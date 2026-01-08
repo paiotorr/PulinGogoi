@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Owner Orders</title>
+
+<style>
+body{
+  margin:0;
+  padding:20px;
+  font-family: Arial, sans-serif;
+  background:#ffffff;
+}
+
+h1{
+  font-size:30px;
+  margin-bottom:20px;
+}
+
+.clearAllBtn{
+  padding:14px 20px;
+  font-size:18px;
+  background:#d63031;
+  color:#fff;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  margin-bottom:25px;
+}
+
+.order{
+  border:2px solid #ccc;
+  border-radius:12px;
+  padding:22px;
+  margin-bottom:25px;
+}
+
+.orderHeader{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:15px;
+}
+
+.table{
+  font-size:24px;
+  font-weight:bold;
+}
+
+.time{
+  font-size:16px;
+  color:#555;
+}
+
+.item{
+  display:flex;
+  align-items:center;
+  margin-bottom:15px;
+}
+
+.item img{
+  width:90px;
+  height:90px;
+  object-fit:cover;
+  border-radius:10px;
+  margin-right:15px;
+}
+
+.itemName{
+  font-size:22px;
+}
+
+.status{
+  font-size:20px;
+  margin:15px 0;
+}
+
+.actions button{
+  padding:14px 18px;
+  font-size:18px;
+  margin-right:10px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+.accept{background:#27ae60;color:#fff;}
+.reject{background:#c0392b;color:#fff;}
+.clear{background:#555;color:#fff;}
+</style>
+</head>
+
+<body>
+
+<h1>📋 Live Orders</h1>
+
+<button class="clearAllBtn" onclick="clearAllOrders()">Clear ALL Orders</button>
+
+<div id="orders"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  onSnapshot,
+  doc,
+  updateDoc,
+  deleteDoc,
+  getDocs,
+  query,
+  orderBy
+} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+
+/* 🔥 Firebase config */
+const firebaseConfig = {
+  apiKey: "AIzaSyDSf51jWs3I4AXX0U8M_HxKn4VtRYg72xs",
+  authDomain: "hotel-order-7f1f2.firebaseapp.com",
+  projectId: "hotel-order-7f1f2"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const ordersDiv = document.getElementById("orders");
+
+/* 🔴 NEWEST ORDERS FIRST */
+const q = query(collection(db, "orders"), orderBy("time", "desc"));
+
+onSnapshot(q, (snap) => {
+  ordersDiv.innerHTML = "";
+
+  snap.forEach((d) => {
+    const o = d.data();
+
+    let itemsHTML = "";
+    o.items.forEach(i => {
+      itemsHTML += `
+        <div class="item">
+          <img src="${i.img}">
+          <div class="itemName">${i.name}</div>
+        </div>
+      `;
+    });
+
+    ordersDiv.innerHTML += `
+      <div class="order">
+        <div class="orderHeader">
+          <div class="table">Table ${o.table}</div>
+          <div class="time">🕒 ${o.time}</div>
+        </div>
+
+        ${itemsHTML}
+
+        <div class="status">
+          Status: <b>${o.status}</b>
+        </div>
+
+        <div class="actions">
+          <button class="accept" onclick="updateStatus('${d.id}','accepted')">Accept</button>
+          <button class="reject" onclick="updateStatus('${d.id}','rejected')">Reject</button>
+          <button class="clear" onclick="clearOne('${d.id}')">Clear</button>
+        </div>
+      </div>
+    `;
+  });
+});
+
+/* ACCEPT / REJECT */
+window.updateStatus = async (id, status) => {
+  await updateDoc(doc(db, "orders", id), { status });
+};
+
+/* CLEAR ONE ORDER */
+window.clearOne = async (id) => {
+  if (confirm("Clear this order?")) {
+    await deleteDoc(doc(db, "orders", id));
+  }
+};
+
+/* CLEAR ALL ORDERS */
+window.clearAllOrders = async () => {
+  if (!confirm("Clear ALL orders?")) return;
+
+  const snap = await getDocs(collection(db, "orders"));
+  snap.forEach(d => deleteDoc(doc(db, "orders", d.id)));
+};
+</script>
+
+</body>
+</html>
