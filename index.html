@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Paiotorr</title>
+
+<!-- Disable double-tap zoom -->
+<style>
+html, body { touch-action: manipulation; }
+
+body{
+  font-family: Arial;
+  padding:28px;
+  padding-bottom:720px;
+  background:#f8f8f8;
+}
+
+h1{text-align:center;font-size:34px;}
+#tableInfo{text-align:center;font-size:24px;font-weight:bold;margin-bottom:20px;}
+
+/* MENU */
+.menu{
+  display:flex;
+  gap:30px;
+  flex-wrap:wrap;
+  justify-content:center;
+  margin-bottom:120px;
+}
+.item{
+  background:#fff;
+  width:260px;
+  padding:20px;
+  border-radius:20px;
+  border:2px solid #ddd;
+  text-align:center;
+}
+.item img{
+  width:100%;
+  height:200px;
+  object-fit:cover;
+  border-radius:16px;
+}
+.item h3{font-size:28px;}
+.item p{font-size:24px;}
+.add-btn{
+  width:100%;
+  padding:20px;
+  font-size:26px;
+  font-weight:bold;
+  border:none;
+  border-radius:16px;
+  background:#3498db;
+  color:#fff;
+}
+
+/* ORDER BOX */
+#orderBox{
+  position:fixed;
+  bottom:0;
+  left:0;
+  width:100%;
+  background:#fff;
+  border-top:4px solid #27ae60;
+  box-shadow:0 -6px 16px rgba(0,0,0,0.2);
+}
+#orderInner{
+  max-width:720px;
+  margin:auto;
+  padding:30px 24px;
+}
+
+/* NAME INPUT */
+#customerName{
+  width:100%;
+  padding:18px;
+  font-size:26px;
+  font-weight:900;
+  color:#000;
+  border-radius:14px;
+  border:2px solid #333;
+  margin-bottom:16px;
+}
+
+/* ORDER LIST */
+.order-item{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:16px;
+  background:#f9f9f9;
+  border-radius:16px;
+  margin-bottom:10px;
+}
+.order-name{font-size:26px;font-weight:800;}
+.remove-btn{
+  width:52px;
+  height:52px;
+  border-radius:50%;
+  font-size:28px;
+  border:none;
+  background:#e74c3c;
+  color:#fff;
+}
+
+/* TOTAL */
+#totalPrice{
+  text-align:center;
+  font-size:28px;
+  font-weight:900;
+  margin:12px 0;
+}
+
+/* PAYMENT OPTIONS */
+.payment{
+  margin:18px 0;
+  font-size:24px;
+  font-weight:900;
+}
+.payment label{
+  display:block;
+  padding:16px;
+  border:2px solid #ccc;
+  border-radius:14px;
+  margin-bottom:10px;
+  cursor:pointer;
+}
+.payment input{
+  transform:scale(1.6);
+  margin-right:12px;
+}
+
+/* SUBMIT */
+.submit-btn{
+  width:80%;
+  margin:16px auto;
+  display:block;
+  padding:26px;
+  font-size:28px;
+  font-weight:bold;
+  border:none;
+  border-radius:22px;
+  background:#27ae60;
+  color:#fff;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🍽 Paiotorr</h1>
+<p id="tableInfo"></p>
+
+<!-- MENU ITEMS -->
+<div class="menu">
+
+  <div class="item">
+    <img src="https://raw.githubusercontent.com/paiotorr/Paiotorr/main/image/Pizza.jpg">
+    <h3>Pizza</h3>
+    <p>₹199</p>
+    <button class="add-btn" onclick="addItem('Pizza',199)">➕ ADD</button>
+  </div>
+
+  <div class="item">
+    <img src="https://images.unsplash.com/photo-1550547660-d9450f859349">
+    <h3>Burger</h3>
+    <p>₹99</p>
+    <button class="add-btn" onclick="addItem('Burger',99)">➕ ADD</button>
+  </div>
+
+</div>
+
+<!-- ORDER BOX -->
+<div id="orderBox">
+  <div id="orderInner">
+
+    <input id="customerName" placeholder="Enter your name">
+
+    <div id="orderList"></div>
+    <div id="totalPrice"></div>
+
+    <div class="payment">
+      <label>
+        <input type="radio" name="pay" checked onclick="selectPay('Cash')">
+        💵 Pay at Counter (Cash)
+      </label>
+      <label>
+        <input type="radio" name="pay" onclick="selectPay('UPI')">
+        📱 Pay Online (UPI)
+      </label>
+    </div>
+
+    <button class="submit-btn" onclick="handleSubmit()">🛎 SUBMIT ORDER</button>
+
+  </div>
+</div>
+
+<!-- Disable double-click zoom -->
+<script>
+document.addEventListener("dblclick", function(e){
+  e.preventDefault();
+}, { passive:false });
+</script>
+
+<!-- FIREBASE + LOGIC -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+
+/* ✅ UPDATED UPI ID */
+const UPI_ID = "dipankargogoi289-2@okaxis";
+const PAYEE  = "Paiotorr";
+
+/* FIREBASE */
+const app = initializeApp({
+  apiKey:"AIzaSyDSf51jWs3I4AXX0U8M_HxKn4VtRYg72xs",
+  authDomain:"hotel-order-7f1f2.firebaseapp.com",
+  projectId:"hotel-order-7f1f2"
+});
+const db = getFirestore(app);
+
+/* TABLE */
+const table =
+  new URLSearchParams(location.search).get("table") || "Unknown";
+tableInfo.innerText = "Table: " + table;
+
+let order = {};
+let total = 0;
+let payment = "Cash";
+
+/* ADD ITEM */
+window.addItem = (name, price)=>{
+  order[name] ? order[name].qty++ :
+    order[name] = { name, price, qty:1 };
+  render();
+};
+
+/* REMOVE ITEM */
+window.removeItem = (name)=>{
+  order[name].qty--;
+  if(order[name].qty <= 0) delete order[name];
+  render();
+};
+
+/* RENDER ORDER */
+function render(){
+  orderList.innerHTML="";
+  total = 0;
+
+  Object.values(order).forEach(o=>{
+    total += o.price * o.qty;
+    orderList.innerHTML += `
+      <div class="order-item">
+        <span class="order-name">${o.name} × ${o.qty}</span>
+        <button class="remove-btn" onclick="removeItem('${o.name}')">✖</button>
+      </div>`;
+  });
+
+  totalPrice.innerText = total ? "Total: ₹" + total : "";
+}
+
+/* PAYMENT SELECT */
+window.selectPay = (mode)=>{
+  payment = mode;
+};
+
+/* SUBMIT HANDLER */
+window.handleSubmit = ()=>{
+  if(!customerName.value.trim() || !total){
+    alert("Please enter name and add items");
+    return;
+  }
+
+  if(payment === "UPI"){
+    const url =
+      `upi://pay?pa=${UPI_ID}&pn=${PAYEE}&am=${total}&cu=INR`;
+    window.location.href = url;
+
+    setTimeout(()=>{
+      if(confirm("Have you completed the UPI payment?")){
+        submitOrder();
+      }
+    },1200);
+
+  } else {
+    submitOrder();
+  }
+};
+
+/* SEND TO FIREBASE */
+async function submitOrder(){
+  await addDoc(collection(db,"orders"),{
+    table,
+    customer: customerName.value.trim(),
+    items: Object.values(order),
+    total,
+    payment,
+    status: "pending",
+    time: new Date().toLocaleString()
+  });
+
+  order = {};
+  render();
+  customerName.value = "";
+  payment = "Cash";
+}
+</script>
+
+</body>
+</html>
