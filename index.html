@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PAIOTORR - The Rajdhani Eatery</title>
+
+<style>
+html,body{touch-action: pan-y; scroll-behavior: smooth;}
+body{font-family:Arial;padding:28px;padding-bottom:750px;background:#f8f8f8}
+h1{text-align:center;font-size:34px}
+#tableInfo{text-align:center;font-weight:bold;margin-bottom:20px;font-size:24px}
+
+/* --- CATEGORY HEADER WITH BLACK LINES --- */
+.category-header {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  font-size: 32px;
+  font-weight: 900;
+  color: #000;
+  margin-top: 60px;
+  margin-bottom: 30px;
+  text-transform: uppercase;
+  transition: all 0.5s; /* Smooth transition for highlight */
+  padding: 10px;
+  border-radius: 10px;
+}
+.category-header::before, .category-header::after {
+  content: "";
+  flex: 1;
+  border-bottom: 4px solid #000;
+}
+.category-header::before { margin-right: 20px; }
+.category-header::after { margin-left: 20px; }
+
+/* --- BIG SCREEN HIGHLIGHT ANIMATION --- */
+@keyframes glow {
+  0% { background-color: transparent; transform: scale(1); }
+  50% { background-color: #ffeb3b; transform: scale(1.05); } /* Bright Yellow Flash */
+  100% { background-color: transparent; transform: scale(1); }
+}
+.header-flash {
+  animation: glow 1s ease-in-out;
+}
+
+/* --- MENU DISPLAY --- */
+.menu{display:flex;gap:30px;justify-content:center;flex-wrap:wrap;margin-bottom:40px}
+.item{background:#fff;border:2px solid #ddd;width:260px;padding:20px;text-align:center;border-radius:20px}
+.item img{width:100%;height:200px;object-fit:cover;border-radius:16px}
+.item h3{font-size:28px}
+.item p{font-size:24px}
+.add-btn{margin-top:18px;width:100%;padding:20px;font-size:26px;font-weight:bold;background:#3498db;color:#fff;border:none;border-radius:16px}
+
+/* --- FIXED ORDER PANEL --- */
+#orderBox {
+  position:fixed;
+  bottom:0;
+  left:0;
+  width:100%;
+  background:#fff;
+  border-top:4px solid #27ae60; 
+  z-index: 999; 
+  box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
+  touch-action: none; 
+}
+#orderInner{max-width:720px;margin:auto;padding:20px; box-sizing: border-box;}
+
+#catBar {
+  display: flex;
+  overflow-x: auto;
+  white-space: nowrap;
+  gap: 15px;
+  padding: 15px 10px;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #eee;
+  scrollbar-width: none;
+  touch-action: pan-x;
+}
+#catBar::-webkit-scrollbar { display: none; }
+
+.cat-btn {
+  flex: 0 0 auto;
+  padding: 15px 40px;
+  font-size: 22px;
+  font-weight: bold;
+  border: 3px solid transparent;
+  border-radius: 50px;
+  color: white;
+  transition: all 0.2s;
+}
+
+/* --- BUTTON HIGHLIGHT --- */
+.cat-active {
+  border-color: #000 !important;
+  transform: scale(1.1);
+}
+
+#customerName {
+  width: 100%; padding: 22px; font-size: 26px; font-weight: 900; 
+  margin-bottom: 18px; border: 2px solid #ddd; border-radius: 12px;
+  box-sizing: border-box; display: block;
+}
+
+#orderList { max-height: 200px; overflow-y: auto; margin-bottom: 10px; touch-action: pan-y; }
+
+/* Category Colors */
+.cat-veg { background: #27ae60; }
+.cat-non-veg { background: #e74c3c; }
+.cat-drinks { background: #2980b9; }
+.cat-starters { background: #f39c12; }
+.cat-desserts { background: #9b59b6; }
+.cat-default { background: #7f8c8d; }
+
+.order-item{display:flex;justify-content:space-between;align-items:center;margin:10px 0;padding:16px;background:#f9f9f9;border-radius:16px}
+.order-name{font-size:26px;font-weight:800}
+.remove-btn{width:50px;height:50px;border-radius:50%;font-size:26px;border:none;background:#e74c3c;color:#fff}
+#totalPrice{text-align:center;font-size:28px;font-weight:900; margin: 10px 0;}
+.submit-btn { width:100%; padding:26px; font-size:28px; font-weight:bold; background:#27ae60; color:#fff; border:none; border-radius:22px; display: block; }
+
+/* POPUP */
+#popup{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:9999}
+.popup-box{background:#fff;width:80%;max-width:420px;padding:42px;text-align:center;border-radius:26px;position:relative}
+</style>
+</head>
+
+<body>
+
+<h1>PAIOTORR - The Rajdhani Eatery</h1>
+<p id="tableInfo"></p>
+
+<div id="mainMenuContainer"></div>
+
+<div id="orderBox" onpointerdown="event.stopPropagation()" ontouchmove="event.stopPropagation()">
+  <div id="orderInner">
+    <div id="catBar"></div>
+    <input id="customerName" placeholder="Enter your name">
+    <div id="orderList"></div>
+    <div id="totalPrice"></div>
+    <button class="submit-btn" onclick="submitOrder()">🛎 SUBMIT ORDER</button>
+  </div>
+</div>
+
+<div id="popup">
+  <div class="popup-box">
+    <div id="closeBtn" style="position:absolute;top:12px;right:16px;font-size:36px;cursor:pointer" onclick="manualClose()">✖</div>
+    <div id="popupIcon" style="font-size:110px"></div>
+    <div id="popupText" style="font-size:30px;font-weight:bold;margin-top:16px"></div>
+    <div id="popupPrice" style="font-size:28px;font-weight:900;margin-top:10px"></div>
+  </div>
+</div>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+import {getFirestore,collection,addDoc,doc,onSnapshot,updateDoc} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+
+const app=initializeApp({
+ apiKey:"AIzaSyDSf51jWs3I4AXX0U8M_HxKn4VtRYg72xs",
+ authDomain:"hotel-order-7f1f2.firebaseapp.com",
+ projectId:"hotel-order-7f1f2"
+});
+const db=getFirestore(app);
+
+const table=new URLSearchParams(location.search).get("table")||"unknown";
+tableInfo.innerText="Table: "+table;
+
+const POPUP_KEY=`popup_${table}`, ORDER_KEY=`order_${table}`, DISMISSED_KEY=`popup_dismissed_${table}`;
+const SUBMITTED_TIME=8*60*1000, FINAL_TIME=5*60*1000;
+
+let timer=null, order={}, total=0;
+
+const menuData = [
+  { name: "Paneer Tikka", price: 180, category: "Starters", img: "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=300" },
+  { name: "Veg Pizza", price: 199, category: "Veg", img: "https://raw.githubusercontent.com/paiotorr/Paiotorr/main/image/Pizza.jpg" },
+  { name: "Chicken Curry", price: 280, category: "Non-Veg", img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300" },
+  { name: "Cold Coffee", price: 90, category: "Drinks", img: "https://images.unsplash.com/photo-1541167760496-1628856ab772?w=300" },
+  { name: "Gulab Jamun", price: 60, category: "Desserts", img: "https://images.unsplash.com/photo-1589119908995-c6837fa14848?w=300" }
+];
+
+function initMenuSystem() {
+  const container = document.getElementById("mainMenuContainer");
+  const catBar = document.getElementById("catBar");
+  const categories = [...new Set(menuData.map(item => item.category))];
+
+  categories.forEach(cat => {
+    const btn = document.createElement("button");
+    btn.innerText = cat;
+    const safeCatName = cat.toLowerCase().replace(/\s+/g, '-');
+    btn.className = `cat-btn cat-${safeCatName}`;
+    
+    btn.onclick = (e) => {
+        // 1. Highlight Button
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('cat-active'));
+        btn.classList.add('cat-active');
+
+        // 2. Scroll and Highlight Section Title on Big Screen
+        const targetTitle = document.querySelector(`#section-${safeCatName} .category-header`);
+        const targetSection = document.getElementById(`section-${safeCatName}`);
+        
+        window.scrollTo({ top: targetSection.offsetTop - 20, behavior: 'smooth' });
+
+        // Trigger flash effect
+        targetTitle.classList.remove('header-flash');
+        void targetTitle.offsetWidth; // Trigger reflow
+        targetTitle.classList.add('header-flash');
+
+        // 3. Center Button in Bar
+        catBar.scrollTo({
+            left: btn.offsetLeft - (catBar.offsetWidth / 2) + (btn.offsetWidth / 2),
+            behavior: 'smooth'
+        });
+    };
+    catBar.appendChild(btn);
+
+    const items = menuData.filter(i => i.category === cat);
+    const sectionWrapper = document.createElement("div");
+    sectionWrapper.id = `section-${safeCatName}`;
+    sectionWrapper.innerHTML = `
+      <div class="category-header">${cat}</div>
+      <div class="menu">
+        ${items.map(item => `<div class="item"><img src="${item.img}"><h3>${item.name}</h3><p>₹${item.price}</p>
+        <button class="add-btn" onclick="addItem('${item.name}', ${item.price})">➕ ADD</button></div>`).join('')}
+      </div>`;
+    container.appendChild(sectionWrapper);
+  });
+}
+
+window.addItem=(name,price)=>{
+ if(order[name]) order[name].qty++;
+ else order[name]={name,price,qty:1};
+ render();
+};
+
+window.removeItem=name=>{
+ order[name].qty--;
+ if(order[name].qty<=0) delete order[name];
+ render();
+};
+
+function render(){
+ orderList.innerHTML=""; total=0;
+ Object.values(order).forEach(o=>{
+  total+=o.price*o.qty;
+  orderList.innerHTML+=`<div class="order-item"><span class="order-name">${o.name} × ${o.qty}</span>
+    <button class="remove-btn" onclick="removeItem('${o.name}')">✖</button></div>`;
+ });
+ orderList.scrollTop = orderList.scrollHeight;
+ totalPrice.innerText=total?"Total: ₹"+total:"";
+}
+
+window.submitOrder=async()=>{
+ if(!customerName.value||!Object.keys(order).length) return alert("Fill name and add item");
+ const ref=await addDoc(collection(db,"orders"),{
+  table, customer:customerName.value, items:Object.values(order),
+  total, status:"pending", submittedAt:Date.now()
+ });
+ localStorage.setItem(ORDER_KEY,ref.id);
+ localStorage.removeItem(DISMISSED_KEY);
+ savePopup("submitted",customerName.value,total);
+ listen(ref.id);
+ order={};render();customerName.value="";
+};
+
+function listen(id){
+ onSnapshot(doc(db,"orders",id),async s=>{
+  if(!s.exists()) return;
+  const d=s.data();
+  if((d.status==="accepted"||d.status==="rejected") && !d.actionAt) await updateDoc(doc(db,"orders",id),{actionAt:Date.now()});
+  if(d.status==="accepted"||d.status==="rejected"){
+   if(localStorage.getItem(DISMISSED_KEY)==="true") return;
+   const p=loadPopup();
+   if(!p || p.status==="submitted") savePopup(d.status,d.customer,d.total);
+  }
+ });
+}
+
+function savePopup(status,name,price){
+ localStorage.setItem(POPUP_KEY,JSON.stringify({status,name,price,start:Date.now()}));
+ showPopup();
+}
+
+function loadPopup(){
+ const d=localStorage.getItem(POPUP_KEY);
+ return d?JSON.parse(d):null;
+}
+
+function remaining(p){
+ return (p.status==="submitted"?SUBMITTED_TIME:FINAL_TIME)-(Date.now()-p.start);
+}
+
+function showPopup(){
+ if(localStorage.getItem(DISMISSED_KEY)==="true") return;
+ const p=loadPopup(); if(!p) return;
+ const left=remaining(p); if(left<=0){autoClose();return;}
+ popup.style.display="flex";
+ document.getElementById('closeBtn').style.display = (p.status === "submitted") ? "none" : "block";
+ popupIcon.innerHTML= p.status==="accepted"?"✔": p.status==="rejected"?"✖":"⏳";
+ popupText.innerText=`${p.name}, your order is ${p.status.toUpperCase()}`;
+ popupPrice.innerText=p.status!=="rejected"?"Total: ₹"+p.price:"";
+ clearTimeout(timer); timer=setTimeout(autoClose,left);
+}
+
+function autoClose(){ clearTimeout(timer); popup.style.display="none"; localStorage.removeItem(POPUP_KEY); }
+window.manualClose=()=>{ clearTimeout(timer); popup.style.display="none"; localStorage.setItem(DISMISSED_KEY,"true"); localStorage.removeItem(POPUP_KEY); };
+
+(()=>{
+ const id=localStorage.getItem(ORDER_KEY);
+ if(id) listen(id);
+ showPopup();
+ initMenuSystem();
+})();
+</script>
+
+</body>
+</html>
