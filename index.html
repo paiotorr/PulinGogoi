@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Boginadi Super Market</title>
+
+<style>
+html,body{touch-action:manipulation}
+body{font-family:Arial;padding:28px;padding-bottom:620px;background:#f8f8f8}
+h1{text-align:center;font-size:34px}
+#tableInfo{text-align:center;font-weight:bold;margin-bottom:20px;font-size:24px}
+.menu{display:flex;gap:30px;justify-content:center;flex-wrap:wrap;margin-bottom:120px}
+.item{background:#fff;border:2px solid #ddd;width:260px;padding:20px;text-align:center;border-radius:20px}
+.item img{width:100%;height:200px;object-fit:cover;border-radius:16px}
+.item h3{font-size:28px}
+.item p{font-size:24px}
+.add-btn{margin-top:18px;width:100%;padding:20px;font-size:26px;font-weight:bold;background:#3498db;color:#fff;border:none;border-radius:16px}
+
+#orderBox{position:fixed;bottom:0;left:0;width:100%;background:#fff;border-top:4px solid #27ae60}
+#orderInner{max-width:720px;margin:auto;padding:30px}
+
+#customerName{
+ width:100%;
+ padding:18px;
+ font-size:26px;
+ font-weight:900;
+ margin-bottom:18px;
+ box-sizing:border-box;
+}
+
+.order-item{display:flex;justify-content:space-between;margin:16px 0;padding:16px;background:#f9f9f9;border-radius:16px}
+.order-name{font-size:28px;font-weight:800}
+.remove-btn{width:56px;height:56px;border-radius:50%;font-size:30px;border:none;background:#e74c3c;color:#fff}
+#totalPrice{text-align:center;font-size:28px;font-weight:900}
+.submit-btn{width:80%;margin:auto;display:block;padding:26px;font-size:28px;font-weight:bold;background:#27ae60;color:#fff;border:none;border-radius:22px}
+
+/* POPUP */
+#popup{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:9999}
+.popup-box{background:#fff;width:80%;max-width:420px;padding:42px;text-align:center;border-radius:26px;position:relative}
+.close-btn{
+ position:absolute;
+ top:12px;
+ right:16px;
+ font-size:36px;
+ font-weight:900;
+ color:#e74c3c;
+ cursor:pointer;
+ user-select:none;
+}
+.popup-icon{font-size:110px}
+.popup-text{font-size:30px;font-weight:bold;margin-top:16px}
+.popup-price{font-size:28px;font-weight:900;margin-top:10px}
+.accepted{color:#27ae60}
+.rejected{color:#e74c3c}
+.pending{color:#f39c12}
+</style>
+</head>
+
+<body>
+
+<h1>🛒 Boginadi Super Market</h1>
+<p id="tableInfo"></p>
+
+<div class="menu">
+  <div class="item">
+    <img src="https://raw.githubusercontent.com/paiotorr/Paiotorr/main/image/Pizza.jpg">
+    <h3>Pizza</h3><p>₹199</p>
+    <button class="add-btn" onclick="addItem('Pizza',199)">➕ ADD</button>
+  </div>
+  <div class="item">
+    <img src="https://images.unsplash.com/photo-1550547660-d9450f859349">
+    <h3>Burger</h3><p>₹99</p>
+    <button class="add-btn" onclick="addItem('Burger',99)">➕ ADD</button>
+  </div>
+  
+  <div class="item">
+    <img src="https://raw.githubusercontent.com/paiotorr/Paiotorr/main/image/Pizza.jpg">
+    <h3>Pizza</h3><p>₹199</p>
+    <button class="add-btn" onclick="addItem('Pizza',199)">➕ ADD</button>
+  </div>
+  <div class="item">
+    <img src="https://images.unsplash.com/photo-1550547660-d9450f859349">
+    <h3>Burger</h3><p>₹99</p>
+    <button class="add-btn" onclick="addItem('Burger',99)">➕ ADD</button>
+  </div>
+  
+  <div class="item">
+    <img src="https://raw.githubusercontent.com/paiotorr/Paiotorr/main/image/Pizza.jpg">
+    <h3>Pizza</h3><p>₹199</p>
+    <button class="add-btn" onclick="addItem('Pizza',199)">➕ ADD</button>
+  </div>
+  <div class="item">
+    <img src="https://images.unsplash.com/photo-1550547660-d9450f859349">
+    <h3>Burger</h3><p>₹99</p>
+    <button class="add-btn" onclick="addItem('Burger',99)">➕ ADD</button>
+  </div>
+  
+  <div class="item">
+    <img src="https://raw.githubusercontent.com/paiotorr/Paiotorr/main/image/Pizza.jpg">
+    <h3>Pizza</h3><p>₹199</p>
+    <button class="add-btn" onclick="addItem('Pizza',199)">➕ ADD</button>
+  </div>
+  <div class="item">
+    <img src="https://images.unsplash.com/photo-1550547660-d9450f859349">
+    <h3>Burger</h3><p>₹99</p>
+    <button class="add-btn" onclick="addItem('Burger',99)">➕ ADD</button>
+  </div>
+  
+  <div class="item">
+    <img src="https://raw.githubusercontent.com/paiotorr/Paiotorr/main/image/Pizza.jpg">
+    <h3>Pizza</h3><p>₹199</p>
+    <button class="add-btn" onclick="addItem('Pizza',199)">➕ ADD</button>
+  </div>
+  <div class="item">
+    <img src="https://images.unsplash.com/photo-1550547660-d9450f859349">
+    <h3>Burger</h3><p>₹99</p>
+    <button class="add-btn" onclick="addItem('Burger',99)">➕ ADD</button>
+  </div>
+  
+</div>
+
+<div id="orderBox">
+  <div id="orderInner">
+    <input id="customerName" placeholder="Enter your name">
+    <div id="orderList"></div>
+    <div id="totalPrice"></div>
+    <button class="submit-btn" onclick="submitOrder()">🛎 SUBMIT ORDER</button>
+  </div>
+</div>
+
+<div id="popup">
+  <div class="popup-box">
+    <div class="close-btn" onclick="manualClose()">✖</div>
+    <div id="popupIcon" class="popup-icon"></div>
+    <div id="popupText" class="popup-text"></div>
+    <div id="popupPrice" class="popup-price"></div>
+  </div>
+</div>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+import {getFirestore,collection,addDoc,doc,onSnapshot,updateDoc} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+
+const app=initializeApp({
+ apiKey:"AIzaSyDSf51jWs3I4AXX0U8M_HxKn4VtRYg72xs",
+ authDomain:"hotel-order-7f1f2.firebaseapp.com",
+ projectId:"hotel-order-7f1f2"
+});
+const db=getFirestore(app);
+
+const table=new URLSearchParams(location.search).get("table")||"unknown";
+tableInfo.innerText="Table: "+table;
+
+const POPUP_KEY=`popup_${table}`;
+const ORDER_KEY=`order_${table}`;
+const DISMISSED_KEY=`popup_dismissed_${table}`;
+
+const SUBMITTED_TIME=8*60*1000;
+const FINAL_TIME=5*60*1000;
+
+let timer=null;
+let order={},total=0;
+
+/* ADD ITEM */
+window.addItem=(name,price)=>{
+ if(order[name]) order[name].qty++;
+ else order[name]={name,price,qty:1};
+ render();
+};
+
+window.removeItem=name=>{
+ order[name].qty--;
+ if(order[name].qty<=0) delete order[name];
+ render();
+};
+
+function render(){
+ orderList.innerHTML="";
+ total=0;
+ Object.values(order).forEach(o=>{
+  total+=o.price*o.qty;
+  orderList.innerHTML+=`
+   <div class="order-item">
+    <span class="order-name">${o.name} × ${o.qty}</span>
+    <button class="remove-btn" onclick="removeItem('${o.name}')">✖</button>
+   </div>`;
+ });
+ totalPrice.innerText=total?"Total: ₹"+total:"";
+}
+
+/* SUBMIT ORDER */
+window.submitOrder=async()=>{
+ if(!customerName.value||!Object.keys(order).length)
+  return alert("Fill name and add item");
+
+ const ref=await addDoc(collection(db,"orders"),{
+  table,
+  customer:customerName.value,
+  items:Object.values(order),
+  total,
+  status:"pending",
+  submittedAt:Date.now()
+ });
+
+ localStorage.setItem(ORDER_KEY,ref.id);
+ localStorage.removeItem(DISMISSED_KEY);
+
+ savePopup("submitted",customerName.value,total);
+ listen(ref.id);
+ order={};render();customerName.value="";
+};
+
+/* FIREBASE LISTENER */
+function listen(id){
+ onSnapshot(doc(db,"orders",id),async s=>{
+  if(!s.exists()) return;
+  const d=s.data();
+
+  if((d.status==="accepted"||d.status==="rejected") && !d.actionAt){
+   await updateDoc(doc(db,"orders",id),{actionAt:Date.now()});
+  }
+
+  if(d.status==="accepted"||d.status==="rejected"){
+   if(localStorage.getItem(DISMISSED_KEY)==="true") return;
+
+   const p=loadPopup();
+   if(!p || p.status==="submitted"){
+    savePopup(d.status,d.customer,d.total);
+   }
+  }
+ });
+}
+
+/* POPUP LOGIC */
+function savePopup(status,name,price){
+ localStorage.setItem(POPUP_KEY,JSON.stringify({
+  status,name,price,start:Date.now()
+ }));
+ showPopup();
+}
+
+function loadPopup(){
+ const d=localStorage.getItem(POPUP_KEY);
+ return d?JSON.parse(d):null;
+}
+
+function remaining(p){
+ return (p.status==="submitted"?SUBMITTED_TIME:FINAL_TIME)-(Date.now()-p.start);
+}
+
+function showPopup(){
+ if(localStorage.getItem(DISMISSED_KEY)==="true") return;
+
+ const p=loadPopup();
+ if(!p) return;
+
+ const left=remaining(p);
+ if(left<=0){autoClose();return;}
+
+ popup.style.display="flex";
+ popupIcon.className="popup-icon "+
+  (p.status==="accepted"?"accepted":p.status==="rejected"?"rejected":"pending");
+
+ popupIcon.innerHTML=
+  p.status==="accepted"?"✔":
+  p.status==="rejected"?"✖":"⏳";
+
+ popupText.innerText=`${p.name}, your order is ${p.status.toUpperCase()}`;
+ popupPrice.innerText=p.status!=="rejected"?"Total: ₹"+p.price:"";
+
+ clearTimeout(timer);
+ timer=setTimeout(autoClose,left);
+}
+
+function autoClose(){
+ clearTimeout(timer);
+ popup.style.display="none";
+ localStorage.removeItem(POPUP_KEY);
+}
+
+/* MANUAL CLOSE — PERMANENT DISMISS */
+window.manualClose=()=>{
+ clearTimeout(timer);
+ popup.style.display="none";
+ localStorage.setItem(DISMISSED_KEY,"true");
+ localStorage.removeItem(POPUP_KEY);
+};
+
+/* INIT */
+(()=>{
+ const id=localStorage.getItem(ORDER_KEY);
+ if(id) listen(id);
+ showPopup();
+})();
+</script>
+
+</body>
+</html>
