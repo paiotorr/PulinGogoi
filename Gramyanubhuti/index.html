@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+<head>-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=1280, initial-scale=0.3, maximum-scale=1.0, user-scalable=no">
-<title>PAIOTORR Gramyanubhuti- </title>
+<title>PAIOTORR - Gramyanubhuti</title>
 
 <style>
 /* --- BASE STYLES --- */
@@ -206,6 +206,11 @@ const app=initializeApp({
 });
 const db=getFirestore(app);
 
+// 🔑 Restaurant ID (ITEM PAGE)
+const restaurantId = "Gramyanubhuti";
+
+
+
 const table=new URLSearchParams(location.search).get("table")||"1";
 tableInfo.innerText="Table: "+table;
 
@@ -349,9 +354,17 @@ window.submitOrder = async(btnElement) => {
   const nameInput = document.getElementById("customerName");
   if(!nameInput.value || !Object.keys(order).length) return alert("Enter name and add items!");
   
-  const ref = await addDoc(collection(db, "orders"), {
-    table, customer: nameInput.value, items: Object.values(order), total, status: "pending", submittedAt: Date.now()
-  });
+await addDoc(
+  collection(db, "restaurants", restaurantId, "orders"),
+  {
+    table,
+    customer: nameInput.value,
+    items: Object.values(order),
+    total,
+    status: "pending",
+    submittedAt: Date.now()
+  }
+);
   
   localStorage.setItem(ORDER_KEY, ref.id);
   localStorage.removeItem(DISMISSED_KEY);
