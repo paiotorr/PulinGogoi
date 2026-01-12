@@ -354,7 +354,7 @@ window.submitOrder = async(btnElement) => {
   const nameInput = document.getElementById("customerName");
   if(!nameInput.value || !Object.keys(order).length) return alert("Enter name and add items!");
   
-await addDoc(
+const ref = await addDoc(
   collection(db, "restaurants", restaurantId, "orders"),
   {
     table,
@@ -365,8 +365,9 @@ await addDoc(
     submittedAt: Date.now()
   }
 );
-  
-  localStorage.setItem(ORDER_KEY, ref.id);
+
+localStorage.setItem(ORDER_KEY, ref.id);
+listen(ref.id);
   localStorage.removeItem(DISMISSED_KEY);
   savePopup("submitted", nameInput.value, total);
   listen(ref.id);
@@ -376,7 +377,9 @@ await addDoc(
 function listen(id) {
   if(localStorage.getItem(EXPIRY_PREFIX + id)) return;
 
-  onSnapshot(doc(db, "orders", id), async s => {
+  onSnapshot(
+  doc(db, "restaurants", restaurantId, "orders", id),
+  async s => {
     if(!s.exists()) return;
     const d = s.data();
 
