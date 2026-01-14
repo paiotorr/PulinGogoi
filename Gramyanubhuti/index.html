@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>-
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=1280, initial-scale=0.3, maximum-scale=1.0, user-scalable=no">
 <title>PAIOTORR - Gramyanubhuti</title>
@@ -57,12 +57,12 @@ h1 { text-align: center; font-size: 100px; margin-top: 90px; }
 .item {
   background: #fff;
   border: 2px solid #ddd;
-  width: 500px;      /* ← THIS LINE controls item width */
+  width: 500px;
   padding: 30px;
   text-align: center;
   border-radius: 20px;
   box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-  flex: 0 0 500px;   /* ← REQUIRED because parent is flex */
+  flex: 0 0 500px;
 }
 .item img { width: 100%; height: 300px; object-fit: cover; border-radius: 16px; }
 .item h3 { font-size: 52px; margin: 15px 0; }
@@ -70,8 +70,8 @@ h1 { text-align: center; font-size: 100px; margin-top: 90px; }
 
 .add-btn { 
   width: 100%;
-  padding: 62px;        /* ✅ increases button height */
-  font-size: 54px;      /* ✅ increases text size */
+  padding: 62px;
+  font-size: 54px;
   font-weight: bold; 
   background: #3498db;
   color: #fff;
@@ -136,11 +136,10 @@ h1 { text-align: center; font-size: 100px; margin-top: 90px; }
 .cat-starters { background: #f39c12 !important; }
 .cat-desserts { background: #9b59b6 !important; }
 
-/* --- VISUAL CLICK WITH BLACK STROKE --- */
 .visual-click {
   transform: scale(0.92) !important;
   filter: brightness(1.2) !important;
-  border: 5px solid #000000 !important; /* Black Stroke */
+  border: 5px solid #000000 !important;
   box-shadow: 0 0 15px rgba(0,0,0,0.3) !important;
 }
 
@@ -221,11 +220,7 @@ const app=initializeApp({
 });
 const db=getFirestore(app);
 
-// 🔑 Restaurant ID (ITEM PAGE)
 const restaurantId = "gramyanubhuti";
-
-
-
 const table=new URLSearchParams(location.search).get("table")||"1";
 tableInfo.innerText="Table: "+table;
 
@@ -241,7 +236,6 @@ const menuData = [
 const POPUP_KEY=`popup_${table}`, ORDER_KEY=`order_${table}`, DISMISSED_KEY=`popup_dismissed_${table}`, EXPIRY_PREFIX=`expired_`;
 let order={}, total=0;
 
-// --- TIME RULES ---
 const TIME_SUBMITTED = 8 * 60 * 1000; 
 const TIME_RESULT = 5 * 60 * 1000;    
 
@@ -261,10 +255,7 @@ window.triggerVisual = (element) => {
   element.classList.remove('visual-click');
   void element.offsetWidth; 
   element.classList.add('visual-click');
-  
-  setTimeout(() => {
-    element.classList.remove('visual-click');
-  }, 200); 
+  setTimeout(() => element.classList.remove('visual-click'), 200); 
 }
 
 // --- INFINITE SCROLL ---
@@ -274,27 +265,18 @@ const SCROLL_SPEED = 2;
 
 function initInfiniteCat() {
     const el = document.getElementById('catBar');
-    
     function step() {
         if (autoScroll) {
             const maxScroll = el.scrollWidth - el.clientWidth;
-            
             if (maxScroll > 0) {
               el.scrollLeft += (SCROLL_SPEED * scrollDir);
-
-              if (scrollDir === 1 && el.scrollLeft >= maxScroll - 5) {
-                  scrollDir = -1; // Bounce Left
-              } 
-              else if (scrollDir === -1 && el.scrollLeft <= 5) {
-                  scrollDir = 1; // Bounce Right
-              }
+              if (scrollDir === 1 && el.scrollLeft >= maxScroll - 5) scrollDir = -1;
+              else if (scrollDir === -1 && el.scrollLeft <= 5) scrollDir = 1;
             }
         }
         requestAnimationFrame(step);
     }
-    
     requestAnimationFrame(step);
-    
     el.addEventListener('touchstart', () => autoScroll = false);
     el.addEventListener('touchend', () => setTimeout(() => autoScroll = true, 2000));
 }
@@ -302,8 +284,6 @@ function initInfiniteCat() {
 function initMenu() {
   const container = document.getElementById("mainMenuContainer");
   const categories = [...new Set(menuData.map(i => i.category))];
-  
-  // 30x duplication for Manual Infinite Scroll feeling
   const loopCats = Array(30).fill(categories).flat();
 
   loopCats.forEach((cat) => {
@@ -311,10 +291,8 @@ function initMenu() {
     const btn = document.createElement("button");
     btn.innerText = cat; 
     btn.className = `cat-btn cat-${safeName}`;
-    
-    btn.onclick = (e) => {
+    btn.onclick = () => {
       triggerVisual(btn); 
-
       const section = document.getElementById(`sec-${safeName}`);
       if(section) {
         window.scrollTo({ top: section.offsetTop - 20, behavior: 'smooth' });
@@ -357,52 +335,43 @@ window.removeItem = (name) => { order[name].qty--; if(order[name].qty <= 0) dele
 
 function render() {
   const list = document.getElementById("orderList"); list.innerHTML = ""; total = 0;
-  Object.values(order).forEach(o => { total += o.price * o.qty; list.innerHTML += `<div class="order-item"><span class="order-name">${o.name} × ${o.qty}</span><button class="remove-btn" onclick="removeItem('${o.name}')">✖</button></div>`; });
-  list.scrollTop = list.scrollHeight;
+  Object.values(order).forEach(o => { 
+    total += o.price * o.qty; 
+    list.innerHTML += `<div class="order-item"><span class="order-name">${o.name} × ${o.qty}</span><button class="remove-btn" onclick="removeItem('${o.name}')">✖</button></div>`; 
+  });
   document.getElementById("totalPrice").innerText = total ? "Total: ₹" + total : "";
 }
 
 // --- ORDERING LOGIC ---
 window.submitOrder = async(btnElement) => {
   triggerVisual(btnElement);
-
   const nameInput = document.getElementById("customerName");
   if(!nameInput.value || !Object.keys(order).length) return alert("Enter name and add items!");
   
-const ref = await addDoc(
-  collection(db, "restaurants", restaurantId, "orders"),
-  {
+  const ref = await addDoc(collection(db, "restaurants", restaurantId, "orders"), {
     table,
     customer: nameInput.value,
     items: Object.values(order),
     total,
     status: "pending",
     submittedAt: Date.now()
-  }
-);
+  });
 
-localStorage.setItem(ORDER_KEY, ref.id);
-listen(ref.id);
-  localStorage.removeItem(DISMISSED_KEY);
+  localStorage.setItem(ORDER_KEY, ref.id);
+  localStorage.removeItem(DISMISSED_KEY); // New order, reset dismissal
   savePopup("submitted", nameInput.value, total);
-showPopup();          // 🔥 FORCE SHOW
-
+  listen(ref.id);
   order = {}; render(); nameInput.value = "";
 };
 
 function listen(id) {
-  if(localStorage.getItem(EXPIRY_PREFIX + id)) return;
-
-  onSnapshot(
-  doc(db, "restaurants", restaurantId, "orders", id),
-  async s => {
+  onSnapshot(doc(db, "restaurants", restaurantId, "orders", id), s => {
     if(!s.exists()) return;
     const d = s.data();
-
-    if((d.status === "accepted" || d.status === "rejected")) {
+    if(d.status === "accepted" || d.status === "rejected") {
       const currentData = JSON.parse(localStorage.getItem(POPUP_KEY) || "{}");
       if (currentData.status !== d.status) {
-        localStorage.removeItem(DISMISSED_KEY); 
+        localStorage.removeItem(DISMISSED_KEY); // Reset dismissal on status change
         savePopup(d.status, d.customer, d.total);
       }
     }
@@ -414,50 +383,28 @@ function savePopup(status, name, price) {
   showPopup();
 }
 
-// --- FIX: UPDATED TIMER LOGIC ---
 function checkPopupTimer() {
   const data = localStorage.getItem(POPUP_KEY);
   if(!data) return;
-  
   const p = JSON.parse(data);
-  const orderId = localStorage.getItem(ORDER_KEY);
   const elapsed = Date.now() - p.start;
   const limit = (p.status === "submitted") ? TIME_SUBMITTED : TIME_RESULT;
 
   if (elapsed > limit) {
     document.getElementById("popup").style.display = "none";
     localStorage.removeItem(POPUP_KEY);
-    
-    // CRITICAL FIX: Only set expired flag if the status was NOT submitted.
-    // If 'submitted' popup expires, we just hide it but KEEP LISTENING for acceptance.
-    if(orderId && p.status !== "submitted") {
-        localStorage.setItem(EXPIRY_PREFIX + orderId, "true");
-    }
   }
 }
-
 setInterval(checkPopupTimer, 1000);
 
 function showPopup() {
   const data = localStorage.getItem(POPUP_KEY);
-  const orderId = localStorage.getItem(ORDER_KEY);
+  const isDismissed = localStorage.getItem(DISMISSED_KEY);
 
-  if(!data) return;
-  if(orderId && localStorage.getItem(EXPIRY_PREFIX + orderId)) return;
+  // FIX: Don't show if user dismissed it already
+  if(!data || isDismissed === "true") return;
 
   const p = JSON.parse(data);
-  const elapsed = Date.now() - p.start;
-  const limit = (p.status === "submitted") ? TIME_SUBMITTED : TIME_RESULT;
-  
-  if(elapsed > limit) {
-    localStorage.removeItem(POPUP_KEY);
-    // SAME FIX APPLIED HERE for page reloads
-    if(orderId && p.status !== "submitted") {
-        localStorage.setItem(EXPIRY_PREFIX + orderId, "true");
-    }
-    return;
-  }
-
   const popup = document.getElementById("popup");
   popup.style.display = "flex";
   document.getElementById("closeBtn").style.display = (p.status === "submitted") ? "none" : "block";
