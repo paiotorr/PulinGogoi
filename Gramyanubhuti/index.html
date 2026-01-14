@@ -3,7 +3,7 @@
 <head>-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=1280, initial-scale=0.3, maximum-scale=1.0, user-scalable=no">
-<title>PAIOTORR - U S Pizza</title>
+<title>PAIOTORR - Gramyanubhuti</title>
 
 <style>
 /* --- BASE STYLES --- */
@@ -54,14 +54,29 @@ h1 { text-align: center; font-size: 100px; margin-top: 90px; }
 
 /* --- MENU ITEMS --- */
 .menu { display: flex; gap: 40px; justify-content: center; flex-wrap: wrap; padding: 0 40px; }
-.item { background: #fff; border: 2px solid #ddd; width: 300px; padding: 25px; text-align: center; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-.item img { width: 100%; height: 240px; object-fit: cover; border-radius: 16px; }
-.item h3 { font-size: 32px; margin: 15px 0; }
-.item p { font-size: 28px; color: #27ae60; font-weight: bold; margin-bottom: 20px; }
+.item {
+  background: #fff;
+  border: 2px solid #ddd;
+  width: 500px;      /* ← THIS LINE controls item width */
+  padding: 30px;
+  text-align: center;
+  border-radius: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  flex: 0 0 500px;   /* ← REQUIRED because parent is flex */
+}
+.item img { width: 100%; height: 300px; object-fit: cover; border-radius: 16px; }
+.item h3 { font-size: 52px; margin: 15px 0; }
+.item p { font-size: 48px; color: #27ae60; font-weight: bold; margin-bottom: 20px; }
 
 .add-btn { 
-  width: 100%; padding: 20px; font-size: 26px; font-weight: bold; 
-  background: #3498db; color: #fff; border: none; border-radius: 16px; 
+  width: 100%;
+  padding: 62px;        /* ✅ increases button height */
+  font-size: 54px;      /* ✅ increases text size */
+  font-weight: bold; 
+  background: #3498db;
+  color: #fff;
+  border: none;
+  border-radius: 22px; 
   cursor: pointer;
   transition: transform 0.1s, background-color 0.1s;
 }
@@ -207,7 +222,7 @@ const app=initializeApp({
 const db=getFirestore(app);
 
 // 🔑 Restaurant ID (ITEM PAGE)
-const restaurantId = "uspizza";
+const restaurantId = "gramyanubhuti";
 
 
 
