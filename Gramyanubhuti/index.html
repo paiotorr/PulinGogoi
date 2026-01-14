@@ -236,6 +236,7 @@ const menuData = [
 const POPUP_KEY=`popup_${table}`, ORDER_KEY=`order_${table}`;
 let order={}, total=0;
 
+// TIMERS: 8 mins for submission, 5 mins for Result
 const TIME_SUBMITTED = 8 * 60 * 1000; 
 const TIME_RESULT = 5 * 60 * 1000;    
 
@@ -368,12 +369,17 @@ function listen(id) {
     if(!s.exists()) return;
     const d = s.data();
     
-    // UNIQUE LOCK: Create a key based on Order ID + Current Status
+    // Check if we've already permanently dismissed this status for this order
     const lockKey = `done_${id}_${d.status}`;
-    if(localStorage.getItem(lockKey)) return; // Already dismissed or expired this status for this order
+    if(localStorage.getItem(lockKey)) return;
 
-    if (d.status === "accepted" || d.status === "rejected") {
-      savePopup(d.status, d.customer, d.total);
+    // IMPORTANT FIX: Only trigger savePopup if the current stored status is DIFFERENT
+    // This prevents the timer from resetting to zero every time Firestore updates.
+    const stored = JSON.parse(localStorage.getItem(POPUP_KEY) || "{}");
+    if (d.status !== stored.status) {
+      if (d.status === "accepted" || d.status === "rejected") {
+        savePopup(d.status, d.customer, d.total);
+      }
     }
   });
 }
@@ -385,20 +391,27 @@ function savePopup(status, name, price) {
 
 function checkPopupTimer() {
   const data = localStorage.getItem(POPUP_KEY);
-  if(!data) return;
+  if(!data) {
+     // If no data, ensure the window is hidden
+     if(document.getElementById("popup").style.display === "flex") {
+        document.getElementById("popup").style.display = "none";
+     }
+     return;
+  }
+
   const p = JSON.parse(data);
   const elapsed = Date.now() - p.start;
   const limit = (p.status === "submitted") ? TIME_SUBMITTED : TIME_RESULT;
 
-  if (elapsed > limit) {
-    // LOCK BEFORE CLOSING: prevents reappearing on refresh
+  if (elapsed >= limit) {
     const orderId = localStorage.getItem(ORDER_KEY);
-    localStorage.setItem(`done_${orderId}_${p.status}`, "true");
+    if(orderId) localStorage.setItem(`done_${orderId}_${p.status}`, "true");
     
     document.getElementById("popup").style.display = "none";
     localStorage.removeItem(POPUP_KEY);
   }
 }
+// Run timer check every second
 setInterval(checkPopupTimer, 1000);
 
 function showPopup() {
@@ -408,7 +421,6 @@ function showPopup() {
   if(!data || !orderId) return;
   const p = JSON.parse(data);
 
-  // DON'T SHOW if this specific order's status is already locked (dismissed/expired)
   if(localStorage.getItem(`done_${orderId}_${p.status}`)) return;
 
   const popup = document.getElementById("popup");
@@ -424,7 +436,6 @@ window.manualClose = () => {
   const orderId = localStorage.getItem(ORDER_KEY);
   if (data && orderId) {
     const p = JSON.parse(data);
-    // LOCK MANUALLY: Mark this order + status as "Done"
     localStorage.setItem(`done_${orderId}_${p.status}`, "true");
   }
   document.getElementById("popup").style.display = "none"; 
