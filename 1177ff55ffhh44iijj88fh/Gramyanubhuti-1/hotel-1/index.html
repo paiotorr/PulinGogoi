@@ -7,7 +7,7 @@
 <meta name="copyright" content="© 2026 Paiotorr">
 <meta name="author" content="Paiotorr">
 
-<title>PAIOTORR - Digital Menu</title>
+<title>PAIOTORR - Gramyanubhuti</title>
 
 <style>
 /* --- BASE STYLES --- */
@@ -27,7 +27,7 @@ html, body {
   -webkit-user-select: none;
 }
 
-h1 { text-align: center; font-size: 70px; margin-top: 90px; }
+h1 { text-align: center; font-size: 90px; margin-top: 90px; }
 #tableInfo { text-align: center; font-weight: bold; font-size: 60px; color: #555; }
 
 /* FIX: Removed huge padding here so footer isn't pushed into void */
@@ -220,7 +220,7 @@ h1 { text-align: center; font-size: 70px; margin-top: 90px; }
 
 <body>
 
-<h1 id="mainTitle">PAIOTORR</h1>
+<h1>PAIOTORR - Gramyanubhuti</h1>
 <p id="tableInfo"></p>
 
 <div id="mainMenuContainer"></div>
@@ -276,12 +276,8 @@ const app=initializeApp({
 });
 const db=getFirestore(app);
 
-// --- DYNAMIC RESTAURANT & TABLE LOGIC ---
-const urlParams = new URLSearchParams(location.search);
-const restaurantId = urlParams.get("res") || "Gramyanubhuti"; 
-const table = urlParams.get("table") || "1";
-
-document.getElementById("mainTitle").innerText = "PAIOTORR - " + restaurantId.toUpperCase();
+const restaurantId = "gramyanubhuti";
+const table=new URLSearchParams(location.search).get("table")||"1";
 tableInfo.innerText="Table: "+table;
 
 const menuData = [
@@ -290,14 +286,13 @@ const menuData = [
   { name: "Chicken Curry", price: 280, category: "Non-Veg", img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400" },
   { name: "Cold Coffee", price: 90, category: "Drinks", img: "https://images.unsplash.com/photo-1541167760496-1628856ab772?w=400" },
   { name: "Gulab Jamun", price: 60, category: "Desserts", img: "https://images.unsplash.com/photo-1589119908995-c6837fa14848?w=400" },
-  { name: "Spring Rolls", price: 120, category: "Starters", img: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400" }
+  { name: "Spring Rolls", price: 120, category: "Starters", img: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400" },
+  { name: "Spring Rolls", price: 120, category: "Desserts", img: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400" },
+   { name: "Spring Rolls", price: 120, category: "Desserts", img: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400" },
+    { name: "Spring Rolls", price: 120, category: "Desserts", img: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400" }
 ];
 
-// --- STRICT MULTI-RESTAURANT KEYS ---
-// Adding restaurantId to the storage keys so different restaurants don't clash
-const POPUP_KEY = popup_${restaurantId}_${table};
-const ORDER_KEY = order_${restaurantId}_${table};
-
+const POPUP_KEY=popup_${table}, ORDER_KEY=order_${table};
 let order={}, total=0;
 
 const TIME_SUBMITTED = 8 * 60 * 1000; 
@@ -408,23 +403,19 @@ window.submitOrder = async(btnElement) => {
   const nameInput = document.getElementById("customerName");
   if(!nameInput.value || !Object.keys(order).length) return alert("Enter name and add items!");
   
-  try {
-    const ref = await addDoc(collection(db, "restaurants", restaurantId, "orders"), {
-      table,
-      customer: nameInput.value,
-      items: Object.values(order),
-      total,
-      status: "pending",
-      submittedAt: Date.now()
-    });
+  const ref = await addDoc(collection(db, "restaurants", restaurantId, "orders"), {
+    table,
+    customer: nameInput.value,
+    items: Object.values(order),
+    total,
+    status: "pending",
+    submittedAt: Date.now()
+  });
 
-    localStorage.setItem(ORDER_KEY, ref.id);
-    savePopup("submitted", nameInput.value, total);
-    listen(ref.id);
-    order = {}; render(); nameInput.value = "";
-  } catch(e) {
-    alert("Error submitting order. Please check internet or restaurant ID.");
-  }
+  localStorage.setItem(ORDER_KEY, ref.id);
+  savePopup("submitted", nameInput.value, total);
+  listen(ref.id);
+  order = {}; render(); nameInput.value = "";
 };
 
 function listen(id) {
@@ -432,8 +423,7 @@ function listen(id) {
     if(!s.exists()) return;
     const d = s.data();
     
-    // Unique lock key including restaurant and table
-    const lockKey = done_${restaurantId}_${table}_${id}_${d.status};
+    const lockKey = done_${id}_${d.status};
     if(localStorage.getItem(lockKey)) return;
 
     const stored = JSON.parse(localStorage.getItem(POPUP_KEY) || "{}");
@@ -446,7 +436,7 @@ function listen(id) {
 }
 
 function savePopup(status, name, price) {
-  localStorage.setItem(POPUP_KEY, JSON.stringify({status, name, price, start: Date.now(), res: restaurantId}));
+  localStorage.setItem(POPUP_KEY, JSON.stringify({status, name, price, start: Date.now()}));
   showPopup();
 }
 
@@ -460,15 +450,12 @@ function checkPopupTimer() {
   }
 
   const p = JSON.parse(data);
-  // Only process if this popup belongs to the current restaurant session
-  if(p.res !== restaurantId) return;
-
   const elapsed = Date.now() - p.start;
   const limit = (p.status === "submitted") ? TIME_SUBMITTED : TIME_RESULT;
 
   if (elapsed >= limit) {
     const orderId = localStorage.getItem(ORDER_KEY);
-    if(orderId) localStorage.setItem(done_${restaurantId}_${table}_${orderId}_${p.status}, "true");
+    if(orderId) localStorage.setItem(done_${orderId}_${p.status}, "true");
     
     document.getElementById("popup").style.display = "none";
     localStorage.removeItem(POPUP_KEY);
@@ -483,10 +470,7 @@ function showPopup() {
   if(!data || !orderId) return;
   const p = JSON.parse(data);
 
-  // CRITICAL FIX: Only show if this popup belongs to THIS restaurant ID
-  if(p.res !== restaurantId) return;
-
-  if(localStorage.getItem(done_${restaurantId}_${table}_${orderId}_${p.status})) return;
+  if(localStorage.getItem(done_${orderId}_${p.status})) return;
 
   const popup = document.getElementById("popup");
   popup.style.display = "flex";
@@ -501,7 +485,7 @@ window.manualClose = () => {
   const orderId = localStorage.getItem(ORDER_KEY);
   if (data && orderId) {
     const p = JSON.parse(data);
-    localStorage.setItem(done_${restaurantId}_${table}_${orderId}_${p.status}, "true");
+    localStorage.setItem(done_${orderId}_${p.status}, "true");
   }
   document.getElementById("popup").style.display = "none"; 
   localStorage.removeItem(POPUP_KEY);
