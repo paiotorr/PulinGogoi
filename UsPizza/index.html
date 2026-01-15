@@ -1,8 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>-
+<head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=1280, initial-scale=0.3, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=1280, initial-scale=0.3, maximum-scale=0.3, minimum-scale=0.3, user-scalable=no">
+
+<meta name="copyright" content="© 2026 Paiotorr">
+<meta name="author" content="Paiotorr">
+
 <title>PAIOTORR - U S Pizza</title>
 
 <style>
@@ -16,21 +20,46 @@ html, body {
   font-family: Arial, sans-serif;
   min-width: 1280px; 
   overflow-x: hidden;
+  /* DISABLE DOUBLE-TAP ZOOM */
+  touch-action: manipulation; 
+  /* DISABLE TEXT SELECTION GLOBALLY */
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-h1 { text-align: center; font-size: 48px; margin-top: 30px; }
-#tableInfo { text-align: center; font-weight: bold; font-size: 30px; color: #555; }
+h1 { text-align: center; font-size: 90px; margin-top: 90px; }
+#tableInfo { text-align: center; font-weight: bold; font-size: 60px; color: #555; }
 
+/* FIX: Removed huge padding here so footer isn't pushed into void */
 #mainMenuContainer {
-  padding-bottom: 1500px; 
+  padding-bottom: 50px; 
 }
+
+/* --- COPYRIGHT FOOTER --- */
+#copyrightFooter {
+  display: block;
+  text-align: center;
+  font-size: 40px;
+  color: #888;
+  background: #f8f8f8;
+  font-weight: bold;
+  
+  margin-top: 50px;
+  
+  /* INCREASE THIS VALUE FOR MORE BLANK SPACE */
+  /* 1000px provides a massive amount of empty space at the bottom */
+  padding-bottom: 1000px; 
+  
+  width: 100%;
+}
+
 
 /* --- CATEGORY HEADERS --- */
 .category-header {
   display: flex;
   align-items: center;
   text-align: center;
-  font-size: 42px;
+  font-size: 60px;
   font-weight: 900;
   color: #000;
   margin: 80px 0 40px 0;
@@ -54,14 +83,34 @@ h1 { text-align: center; font-size: 48px; margin-top: 30px; }
 
 /* --- MENU ITEMS --- */
 .menu { display: flex; gap: 40px; justify-content: center; flex-wrap: wrap; padding: 0 40px; }
-.item { background: #fff; border: 2px solid #ddd; width: 300px; padding: 25px; text-align: center; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-.item img { width: 100%; height: 240px; object-fit: cover; border-radius: 16px; }
-.item h3 { font-size: 32px; margin: 15px 0; }
-.item p { font-size: 28px; color: #27ae60; font-weight: bold; margin-bottom: 20px; }
+.item {
+  background: #fff;
+  border: 2px solid #ddd;
+  width: 500px;
+  padding: 30px;
+  text-align: center;
+  border-radius: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  flex: 0 0 500px;
+}
+/* IMAGE PROTECTION */
+.item img { 
+  width: 100%; height: 300px; object-fit: cover; border-radius: 16px; 
+  pointer-events: none; /* Disables drag/right-click on images specifically */
+  -webkit-user-drag: none;
+}
+.item h3 { font-size: 52px; margin: 15px 0; }
+.item p { font-size: 48px; color: #27ae60; font-weight: bold; margin-bottom: 20px; }
 
 .add-btn { 
-  width: 100%; padding: 20px; font-size: 26px; font-weight: bold; 
-  background: #3498db; color: #fff; border: none; border-radius: 16px; 
+  width: 100%;
+  padding: 62px;
+  font-size: 54px;
+  font-weight: bold; 
+  background: #3498db;
+  color: #fff;
+  border: none;
+  border-radius: 22px; 
   cursor: pointer;
   transition: transform 0.1s, background-color 0.1s;
 }
@@ -87,7 +136,7 @@ h1 { text-align: center; font-size: 48px; margin-top: 30px; }
   padding: 12px;
   margin-bottom: 20px;
   overflow: hidden;
-  position: relative;
+  position: relative;  
 }
 
 #catBar {
@@ -107,7 +156,7 @@ h1 { text-align: center; font-size: 48px; margin-top: 30px; }
 .cat-btn {
   flex: 0 0 auto;
   padding: 18px 50px;
-  font-size: 24px;
+  font-size: 55px;
   font-weight: bold;
   border: 5px solid transparent; 
   border-radius: 60px;
@@ -121,11 +170,10 @@ h1 { text-align: center; font-size: 48px; margin-top: 30px; }
 .cat-starters { background: #f39c12 !important; }
 .cat-desserts { background: #9b59b6 !important; }
 
-/* --- VISUAL CLICK WITH BLACK STROKE --- */
 .visual-click {
   transform: scale(0.92) !important;
   filter: brightness(1.2) !important;
-  border: 5px solid #000000 !important; /* Black Stroke */
+  border: 5px solid #000000 !important;
   box-shadow: 0 0 15px rgba(0,0,0,0.3) !important;
 }
 
@@ -133,10 +181,13 @@ h1 { text-align: center; font-size: 48px; margin-top: 30px; }
   width: 100%; padding: 22px; font-size: 30px; font-weight: 900;
   margin-bottom: 20px; border: 3px solid #ddd; border-radius: 15px;
   box-sizing: border-box;
+  /* Allow text selection ONLY in input fields */
+  user-select: text; 
+  -webkit-user-select: text;
 }
 
 #orderList {
-  max-height: 440px; 
+  max-height: 300px; 
   overflow-y: auto;
   margin-bottom: 15px;
   touch-action: pan-y;
@@ -145,16 +196,16 @@ h1 { text-align: center; font-size: 48px; margin-top: 30px; }
 
 .order-item { 
   display: flex; justify-content: space-between; align-items: center; 
-  margin-bottom: 12px; padding: 20px; background: #f1f1f1; 
-  border-radius: 16px; height: 70px; 
+  margin-bottom: 13px; padding: 4px; background: #f1f1f1; 
+  border-radius: 16px; height: 100px; 
 }
 
-.order-name { font-size: 28px; font-weight: 800; }
-.remove-btn { width: 60px; height: 60px; border-radius: 50%; font-size: 30px; border: none; background: #e74c3c; color: #fff; }
-#totalPrice { text-align: center; font-size: 34px; font-weight: 900; margin-bottom: 15px; }
+.order-name { font-size: 48px; font-weight: 800; }
+.remove-btn { width: 90px; height: 90px; border-radius: 50%; font-size: 60px; border: none; background: #e74c3c; color: #fff; }
+#totalPrice { text-align: center; font-size: 50px; font-weight: 900; margin-bottom: 15px; }
 
 .submit-btn { 
-  width: 100%; padding: 30px; font-size: 32px; font-weight: bold; 
+  width: 100%; padding: 40px; font-size: 42px; font-weight: bold; 
   background: #27ae60; color: #fff; border: none; border-radius: 25px; 
   cursor: pointer;
   transition: transform 0.1s ease-in-out, filter 0.1s; 
@@ -173,6 +224,10 @@ h1 { text-align: center; font-size: 48px; margin-top: 30px; }
 <p id="tableInfo"></p>
 
 <div id="mainMenuContainer"></div>
+
+<div id="copyrightFooter">
+  © 2026 Paiotorr. All Rights Reserved.
+</div>
 
 <div id="orderBox">
   <div id="orderInner">
@@ -199,6 +254,21 @@ h1 { text-align: center; font-size: 48px; margin-top: 30px; }
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
 import {getFirestore,collection,addDoc,doc,onSnapshot,updateDoc} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
+// --- SECURITY & COPYRIGHT PROTECTION ---
+document.addEventListener("contextmenu", (e) => e.preventDefault());
+
+document.addEventListener("keydown", (e) => {
+  if (e.ctrlKey && (e.key === "u" || e.key === "U" || e.key === "s" || e.key === "S" || e.key === "c" || e.key === "C")) {
+    e.preventDefault();
+  }
+});
+
+document.addEventListener("dragstart", (e) => {
+  if (e.target.tagName === "IMG") {
+    e.preventDefault();
+  }
+});
+
 const app=initializeApp({
  apiKey:"AIzaSyDSf51jWs3I4AXX0U8M_HxKn4VtRYg72xs",
  authDomain:"hotel-order-7f1f2.firebaseapp.com",
@@ -206,11 +276,7 @@ const app=initializeApp({
 });
 const db=getFirestore(app);
 
-// 🔑 Restaurant ID (ITEM PAGE)
 const restaurantId = "uspizza";
-
-
-
 const table=new URLSearchParams(location.search).get("table")||"1";
 tableInfo.innerText="Table: "+table;
 
@@ -220,17 +286,18 @@ const menuData = [
   { name: "Chicken Curry", price: 280, category: "Non-Veg", img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400" },
   { name: "Cold Coffee", price: 90, category: "Drinks", img: "https://images.unsplash.com/photo-1541167760496-1628856ab772?w=400" },
   { name: "Gulab Jamun", price: 60, category: "Desserts", img: "https://images.unsplash.com/photo-1589119908995-c6837fa14848?w=400" },
-  { name: "Spring Rolls", price: 120, category: "Starters", img: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400" }
+  { name: "Spring Rolls", price: 120, category: "Starters", img: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400" },
+  { name: "Spring Rolls", price: 120, category: "Desserts", img: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400" },
+   { name: "Spring Rolls", price: 120, category: "Desserts", img: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400" },
+    { name: "Spring Rolls", price: 120, category: "Desserts", img: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400" }
 ];
 
-const POPUP_KEY=`popup_${table}`, ORDER_KEY=`order_${table}`, DISMISSED_KEY=`popup_dismissed_${table}`, EXPIRY_PREFIX=`expired_`;
+const POPUP_KEY=`popup_${table}`, ORDER_KEY=`order_${table}`;
 let order={}, total=0;
 
-// --- TIME RULES ---
 const TIME_SUBMITTED = 8 * 60 * 1000; 
 const TIME_RESULT = 5 * 60 * 1000;    
 
-// --- TOUCH PROTECTION ---
 const orderBox = document.getElementById("orderBox");
 const orderList = document.getElementById("orderList");
 const catBar = document.getElementById("catBar");
@@ -240,46 +307,32 @@ orderBox.addEventListener('touchmove', (e) => {
     if (!isScrollable) e.preventDefault(); 
 }, { passive: false });
 
-// --- VISUAL CLICK LOGIC ---
 window.triggerVisual = (element) => {
   if(!element) return;
   element.classList.remove('visual-click');
   void element.offsetWidth; 
   element.classList.add('visual-click');
-  
-  setTimeout(() => {
-    element.classList.remove('visual-click');
-  }, 200); 
+  setTimeout(() => element.classList.remove('visual-click'), 200); 
 }
 
-// --- INFINITE SCROLL ---
 let autoScroll = true;
 let scrollDir = 1; 
 const SCROLL_SPEED = 2; 
 
 function initInfiniteCat() {
     const el = document.getElementById('catBar');
-    
     function step() {
         if (autoScroll) {
             const maxScroll = el.scrollWidth - el.clientWidth;
-            
             if (maxScroll > 0) {
               el.scrollLeft += (SCROLL_SPEED * scrollDir);
-
-              if (scrollDir === 1 && el.scrollLeft >= maxScroll - 5) {
-                  scrollDir = -1; // Bounce Left
-              } 
-              else if (scrollDir === -1 && el.scrollLeft <= 5) {
-                  scrollDir = 1; // Bounce Right
-              }
+              if (scrollDir === 1 && el.scrollLeft >= maxScroll - 5) scrollDir = -1;
+              else if (scrollDir === -1 && el.scrollLeft <= 5) scrollDir = 1;
             }
         }
         requestAnimationFrame(step);
     }
-    
     requestAnimationFrame(step);
-    
     el.addEventListener('touchstart', () => autoScroll = false);
     el.addEventListener('touchend', () => setTimeout(() => autoScroll = true, 2000));
 }
@@ -287,8 +340,6 @@ function initInfiniteCat() {
 function initMenu() {
   const container = document.getElementById("mainMenuContainer");
   const categories = [...new Set(menuData.map(i => i.category))];
-  
-  // 30x duplication for Manual Infinite Scroll feeling
   const loopCats = Array(30).fill(categories).flat();
 
   loopCats.forEach((cat) => {
@@ -296,10 +347,8 @@ function initMenu() {
     const btn = document.createElement("button");
     btn.innerText = cat; 
     btn.className = `cat-btn cat-${safeName}`;
-    
-    btn.onclick = (e) => {
+    btn.onclick = () => {
       triggerVisual(btn); 
-
       const section = document.getElementById(`sec-${safeName}`);
       if(section) {
         window.scrollTo({ top: section.offsetTop - 20, behavior: 'smooth' });
@@ -342,52 +391,44 @@ window.removeItem = (name) => { order[name].qty--; if(order[name].qty <= 0) dele
 
 function render() {
   const list = document.getElementById("orderList"); list.innerHTML = ""; total = 0;
-  Object.values(order).forEach(o => { total += o.price * o.qty; list.innerHTML += `<div class="order-item"><span class="order-name">${o.name} × ${o.qty}</span><button class="remove-btn" onclick="removeItem('${o.name}')">✖</button></div>`; });
-  list.scrollTop = list.scrollHeight;
+  Object.values(order).forEach(o => { 
+    total += o.price * o.qty; 
+    list.innerHTML += `<div class="order-item"><span class="order-name">${o.name} × ${o.qty}</span><button class="remove-btn" onclick="removeItem('${o.name}')">✖</button></div>`; 
+  });
   document.getElementById("totalPrice").innerText = total ? "Total: ₹" + total : "";
 }
 
-// --- ORDERING LOGIC ---
 window.submitOrder = async(btnElement) => {
   triggerVisual(btnElement);
-
   const nameInput = document.getElementById("customerName");
   if(!nameInput.value || !Object.keys(order).length) return alert("Enter name and add items!");
   
-const ref = await addDoc(
-  collection(db, "restaurants", restaurantId, "orders"),
-  {
+  const ref = await addDoc(collection(db, "restaurants", restaurantId, "orders"), {
     table,
     customer: nameInput.value,
     items: Object.values(order),
     total,
     status: "pending",
     submittedAt: Date.now()
-  }
-);
+  });
 
-localStorage.setItem(ORDER_KEY, ref.id);
-listen(ref.id);
-  localStorage.removeItem(DISMISSED_KEY);
+  localStorage.setItem(ORDER_KEY, ref.id);
   savePopup("submitted", nameInput.value, total);
-showPopup();          // 🔥 FORCE SHOW
-
+  listen(ref.id);
   order = {}; render(); nameInput.value = "";
 };
 
 function listen(id) {
-  if(localStorage.getItem(EXPIRY_PREFIX + id)) return;
-
-  onSnapshot(
-  doc(db, "restaurants", restaurantId, "orders", id),
-  async s => {
+  onSnapshot(doc(db, "restaurants", restaurantId, "orders", id), s => {
     if(!s.exists()) return;
     const d = s.data();
+    
+    const lockKey = `done_${id}_${d.status}`;
+    if(localStorage.getItem(lockKey)) return;
 
-    if((d.status === "accepted" || d.status === "rejected")) {
-      const currentData = JSON.parse(localStorage.getItem(POPUP_KEY) || "{}");
-      if (currentData.status !== d.status) {
-        localStorage.removeItem(DISMISSED_KEY); 
+    const stored = JSON.parse(localStorage.getItem(POPUP_KEY) || "{}");
+    if (d.status !== stored.status) {
+      if (d.status === "accepted" || d.status === "rejected") {
         savePopup(d.status, d.customer, d.total);
       }
     }
@@ -399,49 +440,37 @@ function savePopup(status, name, price) {
   showPopup();
 }
 
-// --- FIX: UPDATED TIMER LOGIC ---
 function checkPopupTimer() {
   const data = localStorage.getItem(POPUP_KEY);
-  if(!data) return;
-  
+  if(!data) {
+     if(document.getElementById("popup").style.display === "flex") {
+        document.getElementById("popup").style.display = "none";
+     }
+     return;
+  }
+
   const p = JSON.parse(data);
-  const orderId = localStorage.getItem(ORDER_KEY);
   const elapsed = Date.now() - p.start;
   const limit = (p.status === "submitted") ? TIME_SUBMITTED : TIME_RESULT;
 
-  if (elapsed > limit) {
+  if (elapsed >= limit) {
+    const orderId = localStorage.getItem(ORDER_KEY);
+    if(orderId) localStorage.setItem(`done_${orderId}_${p.status}`, "true");
+    
     document.getElementById("popup").style.display = "none";
     localStorage.removeItem(POPUP_KEY);
-    
-    // CRITICAL FIX: Only set expired flag if the status was NOT submitted.
-    // If 'submitted' popup expires, we just hide it but KEEP LISTENING for acceptance.
-    if(orderId && p.status !== "submitted") {
-        localStorage.setItem(EXPIRY_PREFIX + orderId, "true");
-    }
   }
 }
-
 setInterval(checkPopupTimer, 1000);
 
 function showPopup() {
   const data = localStorage.getItem(POPUP_KEY);
   const orderId = localStorage.getItem(ORDER_KEY);
-
-  if(!data) return;
-  if(orderId && localStorage.getItem(EXPIRY_PREFIX + orderId)) return;
-
-  const p = JSON.parse(data);
-  const elapsed = Date.now() - p.start;
-  const limit = (p.status === "submitted") ? TIME_SUBMITTED : TIME_RESULT;
   
-  if(elapsed > limit) {
-    localStorage.removeItem(POPUP_KEY);
-    // SAME FIX APPLIED HERE for page reloads
-    if(orderId && p.status !== "submitted") {
-        localStorage.setItem(EXPIRY_PREFIX + orderId, "true");
-    }
-    return;
-  }
+  if(!data || !orderId) return;
+  const p = JSON.parse(data);
+
+  if(localStorage.getItem(`done_${orderId}_${p.status}`)) return;
 
   const popup = document.getElementById("popup");
   popup.style.display = "flex";
@@ -452,8 +481,14 @@ function showPopup() {
 }
 
 window.manualClose = () => { 
+  const data = localStorage.getItem(POPUP_KEY);
+  const orderId = localStorage.getItem(ORDER_KEY);
+  if (data && orderId) {
+    const p = JSON.parse(data);
+    localStorage.setItem(`done_${orderId}_${p.status}`, "true");
+  }
   document.getElementById("popup").style.display = "none"; 
-  localStorage.setItem(DISMISSED_KEY, "true"); 
+  localStorage.removeItem(POPUP_KEY);
 };
 
 (() => {
