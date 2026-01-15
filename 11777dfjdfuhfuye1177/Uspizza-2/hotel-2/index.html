@@ -220,7 +220,7 @@ h1 { text-align: center; font-size: 90px; margin-top: 90px; }
 
 <body>
 
-<h1>PAIOTORR - U S Pizza</h1>
+<h1>PAIOTORR - Gramyanubhuti</h1>
 <p id="tableInfo"></p>
 
 <div id="mainMenuContainer"></div>
@@ -292,7 +292,7 @@ const menuData = [
     { name: "Spring Rolls", price: 120, category: "Desserts", img: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400" }
 ];
 
-const POPUP_KEY=`popup_${table}`, ORDER_KEY=`order_${table}`;
+const POPUP_KEY=popup_${table}, ORDER_KEY=order_${table};
 let order={}, total=0;
 
 const TIME_SUBMITTED = 8 * 60 * 1000; 
@@ -346,13 +346,13 @@ function initMenu() {
     const safeName = cat.toLowerCase().replace(/\s+/g, '-');
     const btn = document.createElement("button");
     btn.innerText = cat; 
-    btn.className = `cat-btn cat-${safeName}`;
+    btn.className = cat-btn cat-${safeName};
     btn.onclick = () => {
       triggerVisual(btn); 
-      const section = document.getElementById(`sec-${safeName}`);
+      const section = document.getElementById(sec-${safeName});
       if(section) {
         window.scrollTo({ top: section.offsetTop - 20, behavior: 'smooth' });
-        const targetHeader = section.querySelector(`.category-header`);
+        const targetHeader = section.querySelector(.category-header);
         targetHeader.classList.remove('header-flash-red'); 
         void targetHeader.offsetWidth; 
         targetHeader.classList.add('header-flash-red');
@@ -364,7 +364,7 @@ function initMenu() {
   categories.forEach(cat => {
     const safeName = cat.toLowerCase().replace(/\s+/g, '-');
     const section = document.createElement("div");
-    section.id = `sec-${safeName}`;
+    section.id = sec-${safeName};
     const items = menuData.filter(i => i.category === cat);
     section.innerHTML = `
       <div class="category-header">${cat}</div>
@@ -393,7 +393,7 @@ function render() {
   const list = document.getElementById("orderList"); list.innerHTML = ""; total = 0;
   Object.values(order).forEach(o => { 
     total += o.price * o.qty; 
-    list.innerHTML += `<div class="order-item"><span class="order-name">${o.name} × ${o.qty}</span><button class="remove-btn" onclick="removeItem('${o.name}')">✖</button></div>`; 
+    list.innerHTML += <div class="order-item"><span class="order-name">${o.name} × ${o.qty}</span><button class="remove-btn" onclick="removeItem('${o.name}')">✖</button></div>; 
   });
   document.getElementById("totalPrice").innerText = total ? "Total: ₹" + total : "";
 }
@@ -423,7 +423,7 @@ function listen(id) {
     if(!s.exists()) return;
     const d = s.data();
     
-    const lockKey = `done_${id}_${d.status}`;
+    const lockKey = done_${id}_${d.status};
     if(localStorage.getItem(lockKey)) return;
 
     const stored = JSON.parse(localStorage.getItem(POPUP_KEY) || "{}");
@@ -455,7 +455,7 @@ function checkPopupTimer() {
 
   if (elapsed >= limit) {
     const orderId = localStorage.getItem(ORDER_KEY);
-    if(orderId) localStorage.setItem(`done_${orderId}_${p.status}`, "true");
+    if(orderId) localStorage.setItem(done_${orderId}_${p.status}, "true");
     
     document.getElementById("popup").style.display = "none";
     localStorage.removeItem(POPUP_KEY);
@@ -470,13 +470,13 @@ function showPopup() {
   if(!data || !orderId) return;
   const p = JSON.parse(data);
 
-  if(localStorage.getItem(`done_${orderId}_${p.status}`)) return;
+  if(localStorage.getItem(done_${orderId}_${p.status})) return;
 
   const popup = document.getElementById("popup");
   popup.style.display = "flex";
   document.getElementById("closeBtn").style.display = (p.status === "submitted") ? "none" : "block";
   document.getElementById("popupIcon").innerHTML = p.status === "accepted" ? "✔" : p.status === "rejected" ? "✖" : "⏳";
-  document.getElementById("popupText").innerText = `${p.name}, order ${p.status.toUpperCase()}`;
+  document.getElementById("popupText").innerText = ${p.name}, order ${p.status.toUpperCase()};
   document.getElementById("popupPrice").innerText = p.status !== "rejected" ? "Total: ₹" + p.price : "";
 }
 
@@ -485,7 +485,7 @@ window.manualClose = () => {
   const orderId = localStorage.getItem(ORDER_KEY);
   if (data && orderId) {
     const p = JSON.parse(data);
-    localStorage.setItem(`done_${orderId}_${p.status}`, "true");
+    localStorage.setItem(done_${orderId}_${p.status}, "true");
   }
   document.getElementById("popup").style.display = "none"; 
   localStorage.removeItem(POPUP_KEY);
