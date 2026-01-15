@@ -276,10 +276,9 @@ const app=initializeApp({
 });
 const db=getFirestore(app);
 
-const restaurantId = "uspizza";
+const restaurantId = "gramyanubhuti";
 const table=new URLSearchParams(location.search).get("table")||"1";
-const tableInfo = document.getElementById("tableInfo");
-tableInfo.innerText = "Table: " + table;
+tableInfo.innerText="Table: "+table;
 
 const menuData = [
   { name: "Paneer Tikka", price: 180, category: "Starters", img: "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=400" },
@@ -293,8 +292,8 @@ const menuData = [
     { name: "Spring Rolls", price: 120, category: "Desserts", img: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400" }
 ];
 
-const POPUP_KEY = popup_${restaurantId}_${table};
-const ORDER_KEY = order_${restaurantId}_${table};
+const POPUP_KEY = `popup_${restaurantId}_${table}`;
+const ORDER_KEY = `order_${restaurantId}_${table}`;
 
 const TIME_SUBMITTED = 8 * 60 * 1000; 
 const TIME_RESULT = 5 * 60 * 1000;    
@@ -424,7 +423,7 @@ function listen(id) {
     if(!s.exists()) return;
     const d = s.data();
     
-    const lockKey = done_${restaurantId}_${id}_${d.status};
+    const lockKey = `done_${id}_${d.status}`;
     if(localStorage.getItem(lockKey)) return;
 
     const stored = JSON.parse(localStorage.getItem(POPUP_KEY) || "{}");
@@ -456,7 +455,7 @@ function checkPopupTimer() {
 
   if (elapsed >= limit) {
     const orderId = localStorage.getItem(ORDER_KEY);
-    if(orderId) localStorage.setItem(done_${restaurantId}_${orderId}_${p.status}, "true");
+    if(orderId) localStorage.setItem(`done_${orderId}_${p.status}`, "true");
     
     document.getElementById("popup").style.display = "none";
     localStorage.removeItem(POPUP_KEY);
@@ -486,7 +485,7 @@ window.manualClose = () => {
   const orderId = localStorage.getItem(ORDER_KEY);
   if (data && orderId) {
     const p = JSON.parse(data);
-    localStorage.setItem(done_${restaurantId}_${orderId}_${p.status}, "true");
+    localStorage.setItem(`done_${orderId}_${p.status}`, "true");
   }
   document.getElementById("popup").style.display = "none"; 
   localStorage.removeItem(POPUP_KEY);
