@@ -20,7 +20,9 @@ html, body {
   font-family: Arial, sans-serif;
   min-width: 1280px; 
   overflow-x: hidden;
+  /* DISABLE DOUBLE-TAP ZOOM */
   touch-action: manipulation; 
+  /* DISABLE TEXT SELECTION GLOBALLY */
   user-select: none;
   -webkit-user-select: none;
 }
@@ -28,6 +30,7 @@ html, body {
 h1 { text-align: center; font-size: 90px; margin-top: 90px; }
 #tableInfo { text-align: center; font-weight: bold; font-size: 60px; color: #555; }
 
+/* FIX: Removed huge padding here so footer isn't pushed into void */
 #mainMenuContainer {
   padding-bottom: 50px; 
 }
@@ -40,10 +43,16 @@ h1 { text-align: center; font-size: 90px; margin-top: 90px; }
   color: #888;
   background: #f8f8f8;
   font-weight: bold;
+  
   margin-top: 50px;
+  
+  /* INCREASE THIS VALUE FOR MORE BLANK SPACE */
+  /* 1000px provides a massive amount of empty space at the bottom */
   padding-bottom: 1000px; 
+  
   width: 100%;
 }
+
 
 /* --- CATEGORY HEADERS --- */
 .category-header {
@@ -84,9 +93,10 @@ h1 { text-align: center; font-size: 90px; margin-top: 90px; }
   box-shadow: 0 4px 15px rgba(0,0,0,0.05);
   flex: 0 0 500px;
 }
+/* IMAGE PROTECTION */
 .item img { 
   width: 100%; height: 300px; object-fit: cover; border-radius: 16px; 
-  pointer-events: none; 
+  pointer-events: none; /* Disables drag/right-click on images specifically */
   -webkit-user-drag: none;
 }
 .item h3 { font-size: 52px; margin: 15px 0; }
@@ -171,6 +181,7 @@ h1 { text-align: center; font-size: 90px; margin-top: 90px; }
   width: 100%; padding: 22px; font-size: 30px; font-weight: 900;
   margin-bottom: 20px; border: 3px solid #ddd; border-radius: 15px;
   box-sizing: border-box;
+  /* Allow text selection ONLY in input fields */
   user-select: text; 
   -webkit-user-select: text;
 }
@@ -278,15 +289,10 @@ const menuData = [
   { name: "Gulab Jamun", price: 60, category: "Desserts", img: "https://images.unsplash.com/photo-1589119908995-c6837fa14848?w=400" },
   { name: "Spring Rolls", price: 120, category: "Starters", img: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400" },
   { name: "Spring Rolls", price: 120, category: "Desserts", img: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400" },
-  { name: "Spring Rolls", price: 120, category: "Desserts", img: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400" },
-  { name: "Spring Rolls", price: 120, category: "Desserts", img: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400" }
+   { name: "Spring Rolls", price: 120, category: "Desserts", img: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400" },
+    { name: "Spring Rolls", price: 120, category: "Desserts", img: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400" }
 ];
 
-// FIXED: Added missing variable declarations
-let order = {};
-let total = 0;
-
-// FIXED: Added backticks for template literals
 const POPUP_KEY = popup_${restaurantId}_${table};
 const ORDER_KEY = order_${restaurantId}_${table};
 
@@ -341,13 +347,13 @@ function initMenu() {
     const safeName = cat.toLowerCase().replace(/\s+/g, '-');
     const btn = document.createElement("button");
     btn.innerText = cat; 
-    btn.className = cat-btn cat-${safeName};
+    btn.className = `cat-btn cat-${safeName}`;
     btn.onclick = () => {
       triggerVisual(btn); 
-      const section = document.getElementById(sec-${safeName});
+      const section = document.getElementById(`sec-${safeName}`);
       if(section) {
         window.scrollTo({ top: section.offsetTop - 20, behavior: 'smooth' });
-        const targetHeader = section.querySelector(.category-header);
+        const targetHeader = section.querySelector(`.category-header`);
         targetHeader.classList.remove('header-flash-red'); 
         void targetHeader.offsetWidth; 
         targetHeader.classList.add('header-flash-red');
@@ -359,7 +365,7 @@ function initMenu() {
   categories.forEach(cat => {
     const safeName = cat.toLowerCase().replace(/\s+/g, '-');
     const section = document.createElement("div");
-    section.id = sec-${safeName};
+    section.id = `sec-${safeName}`;
     const items = menuData.filter(i => i.category === cat);
     section.innerHTML = `
       <div class="category-header">${cat}</div>
@@ -388,7 +394,7 @@ function render() {
   const list = document.getElementById("orderList"); list.innerHTML = ""; total = 0;
   Object.values(order).forEach(o => { 
     total += o.price * o.qty; 
-    list.innerHTML += <div class="order-item"><span class="order-name">${o.name} × ${o.qty}</span><button class="remove-btn" onclick="removeItem('${o.name}')">✖</button></div>; 
+    list.innerHTML += `<div class="order-item"><span class="order-name">${o.name} × ${o.qty}</span><button class="remove-btn" onclick="removeItem('${o.name}')">✖</button></div>`; 
   });
   document.getElementById("totalPrice").innerText = total ? "Total: ₹" + total : "";
 }
@@ -418,7 +424,6 @@ function listen(id) {
     if(!s.exists()) return;
     const d = s.data();
     
-    // FIXED: Added backticks
     const lockKey = done_${restaurantId}_${id}_${d.status};
     if(localStorage.getItem(lockKey)) return;
 
@@ -451,7 +456,6 @@ function checkPopupTimer() {
 
   if (elapsed >= limit) {
     const orderId = localStorage.getItem(ORDER_KEY);
-    // FIXED: Added backticks
     if(orderId) localStorage.setItem(done_${restaurantId}_${orderId}_${p.status}, "true");
     
     document.getElementById("popup").style.display = "none";
@@ -467,14 +471,13 @@ function showPopup() {
   if(!data || !orderId) return;
   const p = JSON.parse(data);
 
-  // FIXED: Added backticks and included restaurantId for consistency
-  if(localStorage.getItem(done_${restaurantId}_${orderId}_${p.status})) return;
+  if(localStorage.getItem(`done_${orderId}_${p.status}`)) return;
 
   const popup = document.getElementById("popup");
   popup.style.display = "flex";
   document.getElementById("closeBtn").style.display = (p.status === "submitted") ? "none" : "block";
   document.getElementById("popupIcon").innerHTML = p.status === "accepted" ? "✔" : p.status === "rejected" ? "✖" : "⏳";
-  document.getElementById("popupText").innerText = ${p.name}, order ${p.status.toUpperCase()};
+  document.getElementById("popupText").innerText = `${p.name}, order ${p.status.toUpperCase()}`;
   document.getElementById("popupPrice").innerText = p.status !== "rejected" ? "Total: ₹" + p.price : "";
 }
 
@@ -483,7 +486,6 @@ window.manualClose = () => {
   const orderId = localStorage.getItem(ORDER_KEY);
   if (data && orderId) {
     const p = JSON.parse(data);
-    // FIXED: Added backticks
     localStorage.setItem(done_${restaurantId}_${orderId}_${p.status}, "true");
   }
   document.getElementById("popup").style.display = "none"; 
