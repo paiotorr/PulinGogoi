@@ -292,8 +292,7 @@ const menuData = [
     { name: "Spring Rolls", price: 120, category: "Desserts", img: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400" }
 ];
 
-const POPUP_KEY = popup_${restaurantId}_${table};
-const ORDER_KEY = order_${restaurantId}_${table};
+const POPUP_KEY=popup_${table}, ORDER_KEY=order_${table};
 let order={}, total=0;
 
 const TIME_SUBMITTED = 8 * 60 * 1000; 
