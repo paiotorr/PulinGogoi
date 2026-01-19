@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Paiotorr – Hota1 Dashboard</title>
+
+<style>
+/* TASK 1 & 3: UI ALIGNMENT & SECURITY CONTROLS */
+* { 
+  box-sizing: border-box; /* Ensures borders/padding are inside the height calculation */
+  user-select: none;      /* Disables text selection */
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
+
+html,body {
+  margin:0;
+  padding:0;
+  font-family:Arial,sans-serif;
+  background:#fff;
+  touch-action: manipulation; /* Blocks double-tap zoom on mobile */
+}
+
+body{padding:20px}
+h1{margin-bottom:14px}
+.main{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+
+/* Pending box fixed at 55vh */
+.pending{border:2px solid #f1c40f;border-radius:12px;padding:14px;height:55vh;overflow-y:auto}
+
+/* Right container matches Pending height exactly; 1fr 1fr splits it perfectly */
+.right{display:grid;grid-template-rows:1fr 1fr;gap:16px;height:55vh;overflow:hidden}
+
+.accepted,.rejected{border-radius:12px;padding:14px;overflow-y:auto}
+.accepted{border:2px solid #2ecc71}
+.rejected{border:2px solid #e74c3c}
+
+h2{margin:0 0 8px;position:sticky;top:0;background:#fff;z-index:1}
+.order{border:2px solid #ccc;border-radius:12px;padding:12px;margin-bottom:12px}
+.header{display:flex;justify-content:space-between}
+.table{font-weight:bold}
+.time{font-size:13px;color:#555}
+.customer{font-weight:bold;margin:6px 0}
+.item{display:flex;align-items:center;margin-bottom:8px}
+.item img{width:70px;height:70px;border-radius:8px;margin-right:10px;object-fit:cover;border:1px solid #ccc}
+.itemText{font-weight:bold}
+.total{font-weight:bold;margin-top:6px}
+.actions{margin-top:8px}
+.actions button{padding:8px 14px;border:none;border-radius:6px;cursor:pointer;margin-right:6px}
+.acceptBtn{background:#2ecc71;color:#fff}
+.rejectBtn{background:#e74c3c;color:#fff}
+.filterBox{margin-top:22px;padding-top:16px;border-top:3px solid #000}
+.analyticsItem{border:2px solid #000;border-radius:12px;padding:12px;margin-bottom:12px}
+.bar{height:14px;border-radius:8px;background:#ddd;overflow:hidden;margin:4px 0 6px}
+.acceptBar{height:100%;background:#2ecc71}
+.rejectBar{height:100%;background:#e74c3c}
+.topBadge{display:inline-block;padding:4px 8px;border-radius:6px;font-size:12px;font-weight:bold;margin-left:6px}
+</style>
+</head>
+
+<body>
+
+<h1>📋 Paiotorr – Hota1</h1>
+
+<div class="main">
+  <div class="pending">
+    <h2>🟡 Pending Orders</h2>
+    <div id="pending"></div>
+  </div>
+  <div class="right">
+    <div class="accepted">
+      <h2>🟢 Accepted</h2>
+      <div id="accepted"></div>
+    </div>
+    <div class="rejected">
+      <h2>🔴 Rejected</h2>
+      <div id="rejected"></div>
+    </div>
+  </div>
+</div>
+
+<div class="filterBox">
+  <h2>📊 Item Analytics (Top 3 Items)</h2>
+  <div id="analytics"></div>
+</div>
+
+<audio id="bellSound" preload="auto">
+  <source src="http://paiotorr.com/2869-preview.mp3">
+</audio>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  onSnapshot,
+  doc,
+  updateDoc,
+  Timestamp
+} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyDSf51jWs3I4AXX0U8M_HxKn4VtRYg72xs",
+  authDomain:"hotel-order-7f1f2.firebaseapp.com",
+  projectId:"hotel-order-7f1f2"
+});
+const db = getFirestore(app);
+
+const restaurantId = "hota1";
+
+const pendingDiv=document.getElementById("pending");
+const acceptedDiv=document.getElementById("accepted");
+const rejectedDiv=document.getElementById("rejected");
+const analyticsDiv=document.getElementById("analytics");
+const bell=document.getElementById("bellSound");
+
+const ITEM_IMAGES = {
+  "Starter", img: "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=400",
+  "Veg", img: "https://paiotorr.com/image/qwdvdjnnjfgjjknfjkgnjk/cold-drink/WhatsApp Image 2026-01-18 at 15.54.55_53f8bc4d.jpg?w=400",
+  "Non-Veg", img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400",
+  "Drinks", img: "https://images.unsplash.com/photo-1541167760496-1628856ab772?w=400",
+  "Desserts", img: "https://images.unsplash.com/photo-1589119908995-c6837fa14848?w=400",
+  "Starters", img: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400",
+  "Cold-Drink", img: "https://paiotorr.com/image/qwdvdjnnjfgjjknfjkgnjk/cold-drink/WhatsApp Image 2026-01-18 at 15.45.17_4e8d4f82.jpg?w=400",
+  "Cold-Drink", img: "https://paiotorr.com/image/qwdvdjnnjfgjjknfjkgnjk/cold-drink/WhatsApp Image 2026-01-18 at 15.45.17_e9c762af.jpg?w=400"
+};
+
+const DEFAULT_IMG="https://raw.githubusercontent.com/paiotorr/Paiotorr/main/image/Pizza.jpg";
+let firstLoad=true;
+
+onSnapshot(
+  collection(db, "restaurants", restaurantId, "orders"),
+  snap => {
+  let orders=[];
+  let playBell=false;
+
+  snap.docChanges().forEach(c=>{
+    if(c.type==="added" && c.doc.data().status==="pending" && !firstLoad){
+      playBell=true;
+    }
+  });
+
+  snap.forEach(d=>{
+    const data=d.data();
+    let createdAt;
+
+    if(data.createdAt?.toDate){
+      createdAt=data.createdAt.toDate();
+    }else{
+      createdAt=new Date();
+      updateDoc(
+        doc(db, "restaurants", restaurantId, "orders", d.id),
+        { createdAt:Timestamp.fromDate(createdAt) }
+      );
+    }
+
+    orders.push({id:d.id,...data,createdAt});
+  });
+
+  if(playBell){
+    bell.currentTime=0;
+    bell.play().catch(()=>{});
+  }
+
+  firstLoad=false;
+
+  // Global sort: newest orders (by createdAt) always at the top
+  orders.sort((a,b)=>b.createdAt-a.createdAt);
+
+  renderList(orders.filter(o=>o.status==="pending"), pendingDiv, true);
+  renderList(orders.filter(o=>o.status==="accepted"), acceptedDiv);
+  renderList(orders.filter(o=>o.status==="rejected"), rejectedDiv);
+
+  renderAnalytics(orders);
+});
+
+function renderList(list, container, showActions=false){
+  container.innerHTML="";
+
+  list.forEach(o=>{
+    const timeText=o.createdAt.toLocaleString("en-IN",{
+      day:"2-digit",month:"short",year:"numeric",
+      hour:"numeric",minute:"2-digit",hour12:true
+    });
+
+    let itemsHtml="";
+    o.items.forEach(i=>{
+      let finalImg = i.img; 
+      if (!finalImg && ITEM_IMAGES[i.name]) finalImg = ITEM_IMAGES[i.name];
+      if (!finalImg) finalImg = DEFAULT_IMG;
+
+      itemsHtml+=`
+      <div class="item">
+        <img src="${finalImg}">
+        <div class="itemText">${i.name} × ${i.qty}</div>
+      </div>`;
+    });
+
+    container.innerHTML+=`
+    <div class="order">
+      <div class="header">
+        <div class="table">Table ${o.table}</div>
+        <div class="time">${timeText}</div>
+      </div>
+      <div class="customer">👤 ${o.customer}</div>
+      ${itemsHtml}
+      <div class="total">₹${o.total}</div>
+      ${showActions ? `
+        <div class="actions">
+          <button class="acceptBtn" onclick="setStatus('${o.id}','accepted')">Accept</button>
+          <button class="rejectBtn" onclick="setStatus('${o.id}','rejected')">Reject</button>
+        </div>` : ""}
+    </div>`;
+  });
+}
+
+function renderAnalytics(orders){
+  const stats={};
+  orders.forEach(o=>{
+    o.items.forEach(i=>{
+      if(!stats[i.name])stats[i.name]={total:0,accepted:0,rejected:0};
+      stats[i.name].total+=i.qty;
+      if(o.status==="accepted")stats[i.name].accepted+=i.qty;
+      if(o.status==="rejected")stats[i.name].rejected+=i.qty;
+    });
+  });
+
+  analyticsDiv.innerHTML="";
+  Object.entries(stats).sort((a,b)=>b[1].total-a[1].total).slice(0,3)
+  .forEach(([name,s],i)=>{
+    const accP=Math.round((s.accepted/s.total)*100)||0;
+    const rejP=Math.round((s.rejected/s.total)*100)||0;
+    const badge=i===0?"🥇 Top 1":i===1?"🥈 Top 2":"🥉 Top 3";
+
+    analyticsDiv.innerHTML+=`
+    <div class="analyticsItem">
+      <h3>${name}<span class="topBadge">${badge}</span></h3>
+      <div><b>Total Orders:</b> ${s.total}</div>
+      <div><b>Accepted:</b> ${s.accepted} (${accP}%)</div>
+      <div class="bar"><div class="acceptBar" style="width:${accP}%"></div></div>
+      <div><b>Rejected:</b> ${s.rejected} (${rejP}%)</div>
+      <div class="bar"><div class="rejectBar" style="width:${rejP}%"></div></div>
+    </div>`;
+  });
+}
+
+// TASK 2: REFRESH TIMESTAMP ON STATUS CHANGE TO FORCE TOP POSITION
+window.setStatus = async (id, status) => {
+  await updateDoc(
+    doc(db, "restaurants", restaurantId, "orders", id),
+    { 
+      status: status,
+      createdAt: Timestamp.now() 
+    }
+  );
+};
+
+// TASK 3: SECURITY & INTERACTION CONTROLS
+document.addEventListener('contextmenu', e => e.preventDefault());
+
+document.addEventListener('keydown', e => {
+  // Disables Copy, Paste, Cut, View Source (Ctrl+U), Save (Ctrl+S), and Zoom (+, -, 0)
+  const forbiddenKeys = ['c', 'v', 'x', 'u', 's', '+', '-', '0', '=', '_'];
+  if ((e.ctrlKey || e.metaKey) && forbiddenKeys.includes(e.key.toLowerCase())) {
+    e.preventDefault();
+  }
+  // Disable F12 (DevTools)
+  if (e.key === "F12") e.preventDefault();
+});
+
+// Disable Zooming with mouse wheel
+document.addEventListener('wheel', e => {
+  if (e.ctrlKey) e.preventDefault();
+}, { passive: false });
+
+// Disable Double-click zoom but allow button clicks
+document.addEventListener('dblclick', e => {
+  if (e.target.tagName !== 'BUTTON') e.preventDefault();
+}, { passive: false });
+
+// Disable browser copy/cut/paste triggers
+['copy', 'cut', 'paste'].forEach(evt => {
+  document.addEventListener(evt, e => e.preventDefault());
+});
+</script>
+
+</body>
+</html>
