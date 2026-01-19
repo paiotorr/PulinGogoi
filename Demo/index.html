@@ -7,7 +7,7 @@
 <meta name="copyright" content="© 2026 Paiotorr">
 <meta name="author" content="Paiotorr">
 
-<title>PAIOTORR - Hota1</title>
+<title>PAIOTORR - HotelA</title>
 
 <style>
 /* --- BASE STYLES --- */
@@ -224,7 +224,7 @@ h1 { text-align: center; font-size: 90px; margin-top: 90px; }
 
 <body>
 
-<h1>PAIOTORR - Hota1</h1>
+<h1>PAIOTORR - HotelA</h1>
 <p id="tableInfo"></p>
 
 <div id="mainMenuContainer"></div>
@@ -280,7 +280,7 @@ const app=initializeApp({
 });
 const db=getFirestore(app);
 
-const restaurantId = "hota1";
+const restaurantId = "HotelA";
 const table=new URLSearchParams(location.search).get("table")||"1";
 tableInfo.innerText="Table: "+table;
 
@@ -293,6 +293,7 @@ const menuData = [
   { name: "Spring Rolls", price: 120, category: "Starters", img: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400" },
   { name: "Coca Cola", price: 40, category: "Cold-Drink", img: "https://paiotorr.com/image/qwdvdjnnjfgjjknfjkgnjk/cold-drink/15.45.17_4e8d4f82.jpg?w=400" },
   { name: "Sprite", price: 40, category: "Cold-Drink", img: "https://paiotorr.com/image/qwdvdjnnjfgjjknfjkgnjk/cold-drink/202615.45.17_e9c762af.jpg?w=400" }
+
 ];
 
 const POPUP_KEY = `popup_${restaurantId}_${table}`;
