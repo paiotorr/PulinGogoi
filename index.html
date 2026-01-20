@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+    <title>Zubeen Garg - PAIOTORR</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <style>
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+                body {
+                          font-family: Arial, Helvetica, sans-serif;
+                                background: #ffffff;
+                                      color: #000000;
+                                            overflow-x: hidden;
+                }
+
+                    .header { background: #000000; color: #ffffff; text-align: center; padding: 16px 8px 10px; }
+                        .header-title { font-size: 20px; font-weight: bold; margin-bottom: 10px; }
+
+                            .tabs { display: flex; justify-content: center; gap: 12px; padding-bottom: 6px; }
+                                .tab-btn {
+                                          padding: 6px 18px;
+                                                border-radius: 20px;
+                                                      border: 1px solid #ffffff;
+                                                            background: #ffffff;
+                                                                  color: #000000;
+                                                                        font-size: 12px;
+                                                                              cursor: pointer;
+                                                                                    min-width: 90px;
+                                                                                          text-align: center;
+                                                                                                transition: all 0.2s ease;
+                                }
+                                    .tab-btn.active { background: #000000; color: #ffffff; border-color: #ffffff; }
+
+                                        .content { max-width: 900px; margin: 16px auto 30px; padding: 0 10px; }
+
+                                            .search-wrapper { text-align: center; margin-bottom: 16px; }
+                                                .search-wrapper input {
+                                                          width: 100%;
+                                                                max-width: 400px;
+                                                                      padding: 10px 12px;
+                                                                            border-radius: 22px;
+                                                                                  border: 1px solid #ccc;
+                                                                                        font-size: 14px;
+                                                                                              outline: none;
+                                                }
+
+                                                    .video-list { list-style: none; }
+                                                        .video-item {
+                                                                  display: flex;
+                                                                        align-items: center;
+                                                                              gap: 10px;
+                                                                                    padding: 10px 6px;
+                                                                                          border-bottom: 1px solid #eee;
+                                                                                                cursor: pointer;
+                                                                                                      transition: background 0.15s ease, transform 0.08s ease;
+                                                                                                            -webkit-tap-highlight-color: transparent;
+                                                                                                                  user-select: none;
+                                                        }
+                                                            .video-item:hover { background: #f7f7f7; }
+                                                                .video-item:active { background: #efefef; transform: scale(0.995); }
+
+                                                                    .serial { font-size: 13px; min-width: 28px; }
+                                                                        .thumb-wrapper {
+                                                                                  flex-shrink: 0;
+                                                                                        width: 120px;
+                                                                                              height: 68px;
+                                                                                                    overflow: hidden;
+                                                                                                          border-radius: 6px;
+                                                                                                                background: #ddd;
+                                                                        }
+                                                                            .thumb-wrapper img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+                                                                                .video-title { font-size: 14px; line-height: 1.2; }
+                                                                                    .no-results { text-align: center; padding: 24px 0; font-size: 14px; color: #555; }
+                                                                                      </style>
+                                                                                      </head>
+                                                                                      <body>
+
+                                                                                        <header class="header">
+                                                                                            <div class="header-title">Zubeen Garg - Paiotorr</div>
+                                                                                                <div class="tabs">
+                                                                                                      <button class="tab-btn active" data-category="podcast">PODCAST</button>
+                                                                                                            <button class="tab-btn" data-category="interview">INTERVIEW</button>
+                                                                                                                  <button class="tab-btn" data-category="song">SONG</button>
+                                                                                                                      </div>
+                                                                                                                        </header>
+
+                                                                                                                          <main class="content">
+                                                                                                                              <div class="search-wrapper">
+                                                                                                                                    <input type="text" id="searchInput" placeholder="Search videos in this section..." />
+                                                                                                                                        </div>
+
+                                                                                                                                            <ul id="videoList" class="video-list"></ul>
+                                                                                                                                                <div id="noResults" class="no-results" style="display:none;">No videos found for this search.</div>
+                                                                                                                                                  </main>
+
+                                                                                                                                                    <script>
+                                                                                                                                                        // ---------- 1) Garbage text remover (for "})})}]}}" injected as text) ----------
+                                                                                                                                                            function removeBracketGarbage(root = document.body) {
+                                                                                                                                                                      // If it is ONLY brackets/parentheses/semicolons/whitespace, remove it.
+                                                                                                                                                                            const onlyGarbage = /^[s)(}{][;]+$/;
+                                                                                                                                                                            
+                                                                                                                                                                                  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+                                                                                                                                                                                        const removeList = [];
+                                                                                                                                                                                        
+                                                                                                                                                                                              while (walker.nextNode()) {
+                                                                                                                                                                                                        const n = walker.currentNode;
+                                                                                                                                                                                                                if (!n || !n.nodeValue) continue;
+                                                                                                                                                                                                                        const t = n.nodeValue.trim();
+                                                                                                                                                                                                                                if (t && onlyGarbage.test(t)) removeList.push(n);
+                                                                                                                                                                                              }
+
+                                                                                                                                                                                                    removeList.forEach(n => n.parentNode && n.parentNode.removeChild(n));
+                                                                                                                                                                            }
+
+                                                                                                                                                                                // Run once when page loads. [web:55]
+                                                                                                                                                                                    window.addEventListener("DOMContentLoaded", () => removeBracketGarbage(document.body)); // [web:55]
+
+                                                                                                                                                                                        // Watch for anything injected later and remove again. [web:55]
+                                                                                                                                                                                            const mo = new MutationObserver(() => removeBracketGarbage(document.body)); // [web:55]
+                                                                                                                                                                                                mo.observe(document.body, { childList: true, subtree: true, characterData: true }); // [web:55]
+
+
+                                                                                                                                                                                                    // ---------- 2) Your app code (YouTube app redirect) ----------
+                                                                                                                                                                                                        const videos = [
+                                                                                                                                                                                                                  { category: "podcast", title: "The Uncut Zubeen : The Last Interview", url: "https://youtu.be/5VenPCFCShU?si=r8kghHMUHwiK7BmS" },
+                                                                                                                                                                                                                        { category: "podcast", title: "Zubeen Garg: Most 'Candid' Podcast, UNTOLD Stories, Emotional Side, SIKAAR || Assamese Podcast - 136", url: "https://youtu.be/LAJF9jUQx2U?si=uBlwVrWh3moUotI7" },
+{ category: "podcast", title: "জুবিন গাৰ্গৰ সৈতে বাৰ্তালাপ", url: "https://youtu.be/D3Ct9LfwyrI?si=UP2DjRyDSog5zPEG" },  
+{ category: "podcast", title: "EP 05 featuring the one and only ZUBEEN GARG....", url: "https://youtu.be/Y4VDE_ogJes?si=aWYGhiYs_GXMROdh" },       
+{ category: "podcast", title: "Zubeen Garg - The Untold Story #kingofassam", url: "https://youtu.be/kL_lMbGu5ss?si=gm7Htd9xKCuak7Lc" },    
+                                                                                                                                                                                                   { category: "interview", title: "Entire family turns up to celebrate Zubeen's birthday", url: "https://youtu.be/SZZCbac048o?si=1mwLZmryAIlWxnEF" },
+                                                                                                                                                                                                                                    { category: "interview", title: "Zubeen Garg Exclusive Final Interview With Radio Mirchi", url: "https://youtu.be/AD8G_v3TJy8?si=qby30Q8DLuSXqx_-" },
+                                                                                                                                                                                                                                          { category: "song", title: "MAJULIR EJONI", url: "https://youtu.be/ZG3SdjQQLQ4?si=LrnyqceIHqg2zLQb" },
+                                                                                                                                                                                                                                                { category: "song", title: "Sang Ghor Dhuniya", url: "https://youtu.be/JGGeDntshCQ?si=98p4SVZDcvWjLQZx" }
+                                                                                                                                                                                                        ];
+
+                                                                                                                                                                                                            const tabs = document.querySelectorAll(".tab-btn");
+                                                                                                                                                                                                                const searchInput = document.getElementById("searchInput");
+                                                                                                                                                                                                                    const videoListEl = document.getElementById("videoList");
+                                                                                                                                                                                                                        const noResultsEl = document.getElementById("noResults");
+
+                                                                                                                                                                                                                            let currentCategory = "podcast";
+
+                                                                                                                                                                                                                                function getYouTubeId(url) {
+                                                                                                                                                                                                                                          try {
+                                                                                                                                                                                                                                                    const u = new URL(url);
+                                                                                                                                                                                                                                                            if (u.hostname === "youtu.be") return u.pathname.slice(1);
+                                                                                                                                                                                                                                                                    return u.searchParams.get("v") || "";
+                                                                                                                                                                                                                                          } catch (e) {
+                                                                                                                                                                                                                                                    return "";
+                                                                                                                                                                                                                                          }
+                                                                                                                                                                                                                                }
+
+                                                                                                                                                                                                                                    function getThumbUrl(id) {
+                                                                                                                                                                                                                                              return "https://img.youtube.com/vi/" + id + "/hqdefault.jpg";
+                                                                                                                                                                                                                                    }
+
+                                                                                                                                                                                                                                        function openYouTube(videoUrl) {
+                                                                                                                                                                                                                                                  const id = getYouTubeId(videoUrl);
+                                                                                                                                                                                                                                                        if (!id) {
+                                                                                                                                                                                                                                                                    window.open(videoUrl, "_blank", "noopener,noreferrer");
+                                                                                                                                                                                                                                                                            return;
+                                                                                                                                                                                                                                                        }
+
+                                                                                                                                                                                                                                                              const webUrl = `https://www.youtube.com/watch?v=${id}`;
+
+                                                                                                                                                                                                                                                                    // Android intent + fallback URL. [web:3]
+                                                                                                                                                                                                                                                                          const intentUrl =
+                                                                                                                                                                                                                                                                                  `intent://www.youtube.com/watch?v=${id}` +
+                                                                                                                                                                                                                                                                                          `#Intent;scheme=https;package=com.google.android.youtube;` +
+                                                                                                                                                                                                                                                                                                  `S.browser_fallback_url=${encodeURIComponent(webUrl)};end`;
+
+                                                                                                                                                                                                                                                                                                        const isAndroid = /Android/i.test(navigator.userAgent);
+                                                                                                                                                                                                                                                                                                              if (isAndroid) window.location.href = intentUrl;
+                                                                                                                                                                                                                                                                                                                    else window.open(webUrl, "_blank", "noopener,noreferrer");
+                                                                                                                                                                                                                                        }
+
+                                                                                                                                                                                                                                            function renderList() {
+                                                                                                                                                                                                                                                      const query = searchInput.value.trim().toLowerCase();
+                                                                                                                                                                                                                                                            const filtered = videos.filter(v =>
+                                                                                                                                                                                                                                                                    v.category === currentCategory && v.title.toLowerCase().includes(query)
+                                                                                                                                                                                                                                                                          );
+
+                                                                                                                                                                                                                                                                                videoListEl.innerHTML = "";
+                                                                                                                                                                                                                                                                                      noResultsEl.style.display = filtered.length ? "none" : "block";
+
+                                                                                                                                                                                                                                                                                            filtered.forEach((video, index) => {
+                                                                                                                                                                                                                                                                                                        const id = getYouTubeId(video.url);
+
+                                                                                                                                                                                                                                                                                                                const li = document.createElement("li");
+                                                                                                                                                                                                                                                                                                                        li.className = "video-item";
+                                                                                                                                                                                                                                                                                                                                li.setAttribute("role", "link");
+                                                                                                                                                                                                                                                                                                                                        li.setAttribute("tabindex", "0");
+
+                                                                                                                                                                                                                                                                                                                                                const activate = () => openYouTube(video.url);
+                                                                                                                                                                                                                                                                                                                                                        li.addEventListener("click", activate);
+                                                                                                                                                                                                                                                                                                                                                                li.addEventListener("keydown", (e) => {
+                                                                                                                                                                                                                                                                                                                                                                              if (e.key === "Enter" || e.key === " ") activate();
+                                                                                                                                                                                                                                                                                                                                                                });
+
+                                                                                                                                                                                                                                                                                                                                                                        const serial = document.createElement("div");
+                                                                                                                                                                                                                                                                                                                                                                                serial.className = "serial";
+                                                                                                                                                                                                                                                                                                                                                                                        serial.textContent = (index + 1) + ")";
+
+                                                                                                                                                                                                                                                                                                                                                                                                const thumbWrap = document.createElement("div");
+                                                                                                                                                                                                                                                                                                                                                                                                        thumbWrap.className = "thumb-wrapper";
+                                                                                                                                                                                                                                                                                                                                                                                                                const img = document.createElement("img");
+                                                                                                                                                                                                                                                                                                                                                                                                                        img.src = id ? getThumbUrl(id) : "";
+                                                                                                                                                                                                                                                                                                                                                                                                                                img.alt = video.title;
+                                                                                                                                                                                                                                                                                                                                                                                                                                        thumbWrap.appendChild(img);
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                const titleDiv = document.createElement("div");
+                                                                                                                                                                                                                                                                                                                                                                                                                                                        titleDiv.className = "video-title";
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                titleDiv.textContent = video.title;
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                        li.appendChild(serial);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                li.appendChild(thumbWrap);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        li.appendChild(titleDiv);
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                videoListEl.appendChild(li);
+                                                                                                                                                                                                                                            });
+
+                                                                                                                                                                                                                                                  // Clean again after rendering list.
+                                                                                                                                                                                                                                                        removeBracketGarbage(document.body);
+                                                                                                                                                                                                                                                            }
+
+                                                                                                                                                                                                                                                                tabs.forEach(btn => {
+                                                                                                                                                                                                                                                                          btn.addEventListener("click", () => {
+                                                                                                                                                                                                                                                                                    const cat = btn.getAttribute("data-category");
+                                                                                                                                                                                                                                                                                            if (cat === currentCategory) return;
+
+                                                                                                                                                                                                                                                                                                    currentCategory = cat;
+                                                                                                                                                                                                                                                                                                            tabs.forEach(b => b.classList.remove("active"));
+                                                                                                                                                                                                                                                                                                                    btn.classList.add("active");
+
+                                                                                                                                                                                                                                                                                                                            searchInput.value = "";
+                                                                                                                                                                                                                                                                                                                                    renderList();
+
+                                                                                                                                                                                                                                                                                                                                            const topOfList = videoListEl.getBoundingClientRect().top + window.scrollY - 10;
+                                                                                                                                                                                                                                                                                                                                                    window.scrollTo({ top: topOfList, behavior: "smooth" });
+                                                                                                                                                                                                                                                                          });
+                                                                                                                                                                                                                                                                });
+
+                                                                                                                                                                                                                                                                    searchInput.addEventListener("input", renderList);
+                                                                                                                                                                                                                                                                        renderList();
+                                                                                                                                                                                                                                                                          </script>
+                                                                                                                                                                                                                                                                        
+             <div class="end-note"><strong>More Coming Soon.....</strong></div>    
+             
+<style>
+  .site-footer{
+    text-align:center;
+    padding:16px 10px 22px;
+    color:#777;
+    font-size:13px;
+  }
+  .site-footer .copyright{
+    font-weight:700;
+  }
+</style>
+
+<footer class="site-footer">
+  <div class="copyright">&copy; 2025 PAIOTORR</div>
+</footer>             
+                                                                                                                                                                                                                                                                          </html>                                                                                                                                                                                                                                                                     
+                                                                                                                                                                                                                                                                          </body>
+                       
+                                                                                                                                               
