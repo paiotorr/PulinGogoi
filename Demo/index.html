@@ -1,3 +1,4 @@
+<!-- :contentReference[oaicite:0]{index=0} -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -20,9 +21,7 @@ html, body {
   font-family: Arial, sans-serif;
   min-width: 1280px; 
   overflow-x: hidden;
-  /* DISABLE DOUBLE-TAP ZOOM */
-  touch-action: manipulation; 
-  /* DISABLE TEXT SELECTION GLOBALLY */
+  touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
 }
@@ -30,12 +29,8 @@ html, body {
 h1 { text-align: center; font-size: 90px; margin-top: 90px; }
 #tableInfo { text-align: center; font-weight: bold; font-size: 60px; color: #555; }
 
-/* FIX: Removed huge padding here so footer isn't pushed into void */
-#mainMenuContainer {
-  padding-bottom: 50px; 
-}
+#mainMenuContainer { padding-bottom: 50px; }
 
-/* --- COPYRIGHT FOOTER --- */
 #copyrightFooter {
   display: block;
   text-align: center;
@@ -43,16 +38,10 @@ h1 { text-align: center; font-size: 90px; margin-top: 90px; }
   color: #888;
   background: #f8f8f8;
   font-weight: bold;
-  
   margin-top: 50px;
-  
-  /* INCREASE THIS VALUE FOR MORE BLANK SPACE */
-  /* 1000px provides a massive amount of empty space at the bottom */
-  padding-bottom: 1000px; 
-  
+  padding-bottom: 1000px;
   width: 100%;
 }
-
 
 /* --- CATEGORY HEADERS --- */
 .category-header {
@@ -93,15 +82,15 @@ h1 { text-align: center; font-size: 90px; margin-top: 90px; }
   box-shadow: 0 4px 15px rgba(0,0,0,0.05);
   flex: 0 0 500px;
 }
-/* IMAGE PROTECTION */
 .item img { 
   width: 100%; height: 300px; object-fit: cover; border-radius: 16px; 
-  pointer-events: none; /* Disables drag/right-click on images specifically */
+  pointer-events: none;
   -webkit-user-drag: none;
 }
 .item h3 { font-size: 52px; margin: 15px 0; }
 .item p { font-size: 48px; color: #27ae60; font-weight: bold; margin-bottom: 20px; }
 
+/* ADD button — must remain exactly as original initial state */
 .add-btn { 
   width: 100%;
   padding: 62px;
@@ -113,6 +102,38 @@ h1 { text-align: center; font-size: 90px; margin-top: 90px; }
   border-radius: 22px; 
   cursor: pointer;
   transition: transform 0.1s, background-color 0.1s;
+}
+
+/* QUANTITY CONTROLLER: replaces add button when active */
+.quantity-controller {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 32px 32px; /* visually similar to add-btn */
+  font-size: 54px;
+  font-weight: bold;
+  border-radius: 22px;
+  box-sizing: border-box;
+  border: 6px solid #27ae60; /* GREEN STROKE when visible */
+  background: #fff;
+  gap: 20px;
+}
+.quantity-controller .qty-btn {
+  width: 120px;
+  height: 70px;
+  font-size: 54px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+}
+.quantity-controller .qty-number {
+  flex: 1;
+  text-align: center;
+  font-size: 54px;
+  font-weight: 900;
+  user-select: none;
 }
 
 /* --- BOTTOM ORDER PANEL --- */
@@ -172,8 +193,6 @@ h1 { text-align: center; font-size: 90px; margin-top: 90px; }
 .cat-chips { background: #ff002b !important; }
 .cat-cold-drink { background: #04947c !important; }
 
-
-
 .visual-click {
   transform: scale(0.92) !important;
   filter: brightness(1.2) !important;
@@ -181,11 +200,11 @@ h1 { text-align: center; font-size: 90px; margin-top: 90px; }
   box-shadow: 0 0 15px rgba(0,0,0,0.3) !important;
 }
 
+/* repurposed input box styles (kept same size & look) */
 #customerName {
   width: 100%; padding: 22px; font-size: 30px; font-weight: 900;
   margin-bottom: 20px; border: 3px solid #ddd; border-radius: 15px;
   box-sizing: border-box;
-  /* Allow text selection ONLY in input fields */
   user-select: text; 
   -webkit-user-select: text;
 }
@@ -198,14 +217,14 @@ h1 { text-align: center; font-size: 90px; margin-top: 90px; }
   overscroll-behavior: contain;
 }
 
+/* Order items — display only (no interactive controls) */
 .order-item { 
   display: flex; justify-content: space-between; align-items: center; 
-  margin-bottom: 13px; padding: 4px; background: #f1f1f1; 
-  border-radius: 16px; height: 100px; 
+  margin-bottom: 13px; padding: 12px; background: #f1f1f1; 
+  border-radius: 16px; height: auto; 
 }
-
 .order-name { font-size: 48px; font-weight: 800; }
-.remove-btn { width: 90px; height: 90px; border-radius: 50%; font-size: 60px; border: none; background: #e74c3c; color: #fff; }
+
 #totalPrice { text-align: center; font-size: 50px; font-weight: 900; margin-bottom: 15px; }
 
 .submit-btn { 
@@ -238,7 +257,13 @@ h1 { text-align: center; font-size: 90px; margin-top: 90px; }
     <div id="categoryNavigationBox">
       <div id="catBar"></div>
     </div>
-    <input id="customerName" placeholder="Enter your name">
+
+    <!-- REPURPOSED INPUT BOX (OPTIONAL order requirements / special instructions) -->
+    <!-- Kept id 'customerName' for compatibility with existing owner page which expects 'customer' field.
+         If filled, this value will be saved as both 'instructions' and also stored into 'customer'
+         so that the owner Pending Orders page (which displays customer/name) will show the instructions. -->
+    <input id="customerName" placeholder="Optional: order requirements / special instructions (e.g., Less salt, No onion, Extra spoon)">
+
     <div id="orderList"></div>
     <div id="totalPrice"></div>
     <button class="submit-btn" onclick="submitOrder(this)">🛎 SUBMIT ORDER</button>
@@ -293,7 +318,6 @@ const menuData = [
   { name: "Spring Rolls", price: 120, category: "Starters", img: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400" },
   { name: "Coca Cola", price: 40, category: "Cold-Drink", img: "https://paiotorr.com/image/qwdvdjnnjfgjjknfjkgnjk/cold-drink/15.45.17_4e8d4f82.jpg?w=400" },
   { name: "Sprite", price: 40, category: "Cold-Drink", img: "https://paiotorr.com/image/qwdvdjnnjfgjjknfjkgnjk/cold-drink/202615.45.17_e9c762af.jpg?w=400" }
-
 ];
 
 const POPUP_KEY = `popup_${restaurantId}_${table}`;
@@ -375,11 +399,13 @@ function initMenu() {
     section.innerHTML = `
       <div class="category-header">${cat}</div>
       <div class="menu">
-        ${items.map(i => `
+        ${items.map((i, idx) => `
           <div class="item">
             <img src="${i.img}">
             <h3>${i.name}</h3><p>₹${i.price}</p>
-            <button class="add-btn" onclick="addItem('${i.name}', ${i.price}, this)">➕ ADD</button>
+            <!-- ADD button: initial state (unchanged appearance) -->
+            <button class="add-btn" data-item-index="${idx}" data-item-name="${i.name}" data-item-price="${i.price}"
+              onclick="handleAddButtonClick(this, '${i.name.replace(/'/g,"\\'")}', ${i.price})">➕ ADD</button>
           </div>`).join('')}
       </div>`;
     container.appendChild(section);
@@ -387,41 +413,144 @@ function initMenu() {
   initInfiniteCat();
 }
 
-window.addItem = (name, price, btn) => {
-  if(btn) triggerVisual(btn);
-  if(order[name]) order[name].qty++; else order[name] = {name, price, qty:1};
+/* ---------------------------
+   ADD → QUANTITY CONTROLLER
+   --------------------------- */
+window.handleAddButtonClick = (btn, name, price) => {
+  if (!btn) return;
+  triggerVisual(btn);
+  if (order[name] && order[name].qty > 0) return;
+  order[name] = { name, price, qty: 1 };
+  const controller = createQuantityController(btn, name, price);
+  btn.replaceWith(controller);
   render();
 };
 
-window.removeItem = (name) => { order[name].qty--; if(order[name].qty <= 0) delete order[name]; render(); };
+function createQuantityController(existingBtn, name, price) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "quantity-controller";
+  wrapper.setAttribute("data-item-name", name);
 
-function render() {
-  const list = document.getElementById("orderList"); list.innerHTML = ""; total = 0;
-  Object.values(order).forEach(o => { 
-    total += o.price * o.qty; 
-    list.innerHTML += `<div class="order-item"><span class="order-name">${o.name} × ${o.qty}</span><button class="remove-btn" onclick="removeItem('${o.name}')">✖</button></div>`; 
+  const minus = document.createElement("button");
+  minus.className = "qty-btn minus";
+  minus.type = "button";
+  minus.innerText = "−";
+
+  const num = document.createElement("div");
+  num.className = "qty-number";
+  num.innerText = order[name] ? String(order[name].qty) : "1";
+
+  const plus = document.createElement("button");
+  plus.className = "qty-btn plus";
+  plus.type = "button";
+  plus.innerText = "+";
+
+  plus.addEventListener("click", (e) => {
+    e.stopPropagation();
+    triggerVisual(plus);
+    if (!order[name]) order[name] = { name, price, qty: 0 };
+    order[name].qty = (order[name].qty || 0) + 1;
+    num.innerText = String(order[name].qty);
+    render();
   });
+
+  minus.addEventListener("click", (e) => {
+    e.stopPropagation();
+    triggerVisual(minus);
+    if (!order[name]) return;
+    order[name].qty = (order[name].qty || 0) - 1;
+    if (order[name].qty <= 0) {
+      delete order[name];
+      const addBtn = createAddButton(name, price);
+      wrapper.replaceWith(addBtn);
+    } else {
+      num.innerText = String(order[name].qty);
+    }
+    render();
+  });
+
+  wrapper.appendChild(minus);
+  wrapper.appendChild(num);
+  wrapper.appendChild(plus);
+
+  return wrapper;
+}
+
+function createAddButton(name, price) {
+  const btn = document.createElement("button");
+  btn.className = "add-btn";
+  btn.innerText = "➕ ADD";
+  btn.setAttribute("data-item-name", name);
+  btn.setAttribute("data-item-price", price);
+  btn.onclick = function() { handleAddButtonClick(btn, name, price); };
+  return btn;
+}
+
+/* ---------------------------
+   Render bottom order list
+   --------------------------- */
+function render() {
+  const list = document.getElementById("orderList");
+  list.innerHTML = "";
+  total = 0;
+
+  Object.values(order).forEach(o => {
+    if (!o || !o.qty || o.qty <= 0) return;
+    total += o.price * o.qty;
+    const row = document.createElement("div");
+    row.className = "order-item";
+    row.innerHTML = `<span class="order-name">${o.name} × ${o.qty}</span><span class="order-price">₹${o.price * o.qty}</span>`;
+    list.appendChild(row);
+  });
+
   document.getElementById("totalPrice").innerText = total ? "Total: ₹" + total : "";
 }
 
+/* ---------------------------
+   submitOrder & popup logic
+   - Input box is OPTIONAL order requirements.
+   - If provided, instructions are saved as 'instructions'.
+   - To ensure owner Pending Orders page shows the instructions (same place where it used to show name),
+     we ALSO store the instructions value into 'customer' field when instructions are present.
+   - If instructions empty, we omit both fields (no defaults).
+   - Popup messages are static and do NOT include input content.
+*/
 window.submitOrder = async(btnElement) => {
   triggerVisual(btnElement);
-  const nameInput = document.getElementById("customerName");
-  if(!nameInput.value || !Object.keys(order).length) return alert("Enter name and add items!");
-  
-  const ref = await addDoc(collection(db, "restaurants", restaurantId, "orders"), {
+  const instructionsInput = document.getElementById("customerName"); // repurposed input
+
+  if (!Object.keys(order).length) {
+    return alert("Please add items before submitting the order.");
+  }
+
+  const payload = {
     table,
-    customer: nameInput.value,
     items: Object.values(order),
     total,
     status: "pending",
     submittedAt: Date.now()
-  });
+  };
+
+  const instr = (instructionsInput && String(instructionsInput.value || "").trim());
+  if (instr) {
+    payload.instructions = instr;      // explicit instructions field
+    payload.customer = instr;          // also store into 'customer' so owner page (which displays name) will show instructions
+  }
+
+  const ref = await addDoc(collection(db, "restaurants", restaurantId, "orders"), payload);
 
   localStorage.setItem(ORDER_KEY, ref.id);
-  savePopup("submitted", nameInput.value, total);
+  savePopup("submitted", total);
   listen(ref.id);
-  order = {}; render(); nameInput.value = "";
+  order = {}; render(); instructionsInput.value = "";
+
+  // revert visible controllers back to add buttons
+  document.querySelectorAll('.quantity-controller').forEach(ctrl => {
+    const nm = ctrl.getAttribute('data-item-name');
+    const pr = (nm && menuData.find(m => m.name === nm)) ? menuData.find(m => m.name === nm).price : 0;
+    const addBtn = createAddButton(nm, pr);
+    ctrl.replaceWith(addBtn);
+  });
 };
 
 function listen(id) {
@@ -435,14 +564,15 @@ function listen(id) {
     const stored = JSON.parse(localStorage.getItem(POPUP_KEY) || "{}");
     if (d.status !== stored.status) {
       if (d.status === "accepted" || d.status === "rejected") {
-        savePopup(d.status, d.customer, d.total);
+        savePopup(d.status, d.total);
       }
     }
   });
 }
 
-function savePopup(status, name, price) {
-  localStorage.setItem(POPUP_KEY, JSON.stringify({status, name, price, start: Date.now()}));
+// savePopup stores only status + price + start time (no input inclusion)
+function savePopup(status, price) {
+  localStorage.setItem(POPUP_KEY, JSON.stringify({status, price, start: Date.now()}));
   showPopup();
 }
 
@@ -482,8 +612,15 @@ function showPopup() {
   popup.style.display = "flex";
   document.getElementById("closeBtn").style.display = (p.status === "submitted") ? "none" : "block";
   document.getElementById("popupIcon").innerHTML = p.status === "accepted" ? "✔" : p.status === "rejected" ? "✖" : "⏳";
-  document.getElementById("popupText").innerText = `${p.name}, order ${p.status.toUpperCase()}`;
-  document.getElementById("popupPrice").innerText = p.status !== "rejected" ? "Total: ₹" + p.price : "";
+
+  const mapping = {
+    submitted: "Order Submitted",
+    accepted: "Order Accepted",
+    rejected: "Order Rejected"
+  };
+  const text = mapping[p.status] || "Order Status";
+  document.getElementById("popupText").innerText = text;
+  document.getElementById("popupPrice").innerText = p.status !== "rejected" ? "Total: ₹" + (p.price || "") : "";
 }
 
 window.manualClose = () => { 
