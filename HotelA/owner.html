@@ -446,4 +446,79 @@ document.addEventListener('keydown', e=>{
   © 2026 Paiotorr. All Rights Reserved.
 </footer>
 </body>
+<!-- 🔐 OWNER PAGE SECURITY + LOGOUT (PASTE AFTER <body>) -->
+<script type="module">
+import { auth, db } from './firebase.js';
+import { onAuthStateChanged } from
+  "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+import { collection, query, where, getDocs } from
+  "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+import { signOut } from
+  "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+// Redirect helper
+function redirect(msg) {
+  alert(msg);
+  window.location.href = "owner_login.html";
+}
+
+// SECURITY GUARD
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    redirect("Please login first.");
+    return;
+  }
+
+  try {
+    const q = query(
+      collection(db, "restaurants"),
+      where("ownerUID", "==", user.uid)
+    );
+
+    const snap = await getDocs(q);
+
+    if (snap.empty) {
+      redirect("No restaurant linked to this account.");
+      return;
+    }
+
+    const doc = snap.docs[0];
+    const data = doc.data();
+
+    const now = new Date();
+    const end = data.subscriptionEnd?.toDate?.();
+
+    if (data.status !== "active") {
+      redirect("Restaurant is paused or inactive.");
+      return;
+    }
+
+    if (!end || now > end) {
+      redirect("Subscription expired. Please renew.");
+      return;
+    }
+
+    // GLOBAL RESTAURANT ID FOR YOUR ORDER CODE
+    window.RESTAURANT_ID = doc.id;
+
+    console.log("Access granted:", doc.id);
+
+  } catch (err) {
+    console.error(err);
+    redirect("Security check failed. Try again.");
+  }
+});
+
+// LOGOUT FUNCTION
+window.logout = function() {
+  signOut(auth).then(() => {
+    window.location.href = "owner_login.html";
+  });
+};
+</script>
+
+<!-- 🚪 LOGOUT BUTTON (YOU CAN MOVE THIS ANYWHERE IN YOUR UI) -->
+<button onclick="logout()">Logout</button>
 </html>
