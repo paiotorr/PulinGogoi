@@ -267,41 +267,22 @@ window.login = function () {
   }
 
   msg.innerText = "Checking login...";
-signInWithEmailAndPassword(auth, email, pass)
-  .then(async (cred) => {
 
-    const user = cred.user;
+  signInWithEmailAndPassword(auth, email, pass)
+    .then(() => {
+      resetAttempts();
+      window.location.replace("/maple/owner.html","HotelA/owner.html");
+    })
+    .catch((error) => {
+      console.error(error);
+      const tries = incrementAttempts();
 
-    // 🔑 STEP 1: find restaurant linked to this owner
-    const q = query(
-      collection(db, "restaurants"),
-      where("ownerUID", "==", user.uid)
-    );
-
-    const snap = await getDocs(q);
-
-    if (snap.empty) {
-      msg.innerText = "No restaurant linked to this account";
-      return;
-    }
-
-    // 🔑 STEP 2: THIS is the restaurantId your system needs
-    const restaurantId = snap.docs[0].id;
-
-    // 🔑 STEP 3: save restaurantId for owner page
-    sessionStorage.setItem(
-      "restaurant_session",
-      JSON.stringify({ rid: restaurantId })
-    );
-
-    // 🔑 STEP 4: now go to owner page
-    window.location.replace("/owner.html");
-  })
-  .catch((error) => {
-    console.error(error);
-    msg.innerText = "Wrong email or password";
-  });
- 
+      if (tries >= MAX_ATTEMPTS) {
+        showLockMessage();
+      } else {
+        msg.innerText = `Wrong login. Attempts left: ${MAX_ATTEMPTS - tries}`;
+      }
+    });
 };
 
 setInterval(() => {
