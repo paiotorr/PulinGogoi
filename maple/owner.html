@@ -190,7 +190,7 @@ const db = getFirestore(app);
 
 const RESTAURANT = {
   id: "maple",
-  name: "MAPLE"
+  name: "MAPLE Owner"
 };
 
 /* ---------- RESTAURANT ID LOGIC ---------- */
@@ -208,7 +208,7 @@ function getRestaurantId(){
 }
 const restaurantId = getRestaurantId();
 document.getElementById("dashTitle").innerText =
-  `📋 Paiotorr – ${restaurantId.toUpperCase()}`;
+  `📋 Paiotorr – ${RESTAURANT.name}`;
 
 /* ---------- variables & constants ---------- */
 const ITEM_IMAGES = {
