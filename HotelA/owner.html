@@ -486,23 +486,6 @@ document.addEventListener('keydown', e=>{
 </footer>
 </body>
 
- // GLOBAL RESTAURANT ID FOR YOUR ORDER CODE
-    window.RESTAURANT_ID = doc.id;
-
-    console.log("Access granted:", doc.id);
-
-  } catch (err) {
-    console.error(err);
-    redirect("Security check failed. Try again.");
-  }
-});
-
-// LOGOUT FUNCTION
-window.logout = function() {
-  signOut(auth).then(() => {
-    window.location.href = "owner_login.html";
-  });
-};
 </script>
 
 <!-- 🚪 LOGOUT BUTTON (YOU CAN MOVE THIS ANYWHERE IN YOUR UI) -->
