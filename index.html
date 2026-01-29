@@ -271,7 +271,7 @@ window.login = function () {
   signInWithEmailAndPassword(auth, email, pass)
     .then(() => {
       resetAttempts();
-      window.location.replace("/maple/owner.html","HotelA/owner.html");
+      window.location.replace("/maple/owner.html","/HotelA/owner.html");
     })
     .catch((error) => {
       console.error(error);
