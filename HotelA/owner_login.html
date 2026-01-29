@@ -294,6 +294,36 @@ setInterval(() => {
 
 loginBtn.addEventListener("click", login);
 </script>
+ 
+ <script>
+// Disable Right Click
+document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+});
+
+// Disable Key Shortcuts
+document.addEventListener('keydown', function(e) {
+
+    // Block F12
+    if (e.keyCode == 123) {
+        e.preventDefault();
+    }
+
+    // Block Ctrl+Shift+I / Ctrl+Shift+J / Ctrl+U
+    if (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74)) {
+        e.preventDefault();
+    }
+
+    if (e.ctrlKey && e.keyCode == 85) {
+        e.preventDefault();
+    }
+
+    // Block Ctrl+S, Ctrl+C, Ctrl+A
+    if (e.ctrlKey && (e.keyCode == 83 || e.keyCode == 67 || e.keyCode == 65)) {
+        e.preventDefault();
+    }
+});
+</script>
 
 </body>
 </html>
