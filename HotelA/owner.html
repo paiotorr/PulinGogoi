@@ -1,45 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script type="module">
-import { auth, db } from '/firebase.js';
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-const LOGIN_URL = "/HotelA/owner_login.html";
-function goLogin(){ window.location.replace(LOGIN_URL); }
-
-onAuthStateChanged(auth, async (user) => {
-  try {
-    if (!user) return goLogin();
-
-    // find restaurants owned by this user
-    const q = query(collection(db, "restaurants"), where("ownerUID", "==", user.uid));
-    const snap = await getDocs(q);
-    if (snap.empty) return goLogin();
-
-    const docSnap = snap.docs[0];
-    const d = docSnap.data();
-
-    // safe subscriptionEnd check (won't throw if missing)
-    const end = d.subscriptionEnd?.toDate?.();
-    if (d.status !== "active") return goLogin();
-    if (!end || new Date() > end) return goLogin();
-
-    // store the restaurant id for use later by the page code
-    try {
-      sessionStorage.setItem("restaurant_session", JSON.stringify({ rid: docSnap.id }));
-      window.RESTAURANT_ID = docSnap.id;
-    } catch(e) { /* ignore session errors */ }
-
-    // allowed — do nothing so page continues to load
-    console.log("Access granted for restaurant:", docSnap.id);
-  } catch (err) {
-    console.error("Guard error:", err);
-    goLogin();
-  }
-});
-</script>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Paiotorr — Owner Dashboard (Fixed Aggregation Images)</title>
@@ -113,6 +74,9 @@ body{padding:20px}
 .rejectBar{background:#e74c3c;height:100%}
 .topBadge{font-size:12px;font-weight:bold;margin-left:6px}
 
+/* Logout button */
+#logoutBtn{position:fixed;right:16px;top:16px;padding:8px 10px;border-radius:8px;border:none;background:#e74c3c;color:#fff;cursor:pointer}
+
 /* responsive */
 @media(max-width:1020px){.grid{grid-template-columns:1fr}}
 </style>
@@ -172,28 +136,66 @@ body{padding:20px}
   <div id="analytics"></div>
 </div>
 
+<!-- Logout button -->
+<button id="logoutBtn">Logout</button>
+
 <script type="module">
-/* ---------- Firebase imports ---------- */
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+/*
+  Single module: auth guard + dashboard logic.
+  Uses auth & db from /firebase.js (your existing init).
+  Uses Firestore/Auth v10.7.1 helper functions to match earlier guard usage.
+*/
+
+import { auth, db } from '/firebase.js';
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
-  getFirestore, collection, onSnapshot, doc, updateDoc, Timestamp
-} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+  collection, query, where, getDocs,
+  onSnapshot, doc, updateDoc, Timestamp, getDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-/* ---------- Config ---------- */
-const firebaseConfig = {
-  apiKey:"AIzaSyDSf51jWs3I4AXX0U8M_HxKn4VtRYg72xs",
-  authDomain:"hotel-order-7f1f2.firebaseapp.com",
-  projectId:"hotel-order-7f1f2"
-};
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+/* ---------- LOGIN GUARD ---------- */
+const LOGIN_URL = "/owner_login.html";
+function goLogin(){ window.location.replace(LOGIN_URL); }
 
+/* Run auth guard first */
+onAuthStateChanged(auth, async (user) => {
+  try {
+    if (!user) return goLogin();
+
+    // find restaurants owned by this user
+    const q = query(collection(db, "restaurants"), where("ownerUID", "==", user.uid));
+    const snap = await getDocs(q);
+    if (snap.empty) return goLogin();
+
+    const docSnap = snap.docs[0];
+    const d = docSnap.data();
+
+    // safe subscriptionEnd check (won't throw if missing)
+    const end = d.subscriptionEnd?.toDate?.();
+    if (d.status !== "active") return goLogin();
+    if (!end || new Date() > end) return goLogin();
+
+    // store the restaurant id for use later by the page code
+    try {
+      sessionStorage.setItem("restaurant_session", JSON.stringify({ rid: docSnap.id }));
+      window.RESTAURANT_ID = docSnap.id;
+    } catch(e) { /* ignore session errors */ }
+
+    // allowed — do nothing so page continues to load
+    console.log("Access granted for restaurant:", docSnap.id);
+  } catch (err) {
+    console.error("Guard error:", err);
+    goLogin();
+  }
+});
+
+/* ---------- CONFIG: manual id for now + display name loader ---------- */
+/* You asked: "put id for now hotela" */
 const RESTAURANT = {
-  id: "hotela",
+  id: "hotela",      // <-- temporary manual id as requested
   name: "HotelA"
 };
 
-/* ---------- RESTAURANT ID LOGIC ---------- */
 const manualId = RESTAURANT.id;
 function getRestaurantId(){
   if(manualId) return manualId;
@@ -207,7 +209,25 @@ function getRestaurantId(){
   return "hotela";
 }
 const restaurantId = getRestaurantId();
-document.getElementById("dashTitle").innerText = `📋 Paiotorr – ${RESTAURANT.name}`;
+
+/* load displayName (display-only) from Firestore (displayName field expected) */
+async function setRestaurantName() {
+  try {
+    const ref = doc(db, "restaurants", restaurantId);
+    const snap = await getDoc(ref);
+    if (snap && snap.exists()) {
+      const data = snap.data();
+      document.getElementById("dashTitle").innerText =
+        `📋 Paiotorr – ${data.displayName || RESTAURANT.name}`;
+      return;
+    }
+  } catch (e) {
+    console.error("Failed to load display name", e);
+  }
+  // fallback
+  document.getElementById("dashTitle").innerText = `📋 Paiotorr – ${RESTAURANT.name}`;
+}
+setRestaurantName();
 
 /* ---------- variables & constants ---------- */
 const ITEM_IMAGES = {
@@ -475,24 +495,4 @@ function escapeHtml(s){ return s ? String(s).replace(/[&<>"']/g, (m)=>({ '&':'&a
 
 /* security & accessibility helpers */
 document.addEventListener('contextmenu', e=>e.preventDefault());
-document.addEventListener('keydown', e=>{
-  const forbidden = ['c','v','x','u','s'];
-  if((e.ctrlKey || e.metaKey) && forbidden.includes(e.key.toLowerCase())) e.preventDefault();
-  if(e.key === "F12") e.preventDefault();
-});
-</script>
-<footer style="margin-top:40px;text-align:center;font-size:13px;color:#555;">
-  © 2026 Paiotorr. All Rights Reserved.
-</footer>
-</body>
-  <button id="logoutBtn" style="position:fixed;right:16px;top:16px;">Logout</button>
-<script type="module">
-import { auth } from '/firebase.js';
-import { signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-document.getElementById('logoutBtn').addEventListener('click', async () => {
-  await signOut(auth);
-  sessionStorage.removeItem('restaurant_session');
-  window.location.href = "/HotelA/owner_login.html";
-});
-</script>
-</html>
+document.addEventListener
