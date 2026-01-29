@@ -207,7 +207,8 @@ function getRestaurantId(){
   return "hotela";
 }
 const restaurantId = getRestaurantId();
-document.getElementById("dashTitle").innerText = `📋 Paiotorr – ${RESTAURANT.name}`;
+document.getElementById("dashTitle").innerText =
+  `📋 Paiotorr – ${restaurantId.toUpperCase()}`;
 
 /* ---------- variables & constants ---------- */
 const ITEM_IMAGES = {
