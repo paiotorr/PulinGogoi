@@ -1,214 +1,336 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Zubeen Garg - PAIOTORR</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="UTF-8">
+<title>Owner Login - PAIOTORR</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Security / Hardening (best possible for static pages) -->
-  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-  <meta http-equiv="X-Frame-Options" content="DENY" />
-  <meta name="referrer" content="no-referrer" />
-  <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()" />
-  <meta http-equiv="Content-Security-Policy" content="
-    default-src 'self';
-    img-src 'self' https://img.youtube.com https://paiotorr.com data:;
-    script-src 'self' 'unsafe-inline';
-    style-src 'self' 'unsafe-inline';
-    connect-src 'self';
-    frame-ancestors 'none';
-  " />
+<style>
+  * {
+    box-sizing: border-box;
+  }
 
-  <style>
-    /* Minimal, cleaned styling */
-    *{box-sizing:border-box;margin:0;padding:0}
-    html,body{height:100%}
-    body{
-      font-family:Arial,Helvetica,sans-serif;
-      background:#fff;color:#000;
-      -webkit-touch-callout:none;-webkit-user-select:none;-khtml-user-select:none;
-      -moz-user-select:none;-ms-user-select:none;user-select:none;overflow-x:hidden;
-    }
-    .header{background:#000;color:#fff;text-align:center;padding:16px 8px 10px}
-    .header-title{font-size:20px;font-weight:700;margin-bottom:10px}
-    .tabs{display:flex;justify-content:center;gap:12px;padding-bottom:6px}
-    .tab-btn{
-      padding:6px 18px;border-radius:20px;border:1px solid #fff;background:#fff;color:#000;
-      font-size:12px;cursor:pointer;min-width:90px;text-align:center;transition:all .2s;
-    }
-    .tab-btn.active{background:#000;color:#fff}
-    .content{max-width:900px;margin:16px auto 30px;padding:0 10px}
-    .search-wrapper{text-align:center;margin-bottom:16px}
-    #searchInput{width:100%;max-width:400px;padding:10px 12px;border-radius:22px;border:1px solid #ccc;font-size:14px}
-    .video-list{list-style:none}
-    .video-item{display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid #eee;cursor:pointer;transition:background .15s,transform .08s}
-    .video-item:hover{background:#f7f7f7}
-    .serial{font-size:13px;min-width:28px}
-    .thumb-wrapper{flex-shrink:0;width:120px;height:68px;overflow:hidden;border-radius:6px;background:#ddd}
-    .thumb-wrapper img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;user-drag:none}
-    .video-title{font-size:14px;line-height:1.2}
-    .no-results{text-align:center;padding:24px 0;font-size:14px;color:#555;display:none}
-    .site-footer{text-align:center;padding:16px 10px 22px;color:#777;font-size:13px}
-    .site-footer .copyright{font-weight:700}
-    .end-note{text-align:center;padding:8px 0;color:#333}
-  </style>
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: linear-gradient(135deg, #e8edf5, #f7f9fc);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+  }
+
+  .login-box {
+    background: white;
+    width: 100%;
+    max-width: 360px;
+    padding: 35px 30px;
+    border-radius: 14px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
+    text-align: center;
+  }
+
+  h2 {
+    margin: 0 0 25px 0;
+    font-size: 22px;
+    font-weight: 600;
+    color: #222;
+  }
+
+  input {
+    width: 100%;
+    padding: 12px 14px;
+    margin-top: 14px;
+    border-radius: 8px;
+    border: 1px solid #d0d6e0;
+    font-size: 14px;
+    transition: border 0.2s, box-shadow 0.2s;
+  }
+
+  input:focus {
+    outline: none;
+    border-color: #0b6efd;
+    box-shadow: 0 0 0 2px rgba(11, 110, 253, 0.15);
+  }
+
+  input::-ms-reveal,
+  input::-ms-clear {
+    display: none;
+  }
+
+  .password-wrapper {
+    position: relative;
+    width: 100%;
+    margin-top: 14px;
+  }
+
+  .password-wrapper input {
+    margin-top: 0; 
+    padding-right: 40px; 
+  }
+
+  .toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6c757d;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    outline: none;
+  }
+
+  .toggle-password:hover {
+    color: #0b6efd;
+  }
+  
+  .toggle-password svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  button.login-btn-main {
+    width: 100%;
+    padding: 12px;
+    margin-top: 22px;
+    background: #0b6efd;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 500;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  button.login-btn-main:hover:not(:disabled) {
+    background: #095bd1;
+  }
+
+  button.login-btn-main:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  button.login-btn-main:disabled {
+    background: #9aa4b2;
+    cursor: not-allowed;
+  }
+
+  .message {
+    margin-top: 15px;
+    font-size: 13px;
+    min-height: 16px;
+    color: #d93025;
+  }
+</style>
 </head>
 <body>
 
-  <header class="header" role="banner">
-    <div class="header-title">Zubeen Garg - Paiotorr</div>
-    <div class="tabs" role="tablist">
-      <button class="tab-btn active" data-category="podcast">PODCAST</button>
-      <button class="tab-btn" data-category="interview">INTERVIEW</button>
-      <button class="tab-btn" data-category="song">SONG</button>
-    </div>
-  </header>
+<div class="login-box">
+  <h2>PAIOTORR</h2>
 
-  <main class="content" role="main">
-    <div class="search-wrapper">
-      <input type="text" id="searchInput" placeholder="Search videos in this section…" aria-label="Search videos"/>
-    </div>
+  <input id="email" type="email" placeholder="Owner Email" autocomplete="username">
+  
+  <div class="password-wrapper">
+    <input id="password" type="password" placeholder="Password" autocomplete="current-password">
+    <button type="button" id="togglePassword" class="toggle-password" tabindex="-1">
+      <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    </button>
+  </div>
 
-    <ul id="videoList" class="video-list" aria-live="polite"></ul>
-    <div id="noResults" class="no-results">No videos found for this search.</div>
+  <button id="loginBtn" class="login-btn-main">Login</button>
 
-    <div class="end-note"><strong>More Coming Soon.....</strong></div>
-  </main>
+  <div id="msg" class="message"></div>
+</div>
 
-  <footer class="site-footer" role="contentinfo">
-    <div class="copyright">&copy; 2025 PAIOTORR</div>
-  </footer>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const toggleBtn = document.getElementById('togglePassword');
+  const passInputEl = document.getElementById('password');
 
-  <script>
-    // ---------- Small garbage-text remover ----------
-    function removeBracketGarbage(root=document.body){
-      const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
-      const remove=[];
-      const onlyGarbage=/^[\s\)\(\}\{\];]+$/;
-      while(walker.nextNode()){
-        const n=walker.currentNode;
-        if(!n||!n.nodeValue) continue;
-        const t=n.nodeValue.trim();
-        if(t && onlyGarbage.test(t)) remove.push(n);
+  toggleBtn.addEventListener('click', function(e) {
+    e.preventDefault(); 
+    const type = passInputEl.getAttribute('type') === 'password' ? 'text' : 'password';
+    passInputEl.setAttribute('type', type);
+
+    if (type === 'text') {
+      this.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:20px;height:20px;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+        </svg>`;
+    } else {
+      this.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:20px;height:20px;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>`;
+    }
+  });
+});
+</script>
+
+<!-- FIREBASE LOGIN SYSTEM (ONLY MODIFIED PART IS INSIDE THIS SCRIPT) -->
+<script type="module">
+import { auth } from '/firebase.js';
+import { signInWithEmailAndPassword } from
+  "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+/* ✅ NEW IMPORT */
+import { getFirestore, doc, getDoc } from
+  "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const MAX_ATTEMPTS = 3;
+const LOCK_TIME = 10 * 60 * 1000;
+
+const emailInput = document.getElementById("email");
+const passInput = document.getElementById("password");
+const msg = document.getElementById("msg");
+const loginBtn = document.getElementById("loginBtn");
+
+/* ✅ NEW LINE */
+const db = getFirestore();
+
+function now() {
+  return new Date().getTime();
+}
+
+function getLockData() {
+  return JSON.parse(localStorage.getItem("ownerLoginLock") || "{}");
+}
+
+function setLockData(data) {
+  localStorage.setItem("ownerLoginLock", JSON.stringify(data));
+}
+
+function isLocked() {
+  const data = getLockData();
+  return data.lockUntil && now() < data.lockUntil;
+}
+
+function lockFor10Min() {
+  setLockData({
+    attempts: MAX_ATTEMPTS,
+    lockUntil: now() + LOCK_TIME
+  });
+}
+
+function incrementAttempts() {
+  const data = getLockData();
+  const attempts = (data.attempts || 0) + 1;
+
+  if (attempts >= MAX_ATTEMPTS) {
+    lockFor10Min();
+    return MAX_ATTEMPTS;
+  } else {
+    setLockData({ attempts });
+    return attempts;
+  }
+}
+
+function resetAttempts() {
+  localStorage.removeItem("ownerLoginLock");
+}
+
+function showLockMessage() {
+  const data = getLockData();
+  const remaining = Math.ceil((data.lockUntil - now()) / 60000);
+  msg.innerText = `Too many attempts. Try again in ${remaining} minute(s).`;
+  loginBtn.disabled = true;
+}
+
+function updateLockUI() {
+  if (isLocked()) {
+    showLockMessage();
+    return true;
+  } else {
+    loginBtn.disabled = false;
+    return false;
+  }
+}
+
+updateLockUI();
+
+window.login = function () {
+  if (updateLockUI()) return;
+
+  const email = emailInput.value.trim();
+  const pass = passInput.value;
+
+  if (!email || !pass) {
+    msg.innerText = "Please enter email and password.";
+    return;
+  }
+
+  msg.innerText = "Checking login...";
+
+  /* ✅ ONLY THIS PART IS MODIFIED */
+  signInWithEmailAndPassword(auth, email, pass)
+    .then(async (userCredential) => {
+      resetAttempts();
+
+      const uid = userCredential.user.uid;
+
+      const docRef = doc(db, "owners", uid);
+      const docSnap = await getDoc(docRef);
+
+      if (!docSnap.exists()) {
+        msg.innerText = "No hotel assigned to this account.";
+        return;
       }
-      remove.forEach(n=>n.parentNode&&n.parentNode.removeChild(n));
-    }
-    window.addEventListener('DOMContentLoaded',()=>removeBracketGarbage(document.body));
-    new MutationObserver(()=>removeBracketGarbage(document.body)).observe(document.body,{childList:true,subtree:true,characterData:true});
 
-    // ---------- Data + App logic ----------
-    const videos = [
-      { category: "podcast", title: "The Uncut Zubeen : The Last Interview", url: "https://youtu.be/5VenPCFCShU?si=r8kghHMUHwiK7BmS" },
-      { category: "podcast", title: "Zubeen Garg: Most 'Candid' Podcast, UNTOLD Stories, Emotional Side, SIKAAR || Assamese Podcast - 136", url: "https://youtu.be/LAJF9jUQx2U?si=uBlwVrWh3moUotI7" },
-      { category: "podcast", title: "জুবিন গাৰ্গৰ সৈতে বাৰ্তালাপ", url: "https://youtu.be/D3Ct9LfwyrI?si=UP2DjRyDSog5zPEG" },
-      { category: "podcast", title: "EP 05 featuring the one and only ZUBEEN GARG....", url: "https://youtu.be/Y4VDE_ogJes?si=aWYGhiYs_GXMROdh" },
-      { category: "podcast", title: "Zubeen Garg - The Untold Story #kingofassam", url: "https://youtu.be/kL_lMbGu5ss?si=gm7Htd9xKCuak7Lc" },
-      { category: "interview", title: "Entire family turns up to celebrate Zubeen's birthday", url: "https://youtu.be/SZZCbac048o?si=1mwLZmryAIlWxnEF" },
-      { category: "interview", title: "Zubeen Garg Exclusive Final Interview With Radio Mirchi", url: "https://youtu.be/AD8G_v3TJy8?si=qby30Q8DLuSXqx_-" },
-      { category: "song", title: "MAJULIR EJONI", url: "https://youtu.be/ZG3SdjQQLQ4?si=LrnyqceIHqg2zLQb" },
-      { category: "song", title: "Sang Ghor Dhuniya", url: "https://youtu.be/JGGeDntshCQ?si=98p4SVZDcvWjLQZx" }
-    ];
+      const hotelId = docSnap.data().hotelId;
 
-    const tabs = document.querySelectorAll('.tab-btn');
-    const searchInput = document.getElementById('searchInput');
-    const videoListEl = document.getElementById('videoList');
-    const noResultsEl = document.getElementById('noResults');
-    let currentCategory = 'podcast';
+      window.location.replace(`/${hotelId}/owner.html`);
+    })
+    .catch((error) => {
+      console.error(error);
+      const tries = incrementAttempts();
 
-    function getYouTubeId(url){
-      try{
-        const u=new URL(url);
-        if(u.hostname==='youtu.be') return u.pathname.slice(1);
-        return u.searchParams.get('v')||'';
-      }catch(e){ return ''; }
-    }
-    function getThumbUrl(id){ return id ? 'https://img.youtube.com/vi/' + id + '/hqdefault.jpg' : ''; }
-
-    function openYouTube(videoUrl){
-      const id=getYouTubeId(videoUrl);
-      if(!id){ window.open(videoUrl,'_blank','noopener,noreferrer'); return; }
-      const webUrl=`https://www.youtube.com/watch?v=${id}`;
-      const intentUrl = `intent://www.youtube.com/watch?v=${id}#Intent;scheme=https;package=com.google.android.youtube;S.browser_fallback_url=${encodeURIComponent(webUrl)};end`;
-      const isAndroid=/Android/i.test(navigator.userAgent);
-      if(isAndroid) location.href=intentUrl;
-      else window.open(webUrl,'_blank','noopener,noreferrer');
-    }
-
-    function renderList(){
-      const q = searchInput.value.trim().toLowerCase();
-      const filtered = videos.filter(v => v.category===currentCategory && v.title.toLowerCase().includes(q));
-      videoListEl.innerHTML = '';
-      noResultsEl.style.display = filtered.length ? 'none' : 'block';
-      filtered.forEach((video, i) => {
-        const id = getYouTubeId(video.url);
-        const li = document.createElement('li');
-        li.className='video-item'; li.setAttribute('role','link'); li.tabIndex=0;
-        const activate = ()=>openYouTube(video.url);
-        li.addEventListener('click',activate);
-        li.addEventListener('keydown',e=>{ if(e.key==='Enter' || e.key===' ') activate(); });
-
-        const serial = document.createElement('div'); serial.className='serial'; serial.textContent=(i+1)+')';
-        const thumbWrap = document.createElement('div'); thumbWrap.className='thumb-wrapper';
-        const img = document.createElement('img'); img.src = getThumbUrl(id); img.alt = video.title;
-        thumbWrap.appendChild(img);
-
-        const titleDiv = document.createElement('div'); titleDiv.className='video-title'; titleDiv.textContent = video.title;
-
-        li.appendChild(serial); li.appendChild(thumbWrap); li.appendChild(titleDiv);
-        videoListEl.appendChild(li);
-      });
-      removeBracketGarbage(document.body);
-    }
-
-    tabs.forEach(btn=>{
-      btn.addEventListener('click',()=>{
-        const cat=btn.getAttribute('data-category');
-        if(cat===currentCategory) return;
-        currentCategory=cat;
-        tabs.forEach(b=>b.classList.remove('active'));
-        btn.classList.add('active');
-        searchInput.value='';
-        renderList();
-        window.scrollTo({ top: videoListEl.getBoundingClientRect().top + window.scrollY - 10, behavior:'smooth' });
-      });
+      if (tries >= MAX_ATTEMPTS) {
+        showLockMessage();
+      } else {
+        msg.innerText = `Wrong login. Attempts left: ${MAX_ATTEMPTS - tries}`;
+      }
     });
+};
 
-    searchInput.addEventListener('input',renderList);
-    renderList();
+setInterval(() => {
+  if (!isLocked()) {
+    loginBtn.disabled = false;
+    msg.innerText = "";
+  }
+}, 5000);
 
-    // ---------- Client-side hardening (disable common shortcuts & inspect) ----------
-    (function harden(){
-      document.addEventListener('contextmenu',e=>e.preventDefault());
-      document.addEventListener('selectstart',e=>e.preventDefault());
-      document.addEventListener('dragstart',e=>e.preventDefault());
+loginBtn.addEventListener("click", login);
+</script>
 
-      document.addEventListener('keydown',function(e){
-        // block F12, Ctrl+Shift+I/J, Ctrl+U, Ctrl+S, Ctrl+P, Ctrl+C, Ctrl+A
-        if (
-          e.keyCode===123 ||
-          (e.ctrlKey && e.shiftKey && (e.keyCode===73 || e.keyCode===74)) ||
-          (e.ctrlKey && (e.keyCode===85 || e.keyCode===83 || e.keyCode===80 || e.keyCode===67 || e.keyCode===65))
-        ){
-          e.preventDefault(); e.stopPropagation(); return false;
-        }
-      }, true);
+<script>
+document.addEventListener('contextmenu', function(e) {
+  e.preventDefault();
+});
 
-      // Basic devtools detection: if opened, clear sensitive content
-      let devtoolsOpen=false;
-      const threshold = 100;
-      setInterval(function(){
-        const t0 = performance.now();
-        debugger;
-        const t1 = performance.now();
-        if(t1 - t0 > threshold && !devtoolsOpen){
-          devtoolsOpen = true;
-          try{ document.documentElement.innerHTML = '<meta charset="utf-8"><title>Blocked</title><style>body{background:#000;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial}</style><div>Developer tools detected — content hidden.</div>'; }catch(e){}
-        }
-      }, 1500);
+document.addEventListener('keydown', function(e) {
+  if (e.keyCode == 123) e.preventDefault();
 
-      // Prevent framing
-      if(window.top !== window.self) window.top.location = window.self.location;
-    })();
-  </script>
+  if (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74)) {
+    e.preventDefault();
+  }
+
+  if (e.ctrlKey && e.keyCode == 85) e.preventDefault();
+
+  if (e.ctrlKey && (e.keyCode == 83 || e.keyCode == 67 || e.keyCode == 65)) {
+    e.preventDefault();
+  }
+});
+</script>
+
 </body>
 </html>
