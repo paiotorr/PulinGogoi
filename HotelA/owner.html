@@ -1,6 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script type="module">
+import { auth, db } from '/firebase.js';
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+function goLogin() {
+  window.location.replace("owner_login.html");
+}
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) return goLogin();
+
+  const q = query(
+    collection(db, "restaurants"),
+    where("ownerUID", "==", user.uid)
+  );
+
+  const snap = await getDocs(q);
+  if (snap.empty) return goLogin();
+
+  const data = snap.docs[0].data();
+  const end = data.subscriptionEnd?.toDate?.();
+
+  if (data.status !== "active") return goLogin();
+  if (!end || new Date() > end) return goLogin();
+
+  // Allowed → do nothing, page continues loading
+});
+</script>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Paiotorr — Owner Dashboard (Fixed Aggregation Images)</title>
