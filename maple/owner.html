@@ -6,7 +6,7 @@ import { auth, db } from '/firebase.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const LOGIN_URL = "/maple/login.html";
+const LOGIN_URL = "/maple/owner_login.html";
 function goLogin(){ window.location.replace(LOGIN_URL); }
 
 onAuthStateChanged(auth, async (user) => {
@@ -492,7 +492,7 @@ import { signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth
 document.getElementById('logoutBtn').addEventListener('click', async () => {
   await signOut(auth);
   sessionStorage.removeItem('restaurant_session');
-  window.location.href = "/maple/login.html";
+  window.location.href = "/maple/owner_login.html";
 });
 </script>
 </html>
