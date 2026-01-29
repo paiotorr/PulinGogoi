@@ -1,48 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script type="module">
-import { auth, db } from '/firebase.js';
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-const LOGIN_URL = "/maple/owner_login.html";
-function goLogin(){ window.location.replace(LOGIN_URL); }
-
-onAuthStateChanged(auth, async (user) => {
-  try {
-    if (!user) return goLogin();
-
-    // find restaurants owned by this user
-    const q = query(collection(db, "restaurants"), where("ownerUID", "==", user.uid));
-    const snap = await getDocs(q);
-    if (snap.empty) return goLogin();
-
-    const docSnap = snap.docs[0];
-    const d = docSnap.data();
-
-    // safe subscriptionEnd check (won't throw if missing)
-    const end = d.subscriptionEnd?.toDate?.();
-    if (d.status !== "active") return goLogin();
-    if (!end || new Date() > end) return goLogin();
-
-    // store the restaurant id for use later by the page code
-    try {
-      sessionStorage.setItem("restaurant_session", JSON.stringify({ rid: docSnap.id }));
-      window.RESTAURANT_ID = docSnap.id;
-    } catch(e) { /* ignore session errors */ }
-
-    // allowed — do nothing so page continues to load
-    console.log("Access granted for restaurant:", docSnap.id);
-  } catch (err) {
-    console.error("Guard error:", err);
-    goLogin();
-  }
-});
-</script>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Paiotorr — Owner Dashboard (Fixed Aggregation Images)</title>
+<title>Paiotorr — Owner Dashboard (Fixed)</title>
 <style>
 /* ---------- Base ---------- */
 *{box-sizing:border-box}
@@ -113,8 +74,12 @@ body{padding:20px}
 .rejectBar{background:#e74c3c;height:100%}
 .topBadge{font-size:12px;font-weight:bold;margin-left:6px}
 
+/* debug message */
+#debugMsg{margin-top:10px;color:#555;font-size:13px}
+
 /* responsive */
 @media(max-width:1020px){.grid{grid-template-columns:1fr}}
+.logoutBtn{position:fixed;right:16px;top:16px;padding:8px 12px;border-radius:8px;border:none;cursor:pointer;background:#e74c3c;color:#fff}
 </style>
 </head>
 <body>
@@ -125,6 +90,9 @@ body{padding:20px}
 
 <div class="headerBar">
   <h1 id="dashTitle">📋 Paiotorr Dashboard</h1>
+  <div>
+    <button id="logoutBtn" class="logoutBtn">Logout</button>
+  </div>
 </div>
 
 <div class="main">
@@ -172,45 +140,29 @@ body{padding:20px}
   <div id="analytics"></div>
 </div>
 
+<div id="debugMsg" aria-live="polite"></div>
+
 <script type="module">
-/* ---------- Firebase imports ---------- */
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+/* ===========================
+   Firebase imports
+   - Assumes /firebase.js exports `auth` and `db`.
+   - Use CDN methods for auth state and Firestore operations.
+   =========================== */
+import { auth, db } from '/firebase.js';
+import { onAuthStateChanged, signOut as fbSignOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
-  getFirestore, collection, onSnapshot, doc, updateDoc, Timestamp
-} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+  collection, query, where, getDocs,
+  onSnapshot, doc, updateDoc, Timestamp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-/* ---------- Config ---------- */
-const firebaseConfig = {
-  apiKey:"AIzaSyDSf51jWs3I4AXX0U8M_HxKn4VtRYg72xs",
-  authDomain:"hotel-order-7f1f2.firebaseapp.com",
-  projectId:"hotel-order-7f1f2"
-};
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+/* ---------- Helper UI refs ---------- */
+const pendingDiv = document.getElementById("pending");
+const analyticsDiv = document.getElementById("analytics");
+const newOrderSound = document.getElementById("newOrderSound");
+const debugMsg = document.getElementById("debugMsg");
+const logoutBtn = document.getElementById("logoutBtn");
 
-const RESTAURANT = {
-  id: "maple",
-  name: "MAPLE"
-};
-
-/* ---------- RESTAURANT ID LOGIC ---------- */
-const manualId = RESTAURANT.id;
-function getRestaurantId(){
-  if(manualId) return manualId;
-  try{
-    const s = sessionStorage.getItem("restaurant_session");
-    if(s){
-      const j = JSON.parse(s);
-      if(j && j.rid) return j.rid;
-    }
-  }catch(e){ console.error("Session error", e); }
-  return "hotela";
-}
-const restaurantId = getRestaurantId();
-document.getElementById("dashTitle").innerText =
-  `📋 Paiotorr – ${restaurantId.toUpperCase()}`;
-
-/* ---------- variables & constants ---------- */
+/* ---------- Safe item images ---------- */
 const ITEM_IMAGES = {
   "Paneer Tikka": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=400",
   "Pav Bhaji": "https://paiotorr.com/image/qwdvdjnnjfgjjknfjkgnjk/cold-drink/15.54.55_53f8bc4d.jpg?w=400",
@@ -223,12 +175,7 @@ const ITEM_IMAGES = {
 };
 const DEFAULT_IMG = "https://raw.githubusercontent.com/paiotorr/Paiotorr/main/image/Pizza.jpg";
 
-/* DOM refs */
-const pendingDiv = document.getElementById("pending");
-const analyticsDiv = document.getElementById("analytics");
-const newOrderSound = document.getElementById("newOrderSound");
-
-/* date display wiring */
+/* ---------- Date display wiring (existing UX preserved) ---------- */
 function formatDisplayDate(iso){ if(!iso) return ""; const parts=iso.split("-"); if(parts.length!==3) return iso; return `${parts[2]}/${parts[1]}/${parts[0]}`; }
 function setDisplayFromHidden(hid,disp){ disp.value = hid.value ? formatDisplayDate(hid.value) : ""; }
 
@@ -253,106 +200,175 @@ function setDisplayFromHidden(hid,disp){ disp.value = hid.value ? formatDisplayD
 document.getElementById("accClear").addEventListener("click",()=>{ document.getElementById("accFrom").value=""; document.getElementById("accTo").value=""; document.getElementById("accFromDisplay").value=""; document.getElementById("accToDisplay").value=""; render(); });
 document.getElementById("rejClear").addEventListener("click",()=>{ document.getElementById("rejFrom").value=""; document.getElementById("rejTo").value=""; document.getElementById("rejFromDisplay").value=""; document.getElementById("rejToDisplay").value=""; render(); });
 
-/* prevent select on native date inputs */
-document.querySelectorAll('input[type="date"]').forEach(input=>input.addEventListener("selectstart",e=>e.preventDefault()));
+/* ---------- Session / Restaurant ID helpers (FIXED) ---------- */
+function getRestaurantIdFromSession() {
+  try {
+    const s = sessionStorage.getItem("restaurant_session");
+    if (!s) return null;
+    const j = JSON.parse(s);
+    return j?.rid || null;
+  } catch (e) {
+    console.error("Failed to read restaurant_session:", e);
+    return null;
+  }
+}
 
-/* ---------- orders snapshot & strict timestamp handling ---------- */
-let firstLoad = true;
-let allOrders = [];
-const soundedOrderIds = new Set();
+function goLogin(){
+  // show debug so you can see why redirect occurred
+  debugMsg.innerText = "Not authorized — redirecting to login...";
+  // small delay gives the message a chance to appear, but redirect is immediate enough
+  window.location.replace("/maple/owner_login.html");
+}
 
-/*
-  createdNowIds tracks documents for which we just set createdAt (server-side)
-  during this snapshot handling. This allows the UI to treat those docs as having a
-  permanent creation timestamp from this moment forward (and ensures proper ordering).
-*/
-let createdNowIds = new Set();
-
-onSnapshot(collection(db,"restaurants",restaurantId,"orders"), snap=>{
-  let playSound = false;
-  let scrollAcc = false;
-  let scrollRej = false;
-  createdNowIds.clear();
-
-  // 1) If an added document lacks createdAt, set it ONCE (server Timestamp).
-  //    This ensures every order gets one permanent createdAt value at the moment
-  //    it is first observed in the system.
-  snap.docChanges().forEach(change=>{
-    const docData = change.doc.data();
-    // If newly added and has no createdAt, set it once.
-    if(change.type === "added" && !docData.createdAt){
-      const ref = doc(db,"restaurants",restaurantId,"orders", change.doc.id);
-      // set server timestamp for createdAt; do not overwrite if it exists.
-      updateDoc(ref, { createdAt: Timestamp.now() }).catch(()=>{ /* ignore failures */ });
-      createdNowIds.add(change.doc.id);
+/* ---------- Auth guard: ensures user owns an active restaurant ---------- */
+let ordersUnsub = null; // keep snapshot unsubscribe so we don't double-subscribe
+onAuthStateChanged(auth, async (user) => {
+  try {
+    // if not logged in -> redirect
+    if (!user) {
+      console.warn("No auth user detected.");
+      return goLogin();
     }
 
-    // sound detection: only play sound for newly added pending orders after initial load
-    if(change.type === "added" && docData.status === "pending" && !firstLoad){
-      const id = change.doc.id;
-      if(!soundedOrderIds.has(id)){
-        soundedOrderIds.add(id);
-        playSound = true;
+    // 1) Try to use session-stored restaurant id (saved at login). If present, use it.
+    let restaurantId = getRestaurantIdFromSession();
+
+    // 2) If not in session, query Firestore for restaurants owned by this user and pick the first.
+    if (!restaurantId) {
+      const q = query(collection(db, "restaurants"), where("ownerUID", "==", user.uid));
+      const snap = await getDocs(q);
+      if (snap.empty) {
+        console.warn("No restaurant document found for user:", user.uid);
+        return goLogin();
       }
+      const docSnap = snap.docs[0];
+      restaurantId = docSnap.id;
+      // save to session for future loads
+      try {
+        sessionStorage.setItem("restaurant_session", JSON.stringify({ rid: restaurantId, name: docSnap.data()?.name || "" }));
+      } catch(e){ console.warn("Could not write session:", e); }
     }
 
-    // detect if a doc changed to accepted/rejected to allow scrolling accepted/rejected to top
-    if((change.type === "added" || change.type === "modified") && !firstLoad){
-      const newStatus = change.doc.data()?.status;
-      if(newStatus === "accepted") scrollAcc = true;
-      if(newStatus === "rejected") scrollRej = true;
+    // read restaurant doc for status and subscription check
+    const restRef = doc(db, "restaurants", restaurantId);
+    // get the doc explicitly (not shown here) or reuse previously fetched doc if available.
+    // We'll fetch quickly via getDocs again for safety:
+    const quickQ = query(collection(db, "restaurants"), where("__name__", "==", restaurantId));
+    const quickSnap = await getDocs(quickQ);
+    if (quickSnap.empty) {
+      console.warn("Restaurant doc not found by ID:", restaurantId);
+      return goLogin();
     }
-  });
+    const restDoc = quickSnap.docs[0];
+    const d = restDoc.data();
 
-  // 2) Build in-memory list using the authoritative createdAt when present.
-  const orders = [];
-  snap.forEach(d=>{
-    const o = d.data();
-    // Prefer Firestore server Timestamp (o.createdAt) -> convert to Date()
-    let createdAt;
-    if(o.createdAt && typeof o.createdAt.toDate === "function"){
-      createdAt = o.createdAt.toDate();
-    } else if(createdNowIds.has(d.id)){
-      // We just set server Timestamp above — but it may not be present yet in this snapshot.
-      // Use current client time as the local representation; the server timestamp will be permanent.
-      createdAt = new Date();
-    } else {
-      // If createdAt is truly missing (rare), assign epoch 0 so it sorts last and later
-      // the createdAt will be set when the doc is observed in future snapshots.
-      createdAt = new Date(0);
+    // safe subscriptionEnd check
+    const end = d?.subscriptionEnd?.toDate?.();
+    if (d?.status !== "active") {
+      console.warn("Restaurant status not active:", d?.status);
+      return goLogin();
     }
-    orders.push({ id: d.id, ...o, createdAt });
-  });
+    if (!end || new Date() > end) {
+      console.warn("Subscription expired or missing:", end);
+      return goLogin();
+    }
 
-  // 3) Play sound if needed
-  if(playSound){
-    newOrderSound.currentTime = 0;
-    newOrderSound.play().catch(()=>{});
-  }
+    // OK: authorized — set UI title and start orders listener
+    window.RESTAURANT_ID = restaurantId;
+    document.getElementById("dashTitle").innerText = `📋 Paiotorr – ${ (d?.name || restaurantId).toString().toUpperCase() }`;
 
-  firstLoad = false;
+    // ensure only one listener
+    if (ordersUnsub) ordersUnsub(); 
+    initOrdersListener(restaurantId);
 
-  // 4) Sort entire collection by createdAt descending (newest first).
-  //    This single rule guarantees newest is always on top in Pending/Accepted/Rejected.
-  orders.sort((a,b)=> b.createdAt - a.createdAt);
-  allOrders = orders;
-  render();
-
-  // 5) Scroll accepted/rejected/pending containers to top when a new item arrives there (visual real-time effect).
-  if(playSound && pendingDiv.parentElement){
-    pendingDiv.parentElement.scrollTop = 0;
-  }
-  if(scrollAcc){
-    const el = document.getElementById("accepted");
-    if(el) el.scrollTop = 0;
-  }
-  if(scrollRej){
-    const el = document.getElementById("rejected");
-    if(el) el.scrollTop = 0;
+    debugMsg.innerText = ""; // clear debug
+  } catch (err) {
+    console.error("Guard error:", err);
+    goLogin();
   }
 });
 
-/* ---------- render logic (consistent with ordering rules) ---------- */
+/* ---------- orders snapshot & render logic (similar to your original) ---------- */
+let firstLoad = true;
+let allOrders = [];
+const soundedOrderIds = new Set();
+let createdNowIds = new Set();
+
+function initOrdersListener(restaurantId) {
+  try {
+    const ordersCol = collection(db, "restaurants", restaurantId, "orders");
+    ordersUnsub = onSnapshot(ordersCol, snap => {
+      let playSound = false;
+      let scrollAcc = false;
+      let scrollRej = false;
+      createdNowIds.clear();
+
+      snap.docChanges().forEach(change=>{
+        const docData = change.doc.data();
+
+        // If newly added and has no createdAt, set it ONCE (server Timestamp).
+        if (change.type === "added" && !docData.createdAt){
+          const ref = doc(db, "restaurants", restaurantId, "orders", change.doc.id);
+          updateDoc(ref, { createdAt: Timestamp.now() }).catch(()=>{ /* ignore failures */ });
+          createdNowIds.add(change.doc.id);
+        }
+
+        if (change.type === "added" && docData.status === "pending" && !firstLoad){
+          const id = change.doc.id;
+          if(!soundedOrderIds.has(id)){
+            soundedOrderIds.add(id);
+            playSound = true;
+          }
+        }
+
+        if((change.type === "added" || change.type === "modified") && !firstLoad){
+          const newStatus = change.doc.data()?.status;
+          if(newStatus === "accepted") scrollAcc = true;
+          if(newStatus === "rejected") scrollRej = true;
+        }
+      });
+
+      // Build in-memory list using authoritative createdAt when present.
+      const orders = [];
+      snap.forEach(d=>{
+        const o = d.data();
+        let createdAt;
+        if(o.createdAt && typeof o.createdAt.toDate === "function"){
+          createdAt = o.createdAt.toDate();
+        } else if(createdNowIds.has(d.id)){
+          createdAt = new Date();
+        } else {
+          createdAt = new Date(0);
+        }
+        orders.push({ id: d.id, ...o, createdAt });
+      });
+
+      // play sound
+      if(playSound){
+        newOrderSound.currentTime = 0;
+        newOrderSound.play().catch(()=>{});
+      }
+
+      firstLoad = false;
+      orders.sort((a,b)=> b.createdAt - a.createdAt);
+      allOrders = orders;
+      render();
+
+      // scroll effects
+      if(playSound && pendingDiv.parentElement){ pendingDiv.parentElement.scrollTop = 0; }
+      if(scrollAcc){ const el = document.getElementById("accepted"); if(el) el.scrollTop = 0; }
+      if(scrollRej){ const el = document.getElementById("rejected"); if(el) el.scrollTop = 0; }
+    }, err => {
+      console.error("Orders snapshot error:", err);
+      debugMsg.innerText = "Realtime listener error (see console).";
+    });
+  } catch(e){
+    console.error("initOrdersListener error:", e);
+    debugMsg.innerText = "Failed to start orders listener.";
+  }
+}
+
+/* ---------- render code (keeps your original UX) ---------- */
 function render(){
   renderPending();
   renderBox("accepted", document.getElementById("accFrom"), document.getElementById("accTo"), document.getElementById("accClear"));
@@ -362,7 +378,6 @@ function render(){
 
 function renderPending(){
   pendingDiv.innerHTML = "";
-  // list already sorted by createdAt desc
   const list = allOrders.filter(o=>o.status==="pending");
   list.forEach(o => renderSingleOrder(o, pendingDiv, true));
 }
@@ -385,16 +400,12 @@ function renderBox(status, from, to, clearBtn){
 }
 
 function renderSingleOrder(o, container, actions){
-  // Ensure newest stays on top by appending in the already-sorted order.
-  // (allOrders is sorted descending)
   let items = "";
   (o.items||[]).forEach(i=>{
     const img = i.img || ITEM_IMAGES[i.name] || DEFAULT_IMG;
-    // add onerror fallback so broken/missing URLs show DEFAULT_IMG
     items += `<div class="item"><img src="${img}" onerror="this.onerror=null;this.src='${DEFAULT_IMG}'"><div class="itemText">${escapeHtml(i.name)} × ${i.qty}</div></div>`;
   });
 
-  // Format timestamp consistently; this display never mutates the stored createdAt.
   const timeText = o.createdAt && o.createdAt.getTime() !== 0 ? o.createdAt.toLocaleString() : "—";
 
   const html = `
@@ -411,22 +422,18 @@ function renderSingleOrder(o, container, actions){
 
 function renderAggregated(list, container, status){
   const map = {};
-
-  // Build aggregate map (qty + image fallback)
   list.forEach(o=> (o.items||[]).forEach(i=>{
     if(!map[i.name]) map[i.name] = { qty:0, img: i.img || ITEM_IMAGES[i.name] || DEFAULT_IMG };
     map[i.name].qty += i.qty;
   }));
 
-  // Convert map to array and sort by quantity descending (highest first).
   const sortedItems = Object.entries(map)
     .map(([name,data]) => ({ name, qty: data.qty, img: data.img || DEFAULT_IMG }))
-    .sort((a,b) => b.qty - a.qty); // deterministic: high -> low
+    .sort((a,b) => b.qty - a.qty);
 
   container.innerHTML = "";
 
   sortedItems.forEach(item=>{
-    // ensure image fallback via onerror attribute (in case the chosen URL fails)
     container.insertAdjacentHTML("beforeend",`
       <div class="aggItem">
         <img src="${item.img}" onerror="this.onerror=null;this.src='${DEFAULT_IMG}'">
@@ -462,38 +469,32 @@ function renderAnalytics(){
 
 /* ---------- update status (DO NOT overwrite createdAt) ---------- */
 window.setStatus = async (id, status) => {
-  // IMPORTANT: Only update the status field. Never modify createdAt.
   try {
-    await updateDoc(doc(db,"restaurants",restaurantId,"orders",id), { status });
-    // The onSnapshot listener will pick up the change and re-render; createdAt remains unchanged.
+    await updateDoc(doc(db,"restaurants", window.RESTAURANT_ID, "orders", id), { status });
   } catch(e){
     console.error("Failed to update status", e);
+    debugMsg.innerText = "Failed to update order status.";
   }
 };
 
 /* helper */
 function escapeHtml(s){ return s ? String(s).replace(/[&<>"']/g, (m)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])) : ""; }
 
-/* security & accessibility helpers */
+/* ---------- logout ---------- */
+logoutBtn.addEventListener('click', async () => {
+  try {
+    await fbSignOut(auth);
+    sessionStorage.removeItem('restaurant_session');
+    if (ordersUnsub) ordersUnsub();
+    window.location.href = "/maple/owner_login.html";
+  } catch(e) {
+    console.error("Logout failed:", e);
+  }
+});
+
+/* ---------- security (same as before) ---------- */
 document.addEventListener('contextmenu', e=>e.preventDefault());
 document.addEventListener('keydown', e=>{
   const forbidden = ['c','v','x','u','s'];
   if((e.ctrlKey || e.metaKey) && forbidden.includes(e.key.toLowerCase())) e.preventDefault();
-  if(e.key === "F12") e.preventDefault();
-});
-</script>
-<footer style="margin-top:40px;text-align:center;font-size:13px;color:#555;">
-  © 2026 Paiotorr. All Rights Reserved.
-</footer>
-</body>
-  <button id="logoutBtn" style="position:fixed;right:16px;top:16px;">Logout</button>
-<script type="module">
-import { auth } from '/firebase.js';
-import { signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-document.getElementById('logoutBtn').addEventListener('click', async () => {
-  await signOut(auth);
-  sessionStorage.removeItem('restaurant_session');
-  window.location.href = "/maple/owner_login.html";
-});
-</script>
-</html>
+  if(e
