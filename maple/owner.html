@@ -11,31 +11,56 @@ function goLogin(){ window.location.replace(LOGIN_URL); }
 
 onAuthStateChanged(auth, async (user) => {
   try {
-    if (!user) return goLogin();
+    if (!user) {
+      goLogin();
+      return;
+    }
 
-    // find restaurants owned by this user
-    const q = query(collection(db, "restaurants"), where("ownerUID", "==", user.uid));
-    const snap = await getDocs(q);
-    if (snap.empty) return goLogin();
+    // get THIS restaurant
+    const restaurantId = RESTAURANT.id;
 
-    const docSnap = snap.docs[0];
-    const d = docSnap.data();
+    // fetch this restaurant document
+    const restaurantRef = doc(db, "restaurants", restaurantId);
+    const restaurantSnap = await getDoc(restaurantRef);
 
-    // safe subscriptionEnd check (won't throw if missing)
-    const end = d.subscriptionEnd?.toDate?.();
-    if (d.status !== "active") return goLogin();
-    if (!end || new Date() > end) return goLogin();
+    if (!restaurantSnap.exists()) {
+      // restaurant does not exist
+      goLogin();
+      return;
+    }
 
-    // store the restaurant id for use later by the page code
-    try {
-      sessionStorage.setItem("restaurant_session", JSON.stringify({ rid: docSnap.id }));
-      window.RESTAURANT_ID = docSnap.id;
-    } catch(e) { /* ignore session errors */ }
+    const data = restaurantSnap.data();
 
-    // allowed — do nothing so page continues to load
-    console.log("Access granted for restaurant:", docSnap.id);
+    // 🔐 OWNER CHECK (MOST IMPORTANT LINE)
+    if (data.ownerUID !== user.uid) {
+      // logged-in user is NOT the owner of this restaurant
+      goLogin();
+      return;
+    }
+
+    // optional subscription checks (keep if you use them)
+    const end = data.subscriptionEnd?.toDate?.();
+    if (data.status !== "active") {
+      goLogin();
+      return;
+    }
+    if (end && new Date() > end) {
+      goLogin();
+      return;
+    }
+
+    // store session (optional but safe)
+    sessionStorage.setItem(
+      "restaurant_session",
+      JSON.stringify({ rid: restaurantId })
+    );
+
+    console.log("Access granted for restaurant:", restaurantId);
+
+    // ✅ DO NOTHING ELSE → page continues loading
+
   } catch (err) {
-    console.error("Guard error:", err);
+    console.error("Owner guard error:", err);
     goLogin();
   }
 });
