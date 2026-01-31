@@ -271,7 +271,7 @@ window.login = function () {
   signInWithEmailAndPassword(auth, email, pass)
     .then(() => {
       resetAttempts();
-      window.location.replace("paiotorr.com");
+      window.location.replace("/owner.html");
     })
     .catch((error) => {
       console.error(error);
