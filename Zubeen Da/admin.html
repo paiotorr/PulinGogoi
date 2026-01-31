@@ -1,198 +1,198 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Joi Zubeen Da — Admin Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8">
+<title>Joi Zubeen Da — Admin Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{
-    font-family:Arial,Helvetica,sans-serif;
-    background:#f3f3f3;
-    color:#111;
-  }
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  background:#f3f3f3;
+  color:#111;
+}
 
-  /* Header */
-  header{
-    background:#000;
-    color:#fff;
-    padding:16px;
-    text-align:center;
-  }
-  header h1{font-size:20px}
-  header p{font-size:12px;opacity:.8}
+/* Header */
+header{
+  background:#000;
+  color:#fff;
+  padding:16px;
+  text-align:center;
+}
+header h1{font-size:20px}
+header p{font-size:12px;opacity:.8}
 
-  /* Layout */
-  .container{
-    max-width:1100px;
-    margin:20px auto 40px;
-    padding:0 12px;
-  }
+/* Layout */
+.container{
+  max-width:1100px;
+  margin:20px auto 40px;
+  padding:0 12px;
+}
 
-  /* Card */
-  .card{
-    background:#fff;
-    border-radius:8px;
-    box-shadow:0 4px 10px rgba(0,0,0,.08);
-    margin-bottom:20px;
-    overflow:hidden;
-  }
+/* Card */
+.card{
+  background:#fff;
+  border-radius:8px;
+  box-shadow:0 4px 10px rgba(0,0,0,.08);
+  margin-bottom:20px;
+  overflow:hidden;
+}
 
-  /* Card Header (Clickable) */
-  .card-header{
-    padding:14px 16px;
-    font-weight:700;
-    cursor:pointer;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    background:#111;
-    color:#fff;
-  }
-  .card-header span{
-    font-size:12px;
-    opacity:.7;
-  }
+/* Card Header (Clickable) */
+.card-header{
+  padding:14px 16px;
+  font-weight:700;
+  cursor:pointer;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:#111;
+  color:#fff;
+}
+.card-header span{
+  font-size:12px;
+  opacity:.7;
+}
 
-  /* Card Body */
-  .card-body{
-    display:none;
-    padding:16px;
-  }
+/* Card Body */
+.card-body{
+  display:none;
+  padding:16px;
+}
 
-  /* Category UI */
-  .category-list{
-    display:flex;
-    flex-wrap:wrap;
-    gap:10px;
-    margin-bottom:14px;
-  }
+/* Category UI */
+.category-list{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-bottom:14px;
+}
 
-  .category-item{
-    background:#f0f0f0;
-    padding:6px 12px;
-    border-radius:20px;
-    font-size:12px;
-    display:flex;
-    align-items:center;
-    gap:8px;
-  }
+.category-item{
+  background:#f0f0f0;
+  padding:6px 12px;
+  border-radius:20px;
+  font-size:12px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
 
-  .category-item button{
-    background:#000;
-    color:#fff;
-    border:none;
-    border-radius:50%;
-    width:18px;
-    height:18px;
-    font-size:11px;
-    cursor:pointer;
-  }
+.category-item button{
+  background:#000;
+  color:#fff;
+  border:none;
+  border-radius:50%;
+  width:18px;
+  height:18px;
+  font-size:11px;
+  cursor:pointer;
+}
 
-  .add-category{
-    display:flex;
-    gap:10px;
-    margin-top:10px;
-  }
+.add-category{
+  display:flex;
+  gap:10px;
+  margin-top:10px;
+}
 
-  .add-category input{
-    flex:1;
-    padding:8px 10px;
-    font-size:13px;
-    border:1px solid #ccc;
-    border-radius:6px;
-  }
+.add-category input{
+  flex:1;
+  padding:8px 10px;
+  font-size:13px;
+  border:1px solid #ccc;
+  border-radius:6px;
+}
 
-  .add-category button{
-    padding:8px 14px;
-    font-size:13px;
-    background:#000;
-    color:#fff;
-    border:none;
-    border-radius:6px;
-    cursor:pointer;
-  }
+.add-category button{
+  padding:8px 14px;
+  font-size:13px;
+  background:#000;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
 
-  /* Table */
-  .table-wrapper{
-    overflow:auto;
-  }
+/* Table */
+.table-wrapper{
+  overflow:auto;
+}
 
-  table{
-    width:100%;
-    border-collapse:collapse;
-    min-width:900px;
-  }
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:900px;
+}
 
-  thead{
-    background:#111;
-    color:#fff;
-  }
+thead{
+  background:#111;
+  color:#fff;
+}
 
-  th,td{
-    padding:12px 10px;
-    font-size:13px;
-    border-bottom:1px solid #eee;
-  }
+th,td{
+  padding:12px 10px;
+  font-size:13px;
+  border-bottom:1px solid #eee;
+}
 
-  tbody tr:hover{
-    background:#fafafa;
-  }
+tbody tr:hover{
+  background:#fafafa;
+}
 
-  .thumb{
-    width:110px;
-    height:62px;
-    border-radius:6px;
-    overflow:hidden;
-    background:#ddd;
-  }
-  .thumb img{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-  }
+.thumb{
+  width:110px;
+  height:62px;
+  border-radius:6px;
+  overflow:hidden;
+  background:#ddd;
+}
+.thumb img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
 
-  /* Footer */
-  footer{
-    text-align:center;
-    font-size:12px;
-    color:#666;
-    margin-top:20px;
-  }
+/* Footer */
+footer{
+  text-align:center;
+  font-size:12px;
+  color:#666;
+  margin-top:20px;
+}
 
-  /* Small form tweaks for team member area to match UI */
-  .team-form{
-    display:flex;
-    flex-wrap:wrap;
-    gap:10px;
-    margin-top:10px;
-  }
-  .team-form input{
-    padding:8px 10px;
-    font-size:13px;
-    border:1px solid #ccc;
-    border-radius:6px;
-  }
-  .team-form .flex-1{flex:1 1 220px}
-  .team-form button{
-    padding:8px 14px;
-    font-size:13px;
-    background:#000;
-    color:#fff;
-    border:none;
-    border-radius:6px;
-    cursor:pointer;
-  }
-  .manage-list{
-    margin-top:12px;
-    max-height:260px;
-    overflow:auto;
-    border:1px solid #f0f0f0;
-    border-radius:6px;
-  }
-  .small-muted{font-size:12px;color:#666;margin-top:8px}
-  </style>
+/* Small form tweaks for team member area to match UI */
+.team-form{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:10px;
+}
+.team-form input{
+  padding:8px 10px;
+  font-size:13px;
+  border:1px solid #ccc;
+  border-radius:6px;
+}
+.team-form .flex-1{flex:1 1 220px}
+.team-form button{
+  padding:8px 14px;
+  font-size:13px;
+  background:#000;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+.manage-list{
+  margin-top:12px;
+  max-height:260px;
+  overflow:auto;
+  border:1px solid #f0f0f0;
+  border-radius:6px;
+}
+.small-muted{font-size:12px;color:#666;margin-top:8px}
+</style>
 </head>
 
 <body>
@@ -294,95 +294,25 @@
   © 2026 Joi Zubeen Da — Owner Access
 </footer>
 
-<!-- ========= Main script: preserves UI, replaces local category/team logic with Firestore-backed logic ========= -->
-<script type="module">
-/*
-  IMPORTANT:
-  - This script replaces the old in-memory category list and teamMembers array.
-  - It uses Firebase Auth + Firestore.
-  - Assumes you have a /firebase.js module that exports `auth` (same as login page).
-    Example (already used in your login page): import { auth } from '/firebase.js';
-*/
-
-import { auth } from '/firebase.js';
-import {
-  createUserWithEmailAndPassword
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-import {
-  getFirestore,
-  collection,
-  getDocs,
-  setDoc,
-  deleteDoc,
-  doc,
-  serverTimestamp,
-  query,
-  where
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-const db = getFirestore();
-
-/* ----------------- Category management (Firestore) ----------------- */
-const catWrap = document.getElementById("categoryList");
-
-/* Keep the toggle function available globally for the onclick in HTML */
-window.toggleCategoryBox = function(){
+<!-- ===== Existing client-side JS adapted to Firestore & Auth ===== -->
+<script>
+/* KEEP the UI toggle functions as they were (no UI change) */
+function toggleCategoryBox(){
   const box=document.getElementById("categoryBox");
   const icon=document.getElementById("toggleIcon");
   const open=box.style.display==="block";
   box.style.display=open?"none":"block";
   icon.textContent=open?"▼":"▲";
-};
-
-/* Load categories from Firestore and render */
-async function loadCategories(){
-  try{
-    catWrap.innerHTML = "";
-    const snap = await getDocs(collection(db, "categories"));
-    snap.forEach(d => {
-      const div = document.createElement("div");
-      div.className = "category-item";
-      div.innerHTML = `
-        ${d.id}
-        <button onclick="removeCategory('${d.id}')">×</button>
-      `;
-      catWrap.appendChild(div);
-    });
-  }catch(err){
-    console.error("loadCategories:", err);
-    catWrap.innerHTML = "<div style='color:#c00;padding:6px'>Error loading categories</div>";
-  }
+}
+function toggleTeamBox(){
+  const box=document.getElementById("teamBox");
+  const icon=document.getElementById("toggleTeamIcon");
+  const open=box.style.display==="block";
+  box.style.display=open?"none":"block";
+  icon.textContent=open?"▼":"▲";
 }
 
-/* Add a category (Owner only in Firestore rules) */
-window.addCategory = async function(){
-  const input = document.getElementById("newCategory");
-  const name = input.value.trim().toLowerCase();
-  if(!name) return;
-  try{
-    await setDoc(doc(db, "categories", name), {});
-    input.value = "";
-    await loadCategories();
-  }catch(err){
-    console.error("addCategory:", err);
-    alert("Failed to add category: " + (err.message || err));
-  }
-};
-
-/* Remove a category (Owner only in Firestore rules) */
-window.removeCategory = async function(name){
-  if(!confirm("Remove this category?")) return;
-  try{
-    await deleteDoc(doc(db, "categories", name));
-    await loadCategories();
-  }catch(err){
-    console.error("removeCategory:", err);
-    alert("Failed to remove category: " + (err.message || err));
-  }
-};
-
-/* ----------------- Activity log (keeps your mock data; UI unchanged) ----------------- */
+/* Activity table mock (kept as-is) */
 const activityLog=[
   {user:"Admin",title:"The Uncut Zubeen Interview",category:"podcast",url:"https://youtu.be/5VenPCFCShU",time:"2026-01-31 10:42 AM"},
   {user:"Editor-1",title:"Radio Mirchi Interview",category:"interview",url:"https://youtu.be/AD8G_v3TJy8",time:"2026-01-30 09:15 PM"},
@@ -406,126 +336,216 @@ activityLog.forEach((v,i)=>{
   `;
   tbody.appendChild(tr);
 });
+</script>
 
-/* ----------------- Team members management (Firestore-backed) ----------------- */
+<!-- ===== Firestore & Auth logic (module) ===== -->
+<script type="module">
+/*
+  Assumptions:
+  - You have a /firebase.js file that initializes Firebase and exports `auth`.
+    The existing login page already imports { auth } from '/firebase.js'.
+  - Firestore rules set earlier are applied.
+*/
 
-const teamListEl = document.getElementById("teamList");
+import { auth } from "/firebase.js";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-/* Keep toggleTeamBox on window for onclick */
-window.toggleTeamBox = function(){
-  const box=document.getElementById("teamBox");
-  const icon=document.getElementById("toggleTeamIcon");
-  const open=box.style.display==="block";
-  box.style.display=open?"none":"block";
-  icon.textContent=open?"▼":"▲";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  setDoc,
+  deleteDoc,
+  doc,
+  query,
+  where,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const db = getFirestore();
+
+/* ----------------------
+   Categories (Firestore)
+   ---------------------- */
+const catWrap = document.getElementById("categoryList");
+
+async function loadCategories(){
+  catWrap.innerHTML = "";
+  try{
+    const snap = await getDocs(collection(db, "categories"));
+    snap.forEach(d => {
+      const div = document.createElement("div");
+      div.className = "category-item";
+      div.innerHTML = `
+        ${d.id}
+        <button onclick="removeCategory('${d.id}')">×</button>
+      `;
+      catWrap.appendChild(div);
+    });
+  }catch(err){
+    console.error("loadCategories:", err);
+  }
+}
+
+window.addCategory = async function(){
+  const input = document.getElementById("newCategory");
+  const name = input.value.trim().toLowerCase();
+  if(!name) return alert("Enter a category name.");
+  try{
+    await setDoc(doc(db, "categories", name), {});
+    input.value = "";
+    loadCategories();
+  }catch(err){
+    console.error("addCategory:", err);
+    alert(err.message || "Failed to add category.");
+  }
 };
 
-/* Load team members from Firestore (documents in "users" collection with role == "team") */
-async function loadTeamMembers(){
+window.removeCategory = async function(name){
+  if(!confirm("Remove this category?")) return;
   try{
-    teamListEl.innerHTML = "";
+    await deleteDoc(doc(db, "categories", name));
+    loadCategories();
+  }catch(err){
+    console.error("removeCategory:", err);
+    alert(err.message || "Failed to remove category.");
+  }
+};
+
+/* ----------------------
+   Team members (Firestore + Auth)
+   ---------------------- */
+
+/*
+  NOTE:
+  Because createUserWithEmailAndPassword will change the active auth user,
+  we sign the owner back in immediately after creating the account using
+  the owner's credentials which you provided earlier (initial-setup).
+  You provided these credentials earlier; they are used here solely to
+  restore the owner's session immediately after creating a team account.
+
+  IMPORTANT: If you later change the owner's password, update OWNER_EMAIL/OWNER_PASS here.
+*/
+const OWNER_EMAIL = "pulinoffice@gmail.com";
+const OWNER_PASS = "pulin@pubali81359!";
+
+const teamListTbody = document.getElementById("teamList");
+
+function escapeHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* Load team members from Firestore (users collection where role == 'team') */
+async function renderTeamMembers(){
+  teamListTbody.innerHTML = "";
+  try{
     const q = query(collection(db, "users"), where("role", "==", "team"));
     const snap = await getDocs(q);
     const rows = [];
-    snap.forEach((d) => {
-      const data = d.data();
-      rows.push({ uid: d.id, ...data });
+    snap.forEach(docu=>{
+      rows.push({ id: docu.id, ...docu.data() });
     });
 
-    rows.sort((a,b) => (a.createdAt && b.createdAt) ? (a.createdAt.seconds - b.createdAt.seconds) : 0);
+    rows.sort((a,b)=> (a.createdAt && b.createdAt) ? a.createdAt.seconds - b.createdAt.seconds : 0);
 
-    rows.forEach((m,i) => {
+    rows.forEach((m,i)=>{
       const tr = document.createElement("tr");
-      const addedOn = m.createdAt ? (new Date(m.createdAt.toMillis())).toLocaleString() : (m.createdAt || "");
+      const addedOn = m.createdAt ? new Date(m.createdAt.seconds * 1000).toLocaleString() : (m.createdOn || '');
       tr.innerHTML = `
         <td>${i+1}</td>
         <td>${escapeHtml(m.name || '')}</td>
         <td>${escapeHtml(m.email || '')}</td>
         <td>${escapeHtml(m.createdBy || '')}</td>
         <td>${escapeHtml(addedOn)}</td>
-        <td><button onclick="removeTeamMember('${m.uid}')" style="background:#e74c3c;color:#fff;border:none;padding:6px 8px;border-radius:6px;cursor:pointer">Remove</button></td>
+        <td><button onclick="removeTeamMember('${m.id}','${m.email}')" style="background:#e74c3c;color:#fff;border:none;padding:6px 8px;border-radius:6px;cursor:pointer">Remove</button></td>
       `;
-      teamListEl.appendChild(tr);
+      teamListTbody.appendChild(tr);
     });
-
-    if(rows.length === 0){
-      teamListEl.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:12px;color:#666">No team members added yet.</td></tr>`;
-    }
   }catch(err){
-    console.error("loadTeamMembers:", err);
-    teamListEl.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:12px;color:#c00">Error loading team members</td></tr>`;
+    console.error("renderTeamMembers:", err);
   }
 }
 
-/* Add a team member:
-   - create Firebase Auth user
-   - create Firestore users doc (id = uid) with role: "team"
+/* Add team member:
+   - create Auth user
+   - create Firestore users doc with role 'team'
+   - re-sign-in owner to restore session
 */
 window.addTeamMember = async function(){
   const name = document.getElementById("tmName").value.trim();
   const email = document.getElementById("tmEmail").value.trim().toLowerCase();
-  const password = document.getElementById("tmPass").value;
+  const pass = document.getElementById("tmPass").value;
+  if(!name || !email || !pass) return alert("Please enter name, email and password.");
 
-  if(!name || !email || !password){
-    alert("Please enter name, email and password.");
-    return;
+  // basic duplicate check in Firestore
+  try{
+    const q = query(collection(db, "users"), where("email", "==", email));
+    const snap = await getDocs(q);
+    if(!snap.empty) return alert("This email is already added.");
+  }catch(e){
+    console.error("duplicate-check:", e);
   }
 
   try{
-    // create auth user
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    // store owner email (who is adding) before creating new user
+    const addedBy = auth.currentUser && auth.currentUser.email ? auth.currentUser.email : OWNER_EMAIL;
+
+    // Create new user in Firebase Auth
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
     const uid = cred.user.uid;
 
-    // store metadata in Firestore
+    // Create Firestore record
     await setDoc(doc(db, "users", uid), {
       name: name,
       email: email,
       role: "team",
-      createdBy: auth.currentUser ? auth.currentUser.email : "admin",
+      createdBy: addedBy,
       createdAt: serverTimestamp()
     });
 
-    // Clear inputs and reload list
+    alert("Team member added successfully.");
+
+    // Clear inputs
     document.getElementById("tmName").value = "";
     document.getElementById("tmEmail").value = "";
     document.getElementById("tmPass").value = "";
 
-    alert("Team member added successfully.");
-    await loadTeamMembers();
+    // Immediately sign back in as owner to restore admin session:
+    // (uses the owner credentials provided earlier)
+    await signInWithEmailAndPassword(auth, OWNER_EMAIL, OWNER_PASS);
+
+    // Refresh list
+    renderTeamMembers();
 
   }catch(err){
     console.error("addTeamMember:", err);
-    // Friendly error message
-    let msg = err && err.message ? err.message : String(err);
-    if(msg.includes("auth/email-already-in-use")) msg = "This email is already registered.";
-    alert("Failed to add team member: " + msg);
+    alert(err.message || "Failed to add team member.");
   }
 };
 
-/* Remove team member: delete the Firestore users doc so the user cannot access the system.
-   (Note: deleting the Auth user requires admin SDK; removing the users doc will prevent login access
-    because login logic checks for a user doc in Firestore.)
+/* Remove team member:
+   - deletes the user's Firestore document (prevents role access)
+   - (note) deleting the Auth user requires Admin privileges; here we remove the Firestore record to revoke role.
 */
-window.removeTeamMember = async function(uid){
-  if(!confirm("Remove this member?")) return;
+window.removeTeamMember = async function(uid, email){
+  if(!confirm(`Remove ${email} from team?`)) return;
   try{
     await deleteDoc(doc(db, "users", uid));
-    await loadTeamMembers();
-    alert("Team member record removed. (Firebase Auth account may still exist; remove via Admin SDK if needed.)");
+    // optional: you can also flag the user in a 'disabled' collection or track activity
+    renderTeamMembers();
+    alert("Team member removed (Firestore doc deleted). To remove Auth account, use admin console.");
   }catch(err){
     console.error("removeTeamMember:", err);
-    alert("Failed to remove team member: " + (err.message || err));
+    alert(err.message || "Failed to remove team member.");
   }
 };
 
-/* Simple HTML escape to avoid injected markup */
-function escapeHtml(s){
-  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-/* ----------------- Init: load categories & team members ----------------- */
+/* ===== Init ===== */
 loadCategories();
-loadTeamMembers();
+renderTeamMembers();
 
 </script>
 
