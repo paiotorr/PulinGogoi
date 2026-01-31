@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Team Video Submission · JoiZubeenDa</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Security Headers (Static-safe) -->
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta http-equiv="X-Frame-Options" content="DENY">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()">
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  background:#fafafa;color:#000;
+  min-height:100vh;
+}
+header{
+  background:#000;color:#fff;
+  padding:16px;text-align:center;
+}
+header h1{font-size:20px;margin-bottom:6px}
+header p{font-size:13px;color:#ccc}
+
+main{
+  max-width:520px;
+  margin:30px auto;
+  padding:0 14px;
+}
+.card{
+  background:#fff;
+  border-radius:10px;
+  padding:20px;
+  box-shadow:0 10px 30px rgba(0,0,0,.08);
+}
+label{
+  display:block;
+  font-size:13px;
+  font-weight:700;
+  margin-bottom:6px;
+}
+input,select,button{
+  width:100%;
+  padding:11px 12px;
+  margin-bottom:14px;
+  border-radius:6px;
+  border:1px solid #ccc;
+  font-size:14px;
+}
+input:focus,select:focus{
+  outline:none;
+  border-color:#000;
+}
+button{
+  background:#000;color:#fff;
+  border:none;
+  font-weight:700;
+  cursor:pointer;
+  transition:.2s;
+}
+button:hover{opacity:.85}
+
+.preview{
+  display:none;
+  margin-top:10px;
+  border-top:1px solid #eee;
+  padding-top:14px;
+}
+.preview img{
+  width:100%;
+  border-radius:6px;
+}
+.preview-title{
+  font-size:14px;
+  font-weight:700;
+  margin-top:8px;
+}
+
+.status{
+  font-size:13px;
+  margin-top:10px;
+}
+.status.ok{color:green}
+.status.err{color:#c00}
+
+footer{
+  text-align:center;
+  font-size:12px;
+  color:#777;
+  padding:18px 10px 24px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>Video Submission</h1>
+  <p>Team Access · JoiZubeenDa</p>
+</header>
+
+<main>
+  <div class="card">
+
+    <label for="videoUrl">YouTube Video URL</label>
+    <input type="url" id="videoUrl" placeholder="https://youtu.be/..." required>
+
+    <label for="category">Select Category</label>
+    <select id="category"></select>
+
+    <button id="addBtn">Add Video</button>
+
+    <div class="preview" id="preview">
+      <img id="thumb" alt="YouTube Thumbnail">
+      <div class="preview-title" id="videoTitle"></div>
+    </div>
+
+    <div class="status" id="statusMsg"></div>
+
+  </div>
+</main>
+
+<footer>
+  © 2026 JoiZubeenDa · Internal Team Tool
+</footer>
+
+<script>
+/* ---------- Dynamic Categories (Mock / Replace with API) ---------- */
+const categories = [
+  { id:"song", name:"Songs" },
+  { id:"interview", name:"Interviews" },
+  { id:"podcast", name:"Podcasts" },
+  { id:"live", name:"Live Performances" }
+];
+
+const categorySelect = document.getElementById('category');
+categories.forEach(c=>{
+  const opt=document.createElement('option');
+  opt.value=c.id;
+  opt.textContent=c.name;
+  categorySelect.appendChild(opt);
+});
+
+/* ---------- Helpers ---------- */
+function getYouTubeId(url){
+  try{
+    const u=new URL(url);
+    if(u.hostname==="youtu.be") return u.pathname.slice(1);
+    return u.searchParams.get("v");
+  }catch(e){return null;}
+}
+
+async function fetchTitle(videoId){
+  /* Placeholder: move to backend later */
+  return "YouTube Video (Title fetched server-side)";
+}
+
+/* ---------- Submission Logic ---------- */
+const btn=document.getElementById('addBtn');
+const statusMsg=document.getElementById('statusMsg');
+const preview=document.getElementById('preview');
+const thumb=document.getElementById('thumb');
+const titleBox=document.getElementById('videoTitle');
+
+btn.addEventListener('click',async ()=>{
+  statusMsg.textContent="";
+  statusMsg.className="status";
+
+  const url=document.getElementById('videoUrl').value.trim();
+  const cat=categorySelect.value;
+  const id=getYouTubeId(url);
+
+  if(!id){
+    statusMsg.textContent="Invalid YouTube URL";
+    statusMsg.classList.add("err");
+    return;
+  }
+
+  const thumbnail=`https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+  thumb.src=thumbnail;
+
+  const title=await fetchTitle(id);
+  titleBox.textContent=title;
+
+  preview.style.display="block";
+
+  /* ---------- SEND TO BACKEND (future) ----------
+  fetch('/api/add-video',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      videoId:id,
+      url:url,
+      category:cat
+    })
+  })
+  ---------------------------------------------- */
+
+  statusMsg.textContent="Video ready to be saved ✔";
+  statusMsg.classList.add("ok");
+});
+</script>
+
+</body>
+</html>
