@@ -13,27 +13,42 @@ onAuthStateChanged(auth, async (user) => {
   try {
     if (!user) return goLogin();
 
-    // find restaurants owned by this user
-    const q = query(collection(db, "restaurants"), where("ownerUID", "==", user.uid));
+    const q = query(
+      collection(db, "restaurants"),
+      where("ownerUID", "==", user.uid)
+    );
+
     const snap = await getDocs(q);
     if (snap.empty) return goLogin();
 
-    const docSnap = snap.docs[0];
-    const d = docSnap.data();
+    // ✅ IMPORTANT FIX STARTS HERE
+    const restaurantId = RESTAURANT.id;
 
-    // safe subscriptionEnd check (won't throw if missing)
+    // check if logged-in owner owns THIS restaurant
+    const ownedRestaurant = snap.docs.find(
+      doc => doc.id === restaurantId
+    );
+
+    if (!ownedRestaurant) {
+      // owner does not belong to this restaurant
+      return goLogin();
+    }
+
+    const d = ownedRestaurant.data();
+    // ✅ FIX ENDS HERE
+
     const end = d.subscriptionEnd?.toDate?.();
     if (d.status !== "active") return goLogin();
     if (!end || new Date() > end) return goLogin();
 
-    // store the restaurant id for use later by the page code
-    try {
-      sessionStorage.setItem("restaurant_session", JSON.stringify({ rid: docSnap.id }));
-      window.RESTAURANT_ID = docSnap.id;
-    } catch(e) { /* ignore session errors */ }
+    sessionStorage.setItem(
+      "restaurant_session",
+      JSON.stringify({ rid: restaurantId })
+    );
 
-    // allowed — do nothing so page continues to load
-    console.log("Access granted for restaurant:", docSnap.id);
+    window.RESTAURANT_ID = restaurantId;
+
+    console.log("Access granted for restaurant:", restaurantId);
   } catch (err) {
     console.error("Guard error:", err);
     goLogin();
