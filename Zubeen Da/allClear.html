@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Owner Panel – Clear Videos</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta http-equiv="X-Frame-Options" content="DENY" />
+<meta http-equiv="X-Content-Type-Options" content="nosniff" />
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  background:#f6f6f6;
+  color:#000;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.panel{
+  background:#fff;
+  width:100%;
+  max-width:420px;
+  border-radius:12px;
+  box-shadow:0 10px 30px rgba(0,0,0,.15);
+  padding:24px;
+  text-align:center;
+}
+
+h1{
+  font-size:20px;
+  margin-bottom:10px;
+}
+
+.note{
+  font-size:13px;
+  color:#555;
+  margin-bottom:20px;
+}
+
+.count-box{
+  background:#000;
+  color:#fff;
+  padding:14px;
+  border-radius:8px;
+  margin-bottom:18px;
+  font-size:14px;
+}
+
+.count-box span{
+  font-size:22px;
+  font-weight:bold;
+  display:block;
+  margin-top:4px;
+}
+
+.clear-btn{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:24px;
+  background:#c40000;
+  color:#fff;
+  font-size:14px;
+  cursor:pointer;
+  transition:.2s;
+}
+
+.clear-btn:hover{background:#a30000}
+
+.footer{
+  margin-top:18px;
+  font-size:12px;
+  color:#777;
+}
+</style>
+</head>
+<body>
+
+<div class="panel">
+  <h1>Owner – Clear All Videos</h1>
+
+  <div class="note">
+    Use this option <strong>before lunch / update</strong><br>
+    to reset owner-added video data.
+  </div>
+
+  <div class="count-box">
+    Total Videos Stored
+    <span id="videoCount">0</span>
+  </div>
+
+  <button class="clear-btn" onclick="clearAllVideos()">
+    CLEAR ALL VIDEOS
+  </button>
+
+  <div class="footer">
+    JoiZubeenDa • Owner Control
+  </div>
+</div>
+
+<script>
+/*
+  Assumption:
+  Owner-added videos are stored in localStorage as:
+  key = "ownerVideos"
+  value = JSON array
+*/
+
+function getVideos(){
+  try{
+    return JSON.parse(localStorage.getItem("ownerVideos")) || [];
+  }catch(e){
+    return [];
+  }
+}
+
+function updateCount(){
+  document.getElementById("videoCount").textContent = getVideos().length;
+}
+
+function clearAllVideos(){
+  const first = confirm("Are you sure you want to CLEAR ALL videos?");
+  if(!first) return;
+
+  const second = confirm("This action CANNOT be undone.\n\nConfirm clear?");
+  if(!second) return;
+
+  localStorage.removeItem("ownerVideos");
+  alert("All videos cleared successfully.");
+  updateCount();
+}
+
+updateCount();
+
+/* Basic protection */
+document.addEventListener("contextmenu",e=>e.preventDefault());
+document.addEventListener("keydown",e=>{
+  if(e.keyCode===123 || (e.ctrlKey && e.shiftKey)){
+    e.preventDefault();
+  }
+});
+</script>
+
+</body>
+</html>
