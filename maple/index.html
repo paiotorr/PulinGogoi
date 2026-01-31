@@ -1,13 +1,10 @@
-<!-- :contentReference[oaicite:0]{index=0} -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=1280, initial-scale=0.3, maximum-scale=0.3, minimum-scale=0.3, user-scalable=no">
-
 <meta name="copyright" content="© 2026 Paiotorr">
 <meta name="author" content="Paiotorr">
-
 <title>PAIOTORR - MAPLE</title>
 
 <style>
@@ -258,10 +255,6 @@ h1 { text-align: center; font-size: 90px; margin-top: 90px; }
       <div id="catBar"></div>
     </div>
 
-    <!-- REPURPOSED INPUT BOX (OPTIONAL order requirements / special instructions) -->
-    <!-- Kept id 'customerName' for compatibility with existing owner page which expects 'customer' field.
-         If filled, this value will be saved as both 'instructions' and also stored into 'customer'
-         so that the owner Pending Orders page (which displays customer/name) will show the instructions. -->
     <input id="customerName" placeholder="Optional: order requirements / special instructions (e.g., Less salt, No onion, Extra spoon)">
 
     <div id="orderList"></div>
@@ -280,35 +273,76 @@ h1 { text-align: center; font-size: 90px; margin-top: 90px; }
 </div>
 
 <script type="module">
-import {initializeApp} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-import {getFirestore,collection,addDoc,doc,onSnapshot,updateDoc} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+/* ========== Firebase imports & init (keep inside module) ========== */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  doc,
+  onSnapshot,
+  updateDoc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
-// --- SECURITY & COPYRIGHT PROTECTION ---
+/* --- SECURITY & COPYRIGHT PROTECTION --- */
 document.addEventListener("contextmenu", (e) => e.preventDefault());
-
 document.addEventListener("keydown", (e) => {
   if (e.ctrlKey && (e.key === "u" || e.key === "U" || e.key === "s" || e.key === "S" || e.key === "c" || e.key === "C")) {
     e.preventDefault();
   }
 });
-
 document.addEventListener("dragstart", (e) => {
   if (e.target.tagName === "IMG") {
     e.preventDefault();
   }
 });
 
-const app=initializeApp({
+/* ========== Firebase app & DB ========== */
+const app = initializeApp({
  apiKey:"AIzaSyDSf51jWs3I4AXX0U8M_HxKn4VtRYg72xs",
  authDomain:"hotel-order-7f1f2.firebaseapp.com",
  projectId:"hotel-order-7f1f2"
 });
-const db=getFirestore(app);
+const db = getFirestore(app);
 
+/* ===== STEP 3: TABLE / ROOM VALIDATION (top-level await is used) ===== */
+const params = new URLSearchParams(location.search);
+
+const identifierType =
+  params.get("type") ||
+  (params.get("table") ? "table" : (params.get("room") ? "room" : null));
+
+const identifierNumber =
+  params.get("table") || params.get("room") || params.get("num") || null;
+
+if (!identifierNumber || !identifierType) {
+  document.body.innerHTML = "Invalid table / room (missing parameter)";
+  throw new Error("Blocked: missing identifier");
+}
+
+const checker = await getDoc(
+  doc(
+    db,
+    "restaurants",
+    "maple",
+    "allowedIdentifiers",
+    `${identifierType}_${identifierNumber}`
+  )
+);
+
+if (!checker.exists()) {
+  document.body.innerHTML = "Invalid table / room number";
+  throw new Error("Blocked: not allowed");
+}
+/* ===== END STEP 3 ===== */
+
+/* ===== Backwards compatibility: table variable used across page ===== */
 const restaurantId = "maple";
-const table=new URLSearchParams(location.search).get("table")||"1";
-tableInfo.innerText="Table: "+table;
+const table = identifierNumber; // keep original 'table' variable for legacy usage
+tableInfo.innerText = "Table: " + table;
 
+/* ========== Menu data & constants ========== */
 const menuData = [
   { name: "Paneer Tikka", price: 180, category: "Starters", img: "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=400" },
   { name: "Pav Bhaji", price: 199, category: "Veg", img: "https://paiotorr.com/image/qwdvdjnnjfgjjknfjkgnjk/cold-drink/15.54.55_53f8bc4d.jpg?w=400" },
@@ -508,12 +542,6 @@ function render() {
 
 /* ---------------------------
    submitOrder & popup logic
-   - Input box is OPTIONAL order requirements.
-   - If provided, instructions are saved as 'instructions'.
-   - To ensure owner Pending Orders page shows the instructions (same place where it used to show name),
-     we ALSO store the instructions value into 'customer' field when instructions are present.
-   - If instructions empty, we omit both fields (no defaults).
-   - Popup messages are static and do NOT include input content.
 */
 window.submitOrder = async(btnElement) => {
   triggerVisual(btnElement);
@@ -523,8 +551,11 @@ window.submitOrder = async(btnElement) => {
     return alert("Please add items before submitting the order.");
   }
 
+  // ===== payload updated for security rules (identifierType + identifierNumber required) =====
   const payload = {
-    table,
+    identifierType,
+    identifierNumber: Number(identifierNumber),
+    table: identifierNumber, // keep old field for owner UI backwards compatibility
     items: Object.values(order),
     total,
     status: "pending",
@@ -620,26 +651,21 @@ function showPopup() {
   };
   const text = mapping[p.status] || "Order Status";
   document.getElementById("popupText").innerText = text;
-  document.getElementById("popupPrice").innerText = p.status !== "rejected" ? "Total: ₹" + (p.price || "") : "";
+  document.getElementById("popupPrice").innerText = p.price ? `₹${p.price}` : "";
 }
 
-window.manualClose = () => { 
-  const data = localStorage.getItem(POPUP_KEY);
+function manualClose() {
   const orderId = localStorage.getItem(ORDER_KEY);
-  if (data && orderId) {
-    const p = JSON.parse(data);
-    localStorage.setItem(`done_${orderId}_${p.status}`, "true");
-  }
-  document.getElementById("popup").style.display = "none"; 
-  localStorage.removeItem(POPUP_KEY);
-};
+  if (!orderId) return;
+  const data = JSON.parse(localStorage.getItem(POPUP_KEY) || "{}");
+  if (data.status === "submitted") return;
+  localStorage.setItem(`done_${orderId}_${data.status}`, "true");
+  document.getElementById("popup").style.display = "none";
+}
 
-(() => {
-  initMenu();
-  const id = localStorage.getItem(ORDER_KEY);
-  if(id) listen(id);
-  showPopup();
-})();
+/* initialize UI */
+initMenu();
+render();
 </script>
 </body>
 </html>
