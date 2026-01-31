@@ -216,7 +216,7 @@ footer{
 
       <div class="add-category">
         <input type="text" id="newCategory" placeholder="New category name">
-        <button onclick="addCategory()">Add</button>
+        <button id="addCategoryBtn">Add</button>
       </div>
 
     </div>
@@ -261,7 +261,7 @@ footer{
           <input type="text" id="tmName" class="flex-1" placeholder="Full name">
           <input type="email" id="tmEmail" class="flex-1" placeholder="Email address">
           <input type="password" id="tmPass" placeholder="Password">
-          <button onclick="addTeamMember()">Add Member</button>
+          <button id="addTeamBtn">Add Member</button>
         </div>
         <div class="small-muted">Team members require a name, an email and a password. Public users cannot add members.</div>
       </div>
@@ -294,65 +294,17 @@ footer{
   © 2026 Joi Zubeen Da — Owner Access
 </footer>
 
-<!-- ===== Existing client-side JS adapted to Firestore & Auth ===== -->
-<script>
-/* KEEP the UI toggle functions as they were (no UI change) */
-function toggleCategoryBox(){
-  const box=document.getElementById("categoryBox");
-  const icon=document.getElementById("toggleIcon");
-  const open=box.style.display==="block";
-  box.style.display=open?"none":"block";
-  icon.textContent=open?"▼":"▲";
-}
-function toggleTeamBox(){
-  const box=document.getElementById("teamBox");
-  const icon=document.getElementById("toggleTeamIcon");
-  const open=box.style.display==="block";
-  box.style.display=open?"none":"block";
-  icon.textContent=open?"▼":"▲";
-}
-
-/* Activity table mock (kept as-is) */
-const activityLog=[
-  {user:"Admin",title:"The Uncut Zubeen Interview",category:"podcast",url:"https://youtu.be/5VenPCFCShU",time:"2026-01-31 10:42 AM"},
-  {user:"Editor-1",title:"Radio Mirchi Interview",category:"interview",url:"https://youtu.be/AD8G_v3TJy8",time:"2026-01-30 09:15 PM"},
-  {user:"Admin",title:"MAJULIR EJONI",category:"song",url:"https://youtu.be/ZG3SdjQQLQ4",time:"2026-01-29 07:05 PM"}
-];
-
-function yt(id){return`https://img.youtube.com/vi/${id}/hqdefault.jpg`}
-function yid(u){try{const x=new URL(u);return x.hostname==="youtu.be"?x.pathname.slice(1):x.searchParams.get("v")}catch(e){return""}}
-
-const tbody=document.getElementById("activityTable");
-activityLog.forEach((v,i)=>{
-  const tr=document.createElement("tr");
-  tr.innerHTML=`
-    <td>${i+1}</td>
-    <td><div class="thumb"><img src="${yt(yid(v.url))}"></div></td>
-    <td>${v.title}</td>
-    <td>${v.category}</td>
-    <td>${v.user}</td>
-    <td><a href="${v.url}" target="_blank">Open</a></td>
-    <td>${v.time}</td>
-  `;
-  tbody.appendChild(tr);
-});
-</script>
-
-<!-- ===== Firestore & Auth logic (module) ===== -->
+<!-- ====== Replaced script: Firestore-driven categories + team management ====== -->
 <script type="module">
 /*
-  Assumptions:
-  - You have a /firebase.js file that initializes Firebase and exports `auth`.
-    The existing login page already imports { auth } from '/firebase.js'.
-  - Firestore rules set earlier are applied.
+  admin.html — Firestore + Auth wiring (module)
+  - Requires you to have /firebase.js exposing initialized `auth` (Firebase Auth)
+    Example in login page used: import { auth } from '/firebase.js';
+  - Uses Firestore client v10 gstatic imports
+  - No UI changes, only logic
 */
 
 import { auth } from "/firebase.js";
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
 import {
   getFirestore,
   collection,
@@ -362,192 +314,323 @@ import {
   doc,
   query,
   where,
-  serverTimestamp
+  orderBy,
+  serverTimestamp,
+  onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+import {
+  createUserWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const db = getFirestore();
 
-/* ----------------------
-   Categories (Firestore)
-   ---------------------- */
-const catWrap = document.getElementById("categoryList");
-
-async function loadCategories(){
-  catWrap.innerHTML = "";
-  try{
-    const snap = await getDocs(collection(db, "categories"));
-    snap.forEach(d => {
-      const div = document.createElement("div");
-      div.className = "category-item";
-      div.innerHTML = `
-        ${d.id}
-        <button onclick="removeCategory('${d.id}')">×</button>
-      `;
-      catWrap.appendChild(div);
-    });
-  }catch(err){
-    console.error("loadCategories:", err);
-  }
-}
-
-window.addCategory = async function(){
-  const input = document.getElementById("newCategory");
-  const name = input.value.trim().toLowerCase();
-  if(!name) return alert("Enter a category name.");
-  try{
-    await setDoc(doc(db, "categories", name), {});
-    input.value = "";
-    loadCategories();
-  }catch(err){
-    console.error("addCategory:", err);
-    alert(err.message || "Failed to add category.");
-  }
-};
-
-window.removeCategory = async function(name){
-  if(!confirm("Remove this category?")) return;
-  try{
-    await deleteDoc(doc(db, "categories", name));
-    loadCategories();
-  }catch(err){
-    console.error("removeCategory:", err);
-    alert(err.message || "Failed to remove category.");
-  }
-};
-
-/* ----------------------
-   Team members (Firestore + Auth)
-   ---------------------- */
-
-/*
-  NOTE:
-  Because createUserWithEmailAndPassword will change the active auth user,
-  we sign the owner back in immediately after creating the account using
-  the owner's credentials which you provided earlier (initial-setup).
-  You provided these credentials earlier; they are used here solely to
-  restore the owner's session immediately after creating a team account.
-
-  IMPORTANT: If you later change the owner's password, update OWNER_EMAIL/OWNER_PASS here.
-*/
-const OWNER_EMAIL = "pulinoffice@gmail.com";
-const OWNER_PASS = "pulin@pubali81359!";
-
-const teamListTbody = document.getElementById("teamList");
-
+/* -------------------------
+   Utility helpers
+   ------------------------- */
 function escapeHtml(s){
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-/* Load team members from Firestore (users collection where role == 'team') */
-async function renderTeamMembers(){
-  teamListTbody.innerHTML = "";
+/* -------------------------
+   Toggle UI boxes (keep unchanged)
+   ------------------------- */
+window.toggleCategoryBox = function(){
+  const box=document.getElementById("categoryBox");
+  const icon=document.getElementById("toggleIcon");
+  const open=box.style.display==="block";
+  box.style.display=open?"none":"block";
+  icon.textContent=open?"▼":"▲";
+};
+
+function toggleTeamBox(){
+  const box=document.getElementById("teamBox");
+  const icon=document.getElementById("toggleTeamIcon");
+  const open=box.style.display==="block";
+  box.style.display=open?"none":"block";
+  icon.textContent=open?"▼":"▲";
+}
+window.toggleTeamBox = toggleTeamBox;
+
+/* -------------------------
+   Categories (Firestore-backed)
+   ------------------------- */
+const categoryListEl = document.getElementById("categoryList");
+const newCategoryInput = document.getElementById("newCategory");
+const addCategoryBtn = document.getElementById("addCategoryBtn");
+
+async function loadCategoriesOnce(){
+  categoryListEl.innerHTML = "";
   try{
-    const q = query(collection(db, "users"), where("role", "==", "team"));
-    const snap = await getDocs(q);
-    const rows = [];
-    snap.forEach(docu=>{
-      rows.push({ id: docu.id, ...docu.data() });
+    const snap = await getDocs(collection(db, "categories"));
+    // iterating and building UI
+    snap.forEach(d=>{
+      const name = d.id;
+      const div = document.createElement("div");
+      div.className = "category-item";
+      // safe insertion
+      div.innerHTML = `${escapeHtml(name)} <button data-cat="${escapeHtml(name)}" aria-label="remove category">×</button>`;
+      categoryListEl.appendChild(div);
     });
 
-    rows.sort((a,b)=> (a.createdAt && b.createdAt) ? a.createdAt.seconds - b.createdAt.seconds : 0);
-
-    rows.forEach((m,i)=>{
-      const tr = document.createElement("tr");
-      const addedOn = m.createdAt ? new Date(m.createdAt.seconds * 1000).toLocaleString() : (m.createdOn || '');
-      tr.innerHTML = `
-        <td>${i+1}</td>
-        <td>${escapeHtml(m.name || '')}</td>
-        <td>${escapeHtml(m.email || '')}</td>
-        <td>${escapeHtml(m.createdBy || '')}</td>
-        <td>${escapeHtml(addedOn)}</td>
-        <td><button onclick="removeTeamMember('${m.id}','${m.email}')" style="background:#e74c3c;color:#fff;border:none;padding:6px 8px;border-radius:6px;cursor:pointer">Remove</button></td>
-      `;
-      teamListTbody.appendChild(tr);
+    // attach click handlers (delegation)
+    categoryListEl.querySelectorAll("button").forEach(btn=>{
+      btn.addEventListener("click", async (e)=>{
+        const name = btn.getAttribute("data-cat");
+        if(!name) return;
+        if(!confirm(`Remove category "${name}"?`)) return;
+        try{
+          await deleteDoc(doc(db, "categories", name));
+          // remove from DOM immediately for feedback
+          btn.parentElement && btn.parentElement.remove();
+        }catch(err){
+          console.error("Remove category error:", err);
+          alert("Failed to remove category. Check console.");
+        }
+      });
     });
+
+    // if no categories, show placeholder
+    if(categoryListEl.children.length === 0){
+      const p = document.createElement("div");
+      p.style.color="#666";
+      p.style.fontSize="13px";
+      p.textContent = "No categories yet.";
+      categoryListEl.appendChild(p);
+    }
   }catch(err){
-    console.error("renderTeamMembers:", err);
+    console.error("loadCategoriesOnce error:", err);
+    categoryListEl.innerHTML = "<div style='color:#c00'>Failed to load categories.</div>";
   }
 }
 
-/* Add team member:
-   - create Auth user
-   - create Firestore users doc with role 'team'
-   - re-sign-in owner to restore session
-*/
-window.addTeamMember = async function(){
-  const name = document.getElementById("tmName").value.trim();
-  const email = document.getElementById("tmEmail").value.trim().toLowerCase();
-  const pass = document.getElementById("tmPass").value;
-  if(!name || !email || !pass) return alert("Please enter name, email and password.");
-
-  // basic duplicate check in Firestore
+/* Real-time listener to keep UI in-sync (preferred) */
+function watchCategoriesRealtime(){
   try{
-    const q = query(collection(db, "users"), where("email", "==", email));
-    const snap = await getDocs(q);
-    if(!snap.empty) return alert("This email is already added.");
+    const q = query(collection(db, "categories"), orderBy("__name__"));
+    onSnapshot(q, snapshot=>{
+      categoryListEl.innerHTML = "";
+      snapshot.forEach(d=>{
+        const name = d.id;
+        const div = document.createElement("div");
+        div.className = "category-item";
+        div.innerHTML = `${escapeHtml(name)} <button data-cat="${escapeHtml(name)}" aria-label="remove category">×</button>`;
+        categoryListEl.appendChild(div);
+      });
+
+      // attach handlers
+      categoryListEl.querySelectorAll("button").forEach(btn=>{
+        btn.onclick = async () => {
+          const name = btn.getAttribute("data-cat");
+          if(!name) return;
+          if(!confirm(`Remove category "${name}"?`)) return;
+          try{
+            await deleteDoc(doc(db, "categories", name));
+            // onSnapshot will update UI
+          }catch(err){
+            console.error("Remove category error:", err);
+            alert("Failed to remove category. Check console.");
+          }
+        };
+      });
+
+      if(categoryListEl.children.length === 0){
+        const p = document.createElement("div");
+        p.style.color="#666";
+        p.style.fontSize="13px";
+        p.textContent = "No categories yet.";
+        categoryListEl.appendChild(p);
+      }
+    }, err=>{
+      console.error("Categories snapshot error:", err);
+      loadCategoriesOnce(); // fallback
+    });
   }catch(e){
-    console.error("duplicate-check:", e);
+    console.error("watchCategoriesRealtime error:", e);
+    loadCategoriesOnce();
+  }
+}
+
+/* Add category */
+addCategoryBtn.addEventListener("click", async ()=>{
+  const name = newCategoryInput.value.trim().toLowerCase();
+  if(!name) return;
+  try{
+    await setDoc(doc(db, "categories", name), { createdAt: serverTimestamp(), createdBy: auth.currentUser ? auth.currentUser.email : null });
+    newCategoryInput.value = "";
+    // realtime listener will update list automatically
+  }catch(err){
+    console.error("Add category error:", err);
+    alert("Failed to add category. Check console.");
+  }
+});
+
+/* -------------------------
+   Team member management (Firestore + Auth)
+   ------------------------- */
+const teamListTBody = document.getElementById("teamList");
+const addTeamBtn = document.getElementById("addTeamBtn");
+const tmNameInput = document.getElementById("tmName");
+const tmEmailInput = document.getElementById("tmEmail");
+const tmPassInput = document.getElementById("tmPass");
+
+/* Render team members from 'users' collection (role === 'team') */
+async function renderTeamMembersFromFirestore(){
+  teamListTBody.innerHTML = "";
+  try{
+    const usersQ = query(collection(db, "users"), where("role", "==", "team"), orderBy("createdAt", "desc"));
+    const snap = await getDocs(usersQ);
+
+    const rows = [];
+    snap.forEach((d, idx)=>{
+      const data = d.data();
+      const tr = document.createElement("tr");
+      const addedOn = data.createdAt && data.createdAt.toDate ? data.createdAt.toDate().toLocaleString() : (data.createdAt || "");
+      tr.innerHTML = `
+        <td>${idx+1}</td>
+        <td>${escapeHtml(data.name || "")}</td>
+        <td>${escapeHtml(data.email || "")}</td>
+        <td>${escapeHtml(data.createdBy || "")}</td>
+        <td>${escapeHtml(addedOn)}</td>
+        <td><button data-uid="${d.id}" class="remove-team-btn" style="background:#e74c3c;color:#fff;border:none;padding:6px 8px;border-radius:6px;cursor:pointer">Remove</button></td>
+      `;
+      rows.push(tr);
+    });
+
+    if(rows.length === 0){
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td colspan="6" style="color:#666;text-align:center;padding:12px">No team members yet.</td>`;
+      teamListTBody.appendChild(tr);
+    }else{
+      rows.forEach(r=>teamListTBody.appendChild(r));
+      // attach remove handlers
+      teamListTBody.querySelectorAll(".remove-team-btn").forEach(btn=>{
+        btn.addEventListener("click", async ()=>{
+          const uid = btn.getAttribute("data-uid");
+          if(!uid) return;
+          if(!confirm("Remove this team member?")) return;
+          try{
+            // delete Firestore user doc (note: deleting Auth user requires admin SDK - not available client-side)
+            await deleteDoc(doc(db, "users", uid));
+            // UI will refresh on next call
+            await renderTeamMembersFromFirestore();
+          }catch(err){
+            console.error("Remove team member error:", err);
+            alert("Failed to remove. Check console.");
+          }
+        });
+      });
+    }
+  }catch(err){
+    console.error("renderTeamMembersFromFirestore error:", err);
+    teamListTBody.innerHTML = `<tr><td colspan="6" style="color:#c00">Failed to load team members.</td></tr>`;
+  }
+}
+
+/* Add team member: create auth user + users doc */
+addTeamBtn.addEventListener("click", async ()=>{
+  const name = tmNameInput.value.trim();
+  const email = tmEmailInput.value.trim().toLowerCase();
+  const password = tmPassInput.value;
+
+  if(!name || !email || !password){
+    alert("Please enter name, email and password.");
+    return;
   }
 
   try{
-    // store owner email (who is adding) before creating new user
-    const addedBy = auth.currentUser && auth.currentUser.email ? auth.currentUser.email : OWNER_EMAIL;
-
-    // Create new user in Firebase Auth
-    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    // create auth user
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
     const uid = cred.user.uid;
 
-    // Create Firestore record
+    // set Firestore doc
     await setDoc(doc(db, "users", uid), {
       name: name,
       email: email,
       role: "team",
-      createdBy: addedBy,
+      createdBy: auth.currentUser ? auth.currentUser.email : "owner",
       createdAt: serverTimestamp()
     });
 
+    // clear inputs
+    tmNameInput.value = "";
+    tmEmailInput.value = "";
+    tmPassInput.value = "";
+
+    // refresh UI
+    await renderTeamMembersFromFirestore();
     alert("Team member added successfully.");
-
-    // Clear inputs
-    document.getElementById("tmName").value = "";
-    document.getElementById("tmEmail").value = "";
-    document.getElementById("tmPass").value = "";
-
-    // Immediately sign back in as owner to restore admin session:
-    // (uses the owner credentials provided earlier)
-    await signInWithEmailAndPassword(auth, OWNER_EMAIL, OWNER_PASS);
-
-    // Refresh list
-    renderTeamMembers();
-
   }catch(err){
-    console.error("addTeamMember:", err);
-    alert(err.message || "Failed to add team member.");
+    console.error("addTeamMember error:", err);
+    alert(err.message || "Failed to add member. See console.");
   }
-};
+});
 
-/* Remove team member:
-   - deletes the user's Firestore document (prevents role access)
-   - (note) deleting the Auth user requires Admin privileges; here we remove the Firestore record to revoke role.
-*/
-window.removeTeamMember = async function(uid, email){
-  if(!confirm(`Remove ${email} from team?`)) return;
+/* -------------------------
+   Activity log (client-side mock -> left as-is but with safe DOM insertion)
+   ------------------------- */
+const activityTableBody = document.getElementById("activityTable");
+
+/* If you want to move activities to Firestore later, replace this block. For now keep the mock, but render safely. */
+const activityLog = [
+  {user:"Admin",title:"The Uncut Zubeen Interview",category:"podcast",url:"https://youtu.be/5VenPCFCShU",time:"2026-01-31 10:42 AM"},
+  {user:"Editor-1",title:"Radio Mirchi Interview",category:"interview",url:"https://youtu.be/AD8G_v3TJy8",time:"2026-01-30 09:15 PM"},
+  {user:"Admin",title:"MAJULIR EJONI",category:"song",url:"https://youtu.be/ZG3SdjQQLQ4",time:"2026-01-29 07:05 PM"}
+];
+
+function getYouTubeId(url){
   try{
-    await deleteDoc(doc(db, "users", uid));
-    // optional: you can also flag the user in a 'disabled' collection or track activity
-    renderTeamMembers();
-    alert("Team member removed (Firestore doc deleted). To remove Auth account, use admin console.");
-  }catch(err){
-    console.error("removeTeamMember:", err);
-    alert(err.message || "Failed to remove team member.");
-  }
-};
+    const u = new URL(url);
+    if(u.hostname === 'youtu.be') return u.pathname.slice(1);
+    return u.searchParams.get('v') || '';
+  }catch(e){ return ''; }
+}
+function yt(id){ return `https://img.youtube.com/vi/${id}/hqdefault.jpg`; }
 
-/* ===== Init ===== */
-loadCategories();
-renderTeamMembers();
+function renderActivityMock(){
+  activityTableBody.innerHTML = "";
+  activityLog.forEach((v,i)=>{
+    const tr = document.createElement("tr");
+    const thumbHtml = `<div class="thumb"><img src="${escapeHtml(yt(getYouTubeId(v.url)))}" alt=""></div>`;
+    tr.innerHTML = `
+      <td>${i+1}</td>
+      <td>${thumbHtml}</td>
+      <td>${escapeHtml(v.title)}</td>
+      <td>${escapeHtml(v.category)}</td>
+      <td>${escapeHtml(v.user)}</td>
+      <td><a href="${escapeHtml(v.url)}" target="_blank" rel="noopener">Open</a></td>
+      <td>${escapeHtml(v.time)}</td>
+    `;
+    activityTableBody.appendChild(tr);
+  });
+}
+
+/* -------------------------
+   Initialization
+   ------------------------- */
+async function initAdminPage(){
+  // initial UI state: open activity box & leave others collapsed
+  document.getElementById("categoryBox").style.display = "none";
+  document.getElementById("teamBox").style.display = "none";
+
+  // load categories (realtime watch preferred)
+  watchCategoriesRealtime(); // keeps the admin UI synced with Firestore automatically
+  // fallback one-time load if realtime fails is handled inside the function
+
+  // load team members
+  await renderTeamMembersFromFirestore();
+
+  // render activity
+  renderActivityMock();
+}
+
+/* Run when DOM is ready */
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initAdminPage);
+} else {
+  initAdminPage();
+}
 
 </script>
-
 </body>
 </html>
