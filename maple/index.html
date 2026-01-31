@@ -568,12 +568,14 @@ window.submitOrder = async(btnElement) => {
   }
 
   const payload = {
-    table,
-    items: Object.values(order),
-    total,
-    status: "pending",
-    submittedAt: Date.now()
-  };
+  identifierType,          // "room" or "table"
+  identifierNumber,        // the number
+  table: identifierNumber, // keep for backward compatibility
+  items: Object.values(order),
+  total,
+  status: "pending",
+  submittedAt: Date.now()
+};
 
   const instr = (instructionsInput && String(instructionsInput.value || "").trim());
   if (instr) {
