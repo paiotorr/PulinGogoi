@@ -399,7 +399,10 @@ function renderSingleOrder(o, container, actions){
 
   const html = `
     <div class="order" data-id="${o.id}">
-      <div class="header"><div class="table">Table ${escapeHtml(String(o.table||"—"))}</div><div class="time">${escapeHtml(timeText)}</div></div>
+      <div class="header"><div class="table">
+  ${o.identifierType === "room" ? "Room" : "Table"} :
+  ${escapeHtml(String(o.identifierNumber || o.table || "—"))}
+</div></div>
       <div class="customer">👤 ${escapeHtml(o.customer||"—")}</div>
       ${items}
       <div class="total">₹${escapeHtml(String(o.total||0))}</div>
