@@ -3,68 +3,71 @@
 <head>
   <script type="module">
 import { auth, db } from '/firebase.js';
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { onAuthStateChanged } from
+  "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+  collection,
+  query,
+  where,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const LOGIN_URL = "/maple/owner_login.html";
-function goLogin(){ window.location.replace(LOGIN_URL); }
+function goLogin() {
+  window.location.replace(LOGIN_URL);
+}
+
+let checkedOnce = false; // 🔑 THIS IS CRITICAL
 
 onAuthStateChanged(auth, async (user) => {
+  if (checkedOnce) return;
+  checkedOnce = true;
+
   try {
-    // 1️⃣ User must be logged in
+    // Waited auth result is FINAL here
     if (!user) {
       goLogin();
       return;
     }
 
-    // 2️⃣ Restaurant ID of THIS page (KEEP THIS)
-    const restaurantId = RESTAURANT.id;
-
-    // 3️⃣ Fetch this restaurant document
-    const restaurantRef = doc(db, "restaurants", restaurantId);
-    const restaurantSnap = await getDoc(restaurantRef);
-
-    if (!restaurantSnap.exists()) {
-      goLogin();
-      return;
-    }
-
-    const data = restaurantSnap.data();
-
-    // 🔍 DEBUG (optional – you can remove later)
-    console.log("Auth UID:", user.uid);
-    console.log("Owner UID:", data.ownerUID);
-
-    // 4️⃣ OWNER CHECK (CRITICAL)
-    if (!data.ownerUID || data.ownerUID !== user.uid) {
-      goLogin();
-      return;
-    }
-
-    // 5️⃣ Optional status / subscription checks
-    if (data.status && data.status !== "active") {
-      goLogin();
-      return;
-    }
-
-    const end = data.subscriptionEnd?.toDate?.();
-    if (end && new Date() > end) {
-      goLogin();
-      return;
-    }
-
-    // 6️⃣ Store session (safe)
-    sessionStorage.setItem(
-      "restaurant_session",
-      JSON.stringify({ rid: restaurantId })
+    const q = query(
+      collection(db, "restaurants"),
+      where("ownerUID", "==", user.uid)
     );
 
-    console.log("✅ Access granted for restaurant:", restaurantId);
+    const snap = await getDocs(q);
 
-    // ✅ DO NOTHING ELSE — page continues
+    if (snap.empty) {
+      goLogin();
+      return;
+    }
+
+    const docSnap = snap.docs[0];
+    const d = docSnap.data();
+
+    const end = d.subscriptionEnd?.toDate?.();
+
+    if (d.status !== "active") {
+      goLogin();
+      return;
+    }
+
+    if (!end || new Date() > end) {
+      goLogin();
+      return;
+    }
+
+    // ✅ AUTHORIZED — allow page to load
+    sessionStorage.setItem(
+      "restaurant_session",
+      JSON.stringify({ rid: docSnap.id })
+    );
+
+    window.RESTAURANT_ID = docSnap.id;
+    console.log("Owner access granted:", docSnap.id);
 
   } catch (err) {
-    console.error("Owner guard error:", err);
+    console.error("Auth guard error:", err);
     goLogin();
   }
 });
