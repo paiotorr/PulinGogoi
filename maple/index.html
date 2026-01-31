@@ -323,12 +323,12 @@ if (!identifierNumber || !identifierType) {
 
 const checker = await getDoc(
   doc(
-    db,
-    "restaurants",
-    "maple",
-    "allowedIdentifiers",
-    `${identifierType}_${identifierNumber}`
-  )
+  db,
+  "restaurants",
+  "maple",
+  "allowedIdentifiers",
+  `${identifierType}_${identifierNumber}`
+)
 );
 
 if (!checker.exists()) {
@@ -340,7 +340,8 @@ if (!checker.exists()) {
 /* ===== Backwards compatibility: table variable used across page ===== */
 const restaurantId = "maple";
 const table = identifierNumber; // keep original 'table' variable for legacy usage
-tableInfo.innerText = "Table: " + table;
+tableInfo.innerText =
+  (identifierType === "room" ? "Room: " : "Table: ") + identifierNumber;
 
 /* ========== Menu data & constants ========== */
 const menuData = [
@@ -354,8 +355,8 @@ const menuData = [
   { name: "Sprite", price: 40, category: "Cold-Drink", img: "https://paiotorr.com/image/qwdvdjnnjfgjjknfjkgnjk/cold-drink/202615.45.17_e9c762af.jpg?w=400" }
 ];
 
-const POPUP_KEY = `popup_${restaurantId}_${table}`;
-const ORDER_KEY = `order_${restaurantId}_${table}`;
+const POPUP_KEY = `popup_${restaurantId}_${identifierType}_${identifierNumber}`;
+const ORDER_KEY = `order_${restaurantId}_${identifierType}_${identifierNumber}`;
 
 const TIME_SUBMITTED = 8 * 60 * 1000; 
 const TIME_RESULT = 5 * 60 * 1000;    
