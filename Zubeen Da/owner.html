@@ -160,6 +160,38 @@ footer{
   color:#666;
   margin-top:20px;
 }
+
+/* Small form tweaks for team member area to match UI */
+.team-form{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:10px;
+}
+.team-form input{
+  padding:8px 10px;
+  font-size:13px;
+  border:1px solid #ccc;
+  border-radius:6px;
+}
+.team-form .flex-1{flex:1 1 220px}
+.team-form button{
+  padding:8px 14px;
+  font-size:13px;
+  background:#000;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+.manage-list{
+  margin-top:12px;
+  max-height:260px;
+  overflow:auto;
+  border:1px solid #f0f0f0;
+  border-radius:6px;
+}
+.small-muted{font-size:12px;color:#666;margin-top:8px}
 </style>
 </head>
 
@@ -212,6 +244,47 @@ footer{
           <tbody id="activityTable"></tbody>
         </table>
       </div>
+    </div>
+  </div>
+
+  <!-- MANAGE TEAM MEMBERS (added at the last, matches existing UI) -->
+  <div class="card">
+    <div class="card-header" onclick="toggleTeamBox()">
+      Manage Team Members
+      <span id="toggleTeamIcon">▼</span>
+    </div>
+
+    <div class="card-body" id="teamBox">
+      <!-- Form: Name, Email, Password -->
+      <div>
+        <div class="team-form">
+          <input type="text" id="tmName" class="flex-1" placeholder="Full name">
+          <input type="email" id="tmEmail" class="flex-1" placeholder="Email address">
+          <input type="password" id="tmPass" placeholder="Password">
+          <button onclick="addTeamMember()">Add Member</button>
+        </div>
+        <div class="small-muted">Team members require a name, an email and a password. Public users cannot add members.</div>
+      </div>
+
+      <!-- List of team members -->
+      <div class="manage-list" id="teamListWrap" style="margin-top:12px">
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Added By</th>
+                <th>Added On</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="teamList"></tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -287,7 +360,74 @@ activityLog.forEach((v,i)=>{
   tbody.appendChild(tr);
 });
 
+/* ===== TEAM MEMBERS MANAGEMENT ===== */
+/* Stored in-memory on client-side for this static page. Replace with API calls for production. */
+let teamMembers = [
+  { name: "Owner", email: "owner@example.com", addedBy: "System", addedOn: "2026-01-31 11:00 AM" }
+];
+
+function toggleTeamBox(){
+  const box=document.getElementById("teamBox");
+  const icon=document.getElementById("toggleTeamIcon");
+  const open=box.style.display==="block";
+  box.style.display=open?"none":"block";
+  icon.textContent=open?"▼":"▲";
+}
+
+function renderTeamMembers(){
+  const wrap=document.getElementById("teamList");
+  wrap.innerHTML="";
+  teamMembers.forEach((m,i)=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`
+      <td>${i+1}</td>
+      <td>${escapeHtml(m.name)}</td>
+      <td>${escapeHtml(m.email)}</td>
+      <td>${escapeHtml(m.addedBy || 'Admin')}</td>
+      <td>${escapeHtml(m.addedOn)}</td>
+      <td><button onclick="removeTeamMember(${i})" style="background:#e74c3c;color:#fff;border:none;padding:6px 8px;border-radius:6px;cursor:pointer">Remove</button></td>
+    `;
+    wrap.appendChild(tr);
+  });
+}
+
+/* Simple HTML escape to avoid injected markup in this static example */
+function escapeHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function addTeamMember(){
+  const name = document.getElementById("tmName").value.trim();
+  const email = document.getElementById("tmEmail").value.trim().toLowerCase();
+  const pass = document.getElementById("tmPass").value;
+  if(!name || !email || !pass) return alert("Please enter name, email and password.");
+  // Basic duplicate check
+  if(teamMembers.some(m => m.email === email)) return alert("This email is already added.");
+  const now = new Date();
+  const ts = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2,'0') + "-" + String(now.getDate()).padStart(2,'0') + " " + now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  teamMembers.push({
+    name: name,
+    email: email,
+    // NOTE: For a real system never store plain passwords in client or server. Use proper hashing and server-side storage.
+    addedBy: "Admin",
+    addedOn: ts
+  });
+  // Clear inputs
+  document.getElementById("tmName").value = "";
+  document.getElementById("tmEmail").value = "";
+  document.getElementById("tmPass").value = "";
+  renderTeamMembers();
+}
+
+function removeTeamMember(i){
+  if(!confirm("Remove this member?")) return;
+  teamMembers.splice(i,1);
+  renderTeamMembers();
+}
+
+/* ===== INIT ===== */
 renderCategories();
+renderTeamMembers();
 </script>
 
 </body>
