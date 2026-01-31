@@ -11,53 +11,57 @@ function goLogin(){ window.location.replace(LOGIN_URL); }
 
 onAuthStateChanged(auth, async (user) => {
   try {
+    // 1️⃣ User must be logged in
     if (!user) {
       goLogin();
       return;
     }
 
-    // get THIS restaurant
+    // 2️⃣ Restaurant ID of THIS page (KEEP THIS)
     const restaurantId = RESTAURANT.id;
 
-    // fetch this restaurant document
+    // 3️⃣ Fetch this restaurant document
     const restaurantRef = doc(db, "restaurants", restaurantId);
     const restaurantSnap = await getDoc(restaurantRef);
 
     if (!restaurantSnap.exists()) {
-      // restaurant does not exist
       goLogin();
       return;
     }
 
     const data = restaurantSnap.data();
 
-    // 🔐 OWNER CHECK (MOST IMPORTANT LINE)
-    if (data.ownerUID !== user.uid) {
-      // logged-in user is NOT the owner of this restaurant
+    // 🔍 DEBUG (optional – you can remove later)
+    console.log("Auth UID:", user.uid);
+    console.log("Owner UID:", data.ownerUID);
+
+    // 4️⃣ OWNER CHECK (CRITICAL)
+    if (!data.ownerUID || data.ownerUID !== user.uid) {
       goLogin();
       return;
     }
 
-    // optional subscription checks (keep if you use them)
-    const end = data.subscriptionEnd?.toDate?.();
-    if (data.status !== "active") {
+    // 5️⃣ Optional status / subscription checks
+    if (data.status && data.status !== "active") {
       goLogin();
       return;
     }
+
+    const end = data.subscriptionEnd?.toDate?.();
     if (end && new Date() > end) {
       goLogin();
       return;
     }
 
-    // store session (optional but safe)
+    // 6️⃣ Store session (safe)
     sessionStorage.setItem(
       "restaurant_session",
       JSON.stringify({ rid: restaurantId })
     );
 
-    console.log("Access granted for restaurant:", restaurantId);
+    console.log("✅ Access granted for restaurant:", restaurantId);
 
-    // ✅ DO NOTHING ELSE → page continues loading
+    // ✅ DO NOTHING ELSE — page continues
 
   } catch (err) {
     console.error("Owner guard error:", err);
