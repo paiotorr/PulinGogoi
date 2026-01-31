@@ -1,48 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script type="module">
-import { auth, db } from '/firebase.js';
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-const LOGIN_URL = "/maple/owner_login.html";
-function goLogin(){ window.location.replace(LOGIN_URL); }
-
-onAuthStateChanged(auth, async (user) => {
-  try {
-    if (!user) return goLogin();
-
-    // find restaurants owned by this user
-    const q = query(collection(db, "restaurants"), where("ownerUID", "==", user.uid));
-    const snap = await getDocs(q);
-    if (snap.empty) return goLogin();
-
-    const docSnap = snap.docs[0];
-    const d = docSnap.data();
-
-    // safe subscriptionEnd check (won't throw if missing)
-    const end = d.subscriptionEnd?.toDate?.();
-    if (d.status !== "active") return goLogin();
-    if (!end || new Date() > end) return goLogin();
-
-    // store the restaurant id for use later by the page code
-    try {
-      sessionStorage.setItem("restaurant_session", JSON.stringify({ rid: docSnap.id }));
-      window.RESTAURANT_ID = docSnap.id;
-    } catch(e) { /* ignore session errors */ }
-
-    // allowed — do nothing so page continues to load
-    console.log("Access granted for restaurant:", docSnap.id);
-  } catch (err) {
-    console.error("Guard error:", err);
-    goLogin();
-  }
-});
-</script>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Paiotorr — Owner Dashboard (Fixed Aggregation Images)</title>
+
 <style>
 /* ---------- Base ---------- */
 *{box-sizing:border-box}
@@ -113,6 +75,23 @@ body{padding:20px}
 .rejectBar{background:#e74c3c;height:100%}
 .topBadge{font-size:12px;font-weight:bold;margin-left:6px}
 
+/* guard message bar */
+#guardMessageBar {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  top: 12px;
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+  padding: 10px 14px;
+  border-radius: 10px;
+  z-index: 99999;
+  font-weight: 600;
+  display: none;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+
 /* responsive */
 @media(max-width:1020px){.grid{grid-template-columns:1fr}}
 </style>
@@ -122,6 +101,8 @@ body{padding:20px}
 <audio id="newOrderSound" preload="auto">
   <source src="https://paiotorr.com/2869-preview.mp3" type="audio/mpeg">
 </audio>
+
+<div id="guardMessageBar"></div>
 
 <div class="headerBar">
   <h1 id="dashTitle">📋 Paiotorr Dashboard</h1>
@@ -173,7 +154,141 @@ body{padding:20px}
 </div>
 
 <script type="module">
-/* ---------- Firebase imports ---------- */
+/*
+  Auth guard (robust) — replaces the previous immediate-redirect logic.
+  Keeps you on the page and shows clear messages instead of instantly bouncing
+  the user back to the login page when a Firestore check fails.
+*/
+
+import { auth, db } from '/firebase.js';
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const LOGIN_URL = "/maple/owner_login.html";
+function goLogin(){ window.location.replace(LOGIN_URL); }
+
+function showGuardMessage(text, persistent = false) {
+  const bar = document.getElementById('guardMessageBar');
+  bar.innerText = text;
+  bar.style.display = 'block';
+  if (!persistent) {
+    // auto-hide after a short period so it doesn't block the UI in normal usage
+    setTimeout(()=>{ bar.style.display = 'none'; }, 8000);
+  }
+}
+
+function hideGuardMessage() {
+  const bar = document.getElementById('guardMessageBar');
+  if (bar) bar.style.display = 'none';
+}
+
+// Accept Firestore Timestamp, ISO string, number (ms), or Date
+function parsePossibleTimestamp(val){
+  if (!val) return null;
+  if (typeof val.toDate === 'function') return val.toDate();
+  if (typeof val === 'number') {
+    const d = new Date(val); return isNaN(d.getTime()) ? null : d;
+  }
+  if (typeof val === 'string') {
+    const d = new Date(val); return isNaN(d.getTime()) ? null : d;
+  }
+  if (val instanceof Date) return val;
+  return null;
+}
+
+onAuthStateChanged(auth, async (user) => {
+  try {
+    hideGuardMessage();
+
+    // If not logged in, send to login page (this is correct)
+    if (!user) {
+      console.log("No authenticated user — redirecting to login.");
+      goLogin();
+      return;
+    }
+
+    // Optional: if you have a restaurant_session saved, keep it while queries run
+    let sessionRestaurantId = null;
+    try {
+      const s = sessionStorage.getItem("restaurant_session");
+      if (s) sessionRestaurantId = JSON.parse(s).rid;
+    } catch(e){ /* ignore session parse errors */ }
+
+    // Query Firestore for restaurants owned by this user
+    let snap;
+    try {
+      const q = query(collection(db, "restaurants"), where("ownerUID", "==", user.uid));
+      snap = await getDocs(q);
+    } catch (err) {
+      console.error("Firestore query failed:", err);
+      // If Firestore failed (network or rules), fallback to session if available
+      if (sessionRestaurantId) {
+        window.RESTAURANT_ID = sessionRestaurantId;
+        console.log("Used session fallback restaurant id:", sessionRestaurantId);
+        hideGuardMessage();
+        return;
+      }
+      // Show clear message and DON'T redirect — this prevents the redirect loop
+      showGuardMessage("Unable to verify owner (Firestore query failed). Check network/Firestore rules. See console for details.", true);
+      return;
+    }
+
+    // If no restaurant doc found
+    if (!snap || snap.empty) {
+      if (sessionRestaurantId) {
+        window.RESTAURANT_ID = sessionRestaurantId;
+        console.log("No restaurant documents found, but using session fallback:", sessionRestaurantId);
+        hideGuardMessage();
+        return;
+      }
+      // Show message instead of sending back to login — lets you debug and prevents bounce
+      showGuardMessage("No restaurant found for this account. Ensure a `restaurants` doc exists with `ownerUID` equal to this user's UID.", true);
+      console.warn("No restaurant found for owner UID:", user.uid);
+      return;
+    }
+
+    // Use first matching restaurant doc (same as original logic)
+    const docSnap = snap.docs[0];
+    const d = docSnap.data();
+
+    // Status check
+    if (d.status !== "active") {
+      showGuardMessage(`Restaurant status is not active (status="${String(d.status)}"). Contact admin or fix the 'status' field.`, true);
+      console.warn("Restaurant status is not active:", d.status);
+      return;
+    }
+
+    // Subscription end check (robust parsing)
+    const end = parsePossibleTimestamp(d.subscriptionEnd);
+    if (!end) {
+      showGuardMessage("Missing or invalid `subscriptionEnd` on restaurant document. Set a Firestore Timestamp in the future.", true);
+      console.warn("Missing/invalid subscriptionEnd:", d.subscriptionEnd);
+      return;
+    }
+    if (new Date() > end) {
+      showGuardMessage(`Subscription expired on ${end.toLocaleString()}. Renew subscription or set a future subscriptionEnd.`, true);
+      console.warn("Subscription expired:", end);
+      return;
+    }
+
+    // All good — set session and allow page to continue
+    try {
+      sessionStorage.setItem("restaurant_session", JSON.stringify({ rid: docSnap.id }));
+      window.RESTAURANT_ID = docSnap.id;
+    } catch(e) { /* ignore session storage errors */ }
+
+    hideGuardMessage();
+    console.log("Access granted for restaurant:", docSnap.id);
+
+  } catch (err) {
+    console.error("Guard error:", err);
+    showGuardMessage("Unexpected guard error. See console for details.", true);
+  }
+});
+</script>
+
+<script type="module">
+/* ---------- Firebase imports & main dashboard logic (unchanged from original) ---------- */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
 import {
   getFirestore, collection, onSnapshot, doc, updateDoc, Timestamp
@@ -482,12 +597,14 @@ document.addEventListener('keydown', e=>{
   if(e.key === "F12") e.preventDefault();
 });
 </script>
+
 <footer style="margin-top:40px;text-align:center;font-size:13px;color:#555;">
   © 2026 Paiotorr. All Rights Reserved.
 </footer>
-</body>
-  <button id="logoutBtn" style="position:fixed;right:16px;top:16px;">Logout</button>
-  
+
+<!-- persistent logout button -->
+<button id="logoutBtn" style="position:fixed;right:16px;top:16px;">Logout</button>
+
 <script>
 document.getElementById('logoutBtn').addEventListener('click', () => {
   // Logout ONLY this owner page
@@ -497,4 +614,5 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
   window.location.replace("/maple/owner_login.html");
 });
 </script>
+</body>
 </html>
