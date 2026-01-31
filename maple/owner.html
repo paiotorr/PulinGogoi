@@ -8,7 +8,6 @@ import { collection, query, where, getDocs } from "https://www.gstatic.com/fireb
 
 const LOGIN_URL = "/maple/owner_login.html";
 function goLogin(){ window.location.replace(LOGIN_URL); }
-
 onAuthStateChanged(auth, async (user) => {
   try {
     if (!user) return goLogin();
