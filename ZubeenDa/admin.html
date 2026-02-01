@@ -8,9 +8,11 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Arial,Helvetica,sans-serif;background:#f3f3f3;color:#111}
-header{background:#000;color:#fff;padding:16px;text-align:center}
+header{background:#000;color:#fff;padding:16px;text-align:center; position: relative;}
 header h1{font-size:20px}
 header p{font-size:12px;opacity:.8}
+.header-actions{position:absolute;right:12px;top:12px;display:flex;gap:8px}
+.header-actions button{background:#fff;color:#000;border:none;padding:8px 12px;border-radius:8px;cursor:pointer}
 .container{max-width:1100px;margin:20px auto 40px;padding:0 12px}
 .card{background:#fff;border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,.08);margin-bottom:20px;overflow:hidden}
 .card-header{padding:14px 16px;font-weight:700;cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:#111;color:#fff}
@@ -29,13 +31,14 @@ th,td{padding:12px 10px;font-size:13px;border-bottom:1px solid #eee}
 tbody tr:hover{background:#fafafa}
 .thumb{width:110px;height:62px;border-radius:6px;overflow:hidden;background:#ddd}
 .thumb img{width:100%;height:100%;object-fit:cover}
-footer{text-align:center;font-size:12px;color:#666;margin-top:20px}
+.footer{text-align:center;font-size:12px;color:#666;margin-top:20px}
 .team-form{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
 .team-form input{padding:8px 10px;font-size:13px;border:1px solid #ccc;border-radius:6px}
 .team-form .flex-1{flex:1 1 220px}
 .team-form button{padding:8px 14px;font-size:13px;background:#000;color:#fff;border:none;border-radius:6px;cursor:pointer}
 .manage-list{margin-top:12px;max-height:260px;overflow:auto;border:1px solid #f0f0f0;border-radius:6px}
 .small-muted{font-size:12px;color:#666;margin-top:8px}
+.link-allclear{background:#c40000;color:#fff;padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
 </style>
 </head>
 
@@ -44,6 +47,10 @@ footer{text-align:center;font-size:12px;color:#666;margin-top:20px}
 <header>
   <h1>Admin / Owner Dashboard</h1>
   <p>Joi Zubeen Da — Control Panel</p>
+  <div class="header-actions" id="headerActions">
+    <button id="btnAllClear" class="link-allclear">All Clear</button>
+    <button id="btnLogout">Logout</button>
+  </div>
 </header>
 
 <main class="container">
@@ -60,7 +67,7 @@ footer{text-align:center;font-size:12px;color:#666;margin-top:20px}
 
       <div class="add-category">
         <input type="text" id="newCategory" placeholder="New category name">
-        <button onclick="addCategory()">Add</button>
+        <button id="addCategoryBtn">Add</button>
       </div>
 
     </div>
@@ -83,6 +90,7 @@ footer{text-align:center;font-size:12px;color:#666;margin-top:20px}
               <th>Added By</th>
               <th>URL</th>
               <th>Date & Time</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody id="activityTable"></tbody>
@@ -104,7 +112,7 @@ footer{text-align:center;font-size:12px;color:#666;margin-top:20px}
           <input type="text" id="tmName" class="flex-1" placeholder="Full name">
           <input type="email" id="tmEmail" class="flex-1" placeholder="Email address">
           <input type="password" id="tmPass" placeholder="Password">
-          <button onclick="addTeamMember()">Add Member</button>
+          <button id="addTeamBtn">Add Member</button>
         </div>
         <div class="small-muted">Team members require a name, an email and a password. Public users cannot add members.</div>
       </div>
@@ -136,253 +144,405 @@ footer{text-align:center;font-size:12px;color:#666;margin-top:20px}
   © 2026 Joi Zubeen Da — Owner Access
 </footer>
 
-<script>
-/* --------------------------
-   Shared storage keys & helpers
-   -------------------------- */
-const CKEY = "jzd_categories";
-const VKEY = "jzd_videos";
-const TKEY = "jzd_team";
-const defaultCategories = ["podcast","interview","song"];
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import {
+    getFirestore, collection, doc, setDoc, addDoc, getDoc, getDocs,
+    onSnapshot, query, where, orderBy, deleteDoc, writeBatch, updateDoc, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const get = (k, d) => {
-  try { return JSON.parse(localStorage.getItem(k) || JSON.stringify(d)); }
-  catch(e){ return d; }
-};
-const set = (k, v) => {
-  try { localStorage.setItem(k, JSON.stringify(v)); }
-  catch(e){}
-};
-
-/* ---------- OWNER GUARD (no UI change) ---------- */
-/* Note: admin access expects a jzd_session set by login flow */
-const session = JSON.parse(sessionStorage.getItem("jzd_session") || "null");
-if(!session || session.role !== "owner"){
-  // silent redirect back to login if not owner
-  location.replace("login.html");
-}
-
-/* ---------- CATEGORY UI ---------- */
-function toggleCategoryBox(){
-  const box=document.getElementById("categoryBox");
-  const icon=document.getElementById("toggleIcon");
-  const open=box.style.display==="block";
-  box.style.display=open?"none":"block";
-  icon.textContent=open?"▼":"▲";
-}
-
-function normalizeCategory(s){
-  return String(s||'').trim().toLowerCase();
-}
-
-function ensureDefaultCategories(){
-  if(!localStorage.getItem(CKEY)){
-    set(CKEY, defaultCategories);
-  } else {
-    // sanity: if stored is empty or not array, reset to default
-    const stored = get(CKEY, []);
-    if(!Array.isArray(stored) || stored.length === 0){
-      set(CKEY, defaultCategories);
-    }
-  }
-}
-
-function renderCategories(){
-  const wrap=document.getElementById("categoryList");
-  const cats = get(CKEY, defaultCategories).map(normalizeCategory);
-  wrap.innerHTML = "";
-  cats.forEach((cat,i)=>{
-    const div = document.createElement("div");
-    div.className = "category-item";
-    div.innerHTML = `${cat} <button onclick="removeCategory(${i})" title="Remove category">×</button>`;
-    wrap.appendChild(div);
-  });
-}
-
-/* add category */
-function addCategory(){
-  const input=document.getElementById("newCategory");
-  const raw = input.value;
-  const val = normalizeCategory(raw);
-  if(!val) return;
-  const cats = get(CKEY, defaultCategories).map(normalizeCategory);
-  if(cats.includes(val)){
-    alert("Category already exists.");
-    return;
-  }
-  cats.push(val);
-  set(CKEY, cats);
-  input.value = "";
-  renderCategories();
-  // Storage change triggers index.html via storage events in other tabs (or our own override)
-}
-
-/* remove category with safe behaviour:
-   - if videos exist in that category, prompt user:
-     OK => move videos to the first remaining category after deletion
-     Cancel => remove category and leave videos unchanged (they will be hidden)
-*/
-function removeCategory(index){
-  const cats = get(CKEY, defaultCategories).map(normalizeCategory);
-  if(index < 0 || index >= cats.length) return;
-  const catToRemove = cats[index];
-
-  // count videos in that category
-  const vids = get(VKEY, []);
-  const vidsInCat = (Array.isArray(vids) ? vids : []).filter(v => (v.category||'').toString().toLowerCase() === catToRemove);
-  if(vidsInCat.length > 0){
-    const msg = `Category "${catToRemove}" contains ${vidsInCat.length} video(s).\n\nPress OK to remove the category and MOVE those videos to the next available category.\nPress Cancel to remove the category but KEEP the videos (they will be hidden on the homepage).`;
-    const move = confirm(msg);
-    // remove the category
-    cats.splice(index, 1);
-    set(CKEY, cats.length ? cats : defaultCategories);
-    // if move chosen and there is at least one category left, move videos
-    if(move){
-      const targetCat = (cats[0] || defaultCategories[0]).toString().toLowerCase();
-      const normalizedVids = (Array.isArray(vids) ? vids : []).map(v => {
-        if((v.category||'').toString().toLowerCase() === catToRemove){
-          return Object.assign({}, v, { category: targetCat });
-        }
-        return v;
-      });
-      set(VKEY, normalizedVids);
-      alert(`Moved ${vidsInCat.length} video(s) to "${targetCat}".`);
-    } else {
-      alert(`Category removed. ${vidsInCat.length} video(s) remain unchanged and will not appear on the homepage unless re-categorized.`);
-    }
-  } else {
-    // no videos in that category — simple remove
-    cats.splice(index, 1);
-    set(CKEY, cats.length ? cats : defaultCategories);
-  }
-  renderCategories();
-  renderVideos();
-}
-
-/* ---------- VIDEO ACTIVITY ---------- */
-function normalizeVideo(v){
-  const id = v.id || (v.url ? (function(){ try{ const u=new URL(v.url); return u.hostname==="youtu.be"?u.pathname.slice(1):u.searchParams.get("v"); }catch(e){return "";} })() : "");
-  return {
-    category: normalizeCategory(v.category || v.cat || 'song'),
-    title: v.title || v.name || (id ? `YouTube · ${id}` : 'Untitled'),
-    url: v.url || (id ? `https://youtu.be/${id}` : ''),
-    thumb: v.thumb || (id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : ''),
-    addedBy: v.addedBy || v.user || 'team',
-    time: v.time || v.addedOn || ''
+  // ---------- Firebase config ----------
+  const firebaseConfig = {
+    apiKey: "AIzaSyC6cMfvfX68H-luCgPa32aXAc0D-x6bczU",
+    authDomain: "zubeenda-17222.firebaseapp.com",
+    projectId: "zubeenda-17222",
+    storageBucket: "zubeenda-17222.firebasestorage.app",
+    messagingSenderId: "541676751696",
+    appId: "1:541676751696:web:e75867164d4372d3ad7a55"
   };
-}
 
-function renderVideos(){
-  const tbody = document.getElementById("activityTable");
-  const vids = get(VKEY, []);
-  const normalized = Array.isArray(vids) ? vids.map(normalizeVideo) : [];
-  tbody.innerHTML = "";
-  normalized.forEach((v,i)=>{
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${i+1}</td>
-      <td><div class="thumb"><img src="${v.thumb || ''}" alt="thumb"></div></td>
-      <td>${escapeHtml(v.title)}</td>
-      <td>${escapeHtml(v.category)}</td>
-      <td>${escapeHtml(v.addedBy)}</td>
-      <td><a href="${escapeHtml(v.url)}" target="_blank" rel="noopener noreferrer">Open</a></td>
-      <td>${escapeHtml(v.time)}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
 
-/* ---------- TEAM MANAGEMENT ---------- */
-let teamMembers = get(TKEY, [
-  { name: "Owner", email: "owner@example.com", addedBy: "System", addedOn: new Date().toLocaleString() }
-]);
+  // ---------- DOM ----------
+  const categoryBox = document.getElementById("categoryBox");
+  const toggleIcon = document.getElementById("toggleIcon");
+  const categoryList = document.getElementById("categoryList");
+  const newCategoryInput = document.getElementById("newCategory");
+  const addCategoryBtn = document.getElementById("addCategoryBtn");
 
-function toggleTeamBox(){
-  const box=document.getElementById("teamBox");
-  const icon=document.getElementById("toggleTeamIcon");
-  const open=box.style.display==="block";
-  box.style.display=open?"none":"block";
-  icon.textContent=open?"▼":"▲";
-}
+  const activityTable = document.getElementById("activityTable");
 
-function renderTeamMembers(){
-  const wrap=document.getElementById("teamList");
-  teamMembers = get(TKEY, teamMembers);
-  wrap.innerHTML="";
-  teamMembers.forEach((m,i)=>{
-    const tr=document.createElement("tr");
-    tr.innerHTML=`
-      <td>${i+1}</td>
-      <td>${escapeHtml(m.name)}</td>
-      <td>${escapeHtml(m.email)}</td>
-      <td>${escapeHtml(m.addedBy || 'Admin')}</td>
-      <td>${escapeHtml(m.addedOn)}</td>
-      <td><button onclick="removeTeamMember(${i})" style="background:#e74c3c;color:#fff;border:none;padding:6px 8px;border-radius:6px;cursor:pointer">Remove</button></td>
-    `;
-    wrap.appendChild(tr);
-  });
-}
+  const teamBox = document.getElementById("teamBox");
+  const toggleTeamIcon = document.getElementById("toggleTeamIcon");
+  const tmName = document.getElementById("tmName");
+  const tmEmail = document.getElementById("tmEmail");
+  const tmPass = document.getElementById("tmPass");
+  const addTeamBtn = document.getElementById("addTeamBtn");
+  const teamList = document.getElementById("teamList");
 
-function addTeamMember(){
-  const name = document.getElementById("tmName").value.trim();
-  const email = document.getElementById("tmEmail").value.trim().toLowerCase();
-  const pass = document.getElementById("tmPass").value;
-  if(!name || !email || !pass) return alert("Please enter name, email and password.");
-  const team = get(TKEY, []);
-  if(team.some(m => m.email === email)) return alert("This email is already added.");
-  const now = new Date();
-  const ts = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2,'0') + "-" + String(now.getDate()).padStart(2,'0') + " " + now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
-  team.push({
-    name: name,
-    email: email,
-    // NOTE: storing plain passwords in localStorage is insecure. This example keeps parity with your static approach.
-    password: pass,
-    addedBy: session.email || 'Owner',
-    addedOn: ts
-  });
-  set(TKEY, team);
-  document.getElementById("tmName").value = "";
-  document.getElementById("tmEmail").value = "";
-  document.getElementById("tmPass").value = "";
-  renderTeamMembers();
-}
+  const btnLogout = document.getElementById("btnLogout");
+  const btnAllClear = document.getElementById("btnAllClear");
 
-function removeTeamMember(i){
-  if(!confirm("Remove this member?")) return;
-  const team = get(TKEY, []);
-  team.splice(i,1);
-  set(TKEY, team);
-  renderTeamMembers();
-}
+  // ---------- Helpers ----------
+  function toggleCategoryBox(){
+    const open = categoryBox.style.display === "block";
+    categoryBox.style.display = open ? "none" : "block";
+    toggleIcon.textContent = open ? "▼" : "▲";
+  }
+  window.toggleCategoryBox = toggleCategoryBox;
 
-/* ---------- UTIL ---------- */
-function escapeHtml(s){
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+  function toggleTeamBox(){
+    const open = teamBox.style.display === "block";
+    teamBox.style.display = open ? "none" : "block";
+    toggleTeamIcon.textContent = open ? "▼" : "▲";
+  }
+  window.toggleTeamBox = toggleTeamBox;
 
-/* ---------- INIT ---------- */
-(function init(){
-  ensureDefaultCategories();
-  renderCategories();
-  renderVideos();
-  renderTeamMembers();
-})();
+  function escapeHtml(s){
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
 
-/* ---------- Watch for storage changes (other tabs) ---------- */
-window.addEventListener('storage', (e) => {
-  try{
-    if(e.key === CKEY){
-      renderCategories();
-    } else if(e.key === VKEY){
-      renderVideos();
-    } else if(e.key === TKEY){
-      renderTeamMembers();
+  // ---------- Auth + Role Guard ----------
+  let currentUser = null;
+  onAuthStateChanged(auth, async (user) => {
+    if(!user){
+      // Not logged in — redirect to login
+      sessionStorage.removeItem("jzd_session");
+      location.replace("login.html");
+      return;
     }
-  }catch(e){}
-});
+    currentUser = user;
+    // Read role from Firestore users collection
+    try {
+      const udoc = await getDoc(doc(db, "users", user.uid));
+      if(!udoc.exists()){
+        // No user doc -> redirect to login (no role)
+        alert("No role assigned to this account. Contact project owner.");
+        await signOut(auth);
+        location.replace("login.html");
+        return;
+      }
+      const u = udoc.data();
+      if(u.role !== "admin"){
+        // Not admin => redirect
+        alert("Admin access required.");
+        await signOut(auth);
+        location.replace("login.html");
+        return;
+      }
+      // session (for other pages)
+      sessionStorage.setItem("jzd_session", JSON.stringify({
+        uid: user.uid,
+        email: user.email,
+        role: u.role,
+        name: u.name || ""
+      }));
 
-/* ---------- Small client hardening (non-breaking) ---------- */
-document.addEventListener('contextmenu', e => e.preventDefault());
+      // Ready: start listeners
+      startCategoryListener();
+      startVideoListener();
+      startTeamListener();
+
+    } catch (err) {
+      console.error(err);
+      alert("Auth verification failed. Please re-login.");
+      await signOut(auth);
+      location.replace("login.html");
+    }
+  });
+
+  // ---------- Category management (collection: categories) ----------
+  let categories = [];
+  let categoriesUnsub = null;
+
+  function startCategoryListener(){
+    if(categoriesUnsub) categoriesUnsub(); // unsubscribe old
+    const colRef = collection(db, "categories");
+    // real-time listener
+    categoriesUnsub = onSnapshot(colRef, (snap) => {
+      const out = [];
+      snap.forEach(d => {
+        const data = d.data();
+        out.push({ id: d.id, name: data.name || d.id, createdAt: data.createdAt || null });
+      });
+      // keep sorted by name
+      out.sort((a,b)=> a.name.localeCompare(b.name));
+      categories = out;
+      renderCategories();
+    }, (err) => {
+      console.error("categories snapshot error", err);
+    });
+  }
+
+  function renderCategories(){
+    categoryList.innerHTML = "";
+    if(!Array.isArray(categories) || categories.length === 0){
+      categoryList.innerHTML = '<div style="color:#777">No categories yet.</div>';
+      return;
+    }
+    categories.forEach((c, i) => {
+      const div = document.createElement("div");
+      div.className = "category-item";
+      div.innerHTML = `${escapeHtml(c.name)} <button onclick="removeCategory('${c.id}')">×</button>`;
+      categoryList.appendChild(div);
+    });
+  }
+
+  addCategoryBtn.addEventListener('click', async () => {
+    const raw = (newCategoryInput.value || "").trim();
+    if(!raw) return;
+    const id = raw.toLowerCase().replace(/\s+/g,'-');
+    try {
+      await setDoc(doc(db, "categories", id), { name: raw, createdAt: serverTimestamp() });
+      newCategoryInput.value = "";
+    } catch (err) {
+      console.error(err);
+      alert("Failed to add category: " + (err.message || err));
+    }
+  });
+
+  // Remove category with behavior similar to the original:
+  // If videos exist in that category, prompt to MOVE them to the first remaining category or KEEP them unchanged.
+  async function removeCategory(catId){
+    try {
+      const catDoc = await getDoc(doc(db, "categories", catId));
+      if(!catDoc.exists()) return;
+
+      // count videos with this category
+      const vidsQuery = query(collection(db, "videos"), where("category","==",catId));
+      const vidsSnap = await getDocs(vidsQuery);
+      const vids = [];
+      vidsSnap.forEach(d=> vids.push({ id: d.id, data: d.data() }));
+
+      if(vids.length > 0){
+        const move = confirm(`Category "${catDoc.data().name}" contains ${vids.length} video(s).\n\nPress OK to remove the category and MOVE those videos to the next available category.\nPress Cancel to remove the category but KEEP the videos (they will be hidden on the homepage unless re-categorized).`);
+        // delete category document
+        await deleteDoc(doc(db, "categories", catId));
+        // after deletion, if move==true and there is at least one category left, move videos
+        const remainingSnap = await getDocs(collection(db, "categories"));
+        const remaining = [];
+        remainingSnap.forEach(d=> remaining.push({ id:d.id, name:d.data().name }));
+        if(move && remaining.length > 0){
+          const target = remaining[0].id;
+          const batch = writeBatch(db);
+          vids.forEach(v => {
+            const vRef = doc(db, "videos", v.id);
+            batch.update(vRef, { category: target });
+          });
+          await batch.commit();
+          alert(`Moved ${vids.length} video(s) to "${remaining[0].name}".`);
+        } else {
+          if(move && remaining.length === 0){
+            // no categories left, keep videos unchanged
+            alert("No remaining categories to move videos to — videos left unchanged.");
+          } else {
+            alert(`Category removed. ${vids.length} video(s) remain unchanged and will not appear on the homepage unless re-categorized.`);
+          }
+        }
+        return;
+      } else {
+        // no videos in category — safe delete
+        await deleteDoc(doc(db, "categories", catId));
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to remove category: " + (err.message || err));
+    }
+  }
+  window.removeCategory = removeCategory;
+
+  // ---------- Video activity log (collection: videos) ----------
+  let videosUnsub = null;
+  function startVideoListener(){
+    if(videosUnsub) videosUnsub();
+    const colRef = collection(db, "videos");
+    // listen ordered by createdAt descending
+    videosUnsub = onSnapshot(query(colRef, orderBy("createdAt","desc")), (snap) => {
+      const rows = [];
+      snap.forEach((d) => {
+        const data = d.data();
+        rows.push({ id: d.id, ...data });
+      });
+      renderVideos(rows);
+    }, err => console.error("videos snapshot error", err));
+  }
+
+  function renderVideos(rows){
+    activityTable.innerHTML = "";
+    if(!Array.isArray(rows) || rows.length === 0){
+      activityTable.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#777;padding:18px">No activity yet.</td></tr>`;
+      return;
+    }
+    rows.forEach((v, i) => {
+      const tr = document.createElement("tr");
+      const thumb = `<div class="thumb"><img src="${escapeHtml(v.thumb||'')}" alt=""></div>`;
+      const urlHtml = `<a href="${escapeHtml(v.url||'')}" target="_blank" rel="noopener noreferrer">Open</a>`;
+      const t = escapeHtml(v.title || '');
+      const catLabel = escapeHtml(String(v.category || ''));
+      const addedBy = escapeHtml(v.addedBy || '');
+      const time = escapeHtml(v.time || (v.createdAt && v.createdAt.toDate ? v.createdAt.toDate().toLocaleString() : ''));
+
+      tr.innerHTML = `
+        <td>${i+1}</td>
+        <td>${thumb}</td>
+        <td>${t}</td>
+        <td>${catLabel}</td>
+        <td>${addedBy}</td>
+        <td>${urlHtml}</td>
+        <td>${time}</td>
+        <td><button onclick="deleteVideo('${v.id}')"
+          style="background:#e74c3c;color:#fff;border:none;padding:6px 8px;border-radius:6px;cursor:pointer">Delete</button></td>
+      `;
+      activityTable.appendChild(tr);
+    });
+  }
+
+  // Delete a video doc (admin only)
+  async function deleteVideo(videoId){
+    if(!confirm("Delete this video? This will remove it from the public index.")) return;
+    try {
+      await deleteDoc(doc(db, "videos", videoId));
+      alert("Deleted.");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete video: " + (err.message || err));
+    }
+  }
+  window.deleteVideo = deleteVideo;
+
+  // ---------- Team management ----------
+  // We'll create a Firebase Auth account for the team member using Identity Toolkit REST endpoint
+  // then write the users doc in Firestore with role: "team".
+  // NOTE: deleting the actual Auth account requires server-side admin privileges. This UI removes the Firestore user doc.
+  const API_KEY = "AIzaSyC6cMfvfX68H-luCgPa32aXAc0D-x6bczU";
+
+  addTeamBtn.addEventListener('click', async () => {
+    const name = (tmName.value || "").trim();
+    const email = (tmEmail.value || "").trim();
+    const pass = (tmPass.value || "").trim();
+    if(!name || !email || !pass){ alert("Please enter name, email and password."); return; }
+
+    try {
+      addTeamBtn.disabled = true;
+      addTeamBtn.textContent = "Adding...";
+      // 1) Create Auth user via REST (so we don't sign out the admin)
+      const resp = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${API_KEY}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password: pass })
+      });
+
+      const j = await resp.json();
+      if(!resp.ok){
+        const errMsg = (j && j.error && j.error.message) ? j.error.message : JSON.stringify(j);
+        throw new Error("Auth create failed: " + errMsg);
+      }
+      const uid = j.localId;
+      // 2) Create users doc in Firestore
+      const ts = new Date().toLocaleString();
+      await setDoc(doc(db, "users", uid), {
+        name,
+        email,
+        role: "team",
+        addedBy: currentUser.email || 'admin',
+        addedOn: ts
+      });
+
+      // UI cleanup
+      tmName.value = ""; tmEmail.value = ""; tmPass.value = "";
+      alert("Team member added.");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to add member: " + (err.message || err));
+    } finally {
+      addTeamBtn.disabled = false;
+      addTeamBtn.textContent = "Add Member";
+    }
+  });
+
+  // Team list listener (query users where role == 'team')
+  let teamUnsub = null;
+  function startTeamListener(){
+    if(teamUnsub) teamUnsub();
+    const colRef = collection(db, "users");
+    // we will listen all users and filter client-side (or you can use query where('role','==','team'))
+    const q = query(colRef /*, where("role","==","team") */);
+    teamUnsub = onSnapshot(q, snap => {
+      const arr = [];
+      snap.forEach(d => {
+        const data = d.data();
+        arr.push({ uid: d.id, ...data });
+      });
+      // filter team
+      const teams = arr.filter(x => x.role === "team");
+      teams.sort((a,b)=> (a.addedOn||'').localeCompare(b.addedOn||''));
+      renderTeamMembers(teams);
+    }, err => console.error("users snapshot error", err));
+  }
+
+  function renderTeamMembers(list){
+    teamList.innerHTML = "";
+    if(!Array.isArray(list) || list.length === 0){
+      teamList.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#777;padding:12px">No team members yet.</td></tr>`;
+      return;
+    }
+    list.forEach((m, i) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${i+1}</td>
+        <td>${escapeHtml(m.name)}</td>
+        <td>${escapeHtml(m.email)}</td>
+        <td>${escapeHtml(m.addedBy || 'Admin')}</td>
+        <td>${escapeHtml(m.addedOn || '')}</td>
+        <td>
+          <button onclick="removeTeamMember('${m.uid}')"
+            style="background:#e74c3c;color:#fff;border:none;padding:6px 8px;border-radius:6px;cursor:pointer">Remove</button>
+        </td>
+      `;
+      teamList.appendChild(tr);
+    });
+  }
+
+  // Remove team member: delete users doc (note: Auth account remains unless removed server-side)
+  async function removeTeamMember(uid){
+    if(!confirm("Remove this member? This will remove their team record. Removing the actual Auth account requires a server-side admin action.")) return;
+    try {
+      await deleteDoc(doc(db, "users", uid));
+      alert("Team member removed from Firestore. To delete their Auth account, run a server-side admin delete.");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to remove team member: " + (err.message || err));
+    }
+  }
+  window.removeTeamMember = removeTeamMember;
+
+  // ---------- Logout & AllClear ----------
+  btnLogout.addEventListener('click', async () => {
+    try {
+      await signOut(auth);
+    } catch(_) {}
+    sessionStorage.removeItem("jzd_session");
+    location.replace("login.html");
+  });
+  btnAllClear.addEventListener('click', () => {
+    // All Clear is a protected page — navigate there (it will re-check auth & role)
+    location.href = "allClear.html";
+  });
+
+  // ---------- Init UI state ----------
+  (function initUI(){
+    // show category & team boxes by default collapsed
+    categoryBox.style.display = "none";
+    teamBox.style.display = "none";
+    toggleIcon.textContent = "▼";
+    toggleTeamIcon.textContent = "▼";
+  })();
+
+  // ---------- Basic client hardening ----------
+  document.addEventListener('contextmenu', e => e.preventDefault());
 </script>
 
 </body>
