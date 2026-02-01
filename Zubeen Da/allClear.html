@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Owner Panel – Clear Videos</title>
+<title>Owner Panel – Clear Logs</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <meta http-equiv="X-Frame-Options" content="DENY" />
@@ -19,7 +19,6 @@ body{
   align-items:center;
   justify-content:center;
 }
-
 .panel{
   background:#fff;
   width:100%;
@@ -29,72 +28,45 @@ body{
   padding:24px;
   text-align:center;
 }
-
-h1{
-  font-size:20px;
-  margin-bottom:10px;
-}
-
-.note{
-  font-size:13px;
-  color:#555;
-  margin-bottom:20px;
-}
-
+h1{font-size:20px;margin-bottom:10px}
+.note{font-size:13px;color:#555;margin-bottom:20px}
 .count-box{
-  background:#000;
-  color:#fff;
-  padding:14px;
-  border-radius:8px;
-  margin-bottom:18px;
-  font-size:14px;
+  background:#000;color:#fff;
+  padding:14px;border-radius:8px;
+  margin-bottom:18px;font-size:14px;
 }
-
 .count-box span{
-  font-size:22px;
-  font-weight:bold;
-  display:block;
-  margin-top:4px;
+  font-size:22px;font-weight:bold;
+  display:block;margin-top:4px;
 }
-
 .clear-btn{
-  width:100%;
-  padding:12px;
-  border:none;
-  border-radius:24px;
-  background:#c40000;
-  color:#fff;
-  font-size:14px;
-  cursor:pointer;
-  transition:.2s;
+  width:100%;padding:12px;
+  border:none;border-radius:24px;
+  background:#c40000;color:#fff;
+  font-size:14px;cursor:pointer;
 }
-
 .clear-btn:hover{background:#a30000}
-
-.footer{
-  margin-top:18px;
-  font-size:12px;
-  color:#777;
-}
+.footer{margin-top:18px;font-size:12px;color:#777}
 </style>
 </head>
+
 <body>
 
 <div class="panel">
-  <h1>Owner – Clear All Videos</h1>
+  <h1>Owner – Clear Activity Logs</h1>
 
   <div class="note">
-    Use this option <strong>before lunch / update</strong><br>
-    to reset owner-added video data.
+    Use this option <strong>before public launch</strong><br>
+    to reset admin activity history.
   </div>
 
   <div class="count-box">
-    Total Videos Stored
+    Videos in Activity Log
     <span id="videoCount">0</span>
   </div>
 
-  <button class="clear-btn" onclick="clearAllVideos()">
-    CLEAR ALL VIDEOS
+  <button class="clear-btn" onclick="clearLogs()">
+    CLEAR ACTIVITY LOGS
   </button>
 
   <div class="footer">
@@ -103,40 +75,39 @@ h1{
 </div>
 
 <script>
-/*
-  Assumption:
-  Owner-added videos are stored in localStorage as:
-  key = "ownerVideos"
-  value = JSON array
-*/
-
-function getVideos(){
-  try{
-    return JSON.parse(localStorage.getItem("ownerVideos")) || [];
-  }catch(e){
-    return [];
-  }
+/* ---------- OWNER GUARD ---------- */
+const session = JSON.parse(sessionStorage.getItem("jzd_session") || "null");
+if(!session || session.role !== "owner"){
+  location.replace("login.html");
 }
 
+/* ---------- STORAGE ---------- */
+const VKEY = "jzd_videos";
+
+/* ---------- HELPERS ---------- */
+function getVideos(){
+  try{
+    return JSON.parse(localStorage.getItem(VKEY)) || [];
+  }catch(e){ return []; }
+}
 function updateCount(){
   document.getElementById("videoCount").textContent = getVideos().length;
 }
 
-function clearAllVideos(){
-  const first = confirm("Are you sure you want to CLEAR ALL videos?");
-  if(!first) return;
+/* ---------- CLEAR LOGS ---------- */
+function clearLogs(){
+  if(!confirm("Are you sure you want to CLEAR ALL activity logs?")) return;
+  if(!confirm("This action cannot be undone.\n\nConfirm clear?")) return;
 
-  const second = confirm("This action CANNOT be undone.\n\nConfirm clear?");
-  if(!second) return;
-
-  localStorage.removeItem("ownerVideos");
-  alert("All videos cleared successfully.");
+  localStorage.removeItem(VKEY);
+  alert("Activity logs cleared successfully.");
   updateCount();
 }
 
+/* ---------- INIT ---------- */
 updateCount();
 
-/* Basic protection */
+/* ---------- BASIC HARDENING ---------- */
 document.addEventListener("contextmenu",e=>e.preventDefault());
 document.addEventListener("keydown",e=>{
   if(e.keyCode===123 || (e.ctrlKey && e.shiftKey)){
