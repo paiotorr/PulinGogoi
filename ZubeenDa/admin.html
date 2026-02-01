@@ -362,10 +362,10 @@ tbody tr:hover{background:#fafafa}
     // listen ordered by createdAt descending
     videosUnsub = onSnapshot(query(colRef, orderBy("createdAt","desc")), (snap) => {
       const rows = [];
-      snap.forEach((d) => {
-        const data = d.data();
-        rows.push({ id: d.id, ...data });
-      });
+      snap.forEach(d => {
+  const data = d.data();
+  rows.push({ ...data, docId: d.id });
+  });
       renderVideos(rows);
     }, err => console.error("videos snapshot error", err));
   }
@@ -393,7 +393,7 @@ tbody tr:hover{background:#fafafa}
         <td>${addedBy}</td>
         <td>${urlHtml}</td>
         <td>${time}</td>
-        <td><button onclick="deleteVideo('${v.id}')"
+        <td><button onclick="deleteVideo('${v.docId}')"
           style="background:#e74c3c;color:#fff;border:none;padding:6px 8px;border-radius:6px;cursor:pointer">Delete</button></td>
       `;
       activityTable.appendChild(tr);
