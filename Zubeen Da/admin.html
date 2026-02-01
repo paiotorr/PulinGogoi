@@ -7,190 +7,34 @@
 
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{
-  font-family:Arial,Helvetica,sans-serif;
-  background:#f3f3f3;
-  color:#111;
-}
-
-/* Header */
-header{
-  background:#000;
-  color:#fff;
-  padding:16px;
-  text-align:center;
-}
+body{font-family:Arial,Helvetica,sans-serif;background:#f3f3f3;color:#111}
+header{background:#000;color:#fff;padding:16px;text-align:center}
 header h1{font-size:20px}
 header p{font-size:12px;opacity:.8}
-
-/* Layout */
-.container{
-  max-width:1100px;
-  margin:20px auto 40px;
-  padding:0 12px;
-}
-
-/* Card */
-.card{
-  background:#fff;
-  border-radius:8px;
-  box-shadow:0 4px 10px rgba(0,0,0,.08);
-  margin-bottom:20px;
-  overflow:hidden;
-}
-
-/* Card Header (Clickable) */
-.card-header{
-  padding:14px 16px;
-  font-weight:700;
-  cursor:pointer;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  background:#111;
-  color:#fff;
-}
-.card-header span{
-  font-size:12px;
-  opacity:.7;
-}
-
-/* Card Body */
-.card-body{
-  display:none;
-  padding:16px;
-}
-
-/* Category UI */
-.category-list{
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
-  margin-bottom:14px;
-}
-
-.category-item{
-  background:#f0f0f0;
-  padding:6px 12px;
-  border-radius:20px;
-  font-size:12px;
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-
-.category-item button{
-  background:#000;
-  color:#fff;
-  border:none;
-  border-radius:50%;
-  width:18px;
-  height:18px;
-  font-size:11px;
-  cursor:pointer;
-}
-
-.add-category{
-  display:flex;
-  gap:10px;
-  margin-top:10px;
-}
-
-.add-category input{
-  flex:1;
-  padding:8px 10px;
-  font-size:13px;
-  border:1px solid #ccc;
-  border-radius:6px;
-}
-
-.add-category button{
-  padding:8px 14px;
-  font-size:13px;
-  background:#000;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-}
-
-/* Table */
-.table-wrapper{
-  overflow:auto;
-}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-  min-width:900px;
-}
-
-thead{
-  background:#111;
-  color:#fff;
-}
-
-th,td{
-  padding:12px 10px;
-  font-size:13px;
-  border-bottom:1px solid #eee;
-}
-
-tbody tr:hover{
-  background:#fafafa;
-}
-
-.thumb{
-  width:110px;
-  height:62px;
-  border-radius:6px;
-  overflow:hidden;
-  background:#ddd;
-}
-.thumb img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
-
-/* Footer */
-footer{
-  text-align:center;
-  font-size:12px;
-  color:#666;
-  margin-top:20px;
-}
-
-/* Small form tweaks for team member area to match UI */
-.team-form{
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
-  margin-top:10px;
-}
-.team-form input{
-  padding:8px 10px;
-  font-size:13px;
-  border:1px solid #ccc;
-  border-radius:6px;
-}
+.container{max-width:1100px;margin:20px auto 40px;padding:0 12px}
+.card{background:#fff;border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,.08);margin-bottom:20px;overflow:hidden}
+.card-header{padding:14px 16px;font-weight:700;cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:#111;color:#fff}
+.card-header span{font-size:12px;opacity:.7}
+.card-body{display:none;padding:16px}
+.category-list{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+.category-item{background:#f0f0f0;padding:6px 12px;border-radius:20px;font-size:12px;display:flex;align-items:center;gap:8px}
+.category-item button{background:#000;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer}
+.add-category{display:flex;gap:10px;margin-top:10px}
+.add-category input{flex:1;padding:8px 10px;font-size:13px;border:1px solid #ccc;border-radius:6px}
+.add-category button{padding:8px 14px;font-size:13px;background:#000;color:#fff;border:none;border-radius:6px;cursor:pointer}
+.table-wrapper{overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:900px}
+thead{background:#111;color:#fff}
+th,td{padding:12px 10px;font-size:13px;border-bottom:1px solid #eee}
+tbody tr:hover{background:#fafafa}
+.thumb{width:110px;height:62px;border-radius:6px;overflow:hidden;background:#ddd}
+.thumb img{width:100%;height:100%;object-fit:cover}
+footer{text-align:center;font-size:12px;color:#666;margin-top:20px}
+.team-form{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.team-form input{padding:8px 10px;font-size:13px;border:1px solid #ccc;border-radius:6px}
 .team-form .flex-1{flex:1 1 220px}
-.team-form button{
-  padding:8px 14px;
-  font-size:13px;
-  background:#000;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-}
-.manage-list{
-  margin-top:12px;
-  max-height:260px;
-  overflow:auto;
-  border:1px solid #f0f0f0;
-  border-radius:6px;
-}
+.team-form button{padding:8px 14px;font-size:13px;background:#000;color:#fff;border:none;border-radius:6px;cursor:pointer}
+.manage-list{margin-top:12px;max-height:260px;overflow:auto;border:1px solid #f0f0f0;border-radius:6px}
 .small-muted{font-size:12px;color:#666;margin-top:8px}
 </style>
 </head>
@@ -204,29 +48,23 @@ footer{
 
 <main class="container">
 
-  <!-- CATEGORY BOX -->
+  <!-- CATEGORY -->
   <div class="card">
-    <div class="card-header" onclick="toggleCategoryBox()">
-      Manage Categories
-      <span id="toggleIcon">▼</span>
+    <div class="card-header" onclick="toggleBox('categoryBox','catIcon')">
+      Manage Categories <span id="catIcon">▼</span>
     </div>
     <div class="card-body" id="categoryBox">
-
       <div class="category-list" id="categoryList"></div>
-
       <div class="add-category">
         <input type="text" id="newCategory" placeholder="New category name">
-        <button id="addCategoryBtn">Add</button>
+        <button onclick="addCategory()">Add</button>
       </div>
-
     </div>
   </div>
 
-  <!-- ACTIVITY TABLE -->
+  <!-- VIDEO LOG -->
   <div class="card">
-    <div class="card-header">
-      Video Activity Log
-    </div>
+    <div class="card-header">Video Activity Log</div>
     <div class="card-body" style="display:block">
       <div class="table-wrapper">
         <table>
@@ -241,396 +79,138 @@ footer{
               <th>Date & Time</th>
             </tr>
           </thead>
-          <tbody id="activityTable"></tbody>
+          <tbody id="videoLog"></tbody>
         </table>
       </div>
     </div>
   </div>
 
-  <!-- MANAGE TEAM MEMBERS (added at the last, matches existing UI) -->
+  <!-- TEAM -->
   <div class="card">
-    <div class="card-header" onclick="toggleTeamBox()">
-      Manage Team Members
-      <span id="toggleTeamIcon">▼</span>
+    <div class="card-header" onclick="toggleBox('teamBox','teamIcon')">
+      Manage Team Members <span id="teamIcon">▼</span>
     </div>
-
     <div class="card-body" id="teamBox">
-      <!-- Form: Name, Email, Password -->
-      <div>
-        <div class="team-form">
-          <input type="text" id="tmName" class="flex-1" placeholder="Full name">
-          <input type="email" id="tmEmail" class="flex-1" placeholder="Email address">
-          <input type="password" id="tmPass" placeholder="Password">
-          <button id="addTeamBtn">Add Member</button>
-        </div>
-        <div class="small-muted">Team members require a name, an email and a password. Public users cannot add members.</div>
+      <div class="team-form">
+        <input id="tmName" class="flex-1" placeholder="Full name">
+        <input id="tmEmail" class="flex-1" placeholder="Email">
+        <input id="tmPass" placeholder="Password">
+        <button onclick="addTeam()">Add Member</button>
       </div>
-
-      <!-- List of team members -->
-      <div class="manage-list" id="teamListWrap" style="margin-top:12px">
-        <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Added By</th>
-                <th>Added On</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="teamList"></tbody>
-          </table>
-        </div>
+      <div class="manage-list">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Name</th><th>Email</th><th>Added On</th><th>Action</th></tr>
+          </thead>
+          <tbody id="teamList"></tbody>
+        </table>
       </div>
-
     </div>
   </div>
 
 </main>
 
-<footer>
-  © 2026 Joi Zubeen Da — Owner Access
-</footer>
+<footer>© 2026 Joi Zubeen Da — Owner Access</footer>
 
-<!-- ====== Replaced script: Firestore-driven categories + team management ====== -->
-<script type="module">
-/*
-  admin.html — Firestore + Auth wiring (module)
-  - Requires you to have /firebase.js exposing initialized `auth` (Firebase Auth)
-    Example in login page used: import { auth } from '/firebase.js';
-  - Uses Firestore client v10 gstatic imports
-  - No UI changes, only logic
-*/
-
-import { auth } from "/firebase.js";
-import {
-  getFirestore,
-  collection,
-  getDocs,
-  setDoc,
-  deleteDoc,
-  doc,
-  query,
-  where,
-  orderBy,
-  serverTimestamp,
-  onSnapshot
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-import {
-  createUserWithEmailAndPassword
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-const db = getFirestore();
-
-/* -------------------------
-   Utility helpers
-   ------------------------- */
-function escapeHtml(s){
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+<script>
+/* ---------- OWNER GUARD ---------- */
+const session = JSON.parse(sessionStorage.getItem("jzd_session") || "null");
+if(!session || session.role !== "owner"){
+  location.replace("login.html");
 }
 
-/* -------------------------
-   Toggle UI boxes (keep unchanged)
-   ------------------------- */
-window.toggleCategoryBox = function(){
-  const box=document.getElementById("categoryBox");
-  const icon=document.getElementById("toggleIcon");
+/* ---------- STORAGE HELPERS ---------- */
+const CKEY="jzd_categories", VKEY="jzd_videos", TKEY="jzd_team";
+const get=(k,d)=>JSON.parse(localStorage.getItem(k)||JSON.stringify(d));
+const set=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+
+/* ---------- TOGGLE ---------- */
+function toggleBox(id,icon){
+  const box=document.getElementById(id);
+  const ic=document.getElementById(icon);
   const open=box.style.display==="block";
   box.style.display=open?"none":"block";
-  icon.textContent=open?"▼":"▲";
-};
-
-function toggleTeamBox(){
-  const box=document.getElementById("teamBox");
-  const icon=document.getElementById("toggleTeamIcon");
-  const open=box.style.display==="block";
-  box.style.display=open?"none":"block";
-  icon.textContent=open?"▼":"▲";
-}
-window.toggleTeamBox = toggleTeamBox;
-
-/* -------------------------
-   Categories (Firestore-backed)
-   ------------------------- */
-const categoryListEl = document.getElementById("categoryList");
-const newCategoryInput = document.getElementById("newCategory");
-const addCategoryBtn = document.getElementById("addCategoryBtn");
-
-async function loadCategoriesOnce(){
-  categoryListEl.innerHTML = "";
-  try{
-    const snap = await getDocs(collection(db, "categories"));
-    // iterating and building UI
-    snap.forEach(d=>{
-      const name = d.id;
-      const div = document.createElement("div");
-      div.className = "category-item";
-      // safe insertion
-      div.innerHTML = `${escapeHtml(name)} <button data-cat="${escapeHtml(name)}" aria-label="remove category">×</button>`;
-      categoryListEl.appendChild(div);
-    });
-
-    // attach click handlers (delegation)
-    categoryListEl.querySelectorAll("button").forEach(btn=>{
-      btn.addEventListener("click", async (e)=>{
-        const name = btn.getAttribute("data-cat");
-        if(!name) return;
-        if(!confirm(`Remove category "${name}"?`)) return;
-        try{
-          await deleteDoc(doc(db, "categories", name));
-          // remove from DOM immediately for feedback
-          btn.parentElement && btn.parentElement.remove();
-        }catch(err){
-          console.error("Remove category error:", err);
-          alert("Failed to remove category. Check console.");
-        }
-      });
-    });
-
-    // if no categories, show placeholder
-    if(categoryListEl.children.length === 0){
-      const p = document.createElement("div");
-      p.style.color="#666";
-      p.style.fontSize="13px";
-      p.textContent = "No categories yet.";
-      categoryListEl.appendChild(p);
-    }
-  }catch(err){
-    console.error("loadCategoriesOnce error:", err);
-    categoryListEl.innerHTML = "<div style='color:#c00'>Failed to load categories.</div>";
-  }
+  ic.textContent=open?"▼":"▲";
 }
 
-/* Real-time listener to keep UI in-sync (preferred) */
-function watchCategoriesRealtime(){
-  try{
-    const q = query(collection(db, "categories"), orderBy("__name__"));
-    onSnapshot(q, snapshot=>{
-      categoryListEl.innerHTML = "";
-      snapshot.forEach(d=>{
-        const name = d.id;
-        const div = document.createElement("div");
-        div.className = "category-item";
-        div.innerHTML = `${escapeHtml(name)} <button data-cat="${escapeHtml(name)}" aria-label="remove category">×</button>`;
-        categoryListEl.appendChild(div);
-      });
-
-      // attach handlers
-      categoryListEl.querySelectorAll("button").forEach(btn=>{
-        btn.onclick = async () => {
-          const name = btn.getAttribute("data-cat");
-          if(!name) return;
-          if(!confirm(`Remove category "${name}"?`)) return;
-          try{
-            await deleteDoc(doc(db, "categories", name));
-            // onSnapshot will update UI
-          }catch(err){
-            console.error("Remove category error:", err);
-            alert("Failed to remove category. Check console.");
-          }
-        };
-      });
-
-      if(categoryListEl.children.length === 0){
-        const p = document.createElement("div");
-        p.style.color="#666";
-        p.style.fontSize="13px";
-        p.textContent = "No categories yet.";
-        categoryListEl.appendChild(p);
-      }
-    }, err=>{
-      console.error("Categories snapshot error:", err);
-      loadCategoriesOnce(); // fallback
-    });
-  }catch(e){
-    console.error("watchCategoriesRealtime error:", e);
-    loadCategoriesOnce();
-  }
+/* ---------- CATEGORIES ---------- */
+function renderCategories(){
+  const list=document.getElementById("categoryList");
+  const cats=get(CKEY,["podcast","interview","song"]);
+  list.innerHTML="";
+  cats.forEach((c,i)=>{
+    list.innerHTML+=`<div class="category-item">${c}<button onclick="removeCategory(${i})">×</button></div>`;
+  });
+}
+function addCategory(){
+  const input=document.getElementById("newCategory");
+  const v=input.value.trim().toLowerCase();
+  if(!v) return;
+  const cats=get(CKEY,[]);
+  if(cats.includes(v)) return;
+  cats.push(v); set(CKEY,cats);
+  input.value=""; renderCategories();
+}
+function removeCategory(i){
+  const cats=get(CKEY,[]);
+  cats.splice(i,1); set(CKEY,cats); renderCategories();
 }
 
-/* Add category */
-addCategoryBtn.addEventListener("click", async ()=>{
-  const name = newCategoryInput.value.trim().toLowerCase();
-  if(!name) return;
-  try{
-    await setDoc(doc(db, "categories", name), { createdAt: serverTimestamp(), createdBy: auth.currentUser ? auth.currentUser.email : null });
-    newCategoryInput.value = "";
-    // realtime listener will update list automatically
-  }catch(err){
-    console.error("Add category error:", err);
-    alert("Failed to add category. Check console.");
-  }
-});
-
-/* -------------------------
-   Team member management (Firestore + Auth)
-   ------------------------- */
-const teamListTBody = document.getElementById("teamList");
-const addTeamBtn = document.getElementById("addTeamBtn");
-const tmNameInput = document.getElementById("tmName");
-const tmEmailInput = document.getElementById("tmEmail");
-const tmPassInput = document.getElementById("tmPass");
-
-/* Render team members from 'users' collection (role === 'team') */
-async function renderTeamMembersFromFirestore(){
-  teamListTBody.innerHTML = "";
-  try{
-    const usersQ = query(collection(db, "users"), where("role", "==", "team"), orderBy("createdAt", "desc"));
-    const snap = await getDocs(usersQ);
-
-    const rows = [];
-    snap.forEach((d, idx)=>{
-      const data = d.data();
-      const tr = document.createElement("tr");
-      const addedOn = data.createdAt && data.createdAt.toDate ? data.createdAt.toDate().toLocaleString() : (data.createdAt || "");
-      tr.innerHTML = `
-        <td>${idx+1}</td>
-        <td>${escapeHtml(data.name || "")}</td>
-        <td>${escapeHtml(data.email || "")}</td>
-        <td>${escapeHtml(data.createdBy || "")}</td>
-        <td>${escapeHtml(addedOn)}</td>
-        <td><button data-uid="${d.id}" class="remove-team-btn" style="background:#e74c3c;color:#fff;border:none;padding:6px 8px;border-radius:6px;cursor:pointer">Remove</button></td>
-      `;
-      rows.push(tr);
-    });
-
-    if(rows.length === 0){
-      const tr = document.createElement("tr");
-      tr.innerHTML = `<td colspan="6" style="color:#666;text-align:center;padding:12px">No team members yet.</td>`;
-      teamListTBody.appendChild(tr);
-    }else{
-      rows.forEach(r=>teamListTBody.appendChild(r));
-      // attach remove handlers
-      teamListTBody.querySelectorAll(".remove-team-btn").forEach(btn=>{
-        btn.addEventListener("click", async ()=>{
-          const uid = btn.getAttribute("data-uid");
-          if(!uid) return;
-          if(!confirm("Remove this team member?")) return;
-          try{
-            // delete Firestore user doc (note: deleting Auth user requires admin SDK - not available client-side)
-            await deleteDoc(doc(db, "users", uid));
-            // UI will refresh on next call
-            await renderTeamMembersFromFirestore();
-          }catch(err){
-            console.error("Remove team member error:", err);
-            alert("Failed to remove. Check console.");
-          }
-        });
-      });
-    }
-  }catch(err){
-    console.error("renderTeamMembersFromFirestore error:", err);
-    teamListTBody.innerHTML = `<tr><td colspan="6" style="color:#c00">Failed to load team members.</td></tr>`;
-  }
-}
-
-/* Add team member: create auth user + users doc */
-addTeamBtn.addEventListener("click", async ()=>{
-  const name = tmNameInput.value.trim();
-  const email = tmEmailInput.value.trim().toLowerCase();
-  const password = tmPassInput.value;
-
-  if(!name || !email || !password){
-    alert("Please enter name, email and password.");
-    return;
-  }
-
-  try{
-    // create auth user
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
-    const uid = cred.user.uid;
-
-    // set Firestore doc
-    await setDoc(doc(db, "users", uid), {
-      name: name,
-      email: email,
-      role: "team",
-      createdBy: auth.currentUser ? auth.currentUser.email : "owner",
-      createdAt: serverTimestamp()
-    });
-
-    // clear inputs
-    tmNameInput.value = "";
-    tmEmailInput.value = "";
-    tmPassInput.value = "";
-
-    // refresh UI
-    await renderTeamMembersFromFirestore();
-    alert("Team member added successfully.");
-  }catch(err){
-    console.error("addTeamMember error:", err);
-    alert(err.message || "Failed to add member. See console.");
-  }
-});
-
-/* -------------------------
-   Activity log (client-side mock -> left as-is but with safe DOM insertion)
-   ------------------------- */
-const activityTableBody = document.getElementById("activityTable");
-
-/* If you want to move activities to Firestore later, replace this block. For now keep the mock, but render safely. */
-const activityLog = [
-  {user:"Admin",title:"The Uncut Zubeen Interview",category:"podcast",url:"https://youtu.be/5VenPCFCShU",time:"2026-01-31 10:42 AM"},
-  {user:"Editor-1",title:"Radio Mirchi Interview",category:"interview",url:"https://youtu.be/AD8G_v3TJy8",time:"2026-01-30 09:15 PM"},
-  {user:"Admin",title:"MAJULIR EJONI",category:"song",url:"https://youtu.be/ZG3SdjQQLQ4",time:"2026-01-29 07:05 PM"}
-];
-
-function getYouTubeId(url){
-  try{
-    const u = new URL(url);
-    if(u.hostname === 'youtu.be') return u.pathname.slice(1);
-    return u.searchParams.get('v') || '';
-  }catch(e){ return ''; }
-}
-function yt(id){ return `https://img.youtube.com/vi/${id}/hqdefault.jpg`; }
-
-function renderActivityMock(){
-  activityTableBody.innerHTML = "";
-  activityLog.forEach((v,i)=>{
-    const tr = document.createElement("tr");
-    const thumbHtml = `<div class="thumb"><img src="${escapeHtml(yt(getYouTubeId(v.url)))}" alt=""></div>`;
-    tr.innerHTML = `
+/* ---------- VIDEO LOG ---------- */
+function renderVideos(){
+  const tbody=document.getElementById("videoLog");
+  const vids=get(VKEY,[]);
+  tbody.innerHTML="";
+  vids.forEach((v,i)=>{
+    tbody.innerHTML+=`
+    <tr>
       <td>${i+1}</td>
-      <td>${thumbHtml}</td>
-      <td>${escapeHtml(v.title)}</td>
-      <td>${escapeHtml(v.category)}</td>
-      <td>${escapeHtml(v.user)}</td>
-      <td><a href="${escapeHtml(v.url)}" target="_blank" rel="noopener">Open</a></td>
-      <td>${escapeHtml(v.time)}</td>
-    `;
-    activityTableBody.appendChild(tr);
+      <td><div class="thumb"><img src="${v.thumb}"></div></td>
+      <td>${v.title}</td>
+      <td>${v.category}</td>
+      <td>${v.addedBy}</td>
+      <td><a href="${v.url}" target="_blank">Open</a></td>
+      <td>${v.time}</td>
+    </tr>`;
   });
 }
 
-/* -------------------------
-   Initialization
-   ------------------------- */
-async function initAdminPage(){
-  // initial UI state: open activity box & leave others collapsed
-  document.getElementById("categoryBox").style.display = "none";
-  document.getElementById("teamBox").style.display = "none";
-
-  // load categories (realtime watch preferred)
-  watchCategoriesRealtime(); // keeps the admin UI synced with Firestore automatically
-  // fallback one-time load if realtime fails is handled inside the function
-
-  // load team members
-  await renderTeamMembersFromFirestore();
-
-  // render activity
-  renderActivityMock();
+/* ---------- TEAM ---------- */
+function renderTeam(){
+  const list=document.getElementById("teamList");
+  const team=get(TKEY,[]);
+  list.innerHTML="";
+  team.forEach((m,i)=>{
+    list.innerHTML+=`
+    <tr>
+      <td>${i+1}</td>
+      <td>${m.name}</td>
+      <td>${m.email}</td>
+      <td>${m.addedOn}</td>
+      <td><button onclick="removeTeam(${i})">Remove</button></td>
+    </tr>`;
+  });
+}
+function addTeam(){
+  const n=tmName.value.trim(), e=tmEmail.value.trim(), p=tmPass.value;
+  if(!n||!e||!p) return alert("Fill all fields");
+  const team=get(TKEY,[]);
+  if(team.some(t=>t.email===e)) return alert("Already exists");
+  team.push({name:n,email:e,password:p,addedOn:new Date().toLocaleString()});
+  set(TKEY,team);
+  tmName.value=tmEmail.value=tmPass.value="";
+  renderTeam();
+}
+function removeTeam(i){
+  const team=get(TKEY,[]);
+  team.splice(i,1); set(TKEY,team); renderTeam();
 }
 
-/* Run when DOM is ready */
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", initAdminPage);
-} else {
-  initAdminPage();
-}
-
+/* ---------- INIT ---------- */
+renderCategories();
+renderVideos();
+renderTeam();
 </script>
+
 </body>
 </html>
