@@ -348,9 +348,9 @@
     videosUnsub = onSnapshot(q, snap => {
       const rows = [];
       snap.forEach(d => {
-        const data = d.data();
-        rows.push({ id: d.id, ...data });
-      });
+  const data = d.data();
+  rows.push({ ...data, docId: d.id });
+  });
       // normalized Firestore videos first (newest -> older)
       const normalized = rows.map(normalizeVideoItem);
       // fallback built-in videos appended after stored videos
