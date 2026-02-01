@@ -179,7 +179,16 @@ footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
         arr.push({ id: d.id, name: data.name || d.id });
       });
       if(arr.length === 0){
-      
+        // fallback defaults if admin hasn't created categories yet
+        
+        fallback.forEach(c => {
+          const opt = document.createElement("option");
+          opt.value = c;
+          opt.textContent = c;
+          categoryEl.appendChild(opt);
+        });
+        return;
+      }
       arr.sort((a,b)=> a.name.localeCompare(b.name));
       arr.forEach(item => {
         const opt = document.createElement("option");
