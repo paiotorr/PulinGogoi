@@ -51,7 +51,7 @@ footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
     <button onclick="addVideo()">Add Video</button>
 
     <div class="preview" id="preview">
-      <img id="thumb">
+      <img id="thumb" alt="Thumbnail">
       <div class="preview-title" id="videoTitle"></div>
     </div>
 
@@ -63,68 +63,88 @@ footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
 <footer>© 2026 JoiZubeenDa · Internal Team Tool</footer>
 
 <script>
-/* ---------- TEAM GUARD ---------- */
+/* ---------- TEAM ACCESS GUARD ---------- */
 const session = JSON.parse(sessionStorage.getItem("jzd_session") || "null");
 if(!session) location.replace("login.html");
 if(session.role !== "team") location.replace("admin.html");
 
-/* ---------- STORAGE ---------- */
-const CKEY="jzd_categories", VKEY="jzd_videos";
-const get=(k,d)=>JSON.parse(localStorage.getItem(k)||JSON.stringify(d));
-const set=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+/* ---------- STORAGE KEYS ---------- */
+const CKEY="jzd_categories";
+const VKEY="jzd_videos";
+
+const get = (k,d)=> {
+  try { return JSON.parse(localStorage.getItem(k) || JSON.stringify(d)); }
+  catch(e){ return d; }
+};
+const set = (k,v)=> localStorage.setItem(k, JSON.stringify(v));
+
+/* ---------- DEFAULT CATEGORIES SAFETY ---------- */
+const defaultCats = ["podcast","interview","song"];
+if(!localStorage.getItem(CKEY)){
+  set(CKEY, defaultCats);
+}
 
 /* ---------- LOAD CATEGORIES ---------- */
-const catSelect=document.getElementById("category");
-const categories=get(CKEY,[]);
+const catSelect = document.getElementById("category");
+const categories = get(CKEY, defaultCats);
+
 categories.forEach(c=>{
-  const o=document.createElement("option");
-  o.value=c; o.textContent=c;
-  catSelect.appendChild(o);
+  const opt = document.createElement("option");
+  opt.value = c;
+  opt.textContent = c;
+  catSelect.appendChild(opt);
 });
 
 /* ---------- HELPERS ---------- */
 function ytId(url){
   try{
-    const u=new URL(url);
-    return u.hostname==="youtu.be"?u.pathname.slice(1):u.searchParams.get("v");
-  }catch(e){return null}
+    const u = new URL(url);
+    return u.hostname === "youtu.be"
+      ? u.pathname.slice(1)
+      : u.searchParams.get("v");
+  }catch(e){ return null; }
 }
 function ytThumb(id){
   return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
 }
+function autoTitle(id){
+  return `YouTube · ${id}`;
+}
 
 /* ---------- ADD VIDEO ---------- */
 function addVideo(){
-  const url=document.getElementById("videoUrl").value.trim();
-  const cat=catSelect.value;
-  const status=document.getElementById("status");
-  const id=ytId(url);
+  const url = document.getElementById("videoUrl").value.trim();
+  const cat = catSelect.value;
+  const status = document.getElementById("status");
+  const id = ytId(url);
+
   if(!id){
-    status.textContent="Invalid YouTube URL";
-    status.className="status err"; return;
+    status.textContent = "Invalid YouTube URL";
+    status.className = "status err";
+    return;
   }
 
-  const videos=get(VKEY,[]);
-  const video={
+  const videos = get(VKEY, []);
+  const video = {
     id,
     url,
-    category:cat,
-    thumb:ytThumb(id),
-    title:"YouTube Video",
-    addedBy:session.email,
-    time:new Date().toLocaleString()
+    category: cat,
+    thumb: ytThumb(id),
+    title: autoTitle(id),
+    addedBy: session.email,
+    time: new Date().toLocaleString()
   };
 
   videos.push(video);
-  set(VKEY,videos);
+  set(VKEY, videos);
 
-  document.getElementById("thumb").src=video.thumb;
-  document.getElementById("videoTitle").textContent=video.title;
-  document.getElementById("preview").style.display="block";
+  document.getElementById("thumb").src = video.thumb;
+  document.getElementById("videoTitle").textContent = video.title;
+  document.getElementById("preview").style.display = "block";
 
-  status.textContent="Video added successfully ✔";
-  status.className="status ok";
-  document.getElementById("videoUrl").value="";
+  status.textContent = "Video added successfully ✔";
+  status.className = "status ok";
+  document.getElementById("videoUrl").value = "";
 }
 </script>
 
