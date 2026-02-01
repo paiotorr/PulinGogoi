@@ -16,17 +16,79 @@
   body{
     font-family:Arial,Helvetica,sans-serif;
     background:#fff;color:#000;
-    -webkit-touch-callout:none;-webkit-user-select:none;-khtml-user-select:none;
-    -moz-user-select:none;-ms-user-select:none;user-select:none;overflow-x:hidden;
+    -webkit-touch-callout:none;-webkit-user-select:none;
+    -khtml-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;
+    overflow-x:hidden;
   }
-  .header{background:#000;color:#fff;text-align:center;padding:16px 8px 10px; position: relative;}
-  .header-title{font-size:20px;font-weight:700;margin-bottom:10px}
-  .tabs{display:flex;justify-content:center;gap:12px;padding-bottom:6px;flex-wrap:wrap}
-  .tab-btn{
-    padding:6px 18px;border-radius:20px;border:1px solid #fff;background:#fff;color:#000;
-    font-size:12px;cursor:pointer;min-width:90px;text-align:center;transition:all .15s;
+
+  .header{background:#000;color:#fff;text-align:center;padding:14px 12px 10px; position: relative;}
+  .header-title{font-size:20px;font-weight:700;margin-bottom:8px}
+  .login-btn{position:absolute;left:10px;top:10px;padding:6px 12px;border-radius:18px;border:1px solid #fff;background:transparent;color:#fff;font-size:12px;text-decoration:none;display:inline-block;line-height:1;cursor:pointer;transition:opacity .12s, transform .06s}
+  .login-btn:active{transform:translateY(1px)}
+  .login-btn[aria-disabled="true"]{opacity:.5;pointer-events:none}
+
+  /* Category Scroll Container (new) */
+  .cat-wrap{
+    margin:12px auto 0;
+    max-width:100%;
+    width:100%;
+    overflow:hidden;
+    padding:10px 8px 20px;
+    box-sizing:border-box;
   }
-  .tab-btn.active{background:#000;color:#fff}
+
+  .cat-scroll{
+    display:flex;
+    gap:14px;
+    align-items:center;
+    padding:6px 12px;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch; /* smooth touch scrolling */
+    scroll-behavior:smooth;
+    scrollbar-width:none; /* firefox */
+  }
+  .cat-scroll::-webkit-scrollbar{ display:none; } /* webkit */
+
+  /* pill style: black background, white text; active inverted */
+  .category-pill{
+    flex: 0 0 auto;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:12px 26px;
+    border-radius:40px;
+    background:#000;
+    color:#fff;
+    font-weight:700;
+    font-size:15px;
+    white-space:nowrap;
+    cursor:pointer;
+    user-select:none;
+    transition:transform .08s, background .12s, color .12s;
+    border: 2px solid transparent;
+  }
+  .category-pill:active{ transform: translateY(1px); }
+  .category-pill:focus{ outline: none; box-shadow: 0 0 0 3px rgba(0,0,0,0.08); }
+
+  .category-pill.active{
+    background:#fff;
+    color:#000;
+    border-color:#000;
+  }
+
+  /* subtle left/right fade edges to show overflow */
+  .cat-wrap::before,
+  .cat-wrap::after{
+    content: "";
+    position: absolute;
+    pointer-events: none;
+    height: 40px;
+    top: 70px; /* adjust relative to header */
+    width: 36px;
+    z-index: 2;
+  }
+
+  /* content area */
   .content{max-width:900px;margin:16px auto 30px;padding:0 10px}
   .search-wrapper{text-align:center;margin-bottom:16px}
   #searchInput{width:100%;max-width:400px;padding:10px 12px;border-radius:22px;border:1px solid #ccc;font-size:14px}
@@ -39,18 +101,14 @@
   .video-title{font-size:14px;line-height:1.2}
   .no-results{text-align:center;padding:24px 0;font-size:14px;color:#555;display:none}
   .site-footer{text-align:center;padding:16px 10px 22px;color:#777;font-size:13px}
-  .site-footer .copyright{font-weight:700}
   .end-note{text-align:center;padding:8px 0;color:#333}
 
-  /* Login button (top-left) */
-  .login-btn{
-    position:absolute; left:10px; top:10px;
-    padding:6px 12px; border-radius:18px; border:1px solid #fff;
-    background:transparent; color:#fff; font-size:12px; text-decoration:none;
-    display:inline-block; line-height:1; cursor:pointer; transition:opacity .12s, transform .06s;
+  /* small responsive tweaks */
+  @media (max-width:520px){
+    .category-pill{padding:10px 18px;font-size:14px}
+    .header{padding-bottom:16px}
+    .cat-wrap{padding-bottom:16px}
   }
-  .login-btn:active{transform:translateY(1px)}
-  .login-btn[aria-disabled="true"]{opacity:.5;pointer-events:none}
 </style>
 </head>
 <body>
@@ -58,7 +116,11 @@
   <header class="header" role="banner">
     <a class="login-btn" href="login.html" aria-label="Login">LOGIN</a>
     <div class="header-title">Zubeen Garg - Paiotorr</div>
-    <div id="tabs" class="tabs" role="tablist" aria-label="Video categories"></div>
+
+    <!-- Category scroll (NEW) -->
+    <div class="cat-wrap" id="catWrap" aria-hidden="false" style="position:relative;">
+      <div id="catScroll" class="cat-scroll" role="tablist" aria-label="Categories"></div>
+    </div>
   </header>
 
   <main class="content" role="main">
@@ -78,11 +140,12 @@
 
 <script>
 /*
-  Connected index.html
-  - Reads categories from localStorage 'jzd_categories' (fallback to defaults)
-  - Reads videos from localStorage 'jzd_videos' + bundled fallback list
-  - Stored videos (most-recent first) appear immediately when team adds them
-  - Keeps original UX/appearance and hardening
+  Connected index.html - Category bar update
+  - Categories are read from localStorage 'jzd_categories' (admin-driven)
+  - Default categories: ["song","video","interview","podcast","funny moment"]
+  - Category bar auto-scrolls right->left, but pauses on user interaction and resumes after idle
+  - Manual touch / mouse scroll works (native), pills are clickable and keyboard focusable
+  - Updates when admin modifies categories via storage events
 */
 
 /* ---------- Storage helpers & keys ---------- */
@@ -93,7 +156,69 @@ const get = (k, d) => {
   catch(e){ return d; }
 };
 
-/* ---------- Built-in fallback videos (kept for initial content) ---------- */
+/* ---------- Defaults ---------- */
+const defaultCats = ["song","video","interview","podcast","funny moment"];
+
+/* ---------- UI Elements ---------- */
+const catScroll = document.getElementById('catScroll');
+const searchInput = document.getElementById('searchInput');
+const videoListEl = document.getElementById('videoList');
+const noResultsEl = document.getElementById('noResults');
+
+let categories = get(CKEY, defaultCats);
+if(!Array.isArray(categories) || categories.length===0) categories = defaultCats;
+let currentCategory = categories[0] || defaultCats[0];
+let allVideos = [];
+
+/* ---------- Build category pills ---------- */
+function titleCase(s){
+  return String(s).replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function renderCategoryBar(){
+  catScroll.innerHTML = '';
+  categories.forEach((cat, i) => {
+    const pill = document.createElement('button');
+    pill.className = 'category-pill' + (cat === currentCategory ? ' active' : '');
+    pill.setAttribute('role','tab');
+    pill.setAttribute('aria-selected', cat === currentCategory ? 'true' : 'false');
+    pill.dataset.cat = cat;
+    pill.tabIndex = 0;
+    pill.innerText = titleCase(cat);
+    pill.addEventListener('click', () => {
+      setActiveCategory(cat, true);
+    });
+    pill.addEventListener('keydown', e => {
+      if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveCategory(cat, true); }
+    });
+    catScroll.appendChild(pill);
+  });
+}
+
+/* ---------- Set active category and render ---- */
+function setActiveCategory(cat, shouldScrollIntoView){
+  currentCategory = cat;
+  // update pill active states
+  Array.from(catScroll.children).forEach(btn => {
+    if(btn.dataset.cat === cat){
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected','true');
+      if(shouldScrollIntoView) {
+        // center the pill in view
+        const rect = btn.getBoundingClientRect();
+        const wrapRect = catScroll.getBoundingClientRect();
+        const offset = rect.left - wrapRect.left - (wrapRect.width/2) + (rect.width/2);
+        catScroll.scrollBy({ left: offset, behavior: 'smooth' });
+      }
+    } else {
+      btn.classList.remove('active');
+      btn.setAttribute('aria-selected','false');
+    }
+  });
+  renderList();
+}
+
+/* ---------- Load videos: stored videos (most recent first) + fallbacks ---------- */
 const builtinVideos = [
   { category: "podcast", title: "The Uncut Zubeen : The Last Interview", url: "https://youtu.be/5VenPCFCShU?si=r8kghHMUHwiK7BmS" },
   { category: "podcast", title: "Zubeen Garg: Most 'Candid' Podcast, UNTOLD Stories, Emotional Side, SIKAAR || Assamese Podcast - 136", url: "https://youtu.be/LAJF9jUQx2U?si=uBlwVrWh3moUotI7" },
@@ -106,7 +231,6 @@ const builtinVideos = [
   { category: "song", title: "Sang Ghor Dhuniya", url: "https://youtu.be/JGGeDntshCQ?si=98p4SVZDcvWjLQZx" }
 ];
 
-/* ---------- Helpers for YouTube IDs & thumbnails ---------- */
 function getYouTubeId(url){
   try{
     const u = new URL(url);
@@ -116,52 +240,9 @@ function getYouTubeId(url){
 }
 function getThumbUrl(id){ return id ? 'https://img.youtube.com/vi/' + id + '/hqdefault.jpg' : ''; }
 
-/* ---------- Small garbage-text remover (keeps original behaviour) ---------- */
-function removeBracketGarbage(root=document.body){
-  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
-  const remove=[];
-  const onlyGarbage=/^[\s\)\(\}\{\];]+$/;
-  while(walker.nextNode()){
-    const n=walker.currentNode;
-    if(!n||!n.nodeValue) continue;
-    const t=n.nodeValue.trim();
-    if(t && onlyGarbage.test(t)) remove.push(n);
-  }
-  remove.forEach(n=>n.parentNode&&n.parentNode.removeChild(n));
-}
-window.addEventListener('DOMContentLoaded', ()=> removeBracketGarbage(document.body));
-new MutationObserver(()=>removeBracketGarbage(document.body)).observe(document.body,{childList:true,subtree:true,characterData:true});
-
-/* ---------- Load categories & build tabs ---------- */
-let categories = get(CKEY, ['podcast','interview','song']);
-const tabsWrap = document.getElementById('tabs');
-
-function buildTabs(){
-  tabsWrap.innerHTML = '';
-  categories.forEach((cat,i)=>{
-    const btn = document.createElement('button');
-    btn.className = 'tab-btn' + (i===0 ? ' active' : '');
-    btn.setAttribute('data-category', cat);
-    btn.textContent = cat.toUpperCase();
-    btn.addEventListener('click', ()=> {
-      if(currentCategory === cat) return;
-      currentCategory = cat;
-      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      searchInput.value = '';
-      renderList();
-      window.scrollTo({ top: videoListEl.getBoundingClientRect().top + window.scrollY - 10, behavior:'smooth' });
-    });
-    tabsWrap.appendChild(btn);
-  });
-}
-
-/* ---------- Load videos: stored videos (most recent first) + fallbacks ---------- */
 function loadVideos(){
   const stored = get(VKEY, []);
-  // Normalize stored items: prefer objects with url property
   const normalizedStored = (Array.isArray(stored) ? stored : []).filter(Boolean).map(item=>{
-    // item may be {url,category,thumb,title,addedBy,time} or older formats
     return {
       category: item.category || item.cat || 'song',
       title: item.title || item.name || '',
@@ -171,7 +252,6 @@ function loadVideos(){
       time: item.time || item.addedOn || ''
     };
   });
-  // Show stored first (reverse to show newest last-added first), then builtins
   const storedNewestFirst = normalizedStored.slice().reverse();
   const builtInNormalized = builtinVideos.map(v => ({
     category: v.category,
@@ -181,16 +261,10 @@ function loadVideos(){
     addedBy: 'system',
     time: ''
   }));
-  return [...storedNewestFirst, ...builtInNormalized];
+  allVideos = [...storedNewestFirst, ...builtInNormalized];
 }
 
 /* ---------- Rendering ---------- */
-const videoListEl = document.getElementById('videoList');
-const searchInput = document.getElementById('searchInput');
-const noResultsEl = document.getElementById('noResults');
-let currentCategory = categories[0] || 'podcast';
-let allVideos = [];
-
 function renderList(){
   const q = searchInput.value.trim().toLowerCase();
   const filtered = allVideos.filter(v => v.category === currentCategory && (v.title || '').toLowerCase().includes(q));
@@ -215,7 +289,6 @@ function renderList(){
     li.appendChild(serial); li.appendChild(thumbWrap); li.appendChild(titleDiv);
     videoListEl.appendChild(li);
   });
-  removeBracketGarbage(document.body);
 }
 
 /* ---------- Open video (Android intent if available) ---------- */
@@ -229,16 +302,87 @@ function openYouTube(videoUrl){
   else window.open(webUrl,'_blank','noopener,noreferrer');
 }
 
+/* ---------- Auto-scroll logic (right -> left) ---------- */
+let autoScrollEnabled = true;
+let autoScrollStep = 0.4; // px per ms (tweak for speed)
+let lastFrame = null;
+let userInteracting = false;
+let resumeTimeout = null;
+
+function autoScrollFrame(ts){
+  if(!lastFrame) lastFrame = ts;
+  const dt = ts - lastFrame;
+  lastFrame = ts;
+  if(autoScrollEnabled && !userInteracting){
+    // move scrollLeft forward (content moves left)
+    catScroll.scrollLeft += autoScrollStep * dt;
+    // if reached end, loop back smoothly
+    if(catScroll.scrollLeft + catScroll.clientWidth >= catScroll.scrollWidth - 1){
+      // small loop: jump back to start
+      catScroll.scrollTo({ left: 0 });
+    }
+  }
+  window.requestAnimationFrame(autoScrollFrame);
+}
+
+/* Pause auto-scroll when user interacts; resume after idle */
+function pauseAutoScroll(){
+  userInteracting = true;
+  if(resumeTimeout) clearTimeout(resumeTimeout);
+  resumeTimeout = setTimeout(()=>{ userInteracting = false; }, 1800); // resume after 1.8s idle
+}
+
+/* Wire user interactions */
+catScroll.addEventListener('pointerdown', e => { pauseAutoScroll(); });
+catScroll.addEventListener('touchstart', e => { pauseAutoScroll(); }, {passive:true});
+catScroll.addEventListener('wheel', e => { pauseAutoScroll(); }, {passive:true});
+catScroll.addEventListener('scroll', () => { pauseAutoScroll(); });
+
+/* ---------- Keep categories in sync with admin (storage events) ---------- */
+window.addEventListener('storage', (e) => {
+  if(e.key === CKEY){
+    try{
+      const updated = JSON.parse(e.newValue || '[]');
+      if(Array.isArray(updated) && updated.length){
+        categories = updated;
+      } else {
+        categories = defaultCats;
+      }
+      // if currentCategory no longer exists, switch to the first
+      if(!categories.includes(currentCategory)) currentCategory = categories[0] || defaultCats[0];
+      renderCategoryBar();
+      setActiveCategory(currentCategory, false);
+    }catch(err){}
+  }
+});
+
 /* ---------- Init ---------- */
 function init(){
-  categories = get(CKEY, categories);
-  buildTabs();
-  allVideos = loadVideos();
+  categories = get(CKEY, defaultCats);
+  if(!Array.isArray(categories) || categories.length===0) categories = defaultCats;
+  renderCategoryBar();
+  setActiveCategory(currentCategory, true);
+  loadVideos();
   renderList();
-  // wire search
   searchInput.addEventListener('input', renderList);
+  window.requestAnimationFrame(autoScrollFrame);
 }
 init();
+
+/* ---------- Small garbage-text remover (keeps original behaviour) ---------- */
+function removeBracketGarbage(root=document.body){
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+  const remove=[];
+  const onlyGarbage=/^[\s\)\(\}\{\];]+$/;
+  while(walker.nextNode()){
+    const n=walker.currentNode;
+    if(!n||!n.nodeValue) continue;
+    const t=n.nodeValue.trim();
+    if(t && onlyGarbage.test(t)) remove.push(n);
+  }
+  remove.forEach(n=>n.parentNode&&n.parentNode.removeChild(n));
+}
+window.addEventListener('DOMContentLoaded',()=>removeBracketGarbage(document.body));
 
 /* ---------- Client-side hardening (disable common shortcuts & inspect) ---------- */
 (function harden(){
@@ -247,7 +391,6 @@ init();
   document.addEventListener('dragstart', e => e.preventDefault());
 
   document.addEventListener('keydown', function(e){
-    // block F12, Ctrl+Shift+I/J, Ctrl+U, Ctrl+S, Ctrl+P, Ctrl+C, Ctrl+A
     if (
       e.keyCode===123 ||
       (e.ctrlKey && e.shiftKey && (e.keyCode===73 || e.keyCode===74)) ||
@@ -256,19 +399,6 @@ init();
       e.preventDefault(); e.stopPropagation(); return false;
     }
   }, true);
-
-  // Basic devtools detection: if opened, clear sensitive content
-  let devtoolsOpen=false;
-  const threshold = 100;
-  setInterval(function(){
-    const t0 = performance.now();
-    debugger;
-    const t1 = performance.now();
-    if(t1 - t0 > threshold && !devtoolsOpen){
-      devtoolsOpen = true;
-      try{ document.documentElement.innerHTML = '<meta charset="utf-8"><title>Blocked</title><style>body{background:#000;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial}</style><div>Developer tools detected — content hidden.</div>'; }catch(e){}
-    }
-  }, 1500);
 
   // Prevent framing
   if(window.top !== window.self) window.top.location = window.self.location;
