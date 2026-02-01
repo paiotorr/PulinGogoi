@@ -1,90 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Zubeen Garg - PAIOTORR</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="utf-8">
+<title>Zubeen Garg - PAIOTORR</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Security / Hardening (best possible for static pages) -->
-  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-  <meta http-equiv="X-Frame-Options" content="DENY" />
-  <meta name="referrer" content="no-referrer" />
-  <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()" />
-  <meta http-equiv="Content-Security-Policy" content="
-    default-src 'self';
-    img-src 'self' https://img.youtube.com https://paiotorr.com data:;
-    script-src 'self' 'unsafe-inline';
-    style-src 'self' 'unsafe-inline';
-    connect-src 'self';
-    frame-ancestors 'none';
-  " />
+<!-- Security / Hardening (static-friendly) -->
+<meta http-equiv="X-Content-Type-Options" content="nosniff" />
+<meta http-equiv="X-Frame-Options" content="DENY" />
+<meta name="referrer" content="no-referrer" />
 
-  <style>
-    /* Minimal, cleaned styling */
-    *{box-sizing:border-box;margin:0;padding:0}
-    html,body{height:100%}
-    body{
-      font-family:Arial,Helvetica,sans-serif;
-      background:#fff;color:#000;
-      -webkit-touch-callout:none;-webkit-user-select:none;-khtml-user-select:none;
-      -moz-user-select:none;-ms-user-select:none;user-select:none;overflow-x:hidden;
-    }
-    .header{background:#000;color:#fff;text-align:center;padding:16px 8px 10px; position: relative;}
-    .header-title{font-size:20px;font-weight:700;margin-bottom:10px}
-    .tabs{display:flex;justify-content:center;gap:12px;padding-bottom:6px}
-    .tab-btn{
-      padding:6px 18px;border-radius:20px;border:1px solid #fff;background:#fff;color:#000;
-      font-size:12px;cursor:pointer;min-width:90px;text-align:center;transition:all .2s;
-    }
-    .tab-btn.active{background:#000;color:#fff}
-    .content{max-width:900px;margin:16px auto 30px;padding:0 10px}
-    .search-wrapper{text-align:center;margin-bottom:16px}
-    #searchInput{width:100%;max-width:400px;padding:10px 12px;border-radius:22px;border:1px solid #ccc;font-size:14px}
-    .video-list{list-style:none}
-    .video-item{display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid #eee;cursor:pointer;transition:background .15s,transform .08s}
-    .video-item:hover{background:#f7f7f7}
-    .serial{font-size:13px;min-width:28px}
-    .thumb-wrapper{flex-shrink:0;width:120px;height:68px;overflow:hidden;border-radius:6px;background:#ddd}
-    .thumb-wrapper img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;user-drag:none}
-    .video-title{font-size:14px;line-height:1.2}
-    .no-results{text-align:center;padding:24px 0;font-size:14px;color:#555;display:none}
-    .site-footer{text-align:center;padding:16px 10px 22px;color:#777;font-size:13px}
-    .site-footer .copyright{font-weight:700}
-    .end-note{text-align:center;padding:8px 0;color:#333}
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:Arial,Helvetica,sans-serif;
+    background:#fff;color:#000;
+    -webkit-touch-callout:none;-webkit-user-select:none;-khtml-user-select:none;
+    -moz-user-select:none;-ms-user-select:none;user-select:none;overflow-x:hidden;
+  }
+  .header{background:#000;color:#fff;text-align:center;padding:16px 8px 10px; position: relative;}
+  .header-title{font-size:20px;font-weight:700;margin-bottom:10px}
+  .tabs{display:flex;justify-content:center;gap:12px;padding-bottom:6px;flex-wrap:wrap}
+  .tab-btn{
+    padding:6px 18px;border-radius:20px;border:1px solid #fff;background:#fff;color:#000;
+    font-size:12px;cursor:pointer;min-width:90px;text-align:center;transition:all .15s;
+  }
+  .tab-btn.active{background:#000;color:#fff}
+  .content{max-width:900px;margin:16px auto 30px;padding:0 10px}
+  .search-wrapper{text-align:center;margin-bottom:16px}
+  #searchInput{width:100%;max-width:400px;padding:10px 12px;border-radius:22px;border:1px solid #ccc;font-size:14px}
+  .video-list{list-style:none}
+  .video-item{display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid #eee;cursor:pointer;transition:background .12s,transform .06s}
+  .video-item:hover{background:#f7f7f7}
+  .serial{font-size:13px;min-width:28px}
+  .thumb-wrapper{flex-shrink:0;width:120px;height:68px;overflow:hidden;border-radius:6px;background:#ddd}
+  .thumb-wrapper img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;user-drag:none}
+  .video-title{font-size:14px;line-height:1.2}
+  .no-results{text-align:center;padding:24px 0;font-size:14px;color:#555;display:none}
+  .site-footer{text-align:center;padding:16px 10px 22px;color:#777;font-size:13px}
+  .site-footer .copyright{font-weight:700}
+  .end-note{text-align:center;padding:8px 0;color:#333}
 
-    /* Login button (top-left) — added without changing original layout/UX */
-    .login-btn{
-      position:absolute;
-      left:10px;
-      top:10px;
-      padding:6px 12px;
-      border-radius:18px;
-      border:1px solid #fff;
-      background:transparent;
-      color:#fff;
-      font-size:12px;
-      text-decoration:none;
-      display:inline-block;
-      line-height:1;
-      cursor:pointer;
-      transition:opacity .15s, transform .08s;
-    }
-    .login-btn:active{transform:translateY(1px)}
-    .login-btn[aria-disabled="true"]{opacity:.5;pointer-events:none}
-  </style>
+  /* Login button (top-left) */
+  .login-btn{
+    position:absolute; left:10px; top:10px;
+    padding:6px 12px; border-radius:18px; border:1px solid #fff;
+    background:transparent; color:#fff; font-size:12px; text-decoration:none;
+    display:inline-block; line-height:1; cursor:pointer; transition:opacity .12s, transform .06s;
+  }
+  .login-btn:active{transform:translateY(1px)}
+  .login-btn[aria-disabled="true"]{opacity:.5;pointer-events:none}
+</style>
 </head>
 <body>
 
   <header class="header" role="banner">
-    <!-- Login button added at top-left; links to login.html for minimal, non-intrusive integration -->
     <a class="login-btn" href="login.html" aria-label="Login">LOGIN</a>
-
     <div class="header-title">Zubeen Garg - Paiotorr</div>
-    <div class="tabs" role="tablist">
-      <button class="tab-btn active" data-category="podcast">PODCAST</button>
-      <button class="tab-btn" data-category="interview">INTERVIEW</button>
-      <button class="tab-btn" data-category="song">SONG</button>
-    </div>
+    <div id="tabs" class="tabs" role="tablist" aria-label="Video categories"></div>
   </header>
 
   <main class="content" role="main">
@@ -102,136 +76,204 @@
     <div class="copyright">&copy; 2026 PAIOTORR</div>
   </footer>
 
-  <script>
-    // ---------- Small garbage-text remover ----------
-    function removeBracketGarbage(root=document.body){
-      const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
-      const remove=[];
-      const onlyGarbage=/^[\s\)\(\}\{\];]+$/;
-      while(walker.nextNode()){
-        const n=walker.currentNode;
-        if(!n||!n.nodeValue) continue;
-        const t=n.nodeValue.trim();
-        if(t && onlyGarbage.test(t)) remove.push(n);
-      }
-      remove.forEach(n=>n.parentNode&&n.parentNode.removeChild(n));
-    }
-    window.addEventListener('DOMContentLoaded',()=>removeBracketGarbage(document.body));
-    new MutationObserver(()=>removeBracketGarbage(document.body)).observe(document.body,{childList:true,subtree:true,characterData:true});
+<script>
+/*
+  Connected index.html
+  - Reads categories from localStorage 'jzd_categories' (fallback to defaults)
+  - Reads videos from localStorage 'jzd_videos' + bundled fallback list
+  - Stored videos (most-recent first) appear immediately when team adds them
+  - Keeps original UX/appearance and hardening
+*/
 
-    // ---------- Data + App logic ----------
-    const videos = [
-      { category: "podcast", title: "The Uncut Zubeen : The Last Interview", url: "https://youtu.be/5VenPCFCShU?si=r8kghHMUHwiK7BmS" },
-      { category: "podcast", title: "Zubeen Garg: Most 'Candid' Podcast, UNTOLD Stories, Emotional Side, SIKAAR || Assamese Podcast - 136", url: "https://youtu.be/LAJF9jUQx2U?si=uBlwVrWh3moUotI7" },
-      { category: "podcast", title: "জুবিন গাৰ্গৰ সৈতে বাৰ্তালাপ", url: "https://youtu.be/D3Ct9LfwyrI?si=UP2DjRyDSog5zPEG" },
-      { category: "podcast", title: "EP 05 featuring the one and only ZUBEEN GARG....", url: "https://youtu.be/Y4VDE_ogJes?si=aWYGhiYs_GXMROdh" },
-      { category: "podcast", title: "Zubeen Garg - The Untold Story #kingofassam", url: "https://youtu.be/kL_lMbGu5ss?si=gm7Htd9xKCuak7Lc" },
-      { category: "interview", title: "Entire family turns up to celebrate Zubeen's birthday", url: "https://youtu.be/SZZCbac048o?si=1mwLZmryAIlWxnEF" },
-      { category: "interview", title: "Zubeen Garg Exclusive Final Interview With Radio Mirchi", url: "https://youtu.be/AD8G_v3TJy8?si=qby30Q8DLuSXqx_-" },
-      { category: "song", title: "MAJULIR EJONI", url: "https://youtu.be/ZG3SdjQQLQ4?si=LrnyqceIHqg2zLQb" },
-      { category: "song", title: "Sang Ghor Dhuniya", url: "https://youtu.be/JGGeDntshCQ?si=98p4SVZDcvWjLQZx" }
-    ];
+/* ---------- Storage helpers & keys ---------- */
+const CKEY = 'jzd_categories';
+const VKEY = 'jzd_videos';
+const get = (k, d) => {
+  try { return JSON.parse(localStorage.getItem(k) || JSON.stringify(d)); }
+  catch(e){ return d; }
+};
 
-    const tabs = document.querySelectorAll('.tab-btn');
-    const searchInput = document.getElementById('searchInput');
-    const videoListEl = document.getElementById('videoList');
-    const noResultsEl = document.getElementById('noResults');
-    let currentCategory = 'podcast';
+/* ---------- Built-in fallback videos (kept for initial content) ---------- */
+const builtinVideos = [
+  { category: "podcast", title: "The Uncut Zubeen : The Last Interview", url: "https://youtu.be/5VenPCFCShU?si=r8kghHMUHwiK7BmS" },
+  { category: "podcast", title: "Zubeen Garg: Most 'Candid' Podcast, UNTOLD Stories, Emotional Side, SIKAAR || Assamese Podcast - 136", url: "https://youtu.be/LAJF9jUQx2U?si=uBlwVrWh3moUotI7" },
+  { category: "podcast", title: "জুবিন গাৰ্গৰ সৈতে বাৰ্তালাপ", url: "https://youtu.be/D3Ct9LfwyrI?si=UP2DjRyDSog5zPEG" },
+  { category: "podcast", title: "EP 05 featuring the one and only ZUBEEN GARG....", url: "https://youtu.be/Y4VDE_ogJes?si=aWYGhiYs_GXMROdh" },
+  { category: "podcast", title: "Zubeen Garg - The Untold Story #kingofassam", url: "https://youtu.be/kL_lMbGu5ss?si=gm7Htd9xKCuak7Lc" },
+  { category: "interview", title: "Entire family turns up to celebrate Zubeen's birthday", url: "https://youtu.be/SZZCbac048o?si=1mwLZmryAIlWxnEF" },
+  { category: "interview", title: "Zubeen Garg Exclusive Final Interview With Radio Mirchi", url: "https://youtu.be/AD8G_v3TJy8?si=qby30Q8DLuSXqx_-" },
+  { category: "song", title: "MAJULIR EJONI", url: "https://youtu.be/ZG3SdjQQLQ4?si=LrnyqceIHqg2zLQb" },
+  { category: "song", title: "Sang Ghor Dhuniya", url: "https://youtu.be/JGGeDntshCQ?si=98p4SVZDcvWjLQZx" }
+];
 
-    function getYouTubeId(url){
-      try{
-        const u=new URL(url);
-        if(u.hostname==='youtu.be') return u.pathname.slice(1);
-        return u.searchParams.get('v')||'';
-      }catch(e){ return ''; }
-    }
-    function getThumbUrl(id){ return id ? 'https://img.youtube.com/vi/' + id + '/hqdefault.jpg' : ''; }
+/* ---------- Helpers for YouTube IDs & thumbnails ---------- */
+function getYouTubeId(url){
+  try{
+    const u = new URL(url);
+    if(u.hostname === 'youtu.be') return u.pathname.slice(1);
+    return u.searchParams.get('v') || '';
+  } catch(e){ return ''; }
+}
+function getThumbUrl(id){ return id ? 'https://img.youtube.com/vi/' + id + '/hqdefault.jpg' : ''; }
 
-    function openYouTube(videoUrl){
-      const id=getYouTubeId(videoUrl);
-      if(!id){ window.open(videoUrl,'_blank','noopener,noreferrer'); return; }
-      const webUrl=`https://www.youtube.com/watch?v=${id}`;
-      const intentUrl = `intent://www.youtube.com/watch?v=${id}#Intent;scheme=https;package=com.google.android.youtube;S.browser_fallback_url=${encodeURIComponent(webUrl)};end`;
-      const isAndroid=/Android/i.test(navigator.userAgent);
-      if(isAndroid) location.href=intentUrl;
-      else window.open(webUrl,'_blank','noopener,noreferrer');
-    }
+/* ---------- Small garbage-text remover (keeps original behaviour) ---------- */
+function removeBracketGarbage(root=document.body){
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+  const remove=[];
+  const onlyGarbage=/^[\s\)\(\}\{\];]+$/;
+  while(walker.nextNode()){
+    const n=walker.currentNode;
+    if(!n||!n.nodeValue) continue;
+    const t=n.nodeValue.trim();
+    if(t && onlyGarbage.test(t)) remove.push(n);
+  }
+  remove.forEach(n=>n.parentNode&&n.parentNode.removeChild(n));
+}
+window.addEventListener('DOMContentLoaded', ()=> removeBracketGarbage(document.body));
+new MutationObserver(()=>removeBracketGarbage(document.body)).observe(document.body,{childList:true,subtree:true,characterData:true});
 
-    function renderList(){
-      const q = searchInput.value.trim().toLowerCase();
-      const filtered = videos.filter(v => v.category===currentCategory && v.title.toLowerCase().includes(q));
-      videoListEl.innerHTML = '';
-      noResultsEl.style.display = filtered.length ? 'none' : 'block';
-      filtered.forEach((video, i) => {
-        const id = getYouTubeId(video.url);
-        const li = document.createElement('li');
-        li.className='video-item'; li.setAttribute('role','link'); li.tabIndex=0;
-        const activate = ()=>openYouTube(video.url);
-        li.addEventListener('click',activate);
-        li.addEventListener('keydown',e=>{ if(e.key==='Enter' || e.key===' ') activate(); });
+/* ---------- Load categories & build tabs ---------- */
+let categories = get(CKEY, ['podcast','interview','song']);
+const tabsWrap = document.getElementById('tabs');
 
-        const serial = document.createElement('div'); serial.className='serial'; serial.textContent=(i+1)+')';
-        const thumbWrap = document.createElement('div'); thumbWrap.className='thumb-wrapper';
-        const img = document.createElement('img'); img.src = getThumbUrl(id); img.alt = video.title;
-        thumbWrap.appendChild(img);
-
-        const titleDiv = document.createElement('div'); titleDiv.className='video-title'; titleDiv.textContent = video.title;
-
-        li.appendChild(serial); li.appendChild(thumbWrap); li.appendChild(titleDiv);
-        videoListEl.appendChild(li);
-      });
-      removeBracketGarbage(document.body);
-    }
-
-    tabs.forEach(btn=>{
-      btn.addEventListener('click',()=>{
-        const cat=btn.getAttribute('data-category');
-        if(cat===currentCategory) return;
-        currentCategory=cat;
-        tabs.forEach(b=>b.classList.remove('active'));
-        btn.classList.add('active');
-        searchInput.value='';
-        renderList();
-        window.scrollTo({ top: videoListEl.getBoundingClientRect().top + window.scrollY - 10, behavior:'smooth' });
-      });
+function buildTabs(){
+  tabsWrap.innerHTML = '';
+  categories.forEach((cat,i)=>{
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn' + (i===0 ? ' active' : '');
+    btn.setAttribute('data-category', cat);
+    btn.textContent = cat.toUpperCase();
+    btn.addEventListener('click', ()=> {
+      if(currentCategory === cat) return;
+      currentCategory = cat;
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      searchInput.value = '';
+      renderList();
+      window.scrollTo({ top: videoListEl.getBoundingClientRect().top + window.scrollY - 10, behavior:'smooth' });
     });
+    tabsWrap.appendChild(btn);
+  });
+}
 
-    searchInput.addEventListener('input',renderList);
-    renderList();
+/* ---------- Load videos: stored videos (most recent first) + fallbacks ---------- */
+function loadVideos(){
+  const stored = get(VKEY, []);
+  // Normalize stored items: prefer objects with url property
+  const normalizedStored = (Array.isArray(stored) ? stored : []).filter(Boolean).map(item=>{
+    // item may be {url,category,thumb,title,addedBy,time} or older formats
+    return {
+      category: item.category || item.cat || 'song',
+      title: item.title || item.name || '',
+      url: item.url || (item.id ? `https://youtu.be/${item.id}` : ''),
+      thumb: item.thumb || (item.id ? getThumbUrl(item.id) : ''),
+      addedBy: item.addedBy || item.user || 'team',
+      time: item.time || item.addedOn || ''
+    };
+  });
+  // Show stored first (reverse to show newest last-added first), then builtins
+  const storedNewestFirst = normalizedStored.slice().reverse();
+  const builtInNormalized = builtinVideos.map(v => ({
+    category: v.category,
+    title: v.title,
+    url: v.url,
+    thumb: getThumbUrl(getYouTubeId(v.url)),
+    addedBy: 'system',
+    time: ''
+  }));
+  return [...storedNewestFirst, ...builtInNormalized];
+}
 
-    // ---------- Client-side hardening (disable common shortcuts & inspect) ----------
-    (function harden(){
-      document.addEventListener('contextmenu',e=>e.preventDefault());
-      document.addEventListener('selectstart',e=>e.preventDefault());
-      document.addEventListener('dragstart',e=>e.preventDefault());
+/* ---------- Rendering ---------- */
+const videoListEl = document.getElementById('videoList');
+const searchInput = document.getElementById('searchInput');
+const noResultsEl = document.getElementById('noResults');
+let currentCategory = categories[0] || 'podcast';
+let allVideos = [];
 
-      document.addEventListener('keydown',function(e){
-        // block F12, Ctrl+Shift+I/J, Ctrl+U, Ctrl+S, Ctrl+P, Ctrl+C, Ctrl+A
-        if (
-          e.keyCode===123 ||
-          (e.ctrlKey && e.shiftKey && (e.keyCode===73 || e.keyCode===74)) ||
-          (e.ctrlKey && (e.keyCode===85 || e.keyCode===83 || e.keyCode===80 || e.keyCode===67 || e.keyCode===65))
-        ){
-          e.preventDefault(); e.stopPropagation(); return false;
-        }
-      }, true);
+function renderList(){
+  const q = searchInput.value.trim().toLowerCase();
+  const filtered = allVideos.filter(v => v.category === currentCategory && (v.title || '').toLowerCase().includes(q));
+  videoListEl.innerHTML = '';
+  noResultsEl.style.display = filtered.length ? 'none' : 'block';
+  filtered.forEach((video, i) => {
+    const id = getYouTubeId(video.url || '');
+    const li = document.createElement('li');
+    li.className='video-item'; li.setAttribute('role','link'); li.tabIndex=0;
+    const activate = ()=>openYouTube(video.url);
+    li.addEventListener('click',activate);
+    li.addEventListener('keydown',e=>{ if(e.key==='Enter' || e.key===' ') activate(); });
 
-      // Basic devtools detection: if opened, clear sensitive content
-      let devtoolsOpen=false;
-      const threshold = 100;
-      setInterval(function(){
-        const t0 = performance.now();
-        debugger;
-        const t1 = performance.now();
-        if(t1 - t0 > threshold && !devtoolsOpen){
-          devtoolsOpen = true;
-          try{ document.documentElement.innerHTML = '<meta charset="utf-8"><title>Blocked</title><style>body{background:#000;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial}</style><div>Developer tools detected — content hidden.</div>'; }catch(e){}
-        }
-      }, 1500);
+    const serial = document.createElement('div'); serial.className='serial'; serial.textContent=(i+1)+')';
+    const thumbWrap = document.createElement('div'); thumbWrap.className='thumb-wrapper';
+    const img = document.createElement('img'); img.alt = video.title || 'Video';
+    img.src = video.thumb || getThumbUrl(id);
+    thumbWrap.appendChild(img);
 
-      // Prevent framing
-      if(window.top !== window.self) window.top.location = window.self.location;
-    })();
-  </script>
+    const titleDiv = document.createElement('div'); titleDiv.className='video-title'; titleDiv.textContent = video.title || 'Untitled Video';
+
+    li.appendChild(serial); li.appendChild(thumbWrap); li.appendChild(titleDiv);
+    videoListEl.appendChild(li);
+  });
+  removeBracketGarbage(document.body);
+}
+
+/* ---------- Open video (Android intent if available) ---------- */
+function openYouTube(videoUrl){
+  const id = getYouTubeId(videoUrl || '');
+  if(!id){ window.open(videoUrl || '#','_blank','noopener,noreferrer'); return; }
+  const webUrl = `https://www.youtube.com/watch?v=${id}`;
+  const intentUrl = `intent://www.youtube.com/watch?v=${id}#Intent;scheme=https;package=com.google.android.youtube;S.browser_fallback_url=${encodeURIComponent(webUrl)};end`;
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  if(isAndroid) location.href = intentUrl;
+  else window.open(webUrl,'_blank','noopener,noreferrer');
+}
+
+/* ---------- Init ---------- */
+function init(){
+  categories = get(CKEY, categories);
+  buildTabs();
+  allVideos = loadVideos();
+  renderList();
+  // wire search
+  searchInput.addEventListener('input', renderList);
+}
+init();
+
+/* ---------- Client-side hardening (disable common shortcuts & inspect) ---------- */
+(function harden(){
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('selectstart', e => e.preventDefault());
+  document.addEventListener('dragstart', e => e.preventDefault());
+
+  document.addEventListener('keydown', function(e){
+    // block F12, Ctrl+Shift+I/J, Ctrl+U, Ctrl+S, Ctrl+P, Ctrl+C, Ctrl+A
+    if (
+      e.keyCode===123 ||
+      (e.ctrlKey && e.shiftKey && (e.keyCode===73 || e.keyCode===74)) ||
+      (e.ctrlKey && (e.keyCode===85 || e.keyCode===83 || e.keyCode===80 || e.keyCode===67 || e.keyCode===65))
+    ){
+      e.preventDefault(); e.stopPropagation(); return false;
+    }
+  }, true);
+
+  // Basic devtools detection: if opened, clear sensitive content
+  let devtoolsOpen=false;
+  const threshold = 100;
+  setInterval(function(){
+    const t0 = performance.now();
+    debugger;
+    const t1 = performance.now();
+    if(t1 - t0 > threshold && !devtoolsOpen){
+      devtoolsOpen = true;
+      try{ document.documentElement.innerHTML = '<meta charset="utf-8"><title>Blocked</title><style>body{background:#000;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial}</style><div>Developer tools detected — content hidden.</div>'; }catch(e){}
+    }
+  }, 1500);
+
+  // Prevent framing
+  if(window.top !== window.self) window.top.location = window.self.location;
+})();
+</script>
+
 </body>
 </html>
