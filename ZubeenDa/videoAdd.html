@@ -64,7 +64,7 @@ footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
   </div>
 </main>
 
-<footer>© 2026 Joi ZubeenDa · Internal Team Tool</footer>
+<footer>© 2026 JoiZubeenDa · Internal Team Tool</footer>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -99,21 +99,62 @@ footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
   const btnLogout = document.getElementById("btnLogout");
 
   // ---------- Helpers ----------
+  // Improved ID extractor and URL validation (supports: youtube.com/watch?v=  youtu.be/  youtube.com/shorts/)
   function ytId(url){
-    try{
+    if(!url) return null;
+    try {
       const u = new URL(url);
-      if(u.hostname === "youtu.be") return u.pathname.slice(1);
-      return u.searchParams.get("v");
-    }catch(e){
+      const host = (u.hostname || '').replace('www.','').toLowerCase();
+      // youtu.be short link
+      if(host === 'youtu.be') {
+        const id = u.pathname.slice(1);
+        return id || null;
+      }
+      // youtube hosts
+      if(host.endsWith('youtube.com') || host === 'youtube.com' || host === 'm.youtube.com'){
+        // watch?v=
+        if(u.pathname === '/watch'){
+          return u.searchParams.get('v') || null;
+        }
+        // shorts: /shorts/<id>
+        if(u.pathname.startsWith('/shorts/')){
+          const parts = u.pathname.split('/');
+          return parts[2] || null;
+        }
+        // embed: /embed/<id>
+        const embedMatch = u.pathname.match(/\/embed\/([A-Za-z0-9_-]+)/);
+        if(embedMatch) return embedMatch[1];
+        // fallback: try search param v
+        if(u.searchParams.get('v')) return u.searchParams.get('v');
+      }
+      return null;
+    } catch(e){
       return null;
     }
   }
-  function ytThumb(id){ return `https://img.youtube.com/vi/${id}/hqdefault.jpg`; }
-  function autoTitle(id){ return `YouTube · ${id}`; }
+
+  function ytThumb(id){ return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : ''; }
   function nowReadable(){ return new Date().toLocaleString(); }
   function setStatus(text, ok){
     statusEl.textContent = text || "";
     statusEl.className = ok ? "status ok" : (text ? "status err" : "status");
+  }
+
+  // Fetch title using YouTube oEmbed (recommended — no API key)
+  // If oEmbed fails (CORS or network), we fallback to a simple id-based title.
+  async function fetchYouTubeTitle(originalUrl, idFallback){
+    const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(originalUrl)}&format=json`;
+    try {
+      const res = await fetch(oembedUrl);
+      if(!res.ok) throw new Error('oEmbed returned ' + res.status);
+      const data = await res.json();
+      if(data && data.title) return data.title;
+      throw new Error('Invalid oEmbed response');
+    } catch (err) {
+      // fallback: return a predictable title instead of failing completely
+      console.warn('YouTube oEmbed failed:', err);
+      return `YouTube · ${idFallback || 'unknown'}`;
+    }
   }
 
   // ---------- Auth & Role Guard (team only) ----------
@@ -135,7 +176,6 @@ footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
       }
       const u = udoc.data();
       if(u.role !== "team"){
-        // If role is admin, redirect to admin
         if(u.role === "admin"){
           location.replace("admin.html");
         } else {
@@ -146,7 +186,6 @@ footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
         return;
       }
 
-      // keep sessionStorage consistent for other pages
       sessionStorage.setItem("jzd_session", JSON.stringify({
         uid: user.uid,
         email: user.email,
@@ -154,7 +193,7 @@ footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
         name: u.name || ""
       }));
 
-      // Start listeners
+      // Start real-time category listener
       startCategoryListener();
 
     } catch (err) {
@@ -171,7 +210,6 @@ footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
     if(categoriesUnsub) categoriesUnsub();
     const col = collection(db, "categories");
     categoriesUnsub = onSnapshot(col, snap => {
-      // keep the select options in same order as Firestore returns
       categoryEl.innerHTML = "";
       const arr = [];
       snap.forEach(d => {
@@ -179,8 +217,8 @@ footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
         arr.push({ id: d.id, name: data.name || d.id });
       });
       if(arr.length === 0){
-        // fallback defaults if admin hasn't created categories yet
-        
+        // fallback if no categories present
+        const fallback = ['song','live','interview'];
         fallback.forEach(c => {
           const opt = document.createElement("option");
           opt.value = c;
@@ -207,26 +245,31 @@ footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
     const url = (videoUrlEl.value || "").trim();
     const categoryId = categoryEl.value;
     const id = ytId(url);
+
     if(!id){
-      setStatus("Invalid YouTube URL", false);
+      setStatus("Invalid or unsupported YouTube URL. Supported: youtube.com/watch?v=, youtu.be/, youtube.com/shorts/", false);
       return;
     }
     if(!categoryId){
       setStatus("Please select a category", false);
       return;
     }
+
     addBtn.disabled = true;
     addBtn.textContent = "Adding...";
 
     try {
       const thumb = ytThumb(id);
-      const title = autoTitle(id);
+
+      // Fetch the real title from YouTube (oEmbed). Fallback to id-based title if oEmbed fails.
+      const title = await fetchYouTubeTitle(url, id);
+
       const videoDoc = {
         id,
         url,
         category: categoryId,
         thumb,
-        title,
+        title, // REAL YouTube title (or reasonable fallback)
         addedBy: currentUser.email || "",
         createdAt: serverTimestamp(),
         time: nowReadable()
