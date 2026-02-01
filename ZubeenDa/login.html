@@ -23,313 +23,88 @@
   input {
     width: 100%; padding: 12px 14px; margin-top: 14px;
     border-radius: 8px; border: 1px solid #d0d6e0; font-size: 14px;
-    transition: border 0.2s, box-shadow 0.2s;
   }
-  input:focus { outline: none; border-color: #0b6efd; box-shadow: 0 0 0 2px rgba(11,110,253,0.12); }
-  .password-wrapper { position: relative; width: 100%; margin-top: 14px; }
-  .password-wrapper input { margin-top: 0; padding-right: 44px; }
-  .toggle-password {
-    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-    background: none; border: none; cursor: pointer; color: #6c757d; padding: 0;
-    display: flex; align-items: center; justify-content: center; outline: none;
+  button {
+    width: 100%; padding: 12px; margin-top: 22px;
+    background: #0b6efd; color: white; border: none;
+    border-radius: 8px; cursor: pointer; font-size: 15px;
   }
-  .toggle-password svg { width: 20px; height: 20px; }
-  .toggle-password:hover { color: #0b6efd; }
-  button.login-btn-main {
-    width: 100%; padding: 12px; margin-top: 22px; background: #0b6efd;
-    color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: 500;
-    transition: background 0.2s, transform 0.1s;
-  }
-  button.login-btn-main:hover:not(:disabled){ background: #095bd1; }
-  button.login-btn-main:active:not(:disabled){ transform: scale(0.98); }
-  button.login-btn-main:disabled { background: #9aa4b2; cursor: not-allowed; }
-  .message { margin-top: 15px; font-size: 13px; min-height: 16px; color: #d93025; }
+  .message { margin-top: 15px; font-size: 13px; color: #d93025; }
 </style>
 </head>
+
 <body>
 
-<div class="login-box" role="main" aria-labelledby="loginTitle">
-  <h2 id="loginTitle">PAIOTORR</h2>
+<div class="login-box">
+  <h2>PAIOTORR</h2>
 
-  <input id="email" type="email" placeholder="Email" autocomplete="username" />
+  <input id="email" type="email" placeholder="Email" />
+  <input id="password" type="password" placeholder="Password" />
 
-  <div class="password-wrapper">
-    <input id="password" type="password" placeholder="Password" autocomplete="current-password" />
-    <button type="button" id="togglePassword" class="toggle-password" tabindex="-1" aria-label="Show password">
-      <!-- eye icon (default: closed eye) -->
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round"
-          d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/>
-        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-      </svg>
-    </button>
-  </div>
-
-  <button id="loginBtn" class="login-btn-main">Login</button>
-
-  <div id="msg" class="message" role="status" aria-live="polite"></div>
+  <button onclick="login()">Login</button>
+  <div id="msg" class="message"></div>
 </div>
 
-<script>
-/*
-  Role-aware Login
-  - Tries Firebase auth if available.
-  - Falls back to localStorage mock for owner/team for local testing.
-  - Stores session in sessionStorage 'jzd_session' as { email, role, name, ts }.
-  - Redirects:
-      owner -> admin.html
-      team   -> videoAdd.html
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-  Notes:
-  - This file preserves the original UX & hardening and fixes the redirect target.
-  - Update jzd_owner, jzd_team in localStorage (or via admin.html in next steps).
-*/
+  const firebaseConfig = {
+    apiKey: "AIzaSyC6cMfvfX68H-luCgPa32aXAc0D-x6bczU",
+    authDomain: "zubeenda-17222.firebaseapp.com",
+    projectId: "zubeenda-17222",
+    storageBucket: "zubeenda-17222.firebasestorage.app",
+    messagingSenderId: "541676751696",
+    appId: "1:541676751696:web:e75867164d4372d3ad7a55"
+  };
 
-/* ---------- Configuration / Defaults ---------- */
-const LOCAL_OWNER_KEY = 'jzd_owner';
-const LOCAL_TEAM_KEY = 'jzd_team';
-const SESSION_KEY = 'jzd_session';
-const MAX_ATTEMPTS = 4;
-const LOCK_TIME_MS = 10 * 60 * 1000; // 10 minutes
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
 
-/* If no owner present, create a default owner for initial setup (change later via admin.html) */
-function ensureDefaults(){
-  try {
-    if(!localStorage.getItem(LOCAL_OWNER_KEY)){
-      const defaultOwner = {
-        email: 'owner@example.com',
-        name: 'Owner',
-        // NOTE: plain-text password only for local demo. Replace with real auth for production.
-        password: 'owner123'
-      };
-      localStorage.setItem(LOCAL_OWNER_KEY, JSON.stringify(defaultOwner));
+  window.login = async function () {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const msg = document.getElementById("msg");
+
+    if (!email || !password) {
+      msg.textContent = "Please enter email and password.";
+      return;
     }
-    if(!localStorage.getItem(LOCAL_TEAM_KEY)){
-      // Team list format: [{ email, name, password? }, ...]
-      localStorage.setItem(LOCAL_TEAM_KEY, JSON.stringify([]));
-    }
-  } catch(e){
-    console.warn('Could not write defaults to localStorage', e);
-  }
-}
-ensureDefaults();
 
-/* ---------- Helpers ---------- */
-function now(){ return Date.now(); }
-function getLockData(email){
-  try{
-    return JSON.parse(localStorage.getItem('jzd_login_lock_' + email) || '{}');
-  }catch(e){ return {}; }
-}
-function setLockData(email, data){
-  try{ localStorage.setItem('jzd_login_lock_' + email, JSON.stringify(data)); }catch(e){}
-}
-function resetLock(email){ try{ localStorage.removeItem('jzd_login_lock_' + email); }catch(e){} }
+    msg.textContent = "Logging in...";
 
-function isLocked(email){
-  const d = getLockData(email);
-  return d.lockUntil && now() < d.lockUntil;
-}
-function incrementAttempts(email){
-  const d = getLockData(email) || {};
-  const attempts = (d.attempts || 0) + 1;
-  if(attempts >= MAX_ATTEMPTS){
-    setLockData(email, { attempts: attempts, lockUntil: now() + LOCK_TIME_MS });
-    return { locked: true, attempts };
-  } else {
-    setLockData(email, { attempts });
-    return { locked: false, attempts };
-  }
-}
+    try {
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      const uid = cred.user.uid;
 
-/* ---------- Session / Role Utilities ---------- */
-function createSession(email, role, name){
-  const s = { email, role, name: name || '', ts: new Date().toISOString() };
-  try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(s)); } catch(e){}
-  return s;
-}
+      const userDoc = await getDoc(doc(db, "users", uid));
 
-function redirectForRole(role){
-  if(role === 'owner') window.location.replace('admin.html');
-  else if(role === 'team') window.location.replace('videoAdd.html');
-  else window.location.replace('index.html');
-}
-
-/* ---------- Local (fallback) Authentication ---------- */
-function findLocalOwner(email){
-  try {
-    const owner = JSON.parse(localStorage.getItem(LOCAL_OWNER_KEY));
-    if(owner && owner.email && owner.email.toLowerCase() === email.toLowerCase()) return owner;
-  } catch(e){}
-  return null;
-}
-function findLocalTeamMember(email){
-  try {
-    const team = JSON.parse(localStorage.getItem(LOCAL_TEAM_KEY) || '[]');
-    return team.find(m => m.email && m.email.toLowerCase() === email.toLowerCase()) || null;
-  } catch(e){ return null; }
-}
-function localAuthenticate(email, password){
-  const owner = findLocalOwner(email);
-  if(owner){
-    if(owner.password && owner.password === password){
-      return { ok: true, role: 'owner', name: owner.name || 'Owner' };
-    } else {
-      return { ok:false, reason: 'owner_bad_password' };
-    }
-  }
-  const tm = findLocalTeamMember(email);
-  if(tm){
-    // only accept if password stored locally for that member
-    if(tm.password && tm.password === password){
-      return { ok:true, role: 'team', name: tm.name || '' };
-    } else {
-      return { ok:false, reason: 'team_bad_password' };
-    }
-  }
-  return { ok:false, reason: 'not_found' };
-}
-
-/* ---------- UI wiring ---------- */
-const emailInput = document.getElementById('email');
-const passInput = document.getElementById('password');
-const loginBtn = document.getElementById('loginBtn');
-const msgEl = document.getElementById('msg');
-const toggleBtn = document.getElementById('togglePassword');
-
-toggleBtn.addEventListener('click', function(e){
-  e.preventDefault();
-  const type = passInput.getAttribute('type') === 'password' ? 'text' : 'password';
-  passInput.setAttribute('type', type);
-  // swap icon (simplified)
-  if(type === 'text'){
-    this.innerHTML = `
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:20px;height:20px;">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"/>
-      </svg>`;
-  } else {
-    this.innerHTML = `
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:20px;height:20px;">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/>
-        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-      </svg>`;
-  }
-});
-
-/* ---------- Core Login Flow ---------- */
-async function tryFirebaseSignIn(email, password){
-  // Using module-based firebase if included (like original file)
-  try {
-    if(window.auth && typeof window.auth === 'object' && typeof window.firebase !== 'undefined'){
-      // The original file imported signInWithEmailAndPassword; try using it if available
-      if(typeof signInWithEmailAndPassword === 'function'){
-        await signInWithEmailAndPassword(window.auth, email, password);
-        return { ok:true, provider: 'firebase' };
+      if (!userDoc.exists()) {
+        msg.textContent = "No role assigned. Contact admin.";
+        return;
       }
-    }
-  } catch(err){
-    // Firebase auth failed — propagate the error for handling
-    return { ok:false, provider:'firebase', error: err };
-  }
-  // No firebase available
-  return { ok:false, provider: 'nofirebase' };
-}
 
-async function handleLogin(){
-  const email = (emailInput.value || '').trim().toLowerCase();
-  const password = passInput.value || '';
+      const userData = userDoc.data();
+      sessionStorage.setItem("jzd_session", JSON.stringify({
+        uid,
+        email,
+        role: userData.role,
+        name: userData.name || ""
+      }));
 
-  msgEl.style.color = '#d93025';
-  if(!email || !password){ msgEl.textContent = 'Please enter email and password.'; return; }
-
-  if(isLocked(email)){
-    const lock = getLockData(email);
-    const mins = Math.ceil((lock.lockUntil - now()) / 60000);
-    msgEl.textContent = `Too many attempts. Try again in ${mins} minute(s).`;
-    loginBtn.disabled = true;
-    return;
-  }
-
-  msgEl.textContent = 'Checking login...';
-  loginBtn.disabled = true;
-
-  // 1) Try Firebase sign-in if available
-  const fb = await tryFirebaseSignIn(email, password);
-  if(fb.ok){
-    // Firebase returned success — determine role by local lists or assume team if not owner
-    let role = 'team';
-    let name = '';
-    const localOwner = findLocalOwner(email);
-    if(localOwner) { role = 'owner'; name = localOwner.name; }
-    else {
-      const tm = findLocalTeamMember(email);
-      if(tm){ role = 'team'; name = tm.name || ''; }
-      else {
-        // If not found in local lists, assume team (server-side may determine actual role)
-        role = 'team';
-      }
-    }
-    createSession(email, role, name);
-    msgEl.style.color = 'green'; msgEl.textContent = 'Login successful — redirecting...';
-    setTimeout(()=>redirectForRole(role), 400);
-    return;
-  }
-
-  // 2) Fallback to localStorage-based auth (useful for dev/first-run)
-  const local = localAuthenticate(email, password);
-  if(local.ok){
-    resetLock(email);
-    createSession(email, local.role, local.name || '');
-    msgEl.style.color = 'green';
-    msgEl.textContent = 'Login successful — redirecting...';
-    setTimeout(()=>redirectForRole(local.role), 400);
-    return;
-  } else {
-    // Not authenticated locally; increment attempts then show relevant message.
-    const res = incrementAttempts(email);
-    loginBtn.disabled = false;
-    if(res.locked){
-      msgEl.textContent = 'Too many attempts. Try again in 10 minutes.';
-      loginBtn.disabled = true;
-    } else {
-      // Provide helpful message; if user exists but password missing (team member without password),
-      // signal that they must use Firebase or ask owner to set a password (admin.html will be updated next).
-      if(local.reason === 'owner_bad_password' || local.reason === 'team_bad_password'){
-        msgEl.textContent = 'Wrong password. Attempts left: ' + (MAX_ATTEMPTS - (res.attempts || 1));
-      } else if(local.reason === 'not_found'){
-        msgEl.textContent = 'User not found locally. If you use Firebase auth, make sure Firebase is configured. Attempts left: ' + (MAX_ATTEMPTS - (res.attempts || 1));
+      if (userData.role === "admin") {
+        window.location.href = "admin.html";
       } else {
-        msgEl.textContent = 'Login failed. Attempts left: ' + (MAX_ATTEMPTS - (res.attempts || 1));
+        window.location.href = "videoAdd.html";
       }
+
+    } catch (err) {
+      msg.textContent = err.message.replace("Firebase:", "");
     }
-  }
-}
-
-/* Keep lock UI in sync */
-setInterval(() => {
-  const email = (emailInput.value || '').trim().toLowerCase();
-  if(email && isLocked(email)){
-    const lock = getLockData(email);
-    const mins = Math.ceil((lock.lockUntil - now()) / 60000);
-    msgEl.textContent = `Too many attempts. Try again in ${mins} minute(s).`;
-    loginBtn.disabled = true;
-  } else {
-    loginBtn.disabled = false;
-  }
-}, 2000);
-
-loginBtn.addEventListener('click', handleLogin);
-passInput.addEventListener('keyup', function(e){ if(e.key === 'Enter') handleLogin(); });
-emailInput.addEventListener('keyup', function(e){ if(e.key === 'Enter') handleLogin(); });
-
-/* ---------- Basic hardening (same as original) ---------- */
-document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
-document.addEventListener('keydown', function(e){
-  // Block F12 (123) and Ctrl+Shift+I/J and Ctrl+U
-  if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85) || (e.ctrlKey && (e.keyCode === 83 || e.keyCode === 67 || e.keyCode === 65)) ){
-    e.preventDefault();
-  }
-});
+  };
 </script>
 
 </body>
