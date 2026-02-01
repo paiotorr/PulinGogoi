@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Team Video Submission · JoiZubeenDa</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta http-equiv="X-Frame-Options" content="DENY">
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;background:#fafafa;color:#000;min-height:100vh}
+header{background:#000;color:#fff;padding:16px;text-align:center}
+header h1{font-size:20px;margin-bottom:6px}
+header p{font-size:13px;color:#ccc}
+main{max-width:520px;margin:30px auto;padding:0 14px}
+.card{background:#fff;border-radius:10px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.08)}
+label{display:block;font-size:13px;font-weight:700;margin-bottom:6px}
+input,select,button{
+  width:100%;padding:11px 12px;margin-bottom:14px;
+  border-radius:6px;border:1px solid #ccc;font-size:14px
+}
+button{background:#000;color:#fff;border:none;font-weight:700;cursor:pointer}
+.preview{display:none;margin-top:10px;border-top:1px solid #eee;padding-top:14px}
+.preview img{width:100%;border-radius:6px}
+.preview-title{font-size:14px;font-weight:700;margin-top:8px}
+.status{font-size:13px;margin-top:10px}
+.status.ok{color:green}
+.status.err{color:#c00}
+footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>Video Submission</h1>
+  <p>Team Access · JoiZubeenDa</p>
+</header>
+
+<main>
+  <div class="card">
+
+    <label>YouTube Video URL</label>
+    <input id="videoUrl" type="url" placeholder="https://youtu.be/..." required>
+
+    <label>Select Category</label>
+    <select id="category"></select>
+
+    <button onclick="addVideo()">Add Video</button>
+
+    <div class="preview" id="preview">
+      <img id="thumb" alt="Thumbnail">
+      <div class="preview-title" id="videoTitle"></div>
+    </div>
+
+    <div class="status" id="status"></div>
+
+  </div>
+</main>
+
+<footer>© 2026 JoiZubeenDa · Internal Team Tool</footer>
+
+<script>
+/* ---------- TEAM ACCESS GUARD ---------- */
+const session = JSON.parse(sessionStorage.getItem("jzd_session") || "null");
+if(!session) location.replace("login.html");
+if(session.role !== "team") location.replace("admin.html");
+
+/* ---------- STORAGE KEYS ---------- */
+const CKEY="jzd_categories";
+const VKEY="jzd_videos";
+
+const get = (k,d)=> {
+  try { return JSON.parse(localStorage.getItem(k) || JSON.stringify(d)); }
+  catch(e){ return d; }
+};
+const set = (k,v)=> localStorage.setItem(k, JSON.stringify(v));
+
+/* ---------- DEFAULT CATEGORIES SAFETY ---------- */
+const defaultCats = ["podcast","interview","song"];
+if(!localStorage.getItem(CKEY)){
+  set(CKEY, defaultCats);
+}
+
+/* ---------- LOAD CATEGORIES ---------- */
+const catSelect = document.getElementById("category");
+const categories = get(CKEY, defaultCats);
+
+categories.forEach(c=>{
+  const opt = document.createElement("option");
+  opt.value = c;
+  opt.textContent = c;
+  catSelect.appendChild(opt);
+});
+
+/* ---------- HELPERS ---------- */
+function ytId(url){
+  try{
+    const u = new URL(url);
+    return u.hostname === "youtu.be"
+      ? u.pathname.slice(1)
+      : u.searchParams.get("v");
+  }catch(e){ return null; }
+}
+function ytThumb(id){
+  return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+}
+function autoTitle(id){
+  return `YouTube · ${id}`;
+}
+
+/* ---------- ADD VIDEO ---------- */
+function addVideo(){
+  const url = document.getElementById("videoUrl").value.trim();
+  const cat = catSelect.value;
+  const status = document.getElementById("status");
+  const id = ytId(url);
+
+  if(!id){
+    status.textContent = "Invalid YouTube URL";
+    status.className = "status err";
+    return;
+  }
+
+  const videos = get(VKEY, []);
+  const video = {
+    id,
+    url,
+    category: cat,
+    thumb: ytThumb(id),
+    title: autoTitle(id),
+    addedBy: session.email,
+    time: new Date().toLocaleString()
+  };
+
+  videos.push(video);
+  set(VKEY, videos);
+
+  document.getElementById("thumb").src = video.thumb;
+  document.getElementById("videoTitle").textContent = video.title;
+  document.getElementById("preview").style.display = "block";
+
+  status.textContent = "Video added successfully ✔";
+  status.className = "status ok";
+  document.getElementById("videoUrl").value = "";
+}
+</script>
+
+</body>
+</html>

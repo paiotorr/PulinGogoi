@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Joi Zubeen Da — Admin Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;background:#f3f3f3;color:#111}
+header{background:#000;color:#fff;padding:16px;text-align:center}
+header h1{font-size:20px}
+header p{font-size:12px;opacity:.8}
+.container{max-width:1100px;margin:20px auto 40px;padding:0 12px}
+.card{background:#fff;border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,.08);margin-bottom:20px;overflow:hidden}
+.card-header{padding:14px 16px;font-weight:700;cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:#111;color:#fff}
+.card-header span{font-size:12px;opacity:.7}
+.card-body{display:none;padding:16px}
+.category-list{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+.category-item{background:#f0f0f0;padding:6px 12px;border-radius:20px;font-size:12px;display:flex;align-items:center;gap:8px}
+.category-item button{background:#000;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer}
+.add-category{display:flex;gap:10px;margin-top:10px}
+.add-category input{flex:1;padding:8px 10px;font-size:13px;border:1px solid #ccc;border-radius:6px}
+.add-category button{padding:8px 14px;font-size:13px;background:#000;color:#fff;border:none;border-radius:6px;cursor:pointer}
+.table-wrapper{overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:900px}
+thead{background:#111;color:#fff}
+th,td{padding:12px 10px;font-size:13px;border-bottom:1px solid #eee}
+tbody tr:hover{background:#fafafa}
+.thumb{width:110px;height:62px;border-radius:6px;overflow:hidden;background:#ddd}
+.thumb img{width:100%;height:100%;object-fit:cover}
+footer{text-align:center;font-size:12px;color:#666;margin-top:20px}
+.team-form{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.team-form input{padding:8px 10px;font-size:13px;border:1px solid #ccc;border-radius:6px}
+.team-form .flex-1{flex:1 1 220px}
+.team-form button{padding:8px 14px;font-size:13px;background:#000;color:#fff;border:none;border-radius:6px;cursor:pointer}
+.manage-list{margin-top:12px;max-height:260px;overflow:auto;border:1px solid #f0f0f0;border-radius:6px}
+.small-muted{font-size:12px;color:#666;margin-top:8px}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>Admin / Owner Dashboard</h1>
+  <p>Joi Zubeen Da — Control Panel</p>
+</header>
+
+<main class="container">
+
+  <!-- CATEGORY BOX -->
+  <div class="card">
+    <div class="card-header" onclick="toggleCategoryBox()">
+      Manage Categories
+      <span id="toggleIcon">▼</span>
+    </div>
+    <div class="card-body" id="categoryBox">
+
+      <div class="category-list" id="categoryList"></div>
+
+      <div class="add-category">
+        <input type="text" id="newCategory" placeholder="New category name">
+        <button onclick="addCategory()">Add</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ACTIVITY TABLE -->
+  <div class="card">
+    <div class="card-header">
+      Video Activity Log
+    </div>
+    <div class="card-body" style="display:block">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Thumbnail</th>
+              <th>Title</th>
+              <th>Category</th>
+              <th>Added By</th>
+              <th>URL</th>
+              <th>Date & Time</th>
+            </tr>
+          </thead>
+          <tbody id="activityTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- MANAGE TEAM MEMBERS -->
+  <div class="card">
+    <div class="card-header" onclick="toggleTeamBox()">
+      Manage Team Members
+      <span id="toggleTeamIcon">▼</span>
+    </div>
+
+    <div class="card-body" id="teamBox">
+      <div>
+        <div class="team-form">
+          <input type="text" id="tmName" class="flex-1" placeholder="Full name">
+          <input type="email" id="tmEmail" class="flex-1" placeholder="Email address">
+          <input type="password" id="tmPass" placeholder="Password">
+          <button onclick="addTeamMember()">Add Member</button>
+        </div>
+        <div class="small-muted">Team members require a name, an email and a password. Public users cannot add members.</div>
+      </div>
+
+      <div class="manage-list" id="teamListWrap" style="margin-top:12px">
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Added By</th>
+                <th>Added On</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="teamList"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  © 2026 Joi Zubeen Da — Owner Access
+</footer>
+
+<script>
+/* --------------------------
+   Shared storage keys & helpers
+   -------------------------- */
+const CKEY = "jzd_categories";
+const VKEY = "jzd_videos";
+const TKEY = "jzd_team";
+const defaultCategories = ["podcast","interview","song"];
+
+const get = (k, d) => {
+  try { return JSON.parse(localStorage.getItem(k) || JSON.stringify(d)); }
+  catch(e){ return d; }
+};
+const set = (k, v) => {
+  try { localStorage.setItem(k, JSON.stringify(v)); }
+  catch(e){}
+};
+
+/* ---------- OWNER GUARD (no UI change) ---------- */
+/* Note: admin access expects a jzd_session set by login flow */
+const session = JSON.parse(sessionStorage.getItem("jzd_session") || "null");
+if(!session || session.role !== "owner"){
+  // silent redirect back to login if not owner
+  location.replace("login.html");
+}
+
+/* ---------- CATEGORY UI ---------- */
+function toggleCategoryBox(){
+  const box=document.getElementById("categoryBox");
+  const icon=document.getElementById("toggleIcon");
+  const open=box.style.display==="block";
+  box.style.display=open?"none":"block";
+  icon.textContent=open?"▼":"▲";
+}
+
+function normalizeCategory(s){
+  return String(s||'').trim().toLowerCase();
+}
+
+function ensureDefaultCategories(){
+  if(!localStorage.getItem(CKEY)){
+    set(CKEY, defaultCategories);
+  } else {
+    // sanity: if stored is empty or not array, reset to default
+    const stored = get(CKEY, []);
+    if(!Array.isArray(stored) || stored.length === 0){
+      set(CKEY, defaultCategories);
+    }
+  }
+}
+
+function renderCategories(){
+  const wrap=document.getElementById("categoryList");
+  const cats = get(CKEY, defaultCategories).map(normalizeCategory);
+  wrap.innerHTML = "";
+  cats.forEach((cat,i)=>{
+    const div = document.createElement("div");
+    div.className = "category-item";
+    div.innerHTML = `${cat} <button onclick="removeCategory(${i})" title="Remove category">×</button>`;
+    wrap.appendChild(div);
+  });
+}
+
+/* add category */
+function addCategory(){
+  const input=document.getElementById("newCategory");
+  const raw = input.value;
+  const val = normalizeCategory(raw);
+  if(!val) return;
+  const cats = get(CKEY, defaultCategories).map(normalizeCategory);
+  if(cats.includes(val)){
+    alert("Category already exists.");
+    return;
+  }
+  cats.push(val);
+  set(CKEY, cats);
+  input.value = "";
+  renderCategories();
+  // Storage change triggers index.html via storage events in other tabs (or our own override)
+}
+
+/* remove category with safe behaviour:
+   - if videos exist in that category, prompt user:
+     OK => move videos to the first remaining category after deletion
+     Cancel => remove category and leave videos unchanged (they will be hidden)
+*/
+function removeCategory(index){
+  const cats = get(CKEY, defaultCategories).map(normalizeCategory);
+  if(index < 0 || index >= cats.length) return;
+  const catToRemove = cats[index];
+
+  // count videos in that category
+  const vids = get(VKEY, []);
+  const vidsInCat = (Array.isArray(vids) ? vids : []).filter(v => (v.category||'').toString().toLowerCase() === catToRemove);
+  if(vidsInCat.length > 0){
+    const msg = `Category "${catToRemove}" contains ${vidsInCat.length} video(s).\n\nPress OK to remove the category and MOVE those videos to the next available category.\nPress Cancel to remove the category but KEEP the videos (they will be hidden on the homepage).`;
+    const move = confirm(msg);
+    // remove the category
+    cats.splice(index, 1);
+    set(CKEY, cats.length ? cats : defaultCategories);
+    // if move chosen and there is at least one category left, move videos
+    if(move){
+      const targetCat = (cats[0] || defaultCategories[0]).toString().toLowerCase();
+      const normalizedVids = (Array.isArray(vids) ? vids : []).map(v => {
+        if((v.category||'').toString().toLowerCase() === catToRemove){
+          return Object.assign({}, v, { category: targetCat });
+        }
+        return v;
+      });
+      set(VKEY, normalizedVids);
+      alert(`Moved ${vidsInCat.length} video(s) to "${targetCat}".`);
+    } else {
+      alert(`Category removed. ${vidsInCat.length} video(s) remain unchanged and will not appear on the homepage unless re-categorized.`);
+    }
+  } else {
+    // no videos in that category — simple remove
+    cats.splice(index, 1);
+    set(CKEY, cats.length ? cats : defaultCategories);
+  }
+  renderCategories();
+  renderVideos();
+}
+
+/* ---------- VIDEO ACTIVITY ---------- */
+function normalizeVideo(v){
+  const id = v.id || (v.url ? (function(){ try{ const u=new URL(v.url); return u.hostname==="youtu.be"?u.pathname.slice(1):u.searchParams.get("v"); }catch(e){return "";} })() : "");
+  return {
+    category: normalizeCategory(v.category || v.cat || 'song'),
+    title: v.title || v.name || (id ? `YouTube · ${id}` : 'Untitled'),
+    url: v.url || (id ? `https://youtu.be/${id}` : ''),
+    thumb: v.thumb || (id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : ''),
+    addedBy: v.addedBy || v.user || 'team',
+    time: v.time || v.addedOn || ''
+  };
+}
+
+function renderVideos(){
+  const tbody = document.getElementById("activityTable");
+  const vids = get(VKEY, []);
+  const normalized = Array.isArray(vids) ? vids.map(normalizeVideo) : [];
+  tbody.innerHTML = "";
+  normalized.forEach((v,i)=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${i+1}</td>
+      <td><div class="thumb"><img src="${v.thumb || ''}" alt="thumb"></div></td>
+      <td>${escapeHtml(v.title)}</td>
+      <td>${escapeHtml(v.category)}</td>
+      <td>${escapeHtml(v.addedBy)}</td>
+      <td><a href="${escapeHtml(v.url)}" target="_blank" rel="noopener noreferrer">Open</a></td>
+      <td>${escapeHtml(v.time)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+/* ---------- TEAM MANAGEMENT ---------- */
+let teamMembers = get(TKEY, [
+  { name: "Owner", email: "owner@example.com", addedBy: "System", addedOn: new Date().toLocaleString() }
+]);
+
+function toggleTeamBox(){
+  const box=document.getElementById("teamBox");
+  const icon=document.getElementById("toggleTeamIcon");
+  const open=box.style.display==="block";
+  box.style.display=open?"none":"block";
+  icon.textContent=open?"▼":"▲";
+}
+
+function renderTeamMembers(){
+  const wrap=document.getElementById("teamList");
+  teamMembers = get(TKEY, teamMembers);
+  wrap.innerHTML="";
+  teamMembers.forEach((m,i)=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`
+      <td>${i+1}</td>
+      <td>${escapeHtml(m.name)}</td>
+      <td>${escapeHtml(m.email)}</td>
+      <td>${escapeHtml(m.addedBy || 'Admin')}</td>
+      <td>${escapeHtml(m.addedOn)}</td>
+      <td><button onclick="removeTeamMember(${i})" style="background:#e74c3c;color:#fff;border:none;padding:6px 8px;border-radius:6px;cursor:pointer">Remove</button></td>
+    `;
+    wrap.appendChild(tr);
+  });
+}
+
+function addTeamMember(){
+  const name = document.getElementById("tmName").value.trim();
+  const email = document.getElementById("tmEmail").value.trim().toLowerCase();
+  const pass = document.getElementById("tmPass").value;
+  if(!name || !email || !pass) return alert("Please enter name, email and password.");
+  const team = get(TKEY, []);
+  if(team.some(m => m.email === email)) return alert("This email is already added.");
+  const now = new Date();
+  const ts = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2,'0') + "-" + String(now.getDate()).padStart(2,'0') + " " + now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  team.push({
+    name: name,
+    email: email,
+    // NOTE: storing plain passwords in localStorage is insecure. This example keeps parity with your static approach.
+    password: pass,
+    addedBy: session.email || 'Owner',
+    addedOn: ts
+  });
+  set(TKEY, team);
+  document.getElementById("tmName").value = "";
+  document.getElementById("tmEmail").value = "";
+  document.getElementById("tmPass").value = "";
+  renderTeamMembers();
+}
+
+function removeTeamMember(i){
+  if(!confirm("Remove this member?")) return;
+  const team = get(TKEY, []);
+  team.splice(i,1);
+  set(TKEY, team);
+  renderTeamMembers();
+}
+
+/* ---------- UTIL ---------- */
+function escapeHtml(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ---------- INIT ---------- */
+(function init(){
+  ensureDefaultCategories();
+  renderCategories();
+  renderVideos();
+  renderTeamMembers();
+})();
+
+/* ---------- Watch for storage changes (other tabs) ---------- */
+window.addEventListener('storage', (e) => {
+  try{
+    if(e.key === CKEY){
+      renderCategories();
+    } else if(e.key === VKEY){
+      renderVideos();
+    } else if(e.key === TKEY){
+      renderTeamMembers();
+    }
+  }catch(e){}
+});
+
+/* ---------- Small client hardening (non-breaking) ---------- */
+document.addEventListener('contextmenu', e => e.preventDefault());
+</script>
+
+</body>
+</html>

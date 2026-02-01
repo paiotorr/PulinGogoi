@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Owner Panel – Clear Logs</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta http-equiv="X-Frame-Options" content="DENY" />
+<meta http-equiv="X-Content-Type-Options" content="nosniff" />
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  background:#f6f6f6;
+  color:#000;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.panel{
+  background:#fff;
+  width:100%;
+  max-width:420px;
+  border-radius:12px;
+  box-shadow:0 10px 30px rgba(0,0,0,.15);
+  padding:24px;
+  text-align:center;
+}
+h1{font-size:20px;margin-bottom:10px}
+.note{font-size:13px;color:#555;margin-bottom:20px}
+.count-box{
+  background:#000;color:#fff;
+  padding:14px;border-radius:8px;
+  margin-bottom:18px;font-size:14px;
+}
+.count-box span{
+  font-size:22px;font-weight:bold;
+  display:block;margin-top:4px;
+}
+.clear-btn{
+  width:100%;padding:12px;
+  border:none;border-radius:24px;
+  background:#c40000;color:#fff;
+  font-size:14px;cursor:pointer;
+}
+.clear-btn:hover{background:#a30000}
+.footer{margin-top:18px;font-size:12px;color:#777}
+</style>
+</head>
+
+<body>
+
+<div class="panel">
+  <h1>Owner – Clear Activity Logs</h1>
+
+  <div class="note">
+    Use this option <strong>before public launch</strong><br>
+    to reset admin activity history.
+  </div>
+
+  <div class="count-box">
+    Videos in Activity Log
+    <span id="videoCount">0</span>
+  </div>
+
+  <button class="clear-btn" onclick="clearLogs()">
+    CLEAR ACTIVITY LOGS
+  </button>
+
+  <div class="footer">
+    JoiZubeenDa • Owner Control
+  </div>
+</div>
+
+<script>
+/* ---------- OWNER GUARD ---------- */
+const session = JSON.parse(sessionStorage.getItem("jzd_session") || "null");
+if(!session || session.role !== "owner"){
+  location.replace("login.html");
+}
+
+/* ---------- STORAGE ---------- */
+const VKEY = "jzd_videos";
+
+/* ---------- HELPERS ---------- */
+function getVideos(){
+  try{
+    return JSON.parse(localStorage.getItem(VKEY)) || [];
+  }catch(e){ return []; }
+}
+function updateCount(){
+  document.getElementById("videoCount").textContent = getVideos().length;
+}
+
+/* ---------- CLEAR LOGS ---------- */
+function clearLogs(){
+  if(!confirm("Are you sure you want to CLEAR ALL activity logs?")) return;
+  if(!confirm("This action cannot be undone.\n\nConfirm clear?")) return;
+
+  localStorage.removeItem(VKEY);
+  alert("Activity logs cleared successfully.");
+  updateCount();
+}
+
+/* ---------- INIT ---------- */
+updateCount();
+
+/* ---------- BASIC HARDENING ---------- */
+document.addEventListener("contextmenu",e=>e.preventDefault());
+document.addEventListener("keydown",e=>{
+  if(e.keyCode===123 || (e.ctrlKey && e.shiftKey)){
+    e.preventDefault();
+  }
+});
+</script>
+
+</body>
+</html>

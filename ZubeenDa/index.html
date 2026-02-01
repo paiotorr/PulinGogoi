@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Zubeen Garg - PAIOTORR</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<!-- Security / Hardening (static-friendly) -->
+<meta http-equiv="X-Content-Type-Options" content="nosniff" />
+<meta http-equiv="X-Frame-Options" content="DENY" />
+<meta name="referrer" content="no-referrer" />
+
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:Arial,Helvetica,sans-serif;
+    background:#fff;color:#000;
+    -webkit-touch-callout:none;-webkit-user-select:none;
+    -khtml-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;
+    overflow-x:hidden;
+  }
+
+  .header{background:#000;color:#fff;text-align:center;padding:14px 12px 10px; position: relative;}
+  .header-title{font-size:20px;font-weight:700;margin-bottom:8px}
+  .login-btn{position:absolute;left:10px;top:10px;padding:6px 12px;border-radius:18px;border:1px solid #fff;background:transparent;color:#fff;font-size:12px;text-decoration:none;display:inline-block;line-height:1;cursor:pointer;transition:opacity .12s, transform .06s}
+  .login-btn:active{transform:translateY(1px)}
+  .login-btn[aria-disabled="true"]{opacity:.5;pointer-events:none}
+
+  /* Category Scroll Container (new) */
+  .cat-wrap{
+    margin:12px auto 0;
+    max-width:100%;
+    width:100%;
+    overflow:hidden;
+    padding:10px 8px 20px;
+    box-sizing:border-box;
+  }
+
+  .cat-scroll{
+    display:flex;
+    gap:14px;
+    align-items:center;
+    padding:6px 12px;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch; /* smooth touch scrolling */
+    scroll-behavior:smooth;
+    scrollbar-width:none; /* firefox */
+  }
+  .cat-scroll::-webkit-scrollbar{ display:none; } /* webkit */
+
+  /* pill style: black background, white text; active inverted */
+  .category-pill{
+    flex: 0 0 auto;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:12px 26px;
+    border-radius:40px;
+    background:#000;
+    color:#fff;
+    font-weight:700;
+    font-size:15px;
+    white-space:nowrap;
+    cursor:pointer;
+    user-select:none;
+    transition:transform .08s, background .12s, color .12s;
+    border: 2px solid transparent;
+  }
+  .category-pill:active{ transform: translateY(1px); }
+  .category-pill:focus{ outline: none; box-shadow: 0 0 0 3px rgba(0,0,0,0.08); }
+
+  .category-pill.active{
+    background:#fff;
+    color:#000;
+    border-color:#000;
+  }
+
+  /* subtle left/right fade edges to show overflow */
+  .cat-wrap::before,
+  .cat-wrap::after{
+    content: "";
+    position: absolute;
+    pointer-events: none;
+    height: 40px;
+    top: 70px; /* adjust relative to header */
+    width: 36px;
+    z-index: 2;
+  }
+
+  /* content area */
+  .content{max-width:900px;margin:16px auto 30px;padding:0 10px}
+  .search-wrapper{text-align:center;margin-bottom:16px}
+  #searchInput{width:100%;max-width:400px;padding:10px 12px;border-radius:22px;border:1px solid #ccc;font-size:14px}
+  .video-list{list-style:none}
+  .video-item{display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid #eee;cursor:pointer;transition:background .12s,transform .06s}
+  .video-item:hover{background:#f7f7f7}
+  .serial{font-size:13px;min-width:28px}
+  .thumb-wrapper{flex-shrink:0;width:120px;height:68px;overflow:hidden;border-radius:6px;background:#ddd}
+  .thumb-wrapper img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;user-drag:none}
+  .video-title{font-size:14px;line-height:1.2}
+  .no-results{text-align:center;padding:24px 0;font-size:14px;color:#555;display:none}
+  .site-footer{text-align:center;padding:16px 10px 22px;color:#777;font-size:13px}
+  .end-note{text-align:center;padding:8px 0;color:#333}
+
+  /* small responsive tweaks */
+  @media (max-width:520px){
+    .category-pill{padding:10px 18px;font-size:14px}
+    .header{padding-bottom:16px}
+    .cat-wrap{padding-bottom:16px}
+  }
+</style>
+</head>
+<body>
+
+  <header class="header" role="banner">
+    <a class="login-btn" href="login.html" aria-label="Login">LOGIN</a>
+    <div class="header-title">Zubeen Garg - Paiotorr</div>
+
+    <!-- Category scroll (NEW) -->
+    <div class="cat-wrap" id="catWrap" aria-hidden="false" style="position:relative;">
+      <div id="catScroll" class="cat-scroll" role="tablist" aria-label="Categories"></div>
+    </div>
+  </header>
+
+  <main class="content" role="main">
+    <div class="search-wrapper">
+      <input type="text" id="searchInput" placeholder="Search videos in this section…" aria-label="Search videos"/>
+    </div>
+
+    <ul id="videoList" class="video-list" aria-live="polite"></ul>
+    <div id="noResults" class="no-results">No videos found for this search.</div>
+
+    <div class="end-note"><strong>More Coming Soon.....</strong></div>
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    <div class="copyright">&copy; 2026 PAIOTORR</div>
+  </footer>
+
+<script>
+/*
+  Connected index.html - Category bar update
+  - Categories are read from localStorage 'jzd_categories' (admin-driven)
+  - Default categories: ["podcast","interview","song"]
+  - Category bar auto-scrolls right->left, but pauses on user interaction and resumes after idle
+  - Manual touch / mouse scroll works (native), pills are clickable and keyboard focusable
+  - Updates when admin modifies categories or team adds videos via storage events
+*/
+
+/* ---------- Storage helpers & keys ---------- */
+const CKEY = 'jzd_categories';
+const VKEY = 'jzd_videos';
+const get = (k, d) => {
+  try { return JSON.parse(localStorage.getItem(k) || JSON.stringify(d)); }
+  catch(e){ return d; }
+};
+const set = (k, v) => {
+  try { localStorage.setItem(k, JSON.stringify(v)); }
+  catch(e){}
+};
+
+/* ---------- Defaults ---------- */
+const defaultCats = ["podcast","interview","song"];
+
+/* Ensure default categories exist (write-once fallback) */
+if(!localStorage.getItem(CKEY)){
+  set(CKEY, defaultCats);
+}
+
+/* ---------- UI Elements ---------- */
+const catScroll = document.getElementById('catScroll');
+const searchInput = document.getElementById('searchInput');
+const videoListEl = document.getElementById('videoList');
+const noResultsEl = document.getElementById('noResults');
+
+let categories = get(CKEY, defaultCats);
+if(!Array.isArray(categories) || categories.length===0) categories = defaultCats;
+let currentCategory = categories[0] || defaultCats[0];
+let allVideos = [];
+
+/* ---------- Helpers ---------- */
+function titleCase(s){
+  return String(s).replace(/\b\w/g, c => c.toUpperCase());
+}
+function getYouTubeId(url){
+  try{
+    const u = new URL(url);
+    if(u.hostname === 'youtu.be') return u.pathname.slice(1);
+    return u.searchParams.get('v') || '';
+  } catch(e){ return ''; }
+}
+function getThumbUrl(id){ return id ? 'https://img.youtube.com/vi/' + id + '/hqdefault.jpg' : ''; }
+
+/* Normalize video item (accepts many shapes) */
+function normalizeVideoItem(item){
+  const id = item.id || getYouTubeId(item.url || '');
+  const url = item.url || (id ? `https://youtu.be/${id}` : '');
+  return {
+    category: (item.category || item.cat || 'song').toString(),
+    title: item.title || item.name || (id ? `YouTube · ${id}` : 'Untitled'),
+    url,
+    thumb: item.thumb || (id ? getThumbUrl(id) : ''),
+    addedBy: item.addedBy || item.user || 'team',
+    time: item.time || item.addedOn || ''
+  };
+}
+
+/* ---------- Build category pills ---------- */
+function renderCategoryBar(){
+  catScroll.innerHTML = '';
+  categories.forEach((cat) => {
+    const pill = document.createElement('button');
+    pill.className = 'category-pill' + (cat === currentCategory ? ' active' : '');
+    pill.setAttribute('role','tab');
+    pill.setAttribute('aria-selected', cat === currentCategory ? 'true' : 'false');
+    pill.dataset.cat = cat;
+    pill.tabIndex = 0;
+    pill.innerText = titleCase(cat);
+    pill.addEventListener('click', () => {
+      setActiveCategory(cat, true);
+    });
+    pill.addEventListener('keydown', e => {
+      if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveCategory(cat, true); }
+    });
+    catScroll.appendChild(pill);
+  });
+}
+
+/* ---------- Set active category and render ---- */
+function setActiveCategory(cat, shouldScrollIntoView){
+  currentCategory = cat;
+  // update pill active states
+  Array.from(catScroll.children).forEach(btn => {
+    if(btn.dataset.cat === cat){
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected','true');
+      if(shouldScrollIntoView) {
+        // center the pill in view
+        const rect = btn.getBoundingClientRect();
+        const wrapRect = catScroll.getBoundingClientRect();
+        const offset = rect.left - wrapRect.left - (wrapRect.width/2) + (rect.width/2);
+        catScroll.scrollBy({ left: offset, behavior: 'smooth' });
+      }
+    } else {
+      btn.classList.remove('active');
+      btn.setAttribute('aria-selected','false');
+    }
+  });
+  renderList();
+}
+
+/* ---------- Load videos from storage + builtin fallback ---------- */
+const builtinVideos = [
+  { category: "podcast", title: "The Uncut Zubeen : The Last Interview", url: "https://youtu.be/5VenPCFCShU?si=r8kghHMUHwiK7BmS" },
+  { category: "podcast", title: "Zubeen Garg: Most 'Candid' Podcast, UNTOLD Stories, Emotional Side, SIKAAR || Assamese Podcast - 136", url: "https://youtu.be/LAJF9jUQx2U?si=uBlwVrWh3moUotI7" },
+  { category: "podcast", title: "জুবিন গাৰ্গৰ সৈতে বাৰ্তালাপ", url: "https://youtu.be/D3Ct9LfwyrI?si=UP2DjRyDSog5zPEG" },
+  { category: "podcast", title: "EP 05 featuring the one and only ZUBEEN GARG....", url: "https://youtu.be/Y4VDE_ogJes?si=aWYGhiYs_GXMROdh" },
+  { category: "podcast", title: "Zubeen Garg - The Untold Story #kingofassam", url: "https://youtu.be/kL_lMbGu5ss?si=gm7Htd9xKCuak7Lc" },
+  { category: "interview", title: "Entire family turns up to celebrate Zubeen's birthday", url: "https://youtu.be/SZZCbac048o?si=1mwLZmryAIlWxnEF" },
+  { category: "interview", title: "Zubeen Garg Exclusive Final Interview With Radio Mirchi", url: "https://youtu.be/AD8G_v3TJy8?si=qby30Q8DLuSXqx_-" },
+  { category: "song", title: "MAJULIR EJONI", url: "https://youtu.be/ZG3SdjQQLQ4?si=LrnyqceIHqg2zLQb" },
+  { category: "song", title: "Sang Ghor Dhuniya", url: "https://youtu.be/JGGeDntshCQ?si=98p4SVZDcvWjLQZx" }
+];
+
+function loadVideos(){
+  const stored = get(VKEY, []);
+  const normalizedStored = (Array.isArray(stored) ? stored : []).filter(Boolean).map(normalizeVideoItem);
+  const storedNewestFirst = normalizedStored.slice().reverse();
+  const builtInNormalized = builtinVideos.map(v => normalizeVideoItem(v));
+  allVideos = [...storedNewestFirst, ...builtInNormalized];
+}
+
+/* ---------- Rendering ---------- */
+function renderList(){
+  const q = searchInput.value.trim().toLowerCase();
+  // ensure currentCategory still exists
+  if(!categories.includes(currentCategory)){
+    currentCategory = categories[0] || defaultCats[0];
+    renderCategoryBar();
+  }
+
+  const filtered = allVideos.filter(v => v.category === currentCategory && (v.title || '').toLowerCase().includes(q));
+  videoListEl.innerHTML = '';
+  noResultsEl.style.display = filtered.length ? 'none' : 'block';
+  filtered.forEach((video, i) => {
+    const id = getYouTubeId(video.url || '');
+    const li = document.createElement('li');
+    li.className='video-item'; li.setAttribute('role','link'); li.tabIndex=0;
+    const activate = ()=>openYouTube(video.url);
+    li.addEventListener('click',activate);
+    li.addEventListener('keydown',e=>{ if(e.key==='Enter' || e.key===' ') activate(); });
+
+    const serial = document.createElement('div'); serial.className='serial'; serial.textContent=(i+1)+')';
+    const thumbWrap = document.createElement('div'); thumbWrap.className='thumb-wrapper';
+    const img = document.createElement('img'); img.alt = video.title || 'Video';
+    img.src = video.thumb || getThumbUrl(id);
+    thumbWrap.appendChild(img);
+
+    const titleDiv = document.createElement('div'); titleDiv.className='video-title'; titleDiv.textContent = video.title || 'Untitled Video';
+
+    li.appendChild(serial); li.appendChild(thumbWrap); li.appendChild(titleDiv);
+    videoListEl.appendChild(li);
+  });
+}
+
+/* ---------- Open video (Android intent if available) ---------- */
+function openYouTube(videoUrl){
+  const id = getYouTubeId(videoUrl || '');
+  if(!id){ window.open(videoUrl || '#','_blank','noopener,noreferrer'); return; }
+  const webUrl = `https://www.youtube.com/watch?v=${id}`;
+  const intentUrl = `intent://www.youtube.com/watch?v=${id}#Intent;scheme=https;package=com.google.android.youtube;S.browser_fallback_url=${encodeURIComponent(webUrl)};end`;
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  if(isAndroid) location.href = intentUrl;
+  else window.open(webUrl,'_blank','noopener,noreferrer');
+}
+
+/* ---------- Auto-scroll logic (right -> left) ---------- */
+let autoScrollEnabled = true;
+let autoScrollStep = 0.4; // px per ms (tweak for speed)
+let lastFrame = null;
+let userInteracting = false;
+let resumeTimeout = null;
+
+function autoScrollFrame(ts){
+  if(!lastFrame) lastFrame = ts;
+  const dt = ts - lastFrame;
+  lastFrame = ts;
+  if(autoScrollEnabled && !userInteracting){
+    // move scrollLeft forward (content moves left)
+    catScroll.scrollLeft += autoScrollStep * dt;
+    // if reached end, loop back smoothly
+    if(catScroll.scrollLeft + catScroll.clientWidth >= catScroll.scrollWidth - 1){
+      // small loop: jump back to start
+      catScroll.scrollTo({ left: 0 });
+    }
+  }
+  window.requestAnimationFrame(autoScrollFrame);
+}
+
+/* Pause auto-scroll when user interacts; resume after idle */
+function pauseAutoScroll(){
+  userInteracting = true;
+  if(resumeTimeout) clearTimeout(resumeTimeout);
+  resumeTimeout = setTimeout(()=>{ userInteracting = false; }, 1800); // resume after 1.8s idle
+}
+
+/* Wire user interactions */
+catScroll.addEventListener('pointerdown', e => { pauseAutoScroll(); });
+catScroll.addEventListener('touchstart', e => { pauseAutoScroll(); }, {passive:true});
+catScroll.addEventListener('wheel', e => { pauseAutoScroll(); }, {passive:true});
+catScroll.addEventListener('scroll', () => { pauseAutoScroll(); });
+
+/* ---------- Keep categories & videos in sync with admin/videoAdd (storage events) ---------- */
+window.addEventListener('storage', (e) => {
+  try{
+    if(e.key === CKEY){
+      const updated = JSON.parse(e.newValue || '[]');
+      categories = Array.isArray(updated) && updated.length ? updated : defaultCats;
+      // if currentCategory no longer exists, switch to the first
+      if(!categories.includes(currentCategory)) currentCategory = categories[0] || defaultCats[0];
+      renderCategoryBar();
+      setActiveCategory(currentCategory, false);
+    } else if (e.key === VKEY){
+      loadVideos();
+      renderList();
+    }
+  }catch(err){}
+});
+
+/* ---------- Also watch in-page local changes (other tabs may trigger storage event) ---------- */
+const origSetItem = localStorage.setItem;
+localStorage.setItem = function(k, v){
+  origSetItem.apply(this, arguments);
+  // if current page mutated storage directly, update UI immediately
+  if(k === CKEY){
+    categories = get(CKEY, defaultCats);
+    renderCategoryBar();
+    if(!categories.includes(currentCategory)) currentCategory = categories[0] || defaultCats[0];
+    setActiveCategory(currentCategory, false);
+  } else if(k === VKEY){
+    loadVideos();
+    renderList();
+  }
+};
+
+/* ---------- Init ---------- */
+function init(){
+  categories = get(CKEY, defaultCats);
+  if(!Array.isArray(categories) || categories.length===0) categories = defaultCats;
+  // ensure category normalization (lowercase)
+  categories = categories.map(c => String(c).toLowerCase());
+  currentCategory = categories.includes(currentCategory) ? currentCategory : categories[0];
+
+  renderCategoryBar();
+  setActiveCategory(currentCategory, true);
+  loadVideos();
+  renderList();
+  searchInput.addEventListener('input', renderList);
+  window.requestAnimationFrame(autoScrollFrame);
+}
+init();
+
+/* ---------- Small garbage-text remover (keeps original behaviour) ---------- */
+function removeBracketGarbage(root=document.body){
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+  const remove=[];
+  const onlyGarbage=/^[\s\)\(\}\{\];]+$/;
+  while(walker.nextNode()){
+    const n=walker.currentNode;
+    if(!n||!n.nodeValue) continue;
+    const t=n.nodeValue.trim();
+    if(t && onlyGarbage.test(t)) remove.push(n);
+  }
+  remove.forEach(n=>n.parentNode&&n.parentNode.removeChild(n));
+}
+window.addEventListener('DOMContentLoaded',()=>removeBracketGarbage(document.body));
+
+/* ---------- Client-side hardening (disable common shortcuts & inspect) ---------- */
+(function harden(){
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('selectstart', e => e.preventDefault());
+  document.addEventListener('dragstart', e => e.preventDefault());
+
+  document.addEventListener('keydown', function(e){
+    if (
+      e.keyCode===123 ||
+      (e.ctrlKey && e.shiftKey && (e.keyCode===73 || e.keyCode===74)) ||
+      (e.ctrlKey && (e.keyCode===85 || e.keyCode===83 || e.keyCode===80 || e.keyCode===67 || e.keyCode===65))
+    ){
+      e.preventDefault(); e.stopPropagation(); return false;
+    }
+  }, true);
+
+  // Prevent framing
+  if(window.top !== window.self) window.top.location = window.self.location;
+})();
+</script>
+
+</body>
+</html>
