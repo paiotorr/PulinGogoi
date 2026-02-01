@@ -47,6 +47,16 @@ h1{font-size:20px;margin-bottom:10px}
 }
 .clear-btn:hover{background:#a30000}
 .footer{margin-top:18px;font-size:12px;color:#777}
+.logout-btn{
+  margin-top:14px;
+  background:#000;
+  color:#fff;
+  border:none;
+  padding:10px 14px;
+  border-radius:20px;
+  cursor:pointer;
+  font-size:13px;
+}
 </style>
 </head>
 
@@ -61,12 +71,16 @@ h1{font-size:20px;margin-bottom:10px}
   </div>
 
   <div class="count-box">
-    Videos in Activity Log
-    <span id="videoCount">0</span>
+    Logs in Activity Panel
+    <span id="logCount">0</span>
   </div>
 
-  <button class="clear-btn" onclick="clearLogs()">
+  <button class="clear-btn" id="clearBtn">
     CLEAR ACTIVITY LOGS
+  </button>
+
+  <button class="logout-btn" id="logoutBtn">
+    Logout
   </button>
 
   <div class="footer">
@@ -74,46 +88,103 @@ h1{font-size:20px;margin-bottom:10px}
   </div>
 </div>
 
-<script>
-/* ---------- OWNER GUARD ---------- */
-const session = JSON.parse(sessionStorage.getItem("jzd_session") || "null");
-if(!session || session.role !== "owner"){
-  location.replace("login.html");
-}
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import {
+    getFirestore, collection, getDocs, writeBatch, doc
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-/* ---------- STORAGE ---------- */
-const VKEY = "jzd_videos";
+  // ---------- Firebase config ----------
+  const firebaseConfig = {
+    apiKey: "AIzaSyC6cMfvfX68H-luCgPa32aXAc0D-x6bczU",
+    authDomain: "zubeenda-17222.firebaseapp.com",
+    projectId: "zubeenda-17222",
+    storageBucket: "zubeenda-17222.firebasestorage.app",
+    messagingSenderId: "541676751696",
+    appId: "1:541676751696:web:e75867164d4372d3ad7a55"
+  };
 
-/* ---------- HELPERS ---------- */
-function getVideos(){
-  try{
-    return JSON.parse(localStorage.getItem(VKEY)) || [];
-  }catch(e){ return []; }
-}
-function updateCount(){
-  document.getElementById("videoCount").textContent = getVideos().length;
-}
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
 
-/* ---------- CLEAR LOGS ---------- */
-function clearLogs(){
-  if(!confirm("Are you sure you want to CLEAR ALL activity logs?")) return;
-  if(!confirm("This action cannot be undone.\n\nConfirm clear?")) return;
+  const logCountEl = document.getElementById("logCount");
+  const clearBtn = document.getElementById("clearBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
 
-  localStorage.removeItem(VKEY);
-  alert("Activity logs cleared successfully.");
-  updateCount();
-}
+  // ---------- OWNER GUARD ----------
+  onAuthStateChanged(auth, async (user) => {
+    if(!user){
+      sessionStorage.removeItem("jzd_session");
+      location.replace("login.html");
+      return;
+    }
 
-/* ---------- INIT ---------- */
-updateCount();
+    try {
+      const snap = await fetchUserRole(user.uid);
+      if(snap !== "admin"){
+        alert("Owner access only.");
+        await signOut(auth);
+        location.replace("login.html");
+        return;
+      }
+      updateCount();
+    } catch (err) {
+      console.error(err);
+      alert("Authorization failed.");
+      await signOut(auth);
+      location.replace("login.html");
+    }
+  });
 
-/* ---------- BASIC HARDENING ---------- */
-document.addEventListener("contextmenu",e=>e.preventDefault());
-document.addEventListener("keydown",e=>{
-  if(e.keyCode===123 || (e.ctrlKey && e.shiftKey)){
-    e.preventDefault();
+  async function fetchUserRole(uid){
+    const res = await getDocs(collection(db, "users"));
+    let role = null;
+    res.forEach(d => {
+      if(d.id === uid) role = d.data().role;
+    });
+    return role;
   }
-});
+
+  // ---------- COUNT LOGS ----------
+  async function updateCount(){
+    const snap = await getDocs(collection(db, "activityLogs"));
+    logCountEl.textContent = snap.size;
+  }
+
+  // ---------- CLEAR LOGS ----------
+  clearBtn.addEventListener("click", async () => {
+    if(!confirm("Are you sure you want to CLEAR ALL activity logs?")) return;
+    if(!confirm("This action cannot be undone.\n\nConfirm clear?")) return;
+
+    try {
+      const snap = await getDocs(collection(db, "activityLogs"));
+      const batch = writeBatch(db);
+      snap.forEach(d => batch.delete(doc(db, "activityLogs", d.id)));
+      await batch.commit();
+      alert("Activity logs cleared successfully.");
+      updateCount();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to clear logs.");
+    }
+  });
+
+  // ---------- LOGOUT ----------
+  logoutBtn.addEventListener("click", async () => {
+    try { await signOut(auth); } catch(e){}
+    sessionStorage.removeItem("jzd_session");
+    location.replace("login.html");
+  });
+
+  // ---------- BASIC HARDENING ----------
+  document.addEventListener("contextmenu", e => e.preventDefault());
+  document.addEventListener("keydown", e => {
+    if(e.keyCode===123 || (e.ctrlKey && e.shiftKey)){
+      e.preventDefault();
+    }
+  });
 </script>
 
 </body>
