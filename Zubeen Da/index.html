@@ -142,10 +142,10 @@
 /*
   Connected index.html - Category bar update
   - Categories are read from localStorage 'jzd_categories' (admin-driven)
-  - Default categories: ["song","video","interview","podcast","funny moment"]
+  - Default categories: ["podcast","interview","song"]
   - Category bar auto-scrolls right->left, but pauses on user interaction and resumes after idle
   - Manual touch / mouse scroll works (native), pills are clickable and keyboard focusable
-  - Updates when admin modifies categories via storage events
+  - Updates when admin modifies categories or team adds videos via storage events
 */
 
 /* ---------- Storage helpers & keys ---------- */
@@ -155,9 +155,18 @@ const get = (k, d) => {
   try { return JSON.parse(localStorage.getItem(k) || JSON.stringify(d)); }
   catch(e){ return d; }
 };
+const set = (k, v) => {
+  try { localStorage.setItem(k, JSON.stringify(v)); }
+  catch(e){}
+};
 
 /* ---------- Defaults ---------- */
-const defaultCats = ["song","video","interview","podcast","funny moment"];
+const defaultCats = ["podcast","interview","song"];
+
+/* Ensure default categories exist (write-once fallback) */
+if(!localStorage.getItem(CKEY)){
+  set(CKEY, defaultCats);
+}
 
 /* ---------- UI Elements ---------- */
 const catScroll = document.getElementById('catScroll');
@@ -170,14 +179,37 @@ if(!Array.isArray(categories) || categories.length===0) categories = defaultCats
 let currentCategory = categories[0] || defaultCats[0];
 let allVideos = [];
 
-/* ---------- Build category pills ---------- */
+/* ---------- Helpers ---------- */
 function titleCase(s){
   return String(s).replace(/\b\w/g, c => c.toUpperCase());
 }
+function getYouTubeId(url){
+  try{
+    const u = new URL(url);
+    if(u.hostname === 'youtu.be') return u.pathname.slice(1);
+    return u.searchParams.get('v') || '';
+  } catch(e){ return ''; }
+}
+function getThumbUrl(id){ return id ? 'https://img.youtube.com/vi/' + id + '/hqdefault.jpg' : ''; }
 
+/* Normalize video item (accepts many shapes) */
+function normalizeVideoItem(item){
+  const id = item.id || getYouTubeId(item.url || '');
+  const url = item.url || (id ? `https://youtu.be/${id}` : '');
+  return {
+    category: (item.category || item.cat || 'song').toString(),
+    title: item.title || item.name || (id ? `YouTube · ${id}` : 'Untitled'),
+    url,
+    thumb: item.thumb || (id ? getThumbUrl(id) : ''),
+    addedBy: item.addedBy || item.user || 'team',
+    time: item.time || item.addedOn || ''
+  };
+}
+
+/* ---------- Build category pills ---------- */
 function renderCategoryBar(){
   catScroll.innerHTML = '';
-  categories.forEach((cat, i) => {
+  categories.forEach((cat) => {
     const pill = document.createElement('button');
     pill.className = 'category-pill' + (cat === currentCategory ? ' active' : '');
     pill.setAttribute('role','tab');
@@ -218,7 +250,7 @@ function setActiveCategory(cat, shouldScrollIntoView){
   renderList();
 }
 
-/* ---------- Load videos: stored videos (most recent first) + fallbacks ---------- */
+/* ---------- Load videos from storage + builtin fallback ---------- */
 const builtinVideos = [
   { category: "podcast", title: "The Uncut Zubeen : The Last Interview", url: "https://youtu.be/5VenPCFCShU?si=r8kghHMUHwiK7BmS" },
   { category: "podcast", title: "Zubeen Garg: Most 'Candid' Podcast, UNTOLD Stories, Emotional Side, SIKAAR || Assamese Podcast - 136", url: "https://youtu.be/LAJF9jUQx2U?si=uBlwVrWh3moUotI7" },
@@ -231,42 +263,23 @@ const builtinVideos = [
   { category: "song", title: "Sang Ghor Dhuniya", url: "https://youtu.be/JGGeDntshCQ?si=98p4SVZDcvWjLQZx" }
 ];
 
-function getYouTubeId(url){
-  try{
-    const u = new URL(url);
-    if(u.hostname === 'youtu.be') return u.pathname.slice(1);
-    return u.searchParams.get('v') || '';
-  } catch(e){ return ''; }
-}
-function getThumbUrl(id){ return id ? 'https://img.youtube.com/vi/' + id + '/hqdefault.jpg' : ''; }
-
 function loadVideos(){
   const stored = get(VKEY, []);
-  const normalizedStored = (Array.isArray(stored) ? stored : []).filter(Boolean).map(item=>{
-    return {
-      category: item.category || item.cat || 'song',
-      title: item.title || item.name || '',
-      url: item.url || (item.id ? `https://youtu.be/${item.id}` : ''),
-      thumb: item.thumb || (item.id ? getThumbUrl(item.id) : ''),
-      addedBy: item.addedBy || item.user || 'team',
-      time: item.time || item.addedOn || ''
-    };
-  });
+  const normalizedStored = (Array.isArray(stored) ? stored : []).filter(Boolean).map(normalizeVideoItem);
   const storedNewestFirst = normalizedStored.slice().reverse();
-  const builtInNormalized = builtinVideos.map(v => ({
-    category: v.category,
-    title: v.title,
-    url: v.url,
-    thumb: getThumbUrl(getYouTubeId(v.url)),
-    addedBy: 'system',
-    time: ''
-  }));
+  const builtInNormalized = builtinVideos.map(v => normalizeVideoItem(v));
   allVideos = [...storedNewestFirst, ...builtInNormalized];
 }
 
 /* ---------- Rendering ---------- */
 function renderList(){
   const q = searchInput.value.trim().toLowerCase();
+  // ensure currentCategory still exists
+  if(!categories.includes(currentCategory)){
+    currentCategory = categories[0] || defaultCats[0];
+    renderCategoryBar();
+  }
+
   const filtered = allVideos.filter(v => v.category === currentCategory && (v.title || '').toLowerCase().includes(q));
   videoListEl.innerHTML = '';
   noResultsEl.style.display = filtered.length ? 'none' : 'block';
@@ -338,28 +351,47 @@ catScroll.addEventListener('touchstart', e => { pauseAutoScroll(); }, {passive:t
 catScroll.addEventListener('wheel', e => { pauseAutoScroll(); }, {passive:true});
 catScroll.addEventListener('scroll', () => { pauseAutoScroll(); });
 
-/* ---------- Keep categories in sync with admin (storage events) ---------- */
+/* ---------- Keep categories & videos in sync with admin/videoAdd (storage events) ---------- */
 window.addEventListener('storage', (e) => {
-  if(e.key === CKEY){
-    try{
+  try{
+    if(e.key === CKEY){
       const updated = JSON.parse(e.newValue || '[]');
-      if(Array.isArray(updated) && updated.length){
-        categories = updated;
-      } else {
-        categories = defaultCats;
-      }
+      categories = Array.isArray(updated) && updated.length ? updated : defaultCats;
       // if currentCategory no longer exists, switch to the first
       if(!categories.includes(currentCategory)) currentCategory = categories[0] || defaultCats[0];
       renderCategoryBar();
       setActiveCategory(currentCategory, false);
-    }catch(err){}
-  }
+    } else if (e.key === VKEY){
+      loadVideos();
+      renderList();
+    }
+  }catch(err){}
 });
+
+/* ---------- Also watch in-page local changes (other tabs may trigger storage event) ---------- */
+const origSetItem = localStorage.setItem;
+localStorage.setItem = function(k, v){
+  origSetItem.apply(this, arguments);
+  // if current page mutated storage directly, update UI immediately
+  if(k === CKEY){
+    categories = get(CKEY, defaultCats);
+    renderCategoryBar();
+    if(!categories.includes(currentCategory)) currentCategory = categories[0] || defaultCats[0];
+    setActiveCategory(currentCategory, false);
+  } else if(k === VKEY){
+    loadVideos();
+    renderList();
+  }
+};
 
 /* ---------- Init ---------- */
 function init(){
   categories = get(CKEY, defaultCats);
   if(!Array.isArray(categories) || categories.length===0) categories = defaultCats;
+  // ensure category normalization (lowercase)
+  categories = categories.map(c => String(c).toLowerCase());
+  currentCategory = categories.includes(currentCategory) ? currentCategory : categories[0];
+
   renderCategoryBar();
   setActiveCategory(currentCategory, true);
   loadVideos();
