@@ -144,20 +144,7 @@
   const videoListEl = document.getElementById('videoList');
   const noResultsEl = document.getElementById('noResults');
 
-  // ---------- Defaults & fallback ----------
-  const defaultCats = ["podcast","interview","song"];
-  const builtinVideos = [
-    { category: "podcast", title: "The Uncut Zubeen : The Last Interview", url: "https://youtu.be/5VenPCFCShU?si=r8kghHMUHwiK7BmS" },
-    { category: "podcast", title: "Zubeen Garg: Most 'Candid' Podcast, UNTOLD Stories, Emotional Side, SIKAAR || Assamese Podcast - 136", url: "https://youtu.be/LAJF9jUQx2U?si=uBlwVrWh3moUotI7" },
-    { category: "podcast", title: "জুবিন গাৰ্গৰ সৈতে বাৰ্তালাপ", url: "https://youtu.be/D3Ct9LfwyrI?si=UP2DjRyDSog5zPEG" },
-    { category: "podcast", title: "EP 05 featuring the one and only ZUBEEN GARG....", url: "https://youtu.be/Y4VDE_ogJes?si=aWYGhiYs_GXMROdh" },
-    { category: "podcast", title: "Zubeen Garg - The Untold Story #kingofassam", url: "https://youtu.be/kL_lMbGu5ss?si=gm7Htd9xKCuak7Lc" },
-    { category: "interview", title: "Entire family turns up to celebrate Zubeen's birthday", url: "https://youtu.be/SZZCbac048o?si=1mwLZmryAIlWxnEF" },
-    { category: "interview", title: "Zubeen Garg Exclusive Final Interview With Radio Mirchi", url: "https://youtu.be/AD8G_v3TJy8?si=qby30Q8DLuSXqx_-" },
-    { category: "song", title: "MAJULIR EJONI", url: "https://youtu.be/ZG3SdjQQLQ4?si=LrnyqceIHqg2zLQb" },
-    { category: "song", title: "Sang Ghor Dhuniya", url: "https://youtu.be/JGGeDntshCQ?si=98p4SVZDcvWjLQZx" }
-  ];
-
+  
   // ---------- State ----------
   let categories = [];            // [{ id, name }]
   let currentCategory = null;     // category id (doc id or fallback string)
