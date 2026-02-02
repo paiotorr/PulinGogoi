@@ -31,40 +31,49 @@ button.primary{background:#000;color:#fff;border:none;font-weight:700;cursor:poi
 .status.ok{color:green}
 .status.err{color:#c00}
 footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
+
+/* Auth-check visuals */
+#authCheck{max-width:520px;margin:60px auto;padding:20px;text-align:center;color:#444;font-size:14px}
 </style>
 </head>
 
 <body>
 
-<header>
-  <h1>Video Submission</h1>
-  <div class="header-actions">
-    <button id="btnLogout">Logout</button>
+  <!-- Visible until auth verified -->
+  <div id="authCheck">Checking session — please wait…</div>
+
+  <!-- App wrapper: hidden until user is authenticated as 'team' -->
+  <div id="app" style="display:none">
+    <header>
+      <h1>Video Submission</h1>
+      <div class="header-actions">
+        <button id="btnLogout">Logout</button>
+      </div>
+    </header>
+
+    <main>
+      <div class="card">
+
+        <label for="videoUrl">YouTube Video URL</label>
+        <input id="videoUrl" type="url" placeholder="https://youtu.be/..." required>
+
+        <label for="category">Select Category</label>
+        <select id="category" aria-label="Select category"></select>
+
+        <button id="addBtn" class="primary" disabled>Add Video</button>
+
+        <div class="preview" id="preview">
+          <img id="thumb" alt="Thumbnail">
+          <div class="preview-title" id="videoTitle"></div>
+        </div>
+
+        <div class="status" id="status"></div>
+
+      </div>
+    </main>
+
+    <footer>© 2026 JoiZubeenDa · Internal Team Tool</footer>
   </div>
-</header>
-
-<main>
-  <div class="card">
-
-    <label for="videoUrl">YouTube Video URL</label>
-    <input id="videoUrl" type="url" placeholder="https://youtu.be/..." required>
-
-    <label for="category">Select Category</label>
-    <select id="category" aria-label="Select category"></select>
-
-    <button id="addBtn" class="primary">Add Video</button>
-
-    <div class="preview" id="preview">
-      <img id="thumb" alt="Thumbnail">
-      <div class="preview-title" id="videoTitle"></div>
-    </div>
-
-    <div class="status" id="status"></div>
-
-  </div>
-</main>
-
-<footer>© 2026 JoiZubeenDa · Internal Team Tool</footer>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -97,6 +106,8 @@ footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
   const videoTitleEl = document.getElementById("videoTitle");
   const statusEl = document.getElementById("status");
   const btnLogout = document.getElementById("btnLogout");
+  const appDiv = document.getElementById("app");
+  const authCheck = document.getElementById("authCheck");
 
   // ---------- Helpers ----------
   function ytId(url){
@@ -149,12 +160,19 @@ footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
 
   // ---------- Auth & Role Guard (team only) ----------
   let currentUser = null;
+  let categoriesUnsub = null;
+
   onAuthStateChanged(auth, async (user) => {
+    // If not signed in, redirect to login immediately
     if(!user){
       sessionStorage.removeItem("jzd_session");
+      // Give a tiny delay for the UX to show the auth-check message (optional).
+      // Then redirect to login.
       location.replace("login.html");
       return;
     }
+
+    // If we have a user, verify role in Firestore
     currentUser = user;
     try {
       const udoc = await getDoc(doc(db, "users", user.uid));
@@ -176,12 +194,20 @@ footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
         return;
       }
 
+      // role === "team" -> show the app and start listeners
       sessionStorage.setItem("jzd_session", JSON.stringify({
         uid: user.uid,
         email: user.email,
         role: u.role,
         name: u.name || ""
       }));
+
+      // Show the app; hide the auth-check message
+      authCheck.style.display = "none";
+      appDiv.style.display = "block";
+
+      // Enable the add button now that auth passed
+      addBtn.disabled = false;
 
       // Start real-time category listener
       startCategoryListener();
@@ -195,34 +221,30 @@ footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
   });
 
   // ---------- Categories (real-time) ----------
-  let categoriesUnsub = null;
   function startCategoryListener(){
     if(categoriesUnsub) categoriesUnsub();
     const col = collection(db, "categories");
 
     categoriesUnsub = onSnapshot(col, snap => {
-      // Preserve any user selection (so we don't clobber a user's manual choice if categories update)
-      const previousValue = categoryEl.value || "";
+      // Clear existing options
+      categoryEl.innerHTML = "";
 
-      // Collect categories from snapshot
+      // Add placeholder - ensures no real category is selected automatically.
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "Select a category";
+      placeholder.disabled = true;
+      placeholder.selected = true;
+      categoryEl.appendChild(placeholder);
+
       const arr = [];
       snap.forEach(d => {
         const data = d.data();
         arr.push({ id: d.id, name: data.name || d.id });
       });
 
-      // Clear and rebuild options, always include the disabled placeholder first
-      categoryEl.innerHTML = "";
-
-      const placeholder = document.createElement("option");
-      placeholder.value = "";
-      placeholder.textContent = "Select a category";
-      placeholder.disabled = true;
-      // do not set selected here unconditionally; we'll set selection below
-      categoryEl.appendChild(placeholder);
-
       if(arr.length === 0){
-        // Fallback static options when DB has none
+        // Fallback options (still keep placeholder selected)
         const fallback = ['song','live','interview'];
         fallback.forEach(c => {
           const opt = document.createElement("option");
@@ -230,47 +252,31 @@ footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
           opt.textContent = c;
           categoryEl.appendChild(opt);
         });
-      } else {
-        arr.sort((a,b)=> a.name.localeCompare(b.name));
-        arr.forEach(item => {
-          const opt = document.createElement("option");
-          opt.value = item.id;
-          opt.textContent = item.name;
-          categoryEl.appendChild(opt);
-        });
+        return;
       }
 
-      // Restore previous selection if it still exists; otherwise select placeholder (no category)
-      if(previousValue){
-        const matching = Array.from(categoryEl.options).find(o => o.value === previousValue);
-        if(matching){
-          matching.selected = true;
-        } else {
-          placeholder.selected = true;
-        }
-      } else {
-        // No previous selection (first load / user hasn't picked) — ensure placeholder is selected
-        placeholder.selected = true;
-      }
+      arr.sort((a,b)=> a.name.localeCompare(b.name));
+      arr.forEach(item => {
+        const opt = document.createElement("option");
+        opt.value = item.id;
+        opt.textContent = item.name;
+        categoryEl.appendChild(opt);
+      });
     }, err => {
       console.error("categories snapshot error", err);
     });
   }
 
   // ---------- Duplicate check helper ----------
-  // This function queries Firestore for existing videos using both legacy fields and new canonical fields.
   async function checkDuplicateVideo(videoId, videoTitle) {
-    // Normalize basic inputs used in equality checks (exact match required by requirement)
     const id = (videoId || "").trim();
     const title = (videoTitle || "").trim();
 
-    // If either is missing, treat as not duplicate here (safety)
     if(!id && !title) return false;
 
     const videosCol = collection(db, "videos");
 
     try {
-      // 1) Check existing by id fields: 'id' OR 'videoId'
       if(id) {
         const qA = query(videosCol, where("id", "==", id));
         const snapA = await getDocs(qA);
@@ -281,7 +287,6 @@ footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
         if(snapB.size > 0) return true;
       }
 
-      // 2) Check existing by title fields: 'title' OR 'videoTitle'
       if(title) {
         const qC = query(videosCol, where("title", "==", title));
         const snapC = await getDocs(qC);
@@ -292,13 +297,10 @@ footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
         if(snapD.size > 0) return true;
       }
 
-      // No duplicates found
       return false;
 
     } catch (err) {
       console.error("Duplicate check failed:", err);
-      // If duplicate-check fails due to permission or network, fail-safe: do NOT block save automatically.
-      // Instead, surface an error so the user can retry.
       throw new Error("Could not verify duplicates (network/permission). Try again.");
     }
   }
@@ -314,9 +316,8 @@ footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
       setStatus("Invalid or unsupported YouTube URL. Supported: youtube.com/watch?v=, youtu.be/, youtube.com/shorts/", false);
       return;
     }
-    // Enforce explicit category selection. (Exact user-visible message required by spec.)
     if(!categoryId){
-      setStatus("Please select a category before submitting.", false);
+      setStatus("Please select a category", false);
       return;
     }
 
@@ -326,10 +327,8 @@ footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
     try {
       const thumb = ytThumb(id);
 
-      // Fetch the real title from YouTube (oEmbed). Fallback to id-based title if oEmbed fails.
       const title = await fetchYouTubeTitle(url, id);
 
-      // --- duplicate check (core fix) ---
       const isDuplicate = await checkDuplicateVideo(id, title);
       if(isDuplicate){
         setStatus("This video has already been added.", false);
@@ -338,19 +337,13 @@ footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
         return;
       }
 
-      // --- prepare document with both legacy and canonical fields ---
       const videoDoc = {
-        // legacy-friendly fields (used by other pages already)
-        id,               // legacy id field
-        title,            // legacy title field
-        url,              // legacy url
-
-        // canonical fields required by spec
+        id,
+        title,
+        url,
         videoId: id,
         videoTitle: title,
         videoUrl: url,
-
-        // meta
         category: categoryId,
         thumb,
         addedBy: currentUser.email || "",
@@ -358,16 +351,13 @@ footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
         time: nowReadable()
       };
 
-      // Add to Firestore (collection 'videos')
       await addDoc(collection(db, "videos"), videoDoc);
 
-      // Show preview & success
       thumbEl.src = thumb;
       videoTitleEl.textContent = title;
       previewEl.style.display = "block";
       setStatus("Video added successfully ✔", true);
 
-      // clear input
       videoUrlEl.value = "";
 
     } catch (err) {
@@ -389,6 +379,7 @@ footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
   // ---------- Small client hardening (non-breaking) ----------
   document.addEventListener('contextmenu', e => e.preventDefault());
 </script>
+
 <script>
 // Disable Right Click
 document.addEventListener('contextmenu', function(e) {
