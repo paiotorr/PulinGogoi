@@ -87,17 +87,134 @@
   .site-footer{text-align:center;padding:16px 10px 22px;color:#777;font-size:13px}
   .end-note{text-align:center;padding:8px 0;color:#333}
 
+  /* --- NOW PLAYING highlight --- */
+  /* Soft black background to subtly indicate the active video */
+  .video-item.playing{
+    background: rgba(0,0,0,0.08);
+    transition: background 0.22s ease;
+  }
+
+  /* --- PLAYER: container + responsive rules --- */
+  .player-wrap{
+    max-width:900px;
+    width:100%;
+    margin: 12px auto;
+    background: #000;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 8px 20px rgba(0,0,0,.08);
+  }
+  /* keep perfect aspect ratio and full width (modern browsers) */
+  .player-frame{
+    width:100%;
+    aspect-ratio: 16/9;
+    background: #000;
+    display:block;
+    border:0;
+    position: relative;
+  }
+  /* ensure the iframe injected by YT fills container */
+  .player-frame iframe { position:absolute; inset:0; width:100%; height:100%; border:0; display:block; }
+
+  /* player controls MUST appear below the video and be responsive */
+  .player-controls{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px;
+    background:#fff;
+    color:#000;
+    flex-wrap:wrap;
+  }
+  .player-controls .left {
+    display:flex; gap:8px; align-items:center;
+  }
+  .player-controls .center {
+    flex:1 1 auto; min-width:150px; display:flex; gap:8px; align-items:center;
+  }
+  .player-controls .right {
+    display:flex; gap:8px; align-items:center; justify-content:flex-end;
+  }
+
+  .btn {
+    background:#111;color:#fff;border:none;padding:8px 10px;border-radius:8px;font-size:14px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .btn.secondary { background:#eee;color:#111; }
+  .track {
+    width:100%;
+    height:8px;
+    background:#eee;
+    border-radius:6px;
+    position:relative;
+    cursor:pointer;
+    min-width:120px;
+  }
+  .track .progress {
+    position:absolute; left:0; top:0; bottom:0; width:0%; background:#111; border-radius:6px;
+  }
+  .meta-title { font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:240px; }
+
+  /* Background Play active state (polish) */
+  #bgPlayBtn.active{
+    background:#000;
+    color:#fff;
+    font-weight:700;
+    border: 1px solid #111;
+  }
+
+  /* Full Screen button active state */
+  #fsBtn.active{
+    background:#000;
+    color:#fff;
+    font-weight:700;
+    border: 1px solid #111;
+  }
+
+  /* Fullscreen-specific styles (when using the Fullscreen API) */
+  .player-wrap:fullscreen,
+  .player-wrap:-webkit-full-screen,
+  .player-wrap:-moz-full-screen,
+  .player-wrap:-ms-fullscreen {
+    width:100%;
+    height:100%;
+    max-width:none;
+    margin:0;
+    border-radius:0;
+    box-shadow:none;
+  }
+  .player-wrap:fullscreen .player-frame,
+  .player-wrap:-webkit-full-screen .player-frame,
+  .player-wrap:-moz-full-screen .player-frame,
+  .player-wrap:-ms-fullscreen .player-frame {
+    aspect-ratio: auto;
+    height:100%;
+  }
+
+  /* Fallback (simulate fullscreen) if Fullscreen API not available */
+  .player-wrap.fs-fallback {
+    position:fixed !important;
+    top:0; left:0; right:0; bottom:0;
+    width:100% !important;
+    height:100% !important;
+    z-index:99999;
+    border-radius:0 !important;
+  }
+  .player-wrap.fs-fallback .player-frame { height:100%; aspect-ratio:auto; }
+
+  /* ensure controls never overflow wide screens and wrap on tiny devices */
   @media (max-width:520px){
-    .category-pill{padding:10px 18px;font-size:14px}
-    .header{padding-bottom:16px}
-    .cat-wrap{padding-bottom:16px}
+    .player-controls { padding:8px; gap:8px; }
+    .meta-title { max-width:140px; font-size:12px; }
+    .btn { padding:8px 8px; font-size:13px; }
+    .track { height:6px; }
   }
 </style>
 </head>
 <body>
 
   <header class="header" role="banner">
-    <a class="login-btn" href="login.html" aria-label="Login">LOGIN</a>
+    <a class="login-btn" href="/ZubeenDa/login.html" aria-label="Login">LOGIN</a>
     <div class="header-title">Joi Zubeen Da - Paiotorr</div>
 
     <div class="cat-wrap" id="catWrap" aria-hidden="false" style="position:relative;">
@@ -106,6 +223,45 @@
   </header>
 
   <main class="content" role="main">
+
+    <!-- EMBEDDED PLAYER (fixed: use YT IFrame API) -->
+    <div id="playerContainer" class="player-wrap" aria-hidden="true" style="display:none;">
+      <!-- container where YT API will create the iframe -->
+      <div id="playerInner">
+        <!-- replaced iframe with a container div so YT API will insert iframe correctly -->
+        <div id="ytPlayer" class="player-frame"></div>
+      </div>
+
+      <!-- CONTROLS: always below the video (this is the change you requested) -->
+      <div class="player-controls" id="playerControls" aria-hidden="false" >
+        <div class="left">
+          <button class="btn" id="prevBtn" title="Previous">⏮</button>
+          <button class="btn" id="playPauseBtn" title="Play/Pause">▶</button>
+          <button class="btn" id="nextBtn" title="Next">⏭</button>
+        </div>
+
+        <div class="center">
+          <div class="meta-title" id="playerTitle">No video</div>
+          <div style="flex:1 1 40%;">
+            <div class="track" id="progressTrack" aria-label="Playback progress">
+              <div class="progress" id="progressBar"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="right">
+          <div id="timeLabel" style="font-size:13px;">0:00 / 0:00</div>
+          <!-- 🔵 Background Play button (default OFF - script will sync state) -->
+          <button class="btn secondary" id="bgPlayBtn" title="Background Play">🎧 OFF</button>
+
+          <!-- 🖵 Full Screen button (NEW) -->
+          <button class="btn secondary" id="fsBtn" title="Full Screen" aria-pressed="false">⛶</button>
+
+          <button class="btn secondary" id="closePlayer" title="Close Player">✕</button>
+        </div>
+      </div>
+    </div>
+
     <div class="search-wrapper">
       <input type="text" id="searchInput" placeholder="Search videos in this section…" aria-label="Search videos"/>
     </div>
@@ -144,11 +300,23 @@
   const videoListEl = document.getElementById('videoList');
   const noResultsEl = document.getElementById('noResults');
 
+  // Player DOM
+  const playerContainer = document.getElementById('playerContainer');
+  const ytPlayerContainer = document.getElementById('ytPlayer'); // replaced iframe ref
+  const playerControls = document.getElementById('playerControls');
+  const playPauseBtn = document.getElementById('playPauseBtn');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const playerTitle = document.getElementById('playerTitle');
+  const progressBar = document.getElementById('progressBar');
+  const progressTrack = document.getElementById('progressTrack');
+  const timeLabel = document.getElementById('timeLabel');
+  const closePlayer = document.getElementById('closePlayer');
+  const bgPlayBtn = document.getElementById('bgPlayBtn'); // 🔵 BACKGROUND PLAY button
+  const fsBtn = document.getElementById('fsBtn'); // <-- Full Screen button
+
   // ---------- Defaults & fallback ----------
-  
-  const builtinVideos = [
-    
-  ];
+  const builtinVideos = [];
 
   // ---------- State ----------
   let categories = [];            // [{ id, name }]
@@ -156,6 +324,18 @@
   let allVideos = [];             // array of normalized video objects (from Firestore + builtins)
   let categoriesUnsub = null;
   let videosUnsub = null;
+
+  // Player state
+  let activePlaylist = [];        // videos for current category (array of normalized items)
+  let currentIndex = -1;          // index in activePlaylist
+  let ytPlayer = null;            // YT.Player instance
+  let playerReady = false;
+  let isPlaying = false;
+  let progressTimer = null;
+
+  // Fullscreen state (keeps a JS-level flag for visual feedback)
+  let isFsActive = false;
+  let fsApiAvailable = !!(playerContainer.requestFullscreen || playerContainer.webkitRequestFullscreen || playerContainer.mozRequestFullScreen || playerContainer.msRequestFullscreen);
 
   // ---------- Helpers ----------
   function titleCase(s){ return String(s).replace(/\b\w/g, c => c.toUpperCase()); }
@@ -170,7 +350,6 @@
   function normalizeVideoItem(item){
     const id = item.id || getYouTubeId(item.url || '');
     const url = item.url || (id ? `https://youtu.be/${id}` : '');
-    // category in Firestore is usually categoryId; for builtin items it's name
     return {
       id: item.id || id || '',
       category: (item.category || item.cat || 'song').toString(),
@@ -220,15 +399,26 @@
         btn.setAttribute('aria-selected','false');
       }
     });
+
+    // rebuild active playlist for the selected category
+    buildActivePlaylist();
     renderList();
+  }
+
+  function buildActivePlaylist(){
+    // Filter by exact category id (category doc id) only
+    activePlaylist = allVideos.filter(v => String(v.category).toLowerCase() === String(currentCategory).toLowerCase());
+    // preserve ordering same as allVideos (which is newest->older). You can change ordering later if needed.
+    // reset current index if it is out of bounds
+    if(currentIndex < 0 || currentIndex >= activePlaylist.length){
+      currentIndex = -1;
+    }
   }
 
   // ---------- Render videos list ----------
   function renderList(){
     const q = (searchInput.value || '').trim().toLowerCase();
     const filtered = allVideos.filter(v => {
-      // If category ids are doc ids in Firestore, v.category equals that id; for builtin category, v.category is the name.
-      // We compare exact currentCategory to v.category; if category list is fallback strings, both use same string.
       if(!currentCategory) return true;
       if(String(v.category).toLowerCase() !== String(currentCategory).toLowerCase()) return false;
       return (v.title || '').toLowerCase().includes(q);
@@ -241,7 +431,22 @@
       const id = getYouTubeId(video.url || '');
       const li = document.createElement('li');
       li.className='video-item'; li.setAttribute('role','link'); li.tabIndex=0;
-      const activate = ()=>openYouTube(video.url);
+      li.dataset.url = video.url || ''; // used by now-playing highlight mapping
+
+      // Clicking now plays inside the embedded player (no redirect)
+      const activate = ()=> {
+        // Determine index inside activePlaylist (category-based)
+        buildActivePlaylist();
+        const idx = activePlaylist.findIndex(v => (v.url||'') === (video.url||''));
+        // If not in the activePlaylist because categories mismatch (rare), just play from filtered list
+        const playIdx = idx >= 0 ? idx : (() => {
+          // add temporarily this video as single-item playlist
+          activePlaylist = [video];
+          return 0;
+        })();
+        playVideoAtIndex(playIdx);
+      };
+
       li.addEventListener('click',activate);
       li.addEventListener('keydown',e=>{ if(e.key==='Enter' || e.key===' ') activate(); });
 
@@ -256,18 +461,359 @@
       li.appendChild(serial); li.appendChild(thumbWrap); li.appendChild(titleDiv);
       videoListEl.appendChild(li);
     });
+
+    // Ensure highlight is correct after re-render
+    updateNowPlayingHighlight();
   }
 
-  // ---------- Open video (Android intent if available) ----------
-  function openYouTube(videoUrl){
-    const id = getYouTubeId(videoUrl || '');
-    if(!id){ window.open(videoUrl || '#','_blank','noopener,noreferrer'); return; }
-    const webUrl = `https://www.youtube.com/watch?v=${id}`;
-    const intentUrl = `intent://www.youtube.com/watch?v=${id}#Intent;scheme=https;package=com.google.android.youtube;S.browser_fallback_url=${encodeURIComponent(webUrl)};end`;
-    const isAndroid = /Android/i.test(navigator.userAgent);
-    if(isAndroid) location.href = intentUrl;
-    else window.open(webUrl,'_blank','noopener,noreferrer');
+  // ---------- Now-playing highlight helper ----------
+  function updateNowPlayingHighlight(){
+    try {
+      const items = videoListEl.querySelectorAll('.video-item');
+      const currentVideo = (activePlaylist && activePlaylist[currentIndex]) ? activePlaylist[currentIndex] : null;
+      items.forEach(li => {
+        const url = li.dataset.url || '';
+        li.classList.toggle('playing', currentVideo && url === currentVideo.url);
+      });
+    } catch(e){}
   }
+
+  // ---------- Player control functions (REWRITTEN to use YT.Player) ----------
+  function showPlayer(){
+    playerContainer.style.display = 'block';
+    playerContainer.setAttribute('aria-hidden','false');
+  }
+  function hidePlayer(){
+    playerContainer.style.display = 'none';
+    playerContainer.setAttribute('aria-hidden','true');
+    stopProgressTimer();
+    isPlaying = false;
+    updatePlayButton();
+    // optionally stop video
+    try { if (playerReady && ytPlayer) { ytPlayer.stopVideo(); } } catch(e){}
+    // ensure fullscreen state cleared if open
+    exitFullScreenImmediate();
+  }
+
+  function playVideoAtIndex(idx){
+    if(!playerReady) {
+      // if player not ready yet, attempt to set currentIndex and show player with the ID in the src once ready
+      currentIndex = idx;
+      const video = activePlaylist[currentIndex];
+      if(video){
+        playerTitle.textContent = video.title || 'Untitled';
+      }
+      updateNowPlayingHighlight();
+      showPlayer();
+      return;
+    }
+    if(!Array.isArray(activePlaylist) || activePlaylist.length === 0) return;
+    if(idx < 0 || idx >= activePlaylist.length) return;
+    currentIndex = idx;
+    const video = activePlaylist[currentIndex];
+    const vid = getYouTubeId(video.url || '');
+    if(!vid) return;
+
+    // update highlight before loading to give immediate feedback
+    updateNowPlayingHighlight();
+
+    try {
+      // Use the official API to load and play the video
+      ytPlayer.loadVideoById({videoId: vid});
+    } catch (err) {
+      // fallback: cue then play
+      try { ytPlayer.cueVideoById(vid); } catch(e){}
+    }
+    playerTitle.textContent = video.title || 'Untitled';
+    showPlayer();
+    isPlaying = true;
+    updatePlayButton();
+    resetProgressBar();
+    startProgressTimer();
+  }
+
+  function prevVideo(){
+    if(currentIndex > 0){
+      playVideoAtIndex(currentIndex - 1);
+    } else {
+      // at beginning -> do nothing or optionally loop
+    }
+  }
+  function nextVideo(){
+    if(currentIndex < activePlaylist.length - 1){
+      playVideoAtIndex(currentIndex + 1);
+    } else {
+      // reached end: stop
+      isPlaying = false;
+      updatePlayButton();
+      stopProgressTimer();
+      // clear highlight when nothing is playing
+      updateNowPlayingHighlight();
+    }
+  }
+
+  function togglePlayPause(){
+    if(playerReady && ytPlayer) {
+      try {
+        const state = ytPlayer.getPlayerState();
+        if(state === YT.PlayerState.PLAYING || state === YT.PlayerState.BUFFERING) {
+          ytPlayer.pauseVideo();
+        } else {
+          ytPlayer.playVideo();
+        }
+        // The onStateChange handler will update isPlaying & UI
+      } catch (e) {
+        // fallback: toggle the flag
+        isPlaying = !isPlaying;
+        updatePlayButton();
+      }
+    } else {
+      // not ready: attempt to play when ready
+      isPlaying = true;
+      updatePlayButton();
+    }
+  }
+
+  function updatePlayButton(){
+    playPauseBtn.textContent = isPlaying ? '⏸' : '▶';
+  }
+
+  function resetProgressBar(){
+    progressBar.style.width = '0%';
+    timeLabel.textContent = '0:00 / 0:00';
+  }
+
+  // ---------- Progress timer (improved using YT API when available) ----------
+  function startProgressTimer(){
+    stopProgressTimer();
+    progressTimer = setInterval(() => {
+      if(playerReady && ytPlayer) {
+        try {
+          const dur = ytPlayer.getDuration() || 0;
+          const cur = ytPlayer.getCurrentTime() || 0;
+          if(dur > 0) {
+            const pct = Math.min(100, (cur / dur) * 100);
+            progressBar.style.width = pct + '%';
+            // format times
+            const fmt = t => {
+              const s = Math.floor(t || 0);
+              const m = Math.floor(s / 60);
+              const sec = String(s % 60).padStart(2,'0');
+              return m + ':' + sec;
+            };
+            timeLabel.textContent = fmt(cur) + ' / ' + fmt(dur);
+          } else {
+            // duration unknown yet; show spinner-like behavior
+            const currentWidth = parseFloat(progressBar.style.width || '0') || 0;
+            const next = Math.min(90, currentWidth + 0.6);
+            progressBar.style.width = next + '%';
+            timeLabel.textContent = isPlaying ? 'Playing' : 'Paused';
+          }
+        } catch(e){
+          // fallback visual only
+          const currentWidth = parseFloat(progressBar.style.width || '0') || 0;
+          const next = Math.min(100, currentWidth + 0.5);
+          progressBar.style.width = next + '%';
+          timeLabel.textContent = isPlaying ? 'Playing' : 'Paused';
+        }
+      } else {
+        // not ready - visual progress
+        const currentWidth = parseFloat(progressBar.style.width || '0') || 0;
+        const next = Math.min(100, currentWidth + 0.5);
+        progressBar.style.width = next + '%';
+        timeLabel.textContent = isPlaying ? 'Playing' : 'Paused';
+      }
+    }, 700);
+  }
+  function stopProgressTimer(){
+    if(progressTimer) { clearInterval(progressTimer); progressTimer = null; }
+    // don't wipe UI entirely; keep current state
+  }
+
+  // Seek by clicking track (best-effort: uses YT API if available)
+  progressTrack.addEventListener('click', (e) => {
+    const rect = progressTrack.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    progressBar.style.width = (pct * 100) + '%';
+    if(playerReady && ytPlayer) {
+      try {
+        const dur = ytPlayer.getDuration() || 0;
+        const seekTo = dur * pct;
+        ytPlayer.seekTo(seekTo, true);
+      } catch(e){}
+    }
+  });
+
+  // Control button listeners
+  playPauseBtn.addEventListener('click', () => { togglePlayPause(); });
+  prevBtn.addEventListener('click', () => { prevVideo(); });
+  nextBtn.addEventListener('click', () => { nextVideo(); });
+  closePlayer.addEventListener('click', () => { hidePlayer(); });
+
+  // ---------- Screen Orientation helpers (NEW) ----------
+  async function lockLandscape(){
+    try{
+      if (screen.orientation && screen.orientation.lock) {
+        // Attempt a general landscape lock; browsers may accept 'landscape' or 'landscape-primary'
+        await screen.orientation.lock('landscape');
+      }
+    } catch(e){
+      // If locking fails (iOS Safari or denied), fail silently and continue (we don't break playback)
+      // console.debug('Orientation lock failed or unsupported', e);
+    }
+  }
+  function unlockOrientation(){
+    try{
+      // Some browsers support unlock(), others ignore.
+      if (screen.orientation && screen.orientation.unlock) {
+        screen.orientation.unlock();
+      }
+    } catch(e){}
+  }
+
+  // ---------- Fullscreen logic (UPDATED: orientation lock/unlock) ----------
+  function updateFsBtn(){
+    try {
+      fsBtn.classList.toggle('active', isFsActive);
+      fsBtn.setAttribute('aria-pressed', String(Boolean(isFsActive)));
+      // keep icon same for simplicity
+      fsBtn.textContent = '⛶';
+    } catch(e){}
+  }
+
+  // Enter fullscreen via API or fallback
+  async function enterFullScreen(){
+    if(!playerContainer) return;
+    // Try standard API
+    try {
+      if (playerContainer.requestFullscreen) {
+        await playerContainer.requestFullscreen();
+        // only attempt orientation lock after native fullscreen was entered
+        await lockLandscape();
+        isFsActive = true;
+        updateFsBtn();
+        return;
+      } else if (playerContainer.webkitRequestFullscreen) {
+        await playerContainer.webkitRequestFullscreen();
+        await lockLandscape();
+        isFsActive = true;
+        updateFsBtn();
+        return;
+      } else if (playerContainer.mozRequestFullScreen) {
+        await playerContainer.mozRequestFullScreen();
+        await lockLandscape();
+        isFsActive = true;
+        updateFsBtn();
+        return;
+      } else if (playerContainer.msRequestFullscreen) {
+        await playerContainer.msRequestFullscreen();
+        await lockLandscape();
+        isFsActive = true;
+        updateFsBtn();
+        return;
+      }
+    } catch (e) {
+      // ignore and fallback below
+    }
+
+    // Fallback: simulate fullscreen via CSS class (works when API blocked/not available)
+    playerContainer.classList.add('fs-fallback');
+    isFsActive = true;
+    updateFsBtn();
+    // Attempt orientation lock even for fallback (may fail silently)
+    try { lockLandscape(); } catch(e){}
+  }
+
+  // Exit fullscreen via API or fallback
+  async function exitFullScreen(){
+    try {
+      const docFs = (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+      if (docFs) {
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+          await unlockOrientation();
+          isFsActive = false;
+          updateFsBtn();
+          return;
+        } else if (document.webkitExitFullscreen) {
+          await document.webkitExitFullscreen();
+          await unlockOrientation();
+          isFsActive = false;
+          updateFsBtn();
+          return;
+        } else if (document.mozCancelFullScreen) {
+          await document.mozCancelFullScreen();
+          await unlockOrientation();
+          isFsActive = false;
+          updateFsBtn();
+          return;
+        } else if (document.msExitFullscreen) {
+          await document.msExitFullscreen();
+          await unlockOrientation();
+          isFsActive = false;
+          updateFsBtn();
+          return;
+        }
+      }
+    } catch (e){
+      // ignore and continue to fallback cleanup
+    }
+
+    // Fallback cleanup
+    playerContainer.classList.remove('fs-fallback');
+    isFsActive = false;
+    updateFsBtn();
+    try { unlockOrientation(); } catch(e){}
+  }
+
+  // Immediate exit used when hiding player (no await)
+  function exitFullScreenImmediate(){
+    try {
+      if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement) {
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+        else if (document.msExitFullscreen) document.msExitFullscreen();
+      }
+    } catch(e){}
+    playerContainer.classList.remove('fs-fallback');
+    isFsActive = false;
+    updateFsBtn();
+    try { unlockOrientation(); } catch(e){}
+  }
+
+  function toggleFullScreen(){
+    const docFs = (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+    if (docFs || playerContainer.classList.contains('fs-fallback') || isFsActive) {
+      exitFullScreen();
+    } else {
+      enterFullScreen();
+    }
+  }
+
+  // Listen for changes (user pressed ESC or browser changed fullscreen state)
+  function onFsChange(){
+    const docFs = (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+    if (docFs) {
+      isFsActive = true;
+      playerContainer.classList.remove('fs-fallback');
+    } else {
+      // not in native fullscreen - clear JS flag and fallback class, and unlock orientation
+      playerContainer.classList.remove('fs-fallback');
+      isFsActive = false;
+      try { unlockOrientation(); } catch(e){}
+    }
+    updateFsBtn();
+  }
+
+  // Bind FS button
+  fsBtn.addEventListener('click', () => { toggleFullScreen(); });
+
+  // Fullscreen change events (cross-browser)
+  document.addEventListener('fullscreenchange', onFsChange);
+  document.addEventListener('webkitfullscreenchange', onFsChange);
+  document.addEventListener('mozfullscreenchange', onFsChange);
+  document.addEventListener('MSFullscreenChange', onFsChange);
 
   // ---------- Auto-scroll for category bar ----------
   let autoScrollEnabled = true;
@@ -301,6 +847,14 @@
   catScroll.addEventListener('scroll', () => { pauseAutoScroll(); });
 
   // ---------- Firestore listeners ----------
+  const defaultCats = ['song','live','interview'];
+
+  // helper to normalize category names for robust matching
+  function normCatKey(s){
+    return (String(s || '').toLowerCase().replace(/[^a-z0-9]/g,'')).trim();
+  }
+  const preferredCatKey = normCatKey('ZG HiT Songs');
+
   function startCategoryListener(){
     if(categoriesUnsub) categoriesUnsub();
     const col = collection(db, "categories");
@@ -310,21 +864,26 @@
         const data = d.data();
         out.push({ id: d.id, name: data.name || d.id });
       });
-      // sort by name
       out.sort((a,b)=> (a.name || '').localeCompare(b.name || ''));
       categories = out;
-      // if currentCategory is null, set to first category
-      if(!currentCategory && categories.length) currentCategory = categories[0].id;
-      // if currentCategory no longer exists (deleted), switch to first available
+
+      // Choose default category: prefer "ZG HiT Songs" if present (robust matching), else first
+      if(!currentCategory && categories.length){
+        const found = categories.find(c => {
+          return normCatKey(c.name || c.id) === preferredCatKey;
+        });
+        currentCategory = found ? found.id : categories[0].id;
+      }
+
+      // ensure currentCategory still exists
       if(currentCategory && !categories.find(c=>c.id===currentCategory)){
         currentCategory = (categories[0] && categories[0].id) || defaultCats[0];
       }
+
       renderCategoryBar();
-      // ensure videos re-render since category ids may have changed
       renderList();
     }, err => {
       console.error("categories snapshot error", err);
-      // fallback: if categories missing, use defaultCats
       if(!categories || categories.length === 0){
         categories = defaultCats.map(c => ({ id: c, name: c }));
         if(!currentCategory) currentCategory = categories[0].id;
@@ -340,24 +899,28 @@
     videosUnsub = onSnapshot(q, snap => {
       const rows = [];
       snap.forEach(d => {
-  const data = d.data();
-  rows.push({ ...data, docId: d.id });
-  });
-      // normalized Firestore videos first (newest -> older)
+        const data = d.data();
+        rows.push({ ...data, docId: d.id });
+      });
       const normalized = rows.map(normalizeVideoItem);
-      // fallback built-in videos appended after stored videos
       const builtInNormalized = builtinVideos.map(normalizeVideoItem);
       allVideos = [...normalized, ...builtInNormalized];
-      // If currentCategory is null, set to first available category id, or fallback to builtIn categories
+
+      // If no category chosen yet, try to choose preferred category if it exists
       if(!currentCategory){
-        if(categories && categories.length) currentCategory = categories[0].id;
-        else if(allVideos.length) currentCategory = allVideos[0].category;
+        if(categories && categories.length){
+          const found = categories.find(c => normCatKey(c.name || c.id) === preferredCatKey);
+          currentCategory = found ? found.id : categories[0].id;
+        } else if(allVideos.length){
+          currentCategory = allVideos[0].category;
+        }
       }
+      buildActivePlaylist();
       renderList();
     }, err => {
       console.error("videos snapshot error", err);
-      // fallback to built-in videos only
       allVideos = builtinVideos.map(normalizeVideoItem);
+      buildActivePlaylist();
       renderList();
     });
   }
@@ -365,24 +928,163 @@
   // ---------- Search wiring ----------
   searchInput.addEventListener('input', () => { renderList(); });
 
+  // ---------- Initialize YT Player integration ----------
+  // IMPORTANT: window.onYouTubeIframeAPIReady must be defined in global scope so the loaded YT API can call it.
+  window.onYouTubeIframeAPIReady = function () {
+    // Create YT.Player inside container with proper playerVars (including origin)
+    try {
+      ytPlayer = new YT.Player('ytPlayer', {
+        height: '100%',
+        width: '100%',
+        videoId: '',
+        playerVars: {
+          autoplay: 1,
+          playsinline: 1,
+          rel: 0,
+          modestbranding: 1,
+          enablejsapi: 1,
+          origin: window.location.origin || (window.location.protocol + '//' + window.location.host)
+        },
+        events: {
+          onReady: function () {
+            playerReady = true;
+            // if a selection was made before ready, attempt to play it
+            if (currentIndex >= 0 && activePlaylist[currentIndex]) {
+              const vid = getYouTubeId(activePlaylist[currentIndex].url || '');
+              if (vid) {
+                try { ytPlayer.loadVideoById(vid); } catch(e){}
+              }
+            }
+          },
+          onStateChange: function (e) {
+            // Update UI based on player state
+            if (e.data === YT.PlayerState.PLAYING) {
+              isPlaying = true;
+              updatePlayButton();
+              startProgressTimer();
+            } else if (e.data === YT.PlayerState.PAUSED) {
+              isPlaying = false;
+              updatePlayButton();
+              stopProgressTimer();
+            } else if (e.data === YT.PlayerState.ENDED) {
+              isPlaying = false;
+              updatePlayButton();
+              // Auto play next
+              nextVideo();
+            } else if (e.data === YT.PlayerState.BUFFERING) {
+              // keep playing flag
+            }
+          }
+        }
+      });
+    } catch (err) {
+      console.error('YT.Player creation failed', err);
+    }
+  };
+
+  // ---------- 🔵 BACKGROUND PLAY (IMPROVED & SAFE) ----------
+  // Purpose: allow the user to manually enable background audio where the browser/OS allows it.
+  // State is remembered in localStorage and the player will try to resume playback if the page becomes hidden,
+  // the window blurs, or the browser tries to pause the video. This is best-effort and will gracefully
+  // fall back if the OS blocks background playback.
+  let backgroundPlayEnabled = localStorage.getItem('bgPlay') === '1';
+  function updateBgBtn(){
+    try {
+      bgPlayBtn.textContent = backgroundPlayEnabled ? '🎧 ON' : '🎧 OFF';
+      bgPlayBtn.classList.toggle('active', backgroundPlayEnabled);
+    } catch(e){}
+  }
+  updateBgBtn();
+
+  bgPlayBtn.addEventListener('click', () => {
+    backgroundPlayEnabled = !backgroundPlayEnabled;
+    try { localStorage.setItem('bgPlay', backgroundPlayEnabled ? '1' : '0'); } catch(e){}
+    updateBgBtn();
+
+    // Try to resume playback immediately when enabling
+    if (backgroundPlayEnabled && ytPlayer && playerReady) {
+      try { ytPlayer.playVideo(); } catch(e){}
+    }
+  });
+
+  function tryResumePlayback(){
+    if (!backgroundPlayEnabled) return;
+    if (!ytPlayer || !playerReady) return;
+    try {
+      const state = ytPlayer.getPlayerState();
+      if (state !== YT.PlayerState.PLAYING) {
+        // Attempt to play — browser may ignore if autoplay policy blocks it,
+        // but this is a safe, single attempt (no tight loops).
+        ytPlayer.playVideo();
+      }
+    } catch(e){}
+  }
+
+  // When tab/app changes (page visibility)
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && backgroundPlayEnabled) {
+      // small delay to let browser process visibility change
+      setTimeout(tryResumePlayback, 400);
+    }
+  });
+
+  // When window loses focus (screen lock, app switch on some platforms)
+  window.addEventListener('blur', () => {
+    if (backgroundPlayEnabled) {
+      setTimeout(tryResumePlayback, 500);
+    }
+  });
+
+  // Also attempt to resume on pageshow (when coming back) if background mode is enabled
+  window.addEventListener('pageshow', () => {
+    if (backgroundPlayEnabled) {
+      setTimeout(tryResumePlayback, 300);
+    }
+  });
+
   // ---------- Init ----------
   (function init(){
-    // start listeners
     startCategoryListener();
     startVideoListener();
-    // default UI state
     window.requestAnimationFrame(autoScrollFrame);
-    // If no categories exist in Firestore, ensure fallback pills appear:
-    if(!categories || categories.length === 0){
-      categories = defaultCats.map(c => ({ id: c, name: c }));
-      if(!currentCategory) currentCategory = categories[0].id;
-      renderCategoryBar();
-    }
   })();
 
   // ---------- Prevent easy scraping (non-breaking) ----------
   document.addEventListener('contextmenu', e => e.preventDefault());
-  document.addEventListener('selectstart', e => {}); // allow selection on homepage? Keep minimal
+  document.addEventListener('selectstart', e => {});
+</script>
+
+<!-- Load the YouTube IFrame API (not a module) so the global callback will run -->
+<script src="https://www.youtube.com/iframe_api"></script>
+
+<script>
+// Disable Right Click
+document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+});
+
+// Disable Key Shortcuts
+document.addEventListener('keydown', function(e) {
+
+    // Block F12
+    if (e.keyCode == 123) {
+        e.preventDefault();
+    }
+
+    // Block Ctrl+Shift+I / Ctrl+Shift+J / Ctrl+U
+    if (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74)) {
+        e.preventDefault();
+    }
+
+    if (e.ctrlKey && e.keyCode == 85) {
+        e.preventDefault();
+    }
+
+    // Block Ctrl+S, Ctrl+C,
+    if (e.ctrlKey && (e.keyCode == 83 || e.keyCode == 67)) {
+        e.preventDefault();
+    }
+});
 </script>
 
 </body>
