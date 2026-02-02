@@ -10,982 +10,234 @@
 <meta name="referrer" content="no-referrer" />
 
 <style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%}
-  body{
-    font-family:Arial,Helvetica,sans-serif;
-    background:#fff;color:#000;
-    -webkit-touch-callout:none;-webkit-user-select:none;
-    -khtml-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;
-    overflow-x:hidden;
-  }
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  background:#fff;color:#000;
+  overflow-x:hidden;
+}
 
-  .header{background:#000;color:#fff;text-align:center;padding:14px 12px 10px; position: relative;}
-  .header-title{font-size:20px;font-weight:700;margin-bottom:8px}
-  .login-btn{position:absolute;left:10px;top:10px;padding:6px 12px;border-radius:18px;border:1px solid #fff;background:transparent;color:#fff;font-size:12px;text-decoration:none;display:inline-block;line-height:1;cursor:pointer;transition:opacity .12s, transform .06s}
-  .login-btn:active{transform:translateY(1px)}
-  .login-btn[aria-disabled="true"]{opacity:.5;pointer-events:none}
+.header{background:#000;color:#fff;text-align:center;padding:14px 12px 10px;position:relative}
+.header-title{font-size:20px;font-weight:700;margin-bottom:8px}
+.login-btn{position:absolute;left:10px;top:10px;padding:6px 12px;border-radius:18px;border:1px solid #fff;background:transparent;color:#fff;font-size:12px;text-decoration:none}
 
-  .cat-wrap{
-    margin:12px auto 0;
-    max-width:100%;
-    width:100%;
-    overflow:hidden;
-    padding:10px 8px 20px;
-    box-sizing:border-box;
-  }
+.cat-wrap{margin:12px auto 0;padding:10px 8px 20px}
+.cat-scroll{display:flex;gap:14px;overflow-x:auto;scrollbar-width:none}
+.cat-scroll::-webkit-scrollbar{display:none}
 
-  .cat-scroll{
-    display:flex;
-    gap:14px;
-    align-items:center;
-    padding:6px 12px;
-    overflow-x:auto;
-    -webkit-overflow-scrolling:touch;
-    scroll-behavior:smooth;
-    scrollbar-width:none;
-  }
-  .cat-scroll::-webkit-scrollbar{ display:none; }
+.category-pill{
+  padding:12px 26px;
+  border-radius:40px;
+  background:#000;
+  color:#fff;
+  font-weight:700;
+  cursor:pointer;
+  border:2px solid transparent;
+}
+.category-pill.active{
+  background:#fff;
+  color:#000;
+  border-color:#000;
+}
 
-  .category-pill{
-    flex: 0 0 auto;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    padding:12px 26px;
-    border-radius:40px;
-    background:#000;
-    color:#fff;
-    font-weight:700;
-    font-size:15px;
-    white-space:nowrap;
-    cursor:pointer;
-    user-select:none;
-    transition:transform .08s, background .12s, color .12s;
-    border: 2px solid transparent;
-  }
-  .category-pill:active{ transform: translateY(1px); }
-  .category-pill:focus{ outline: none; box-shadow: 0 0 0 3px rgba(0,0,0,0.08); }
+.content{max-width:900px;margin:16px auto 30px;padding:0 10px}
+.search-wrapper{text-align:center;margin-bottom:16px}
+#searchInput{width:100%;max-width:400px;padding:10px;border-radius:22px;border:1px solid #ccc}
 
-  .category-pill.active{
-    background:#fff;
-    color:#000;
-    border-color:#000;
-  }
+.video-list{list-style:none}
+.video-item{
+  display:flex;
+  gap:10px;
+  padding:10px 6px;
+  border-bottom:1px solid #eee;
+  cursor:pointer;
+  transition:background .25s ease;
+}
 
-  .content{max-width:900px;margin:16px auto 30px;padding:0 10px}
-  .search-wrapper{text-align:center;margin-bottom:16px}
-  #searchInput{width:100%;max-width:400px;padding:10px 12px;border-radius:22px;border:1px solid #ccc;font-size:14px}
-  .video-list{list-style:none}
-  .video-item{display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid #eee;cursor:pointer;transition:background .12s,transform .06s}
-  .video-item:hover{background:#f7f7f7}
-  .serial{font-size:13px;min-width:28px}
-  .thumb-wrapper{flex-shrink:0;width:120px;height:68px;overflow:hidden;border-radius:6px;background:#ddd}
-  .thumb-wrapper img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;user-drag:none}
-  .video-title{font-size:14px;line-height:1.2}
-  .no-results{text-align:center;padding:24px 0;font-size:14px;color:#555;display:none}
-  .site-footer{text-align:center;padding:16px 10px 22px;color:#777;font-size:13px}
-  .end-note{text-align:center;padding:8px 0;color:#333}
+/* ✅ NOW PLAYING HIGHLIGHT */
+.video-item.playing{
+  background:rgba(0,0,0,0.08);
+  border-left:4px solid #000;
+}
 
-  /* --- PLAYER: container + responsive rules --- */
-  .player-wrap{
-    max-width:900px;
-    width:100%;
-    margin: 12px auto;
-    background: #000;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 8px 20px rgba(0,0,0,.08);
-  }
-  /* keep perfect aspect ratio and full width (modern browsers) */
-  .player-frame{
-    width:100%;
-    aspect-ratio: 16/9;
-    background: #000;
-    display:block;
-    border:0;
-    position: relative;
-  }
-  /* ensure the iframe injected by YT fills container */
-  .player-frame iframe { position:absolute; inset:0; width:100%; height:100%; border:0; display:block; }
+.thumb-wrapper{width:120px;height:68px;overflow:hidden;border-radius:6px;background:#ddd}
+.thumb-wrapper img{width:100%;height:100%;object-fit:cover}
+.video-title{font-size:14px}
 
-  /* player controls MUST appear below the video and be responsive */
-  .player-controls{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    padding:10px;
-    background:#fff;
-    color:#000;
-    flex-wrap:wrap;
-  }
-  .player-controls .left {
-    display:flex; gap:8px; align-items:center;
-  }
-  .player-controls .center {
-    flex:1 1 auto; min-width:150px; display:flex; gap:8px; align-items:center;
-  }
-  .player-controls .right {
-    display:flex; gap:8px; align-items:center; justify-content:flex-end;
-  }
+.player-wrap{
+  max-width:900px;
+  margin:12px auto;
+  background:#000;
+  border-radius:8px;
+  overflow:hidden;
+  display:none;
+}
+.player-frame{aspect-ratio:16/9;position:relative}
+.player-frame iframe{position:absolute;inset:0;width:100%;height:100%}
 
-  .btn {
-    background:#111;color:#fff;border:none;padding:8px 10px;border-radius:8px;font-size:14px;cursor:pointer;
-    display:inline-flex;align-items:center;gap:6px;
-  }
-  .btn.secondary { background:#eee;color:#111; }
-  .track {
-    width:100%;
-    height:8px;
-    background:#eee;
-    border-radius:6px;
-    position:relative;
-    cursor:pointer;
-    min-width:120px;
-  }
-  .track .progress {
-    position:absolute; left:0; top:0; bottom:0; width:0%; background:#111; border-radius:6px;
-  }
-  .meta-title { font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:240px; }
+.player-controls{
+  display:flex;
+  gap:10px;
+  padding:10px;
+  background:#fff;
+  flex-wrap:wrap;
+}
 
-  /* Background Play active state (polish) */
-  #bgPlayBtn.active{
-    background:#000;
-    color:#fff;
-    font-weight:700;
-    border: 1px solid #111;
-  }
+.btn{padding:8px 10px;border:none;border-radius:8px;background:#111;color:#fff;cursor:pointer}
+.btn.secondary{background:#eee;color:#111}
 
-  /* Full Screen button active state */
-  #fsBtn.active{
-    background:#000;
-    color:#fff;
-    font-weight:700;
-    border: 1px solid #111;
-  }
+.player-wrap:fullscreen{
+  width:100%;
+  height:100%;
+  max-width:none;
+  border-radius:0;
+}
 
-  /* Fullscreen-specific styles (when using the Fullscreen API) */
-  .player-wrap:fullscreen,
-  .player-wrap:-webkit-full-screen,
-  .player-wrap:-moz-full-screen,
-  .player-wrap:-ms-fullscreen {
-    width:100%;
-    height:100%;
-    max-width:none;
-    margin:0;
-    border-radius:0;
-    box-shadow:none;
-  }
-  .player-wrap:fullscreen .player-frame,
-  .player-wrap:-webkit-full-screen .player-frame,
-  .player-wrap:-moz-full-screen .player-frame,
-  .player-wrap:-ms-fullscreen .player-frame {
-    aspect-ratio: auto;
-    height:100%;
-  }
-
-  /* Fallback (simulate fullscreen) if Fullscreen API not available */
-  .player-wrap.fs-fallback {
-    position:fixed !important;
-    top:0; left:0; right:0; bottom:0;
-    width:100% !important;
-    height:100% !important;
-    z-index:99999;
-    border-radius:0 !important;
-  }
-  .player-wrap.fs-fallback .player-frame { height:100%; aspect-ratio:auto; }
-
-  /* ensure controls never overflow wide screens and wrap on tiny devices */
-  @media (max-width:520px){
-    .player-controls { padding:8px; gap:8px; }
-    .meta-title { max-width:140px; font-size:12px; }
-    .btn { padding:8px 8px; font-size:13px; }
-    .track { height:6px; }
-  }
+.site-footer{text-align:center;padding:16px;color:#777;font-size:13px}
 </style>
 </head>
+
 <body>
 
-  <header class="header" role="banner">
-    <a class="login-btn" href="login.html" aria-label="Login">LOGIN</a>
-    <div class="header-title">Joi Zubeen Da - Paiotorr</div>
+<header class="header">
+  <a class="login-btn" href="login.html">LOGIN</a>
+  <div class="header-title">Joi Zubeen Da - Paiotorr</div>
+  <div class="cat-wrap">
+    <div id="catScroll" class="cat-scroll"></div>
+  </div>
+</header>
 
-    <div class="cat-wrap" id="catWrap" aria-hidden="false" style="position:relative;">
-      <div id="catScroll" class="cat-scroll" role="tablist" aria-label="Categories"></div>
-    </div>
-  </header>
+<main class="content">
 
-  <main class="content" role="main">
+<div id="playerContainer" class="player-wrap">
+  <div id="ytPlayer" class="player-frame"></div>
 
-    <!-- EMBEDDED PLAYER (fixed: use YT IFrame API) -->
-    <div id="playerContainer" class="player-wrap" aria-hidden="true" style="display:none;">
-      <!-- container where YT API will create the iframe -->
-      <div id="playerInner">
-        <!-- replaced iframe with a container div so YT API will insert iframe correctly -->
-        <div id="ytPlayer" class="player-frame"></div>
-      </div>
+  <div class="player-controls">
+    <button class="btn" id="prevBtn">⏮</button>
+    <button class="btn" id="playPauseBtn">▶</button>
+    <button class="btn" id="nextBtn">⏭</button>
+    <button class="btn secondary" id="fsBtn">⛶</button>
+    <button class="btn secondary" id="closePlayer">✕</button>
+  </div>
+</div>
 
-      <!-- CONTROLS: always below the video (this is the change you requested) -->
-      <div class="player-controls" id="playerControls" aria-hidden="false" >
-        <div class="left">
-          <button class="btn" id="prevBtn" title="Previous">⏮</button>
-          <button class="btn" id="playPauseBtn" title="Play/Pause">▶</button>
-          <button class="btn" id="nextBtn" title="Next">⏭</button>
-        </div>
+<div class="search-wrapper">
+  <input type="text" id="searchInput" placeholder="Search videos…">
+</div>
 
-        <div class="center">
-          <div class="meta-title" id="playerTitle">No video</div>
-          <div style="flex:1 1 40%;">
-            <div class="track" id="progressTrack" aria-label="Playback progress">
-              <div class="progress" id="progressBar"></div>
-            </div>
-          </div>
-        </div>
+<ul id="videoList" class="video-list"></ul>
 
-        <div class="right">
-          <div id="timeLabel" style="font-size:13px;">0:00 / 0:00</div>
-          <!-- 🔵 Background Play button (default OFF - script will sync state) -->
-          <button class="btn secondary" id="bgPlayBtn" title="Background Play">🎧 OFF</button>
+</main>
 
-          <!-- 🖵 Full Screen button (NEW) -->
-          <button class="btn secondary" id="fsBtn" title="Full Screen" aria-pressed="false">⛶</button>
-
-          <button class="btn secondary" id="closePlayer" title="Close Player">✕</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="search-wrapper">
-      <input type="text" id="searchInput" placeholder="Search videos in this section…" aria-label="Search videos"/>
-    </div>
-
-    <ul id="videoList" class="video-list" aria-live="polite"></ul>
-    <div id="noResults" class="no-results">No videos found for this search.</div>
-
-    <div class="end-note"><strong>More Coming Soon.....</strong></div>
-  </main>
-
-  <footer class="site-footer" role="contentinfo">
-    <div class="copyright">&copy; 2026 PAIOTORR</div>
-  </footer>
+<footer class="site-footer">© 2026 PAIOTORR</footer>
 
 <script type="module">
-  // Firebase imports
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-  // ---------- Firebase config ----------
-  const firebaseConfig = {
-    apiKey: "AIzaSyC6cMfvfX68H-luCgPa32aXAc0D-x6bczU",
-    authDomain: "zubeenda-17222.firebaseapp.com",
-    projectId: "zubeenda-17222",
-    storageBucket: "zubeenda-17222.firebasestorage.app",
-    messagingSenderId: "541676751696",
-    appId: "1:541676751696:web:e75867164d4372d3ad7a55"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyC6cMfvfX68H-luCgPa32aXAc0D-x6bczU",
+  authDomain: "zubeenda-17222.firebaseapp.com",
+  projectId: "zubeenda-17222",
+};
+initializeApp(firebaseConfig);
+const db = getFirestore();
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+const catScroll=document.getElementById("catScroll");
+const videoList=document.getElementById("videoList");
+const playerContainer=document.getElementById("playerContainer");
+const fsBtn=document.getElementById("fsBtn");
 
-  // ---------- DOM ----------
-  const catScroll = document.getElementById('catScroll');
-  const searchInput = document.getElementById('searchInput');
-  const videoListEl = document.getElementById('videoList');
-  const noResultsEl = document.getElementById('noResults');
+let categories=[],videos=[],activePlaylist=[];
+let currentCategory=null,currentIndex=-1;
+let ytPlayer,isPlaying=false;
 
-  // Player DOM
-  const playerContainer = document.getElementById('playerContainer');
-  const ytPlayerContainer = document.getElementById('ytPlayer'); // replaced iframe ref
-  const playerControls = document.getElementById('playerControls');
-  const playPauseBtn = document.getElementById('playPauseBtn');
-  const prevBtn = document.getElementById('prevBtn');
-  const nextBtn = document.getElementById('nextBtn');
-  const playerTitle = document.getElementById('playerTitle');
-  const progressBar = document.getElementById('progressBar');
-  const progressTrack = document.getElementById('progressTrack');
-  const timeLabel = document.getElementById('timeLabel');
-  const closePlayer = document.getElementById('closePlayer');
-  const bgPlayBtn = document.getElementById('bgPlayBtn'); // 🔵 BACKGROUND PLAY button
-  const fsBtn = document.getElementById('fsBtn'); // <-- Full Screen button
-
-  // ---------- Defaults & fallback ----------
-  const builtinVideos = [];
-
-  // ---------- State ----------
-  let categories = [];            // [{ id, name }]
-  let currentCategory = null;     // category id (doc id or fallback string)
-  let allVideos = [];             // array of normalized video objects (from Firestore + builtins)
-  let categoriesUnsub = null;
-  let videosUnsub = null;
-
-  // Player state
-  let activePlaylist = [];        // videos for current category (array of normalized items)
-  let currentIndex = -1;          // index in activePlaylist
-  let ytPlayer = null;            // YT.Player instance
-  let playerReady = false;
-  let isPlaying = false;
-  let progressTimer = null;
-
-  // Fullscreen state (keeps a JS-level flag for visual feedback)
-  let isFsActive = false;
-  let fsApiAvailable = !!(playerContainer.requestFullscreen || playerContainer.webkitRequestFullscreen || playerContainer.mozRequestFullScreen || playerContainer.msRequestFullscreen);
-
-  // ---------- Helpers ----------
-  function titleCase(s){ return String(s).replace(/\b\w/g, c => c.toUpperCase()); }
-  function getYouTubeId(url){
-    try{
-      const u = new URL(url);
-      if(u.hostname === 'youtu.be') return u.pathname.slice(1);
-      return u.searchParams.get('v') || '';
-    } catch(e){ return ''; }
+/* ✅ DEFAULT CATEGORY FIX */
+onSnapshot(collection(db,"categories"),snap=>{
+  categories=[];
+  snap.forEach(d=>categories.push({id:d.id,name:d.data().name}));
+  if(!currentCategory){
+    const preferred=categories.find(c=>c.name.toLowerCase()==="zg hit songs");
+    currentCategory=preferred?preferred.id:categories[0]?.id;
   }
-  function getThumbUrl(id){ return id ? 'https://img.youtube.com/vi/' + id + '/hqdefault.jpg' : ''; }
-  function normalizeVideoItem(item){
-    const id = item.id || getYouTubeId(item.url || '');
-    const url = item.url || (id ? `https://youtu.be/${id}` : '');
-    return {
-      id: item.id || id || '',
-      category: (item.category || item.cat || 'song').toString(),
-      title: item.title || item.name || (id ? `YouTube · ${id}` : 'Untitled'),
-      url,
-      thumb: item.thumb || (id ? getThumbUrl(id) : ''),
-      addedBy: item.addedBy || item.user || 'team',
-      time: item.time || item.addedOn || (item.createdAt && item.createdAt.toDate ? item.createdAt.toDate().toLocaleString() : '')
-    };
-  }
+  renderCategories();
+});
 
-  // ---------- Render categories (pills) ----------
-  function renderCategoryBar(){
-    catScroll.innerHTML = '';
-    const list = (categories && categories.length) ? categories : defaultCats.map(c => ({ id: c, name: c }));
-    list.forEach(cat => {
-      const pill = document.createElement('button');
-      pill.className = 'category-pill' + ((currentCategory === cat.id) ? ' active' : '');
-      pill.setAttribute('role','tab');
-      pill.setAttribute('aria-selected', (currentCategory === cat.id) ? 'true' : 'false');
-      pill.dataset.cat = cat.id;
-      pill.tabIndex = 0;
-      pill.innerText = titleCase(cat.name || cat.id);
-      pill.addEventListener('click', () => {
-        setActiveCategory(cat.id, true);
-      });
-      pill.addEventListener('keydown', e => {
-        if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveCategory(cat.id, true); }
-      });
-      catScroll.appendChild(pill);
-    });
-  }
-  function setActiveCategory(catId, shouldScrollIntoView){
-    currentCategory = catId;
-    Array.from(catScroll.children).forEach(btn => {
-      if(btn.dataset.cat === catId){
-        btn.classList.add('active');
-        btn.setAttribute('aria-selected','true');
-        if(shouldScrollIntoView){
-          const rect = btn.getBoundingClientRect();
-          const wrapRect = catScroll.getBoundingClientRect();
-          const offset = rect.left - wrapRect.left - (wrapRect.width/2) + (rect.width/2);
-          catScroll.scrollBy({ left: offset, behavior: 'smooth' });
-        }
-      } else {
-        btn.classList.remove('active');
-        btn.setAttribute('aria-selected','false');
-      }
-    });
-
-    // rebuild active playlist for the selected category
-    buildActivePlaylist();
-    renderList();
-  }
-
-  function buildActivePlaylist(){
-    // Filter by exact category id (category doc id) only
-    activePlaylist = allVideos.filter(v => String(v.category).toLowerCase() === String(currentCategory).toLowerCase());
-    // preserve ordering same as allVideos (which is newest->older). You can change ordering later if needed.
-    // reset current index if it is out of bounds
-    if(currentIndex < 0 || currentIndex >= activePlaylist.length){
-      currentIndex = -1;
-    }
-  }
-
-  // ---------- Render videos list ----------
-  function renderList(){
-    const q = (searchInput.value || '').trim().toLowerCase();
-    const filtered = allVideos.filter(v => {
-      if(!currentCategory) return true;
-      if(String(v.category).toLowerCase() !== String(currentCategory).toLowerCase()) return false;
-      return (v.title || '').toLowerCase().includes(q);
-    });
-
-    videoListEl.innerHTML = '';
-    noResultsEl.style.display = filtered.length ? 'none' : 'block';
-
-    filtered.forEach((video, i) => {
-      const id = getYouTubeId(video.url || '');
-      const li = document.createElement('li');
-      li.className='video-item'; li.setAttribute('role','link'); li.tabIndex=0;
-
-      // Clicking now plays inside the embedded player (no redirect)
-      const activate = ()=> {
-        // Determine index inside activePlaylist (category-based)
-        buildActivePlaylist();
-        const idx = activePlaylist.findIndex(v => (v.url||'') === (video.url||''));
-        // If not in the activePlaylist because categories mismatch (rare), just play from filtered list
-        const playIdx = idx >= 0 ? idx : (() => {
-          // add temporarily this video as single-item playlist
-          activePlaylist = [video];
-          return 0;
-        })();
-        playVideoAtIndex(playIdx);
-      };
-
-      li.addEventListener('click',activate);
-      li.addEventListener('keydown',e=>{ if(e.key==='Enter' || e.key===' ') activate(); });
-
-      const serial = document.createElement('div'); serial.className='serial'; serial.textContent=(i+1)+')';
-      const thumbWrap = document.createElement('div'); thumbWrap.className='thumb-wrapper';
-      const img = document.createElement('img'); img.alt = video.title || 'Video';
-      img.src = video.thumb || getThumbUrl(id);
-      thumbWrap.appendChild(img);
-
-      const titleDiv = document.createElement('div'); titleDiv.className='video-title'; titleDiv.textContent = video.title || 'Untitled Video';
-
-      li.appendChild(serial); li.appendChild(thumbWrap); li.appendChild(titleDiv);
-      videoListEl.appendChild(li);
-    });
-  }
-
-  // ---------- Player control functions (REWRITTEN to use YT.Player) ----------
-  function showPlayer(){
-    playerContainer.style.display = 'block';
-    playerContainer.setAttribute('aria-hidden','false');
-  }
-  function hidePlayer(){
-    playerContainer.style.display = 'none';
-    playerContainer.setAttribute('aria-hidden','true');
-    stopProgressTimer();
-    isPlaying = false;
-    updatePlayButton();
-    // optionally stop video
-    try { if (playerReady && ytPlayer) { ytPlayer.stopVideo(); } } catch(e){}
-    // ensure fullscreen state cleared if open
-    exitFullScreenImmediate();
-  }
-
-  function playVideoAtIndex(idx){
-    if(!playerReady) {
-      // if player not ready yet, attempt to set currentIndex and show player with the ID in the src once ready
-      currentIndex = idx;
-      const video = activePlaylist[currentIndex];
-      if(video){
-        playerTitle.textContent = video.title || 'Untitled';
-      }
-      showPlayer();
-      return;
-    }
-    if(!Array.isArray(activePlaylist) || activePlaylist.length === 0) return;
-    if(idx < 0 || idx >= activePlaylist.length) return;
-    currentIndex = idx;
-    const video = activePlaylist[currentIndex];
-    const vid = getYouTubeId(video.url || '');
-    if(!vid) return;
-
-    try {
-      // Use the official API to load and play the video
-      ytPlayer.loadVideoById({videoId: vid});
-    } catch (err) {
-      // fallback: cue then play
-      try { ytPlayer.cueVideoById(vid); } catch(e){}
-    }
-    playerTitle.textContent = video.title || 'Untitled';
-    showPlayer();
-    isPlaying = true;
-    updatePlayButton();
-    resetProgressBar();
-    startProgressTimer();
-  }
-
-  function prevVideo(){
-    if(currentIndex > 0){
-      playVideoAtIndex(currentIndex - 1);
-    } else {
-      // at beginning -> do nothing or optionally loop
-    }
-  }
-  function nextVideo(){
-    if(currentIndex < activePlaylist.length - 1){
-      playVideoAtIndex(currentIndex + 1);
-    } else {
-      // reached end: stop
-      isPlaying = false;
-      updatePlayButton();
-      stopProgressTimer();
-    }
-  }
-
-  function togglePlayPause(){
-    if(playerReady && ytPlayer) {
-      try {
-        const state = ytPlayer.getPlayerState();
-        if(state === YT.PlayerState.PLAYING || state === YT.PlayerState.BUFFERING) {
-          ytPlayer.pauseVideo();
-        } else {
-          ytPlayer.playVideo();
-        }
-        // The onStateChange handler will update isPlaying & UI
-      } catch (e) {
-        // fallback: toggle the flag
-        isPlaying = !isPlaying;
-        updatePlayButton();
-      }
-    } else {
-      // not ready: attempt to play when ready
-      isPlaying = true;
-      updatePlayButton();
-    }
-  }
-
-  function updatePlayButton(){
-    playPauseBtn.textContent = isPlaying ? '⏸' : '▶';
-  }
-
-  function resetProgressBar(){
-    progressBar.style.width = '0%';
-    timeLabel.textContent = '0:00 / 0:00';
-  }
-
-  // ---------- Progress timer (improved using YT API when available) ----------
-  function startProgressTimer(){
-    stopProgressTimer();
-    progressTimer = setInterval(() => {
-      if(playerReady && ytPlayer) {
-        try {
-          const dur = ytPlayer.getDuration() || 0;
-          const cur = ytPlayer.getCurrentTime() || 0;
-          if(dur > 0) {
-            const pct = Math.min(100, (cur / dur) * 100);
-            progressBar.style.width = pct + '%';
-            // format times
-            const fmt = t => {
-              const s = Math.floor(t || 0);
-              const m = Math.floor(s / 60);
-              const sec = String(s % 60).padStart(2,'0');
-              return m + ':' + sec;
-            };
-            timeLabel.textContent = fmt(cur) + ' / ' + fmt(dur);
-          } else {
-            // duration unknown yet; show spinner-like behavior
-            const currentWidth = parseFloat(progressBar.style.width || '0') || 0;
-            const next = Math.min(90, currentWidth + 0.6);
-            progressBar.style.width = next + '%';
-            timeLabel.textContent = isPlaying ? 'Playing' : 'Paused';
-          }
-        } catch(e){
-          // fallback visual only
-          const currentWidth = parseFloat(progressBar.style.width || '0') || 0;
-          const next = Math.min(100, currentWidth + 0.5);
-          progressBar.style.width = next + '%';
-          timeLabel.textContent = isPlaying ? 'Playing' : 'Paused';
-        }
-      } else {
-        // not ready - visual progress
-        const currentWidth = parseFloat(progressBar.style.width || '0') || 0;
-        const next = Math.min(100, currentWidth + 0.5);
-        progressBar.style.width = next + '%';
-        timeLabel.textContent = isPlaying ? 'Playing' : 'Paused';
-      }
-    }, 700);
-  }
-  function stopProgressTimer(){
-    if(progressTimer) { clearInterval(progressTimer); progressTimer = null; }
-    // don't wipe UI entirely; keep current state
-  }
-
-  // Seek by clicking track (best-effort: uses YT API if available)
-  progressTrack.addEventListener('click', (e) => {
-    const rect = progressTrack.getBoundingClientRect();
-    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    progressBar.style.width = (pct * 100) + '%';
-    if(playerReady && ytPlayer) {
-      try {
-        const dur = ytPlayer.getDuration() || 0;
-        const seekTo = dur * pct;
-        ytPlayer.seekTo(seekTo, true);
-      } catch(e){}
-    }
+function renderCategories(){
+  catScroll.innerHTML="";
+  categories.forEach(c=>{
+    const b=document.createElement("button");
+    b.className="category-pill"+(c.id===currentCategory?" active":"");
+    b.textContent=c.name;
+    b.onclick=()=>{currentCategory=c.id;renderCategories();renderVideos()};
+    catScroll.appendChild(b);
   });
+}
 
-  // Control button listeners
-  playPauseBtn.addEventListener('click', () => { togglePlayPause(); });
-  prevBtn.addEventListener('click', () => { prevVideo(); });
-  nextBtn.addEventListener('click', () => { nextVideo(); });
-  closePlayer.addEventListener('click', () => { hidePlayer(); });
+onSnapshot(query(collection(db,"videos"),orderBy("createdAt","desc")),snap=>{
+  videos=[];
+  snap.forEach(d=>videos.push(d.data()));
+  renderVideos();
+});
 
-  // ---------- Fullscreen logic (NEW) ----------
-  // Uses Browser Fullscreen API when available; falls back to "simulated" fullscreen via CSS class if not.
-  function updateFsBtn(){
-    try {
-      fsBtn.classList.toggle('active', isFsActive);
-      fsBtn.setAttribute('aria-pressed', String(Boolean(isFsActive)));
-      // change icon / label if desired
-      fsBtn.textContent = isFsActive ? '⛶' : '⛶';
-    } catch(e){}
-  }
-
-  // Enter fullscreen via API or fallback
-  async function enterFullScreen(){
-    if(!playerContainer) return;
-    // Try standard API
-    try {
-      if (playerContainer.requestFullscreen) {
-        await playerContainer.requestFullscreen();
-        return;
-      } else if (playerContainer.webkitRequestFullscreen) {
-        await playerContainer.webkitRequestFullscreen();
-        return;
-      } else if (playerContainer.mozRequestFullScreen) {
-        await playerContainer.mozRequestFullScreen();
-        return;
-      } else if (playerContainer.msRequestFullscreen) {
-        await playerContainer.msRequestFullscreen();
-        return;
-      }
-    } catch (e) {
-      // ignore and fallback to simulated fullscreen below
-    }
-
-    // Fallback: simulate fullscreen via CSS class (works when API blocked/not available)
-    playerContainer.classList.add('fs-fallback');
-    isFsActive = true;
-    updateFsBtn();
-  }
-
-  // Exit fullscreen via API or fallback
-  async function exitFullScreen(){
-    try {
-      if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement) {
-        if (document.exitFullscreen) {
-          await document.exitFullscreen();
-          return;
-        } else if (document.webkitExitFullscreen) {
-          await document.webkitExitFullscreen();
-          return;
-        } else if (document.mozCancelFullScreen) {
-          await document.mozCancelFullScreen();
-          return;
-        } else if (document.msExitFullscreen) {
-          await document.msExitFullscreen();
-          return;
-        }
-      }
-    } catch (e){
-      // ignore and continue to fallback cleanup
-    }
-
-    // Fallback cleanup
-    playerContainer.classList.remove('fs-fallback');
-    isFsActive = false;
-    updateFsBtn();
-  }
-
-  // Immediate exit used when hiding player (no await)
-  function exitFullScreenImmediate(){
-    try {
-      if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement) {
-        if (document.exitFullscreen) document.exitFullscreen();
-        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-        else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
-        else if (document.msExitFullscreen) document.msExitFullscreen();
-      }
-    } catch(e){}
-    playerContainer.classList.remove('fs-fallback');
-    isFsActive = false;
-    updateFsBtn();
-  }
-
-  function toggleFullScreen(){
-    // If we're already in simulated fallback, treat as active too.
-    const docFs = (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
-    if (docFs || playerContainer.classList.contains('fs-fallback') || isFsActive) {
-      exitFullScreen();
-    } else {
-      enterFullScreen();
-    }
-  }
-
-  // Listen for changes (user pressed ESC or browser changed fullscreen state)
-  function onFsChange(){
-    const docFs = (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
-    if (docFs) {
-      isFsActive = true;
-      // ensure fallback class removed (API is controlling)
-      playerContainer.classList.remove('fs-fallback');
-    } else {
-      // not in native fullscreen - clear JS flag and fallback class
-      playerContainer.classList.remove('fs-fallback');
-      isFsActive = false;
-    }
-    updateFsBtn();
-  }
-
-  // Bind FS button
-  fsBtn.addEventListener('click', () => { toggleFullScreen(); });
-
-  // Fullscreen change events (cross-browser)
-  document.addEventListener('fullscreenchange', onFsChange);
-  document.addEventListener('webkitfullscreenchange', onFsChange);
-  document.addEventListener('mozfullscreenchange', onFsChange);
-  document.addEventListener('MSFullscreenChange', onFsChange);
-
-  // ---------- Auto-scroll for category bar ----------
-  let autoScrollEnabled = true;
-  let autoScrollStep = 0.4; // px per ms
-  let lastFrame = null;
-  let userInteracting = false;
-  let resumeTimeout = null;
-
-  function autoScrollFrame(ts){
-    if(!lastFrame) lastFrame = ts;
-    const dt = ts - lastFrame;
-    lastFrame = ts;
-    if(autoScrollEnabled && !userInteracting){
-      catScroll.scrollLeft += autoScrollStep * dt;
-      if(catScroll.scrollLeft + catScroll.clientWidth >= catScroll.scrollWidth - 1){
-        catScroll.scrollTo({ left: 0 });
-      }
-    }
-    window.requestAnimationFrame(autoScrollFrame);
-  }
-
-  function pauseAutoScroll(){
-    userInteracting = true;
-    if(resumeTimeout) clearTimeout(resumeTimeout);
-    resumeTimeout = setTimeout(()=>{ userInteracting = false; }, 1800);
-  }
-
-  catScroll.addEventListener('pointerdown', e => { pauseAutoScroll(); });
-  catScroll.addEventListener('touchstart', e => { pauseAutoScroll(); }, {passive:true});
-  catScroll.addEventListener('wheel', e => { pauseAutoScroll(); }, {passive:true});
-  catScroll.addEventListener('scroll', () => { pauseAutoScroll(); });
-
-  // ---------- Firestore listeners ----------
-  const defaultCats = ['song','live','interview'];
-
-  function startCategoryListener(){
-    if(categoriesUnsub) categoriesUnsub();
-    const col = collection(db, "categories");
-    categoriesUnsub = onSnapshot(col, snap => {
-      const out = [];
-      snap.forEach(d => {
-        const data = d.data();
-        out.push({ id: d.id, name: data.name || d.id });
-      });
-      out.sort((a,b)=> (a.name || '').localeCompare(b.name || ''));
-      categories = out;
-      if(!currentCategory && categories.length) currentCategory = categories[0].id;
-      if(currentCategory && !categories.find(c=>c.id===currentCategory)){
-        currentCategory = (categories[0] && categories[0].id) || defaultCats[0];
-      }
-      renderCategoryBar();
-      renderList();
-    }, err => {
-      console.error("categories snapshot error", err);
-      if(!categories || categories.length === 0){
-        categories = defaultCats.map(c => ({ id: c, name: c }));
-        if(!currentCategory) currentCategory = categories[0].id;
-        renderCategoryBar();
-      }
-    });
-  }
-
-  function startVideoListener(){
-    if(videosUnsub) videosUnsub();
-    const col = collection(db, "videos");
-    const q = query(col, orderBy("createdAt", "desc"));
-    videosUnsub = onSnapshot(q, snap => {
-      const rows = [];
-      snap.forEach(d => {
-        const data = d.data();
-        rows.push({ ...data, docId: d.id });
-      });
-      const normalized = rows.map(normalizeVideoItem);
-      const builtInNormalized = builtinVideos.map(normalizeVideoItem);
-      allVideos = [...normalized, ...builtInNormalized];
-      if(!currentCategory){
-        if(categories && categories.length) currentCategory = categories[0].id;
-        else if(allVideos.length) currentCategory = allVideos[0].category;
-      }
-      buildActivePlaylist();
-      renderList();
-    }, err => {
-      console.error("videos snapshot error", err);
-      allVideos = builtinVideos.map(normalizeVideoItem);
-      buildActivePlaylist();
-      renderList();
-    });
-  }
-
-  // ---------- Search wiring ----------
-  searchInput.addEventListener('input', () => { renderList(); });
-
-  // ---------- Initialize YT Player integration ----------
-  // IMPORTANT: window.onYouTubeIframeAPIReady must be defined in global scope so the loaded YT API can call it.
-  window.onYouTubeIframeAPIReady = function () {
-    // Create YT.Player inside container with proper playerVars (including origin)
-    try {
-      ytPlayer = new YT.Player('ytPlayer', {
-        height: '100%',
-        width: '100%',
-        videoId: '',
-        playerVars: {
-          autoplay: 1,
-          playsinline: 1,
-          rel: 0,
-          modestbranding: 1,
-          enablejsapi: 1,
-          origin: window.location.origin || (window.location.protocol + '//' + window.location.host)
-        },
-        events: {
-          onReady: function () {
-            playerReady = true;
-            // if a selection was made before ready, attempt to play it
-            if (currentIndex >= 0 && activePlaylist[currentIndex]) {
-              const vid = getYouTubeId(activePlaylist[currentIndex].url || '');
-              if (vid) {
-                try { ytPlayer.loadVideoById(vid); } catch(e){}
-              }
-            }
-          },
-          onStateChange: function (e) {
-            // Update UI based on player state
-            if (e.data === YT.PlayerState.PLAYING) {
-              isPlaying = true;
-              updatePlayButton();
-              startProgressTimer();
-            } else if (e.data === YT.PlayerState.PAUSED) {
-              isPlaying = false;
-              updatePlayButton();
-              stopProgressTimer();
-            } else if (e.data === YT.PlayerState.ENDED) {
-              isPlaying = false;
-              updatePlayButton();
-              // Auto play next
-              nextVideo();
-            } else if (e.data === YT.PlayerState.BUFFERING) {
-              // keep playing flag
-            }
-          }
-        }
-      });
-    } catch (err) {
-      console.error('YT.Player creation failed', err);
-    }
-  };
-
-  // ---------- 🔵 BACKGROUND PLAY (IMPROVED & SAFE) ----------
-  // Purpose: allow the user to manually enable background audio where the browser/OS allows it.
-  // State is remembered in localStorage and the player will try to resume playback if the page becomes hidden,
-  // the window blurs, or the browser tries to pause the video. This is best-effort and will gracefully
-  // fall back if the OS blocks background playback.
-  let backgroundPlayEnabled = localStorage.getItem('bgPlay') === '1';
-  function updateBgBtn(){
-    try {
-      bgPlayBtn.textContent = backgroundPlayEnabled ? '🎧 ON' : '🎧 OFF';
-      bgPlayBtn.classList.toggle('active', backgroundPlayEnabled);
-    } catch(e){}
-  }
-  updateBgBtn();
-
-  bgPlayBtn.addEventListener('click', () => {
-    backgroundPlayEnabled = !backgroundPlayEnabled;
-    try { localStorage.setItem('bgPlay', backgroundPlayEnabled ? '1' : '0'); } catch(e){}
-    updateBgBtn();
-
-    // Try to resume playback immediately when enabling
-    if (backgroundPlayEnabled && ytPlayer && playerReady) {
-      try { ytPlayer.playVideo(); } catch(e){}
-    }
+function renderVideos(){
+  videoList.innerHTML="";
+  activePlaylist=videos.filter(v=>v.category===currentCategory);
+  activePlaylist.forEach((v,i)=>{
+    const li=document.createElement("li");
+    li.className="video-item"+(i===currentIndex?" playing":"");
+    li.innerHTML=`
+      <div class="thumb-wrapper"><img src="https://img.youtube.com/vi/${v.videoId}/hqdefault.jpg"></div>
+      <div class="video-title">${v.title}</div>`;
+    li.onclick=()=>playVideo(i);
+    videoList.appendChild(li);
   });
+}
 
-  function tryResumePlayback(){
-    if (!backgroundPlayEnabled) return;
-    if (!ytPlayer || !playerReady) return;
-    try {
-      const state = ytPlayer.getPlayerState();
-      if (state !== YT.PlayerState.PLAYING) {
-        // Attempt to play — browser may ignore if autoplay policy blocks it,
-        // but this is a safe, single attempt (no tight loops).
-        ytPlayer.playVideo();
-      }
-    } catch(e){}
+/* ✅ PLAY + HIGHLIGHT FIX */
+function playVideo(i){
+  currentIndex=i;
+  updateHighlight();
+  playerContainer.style.display="block";
+  ytPlayer.loadVideoById(activePlaylist[i].videoId);
+  isPlaying=true;
+  document.getElementById("playPauseBtn").textContent="⏸";
+}
+
+function updateHighlight(){
+  document.querySelectorAll(".video-item").forEach((el,i)=>{
+    el.classList.toggle("playing",i===currentIndex);
+  });
+}
+
+/* ✅ FULLSCREEN + LANDSCAPE FIX */
+fsBtn.onclick=async()=>{
+  if(!document.fullscreenElement){
+    await playerContainer.requestFullscreen();
+    if(screen.orientation?.lock){
+      screen.orientation.lock("landscape").catch(()=>{});
+    }
+  }else{
+    document.exitFullscreen();
+    if(screen.orientation?.unlock){
+      screen.orientation.unlock();
+    }
   }
+};
 
-  // When tab/app changes (page visibility)
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden && backgroundPlayEnabled) {
-      // small delay to let browser process visibility change
-      setTimeout(tryResumePlayback, 400);
-    }
-  });
+document.getElementById("closePlayer").onclick=()=>{
+  playerContainer.style.display="none";
+  if(document.fullscreenElement) document.exitFullscreen();
+  if(screen.orientation?.unlock) screen.orientation.unlock();
+};
 
-  // When window loses focus (screen lock, app switch on some platforms)
-  window.addEventListener('blur', () => {
-    if (backgroundPlayEnabled) {
-      setTimeout(tryResumePlayback, 500);
-    }
-  });
-
-  // Also attempt to resume on pageshow (when coming back) if background mode is enabled
-  window.addEventListener('pageshow', () => {
-    if (backgroundPlayEnabled) {
-      setTimeout(tryResumePlayback, 300);
-    }
-  });
-
-  // ---------- Init ----------
-  (function init(){
-    startCategoryListener();
-    startVideoListener();
-    window.requestAnimationFrame(autoScrollFrame);
-  })();
-
-  // ---------- Prevent easy scraping (non-breaking) ----------
-  document.addEventListener('contextmenu', e => e.preventDefault());
-  document.addEventListener('selectstart', e => {});
+/* YT API */
+window.onYouTubeIframeAPIReady=()=>{
+  ytPlayer=new YT.Player("ytPlayer",{playerVars:{playsinline:1}});
+};
 </script>
 
-<!-- Load the YouTube IFrame API (not a module) so the global callback will run -->
 <script src="https://www.youtube.com/iframe_api"></script>
-
-<script>
-// Disable Right Click
-document.addEventListener('contextmenu', function(e) {
-    e.preventDefault();
-});
-
-// Disable Key Shortcuts
-document.addEventListener('keydown', function(e) {
-
-    // Block F12
-    if (e.keyCode == 123) {
-        e.preventDefault();
-    }
-
-    // Block Ctrl+Shift+I / Ctrl+Shift+J / Ctrl+U
-    if (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74)) {
-        e.preventDefault();
-    }
-
-    if (e.ctrlKey && e.keyCode == 85) {
-        e.preventDefault();
-    }
-
-    // Block Ctrl+S, Ctrl+C,
-    if (e.ctrlKey && (e.keyCode == 83 || e.keyCode == 67)) {
-        e.preventDefault();
-    }
-});
-</script>
-
 </body>
 </html>
