@@ -199,14 +199,30 @@ footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
   function startCategoryListener(){
     if(categoriesUnsub) categoriesUnsub();
     const col = collection(db, "categories");
+
     categoriesUnsub = onSnapshot(col, snap => {
-      categoryEl.innerHTML = "";
+      // Preserve any user selection (so we don't clobber a user's manual choice if categories update)
+      const previousValue = categoryEl.value || "";
+
+      // Collect categories from snapshot
       const arr = [];
       snap.forEach(d => {
         const data = d.data();
         arr.push({ id: d.id, name: data.name || d.id });
       });
+
+      // Clear and rebuild options, always include the disabled placeholder first
+      categoryEl.innerHTML = "";
+
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "Select a category";
+      placeholder.disabled = true;
+      // do not set selected here unconditionally; we'll set selection below
+      categoryEl.appendChild(placeholder);
+
       if(arr.length === 0){
+        // Fallback static options when DB has none
         const fallback = ['song','live','interview'];
         fallback.forEach(c => {
           const opt = document.createElement("option");
@@ -214,15 +230,28 @@ footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
           opt.textContent = c;
           categoryEl.appendChild(opt);
         });
-        return;
+      } else {
+        arr.sort((a,b)=> a.name.localeCompare(b.name));
+        arr.forEach(item => {
+          const opt = document.createElement("option");
+          opt.value = item.id;
+          opt.textContent = item.name;
+          categoryEl.appendChild(opt);
+        });
       }
-      arr.sort((a,b)=> a.name.localeCompare(b.name));
-      arr.forEach(item => {
-        const opt = document.createElement("option");
-        opt.value = item.id;
-        opt.textContent = item.name;
-        categoryEl.appendChild(opt);
-      });
+
+      // Restore previous selection if it still exists; otherwise select placeholder (no category)
+      if(previousValue){
+        const matching = Array.from(categoryEl.options).find(o => o.value === previousValue);
+        if(matching){
+          matching.selected = true;
+        } else {
+          placeholder.selected = true;
+        }
+      } else {
+        // No previous selection (first load / user hasn't picked) — ensure placeholder is selected
+        placeholder.selected = true;
+      }
     }, err => {
       console.error("categories snapshot error", err);
     });
@@ -285,8 +314,9 @@ footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
       setStatus("Invalid or unsupported YouTube URL. Supported: youtube.com/watch?v=, youtu.be/, youtube.com/shorts/", false);
       return;
     }
+    // Enforce explicit category selection. (Exact user-visible message required by spec.)
     if(!categoryId){
-      setStatus("Please select a category", false);
+      setStatus("Please select a category before submitting.", false);
       return;
     }
 
