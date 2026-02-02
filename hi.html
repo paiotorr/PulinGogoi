@@ -148,6 +148,14 @@
   }
   .meta-title { font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:240px; }
 
+  /* Background Play active state (polish) */
+  #bgPlayBtn.active{
+    background:#000;
+    color:#fff;
+    font-weight:700;
+    border: 1px solid #111;
+  }
+
   /* ensure controls never overflow wide screens and wrap on tiny devices */
   @media (max-width:520px){
     .player-controls { padding:8px; gap:8px; }
@@ -197,6 +205,8 @@
 
         <div class="right">
           <div id="timeLabel" style="font-size:13px;">0:00 / 0:00</div>
+          <!-- 🔵 Background Play button (default OFF - script will sync state) -->
+          <button class="btn secondary" id="bgPlayBtn" title="Background Play">🎧 OFF</button>
           <button class="btn secondary" id="closePlayer" title="Close Player">✕</button>
         </div>
       </div>
@@ -252,6 +262,7 @@
   const progressTrack = document.getElementById('progressTrack');
   const timeLabel = document.getElementById('timeLabel');
   const closePlayer = document.getElementById('closePlayer');
+  const bgPlayBtn = document.getElementById('bgPlayBtn'); // 🔵 BACKGROUND PLAY button
 
   // ---------- Defaults & fallback ----------
   const builtinVideos = [];
@@ -704,6 +715,66 @@
       console.error('YT.Player creation failed', err);
     }
   };
+
+  // ---------- 🔵 BACKGROUND PLAY (IMPROVED & SAFE) ----------
+  // Purpose: allow the user to manually enable background audio where the browser/OS allows it.
+  // State is remembered in localStorage and the player will try to resume playback if the page becomes hidden,
+  // the window blurs, or the browser tries to pause the video. This is best-effort and will gracefully
+  // fall back if the OS blocks background playback.
+  let backgroundPlayEnabled = localStorage.getItem('bgPlay') === '1';
+  function updateBgBtn(){
+    try {
+      bgPlayBtn.textContent = backgroundPlayEnabled ? '🎧 ON' : '🎧 OFF';
+      bgPlayBtn.classList.toggle('active', backgroundPlayEnabled);
+    } catch(e){}
+  }
+  updateBgBtn();
+
+  bgPlayBtn.addEventListener('click', () => {
+    backgroundPlayEnabled = !backgroundPlayEnabled;
+    try { localStorage.setItem('bgPlay', backgroundPlayEnabled ? '1' : '0'); } catch(e){}
+    updateBgBtn();
+
+    // Try to resume playback immediately when enabling
+    if (backgroundPlayEnabled && ytPlayer && playerReady) {
+      try { ytPlayer.playVideo(); } catch(e){}
+    }
+  });
+
+  function tryResumePlayback(){
+    if (!backgroundPlayEnabled) return;
+    if (!ytPlayer || !playerReady) return;
+    try {
+      const state = ytPlayer.getPlayerState();
+      if (state !== YT.PlayerState.PLAYING) {
+        // Attempt to play — browser may ignore if autoplay policy blocks it,
+        // but this is a safe, single attempt (no tight loops).
+        ytPlayer.playVideo();
+      }
+    } catch(e){}
+  }
+
+  // When tab/app changes (page visibility)
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && backgroundPlayEnabled) {
+      // small delay to let browser process visibility change
+      setTimeout(tryResumePlayback, 400);
+    }
+  });
+
+  // When window loses focus (screen lock, app switch on some platforms)
+  window.addEventListener('blur', () => {
+    if (backgroundPlayEnabled) {
+      setTimeout(tryResumePlayback, 500);
+    }
+  });
+
+  // Also attempt to resume on pageshow (when coming back) if background mode is enabled
+  window.addEventListener('pageshow', () => {
+    if (backgroundPlayEnabled) {
+      setTimeout(tryResumePlayback, 300);
+    }
+  });
 
   // ---------- Init ----------
   (function init(){
