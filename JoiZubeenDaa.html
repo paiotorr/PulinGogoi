@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Joi Zubeen Da - PAIOTORR</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta http-equiv="X-Content-Type-Options" content="nosniff" />
+<meta http-equiv="X-Frame-Options" content="DENY" />
+<meta name="referrer" content="no-referrer" />
+
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:Arial,Helvetica,sans-serif;
+    background:#fff;color:#000;
+    -webkit-touch-callout:none;-webkit-user-select:none;
+    -khtml-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;
+    overflow-x:hidden;
+  }
+
+  .header{background:#000;color:#fff;text-align:center;padding:14px 12px 10px; position: relative;}
+  .header-title{font-size:20px;font-weight:700;margin-bottom:8px}
+  .login-btn{position:absolute;left:10px;top:10px;padding:6px 12px;border-radius:18px;border:1px solid #fff;background:transparent;color:#fff;font-size:12px;text-decoration:none;display:inline-block;line-height:1;cursor:pointer;transition:opacity .12s, transform .06s}
+  .login-btn:active{transform:translateY(1px)}
+  .login-btn[aria-disabled="true"]{opacity:.5;pointer-events:none}
+
+  .cat-wrap{
+    margin:12px auto 0;
+    max-width:100%;
+    width:100%;
+    overflow:hidden;
+    padding:10px 8px 20px;
+    box-sizing:border-box;
+  }
+
+  .cat-scroll{
+    display:flex;
+    gap:14px;
+    align-items:center;
+    padding:6px 12px;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    scroll-behavior:smooth;
+    scrollbar-width:none;
+  }
+  .cat-scroll::-webkit-scrollbar{ display:none; }
+
+  .category-pill{
+    flex: 0 0 auto;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:12px 26px;
+    border-radius:40px;
+    background:#000;
+    color:#fff;
+    font-weight:700;
+    font-size:15px;
+    white-space:nowrap;
+    cursor:pointer;
+    user-select:none;
+    transition:transform .08s, background .12s, color .12s;
+    border: 2px solid transparent;
+  }
+  .category-pill:active{ transform: translateY(1px); }
+  .category-pill:focus{ outline: none; box-shadow: 0 0 0 3px rgba(0,0,0,0.08); }
+
+  .category-pill.active{
+    background:#fff;
+    color:#000;
+    border-color:#000;
+  }
+
+  .content{max-width:900px;margin:16px auto 30px;padding:0 10px}
+  .search-wrapper{text-align:center;margin-bottom:16px}
+  #searchInput{width:100%;max-width:400px;padding:10px 12px;border-radius:22px;border:1px solid #ccc;font-size:14px}
+  .video-list{list-style:none}
+  .video-item{display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid #eee;cursor:pointer;transition:background .12s,transform .06s}
+  .video-item:hover{background:#f7f7f7}
+  .serial{font-size:13px;min-width:28px}
+  .thumb-wrapper{flex-shrink:0;width:120px;height:68px;overflow:hidden;border-radius:6px;background:#ddd}
+  .thumb-wrapper img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;user-drag:none}
+  .video-title{font-size:14px;line-height:1.2}
+  .no-results{text-align:center;padding:24px 0;font-size:14px;color:#555;display:none}
+  .site-footer{text-align:center;padding:16px 10px 22px;color:#777;font-size:13px}
+  .end-note{text-align:center;padding:8px 0;color:#333}
+
+  /* Player overlay / dock */
+  .player-dock{
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    width: 360px;
+    max-width: calc(100% - 36px);
+    background: #0b0b0b;
+    color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(0,0,0,.35);
+    overflow: hidden;
+    z-index: 2200;
+    display: none; /* visible when a video is playing or opened */
+  }
+  .player-header{
+    display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(0,0,0,.85);
+  }
+  .player-thumb{width:56px;height:36px;border-radius:6px;overflow:hidden;flex-shrink:0;background:#222}
+  .player-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .player-meta{flex:1; font-size:13px;line-height:1.1}
+  .player-title{font-weight:700; font-size:13px; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .player-controls{display:flex;gap:8px;align-items:center}
+  .pc-btn{background:transparent;border:none;color:#fff;padding:8px;border-radius:8px;cursor:pointer;font-size:14px}
+  .pc-btn:active{transform:translateY(1px)}
+  .pc-btn[disabled]{opacity:.4;pointer-events:none}
+
+  .player-iframe{width:100%;height:202px;background:#000;display:block;border:0}
+  @media (max-width:520px){
+    .player-dock{right: 10px; left:10px; width:auto}
+    .player-iframe{height:160px}
+    .category-pill{padding:10px 18px;font-size:14px}
+    .header{padding-bottom:16px}
+    .cat-wrap{padding-bottom:16px}
+  }
+</style>
+</head>
+<body>
+
+  <header class="header" role="banner">
+    <a class="login-btn" href="login.html" aria-label="Login">LOGIN</a>
+    <div class="header-title">Joi Zubeen Da - Paiotorr</div>
+
+    <div class="cat-wrap" id="catWrap" aria-hidden="false" style="position:relative;">
+      <div id="catScroll" class="cat-scroll" role="tablist" aria-label="Categories"></div>
+    </div>
+  </header>
+
+  <main class="content" role="main">
+    <div class="search-wrapper">
+      <input type="text" id="searchInput" placeholder="Search videos in this section…" aria-label="Search videos"/>
+    </div>
+
+    <ul id="videoList" class="video-list" aria-live="polite"></ul>
+    <div id="noResults" class="no-results">No videos found for this search.</div>
+
+    <div class="end-note"><strong>More Coming Soon.....</strong></div>
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    <div class="copyright">&copy; 2026 PAIOTORR</div>
+  </footer>
+
+  <!-- Player dock (embedded YouTube iframe + controls) -->
+  <div id="playerDock" class="player-dock" aria-hidden="true">
+    <div class="player-header">
+      <div class="player-thumb" id="playerThumb"><img src="" alt=""></div>
+      <div class="player-meta">
+        <div id="playerTitle" class="player-title">Loading…</div>
+        <div style="font-size:12px;color:#bdbdbd" id="playerSub">Playlist</div>
+      </div>
+      <div class="player-controls" role="group" aria-label="Player controls">
+        <button id="btnPrev" class="pc-btn" title="Previous">⏮</button>
+        <button id="btnPlayPause" class="pc-btn" title="Play / Stop">▶</button>
+        <button id="btnNext" class="pc-btn" title="Next">⏭</button>
+        <button id="btnClose" class="pc-btn" title="Close player">✕</button>
+      </div>
+    </div>
+    <!-- iframe created and controlled by YouTube Iframe API -->
+    <div id="iframeWrap">
+      <div id="playerPlaceholder" style="width:100%;height:202px;background:#000"></div>
+    </div>
+  </div>
+
+<script type="module">
+  // Firebase imports (same config as other pages)
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  // ---------- Firebase config ----------
+  const firebaseConfig = {
+    apiKey: "AIzaSyC6cMfvfX68H-luCgPa32aXAc0D-x6bczU",
+    authDomain: "zubeenda-17222.firebaseapp.com",
+    projectId: "zubeenda-17222",
+    storageBucket: "zubeenda-17222.firebasestorage.app",
+    messagingSenderId: "541676751696",
+    appId: "1:541676751696:web:e75867164d4372d3ad7a55"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // ---------- DOM ----------
+  const catScroll = document.getElementById('catScroll');
+  const searchInput = document.getElementById('searchInput');
+  const videoListEl = document.getElementById('videoList');
+  const noResultsEl = document.getElementById('noResults');
+
+  // Player DOM
+  const playerDock = document.getElementById('playerDock');
+  const playerTitle = document.getElementById('playerTitle');
+  const playerSub = document.getElementById('playerSub');
+  const playerThumb = document.getElementById('playerThumb').querySelector('img');
+  const btnPrev = document.getElementById('btnPrev');
+  const btnNext = document.getElementById('btnNext');
+  const btnPlayPause = document.getElementById('btnPlayPause');
+  const btnClose = document.getElementById('btnClose');
+  const playerPlaceholder = document.getElementById('playerPlaceholder');
+
+  // ---------- State ----------
+  const builtinVideos = [];
+  let categories = [];
+  let currentCategory = null;
+  let allVideos = [];             // normalized video objects
+  let activePlaylist = [];        // subset (current category)
+  let currentIndex = -1;          // index inside activePlaylist
+  let ytPlayer = null;            // YT player instance
+  let playerReady = false;
+  let isPlaying = false;
+
+  // ---------- Helpers ----------
+  function titleCase(s){ return String(s).replace(/\b\w/g, c => c.toUpperCase()); }
+  function getYouTubeId(url){
+    try{
+      const u = new URL(url);
+      if(u.hostname === 'youtu.be') return u.pathname.slice(1);
+      return u.searchParams.get('v') || '';
+    } catch(e){ return ''; }
+  }
+  function getThumbUrl(id){ return id ? 'https://img.youtube.com/vi/' + id + '/hqdefault.jpg' : ''; }
+  function normalizeVideoItem(item){
+    const id = item.videoId || item.id || getYouTubeId(item.url || '');
+    const url = item.videoUrl || item.url || (id ? `https://youtu.be/${id}` : '');
+    return {
+      id: id || '',
+      category: (item.category || item.cat || 'song').toString(),
+      title: item.videoTitle || item.title || item.name || (id ? `YouTube · ${id}` : 'Untitled'),
+      url,
+      thumb: item.thumb || (id ? getThumbUrl(id) : ''),
+      addedBy: item.addedBy || item.user || 'team',
+      time: item.time || item.addedOn || (item.createdAt && item.createdAt.toDate ? item.createdAt.toDate().toLocaleString() : '')
+    };
+  }
+
+  // ---------- Render categories (pills) ----------
+  function renderCategoryBar(){
+    catScroll.innerHTML = '';
+    const list = (categories && categories.length) ? categories : [{ id: 'song', name: 'Song' }];
+    list.forEach(cat => {
+      const pill = document.createElement('button');
+      pill.className = 'category-pill' + ((currentCategory === cat.id) ? ' active' : '');
+      pill.setAttribute('role','tab');
+      pill.setAttribute('aria-selected', (currentCategory === cat.id) ? 'true' : 'false');
+      pill.dataset.cat = cat.id;
+      pill.tabIndex = 0;
+      pill.innerText = titleCase(cat.name || cat.id);
+      pill.addEventListener('click', () => {
+        setActiveCategory(cat.id, true);
+      });
+      pill.addEventListener('keydown', e => {
+        if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveCategory(cat.id, true); }
+      });
+      catScroll.appendChild(pill);
+    });
+  }
+  function setActiveCategory(catId, shouldScrollIntoView){
+    currentCategory = catId;
+    Array.from(catScroll.children).forEach(btn => {
+      if(btn.dataset.cat === catId){
+        btn.classList.add('active');
+        btn.setAttribute('aria-selected','true');
+        if(shouldScrollIntoView){
+          const rect = btn.getBoundingClientRect();
+          const wrapRect = catScroll.getBoundingClientRect();
+          const offset = rect.left - wrapRect.left - (wrapRect.width/2) + (rect.width/2);
+          catScroll.scrollBy({ left: offset, behavior: 'smooth' });
+        }
+      } else {
+        btn.classList.remove('active');
+        btn.setAttribute('aria-selected','false');
+      }
+    });
+    // rebuild active playlist for selected category
+    buildActivePlaylist();
+    renderList();
+  }
+
+  // ---------- Build active playlist ----------
+  function buildActivePlaylist(){
+    activePlaylist = allVideos.filter(v => {
+      if(!currentCategory) return true;
+      return String(v.category).toLowerCase() === String(currentCategory).toLowerCase();
+    });
+    // Keep order as in allVideos (Firestore createdAt desc)
+    // If the currently playing video is not in new playlist, stop player
+    if(currentIndex >= 0){
+      const currentVideo = activePlaylist[currentIndex];
+      if(!currentVideo){
+        stopAndHidePlayer();
+      }
+    }
+    playerSub.textContent = `${activePlaylist.length} item(s) • ${titleCase(currentCategory||'')}`;
+  }
+
+  // ---------- Render videos list ----------
+  function renderList(){
+    const q = (searchInput.value || '').trim().toLowerCase();
+    const filtered = allVideos.filter(v => {
+      if(!currentCategory) return true;
+      if(String(v.category).toLowerCase() !== String(currentCategory).toLowerCase()) return false;
+      return (v.title || '').toLowerCase().includes(q);
+    });
+
+    videoListEl.innerHTML = '';
+    noResultsEl.style.display = filtered.length ? 'none' : 'block';
+
+    filtered.forEach((video, i) => {
+      const id = video.id || getYouTubeId(video.url || '');
+      const li = document.createElement('li');
+      li.className='video-item'; li.setAttribute('role','link'); li.tabIndex=0;
+      const activate = ()=>onVideoClicked(video);
+      li.addEventListener('click',activate);
+      li.addEventListener('keydown',e=>{ if(e.key==='Enter' || e.key===' ') activate(); });
+
+      const serial = document.createElement('div'); serial.className='serial'; serial.textContent=(i+1)+')';
+      const thumbWrap = document.createElement('div'); thumbWrap.className='thumb-wrapper';
+      const img = document.createElement('img'); img.alt = video.title || 'Video';
+      img.src = video.thumb || getThumbUrl(id);
+      thumbWrap.appendChild(img);
+
+      const titleDiv = document.createElement('div'); titleDiv.className='video-title'; titleDiv.textContent = video.title || 'Untitled Video';
+
+      li.appendChild(serial); li.appendChild(thumbWrap); li.appendChild(titleDiv);
+      videoListEl.appendChild(li);
+    });
+  }
+
+  // ---------- Video click handler (play inside page) ----------
+  function onVideoClicked(video){
+    // ensure playlist is category-scoped
+    buildActivePlaylist();
+    // find index inside activePlaylist
+    const idx = activePlaylist.findIndex(v => v.id === video.id && v.url === video.url);
+    if(idx === -1){
+      // fallback: if not present, append then play
+      activePlaylist.push(video);
+      currentIndex = activePlaylist.length - 1;
+    } else {
+      currentIndex = idx;
+    }
+    openPlayerDock();
+    playCurrent();
+  }
+
+  // ---------- YouTube Player API setup ----------
+  // Load IFrame API
+  let ytApiLoaded = false;
+  function loadYouTubeIframeAPI(){
+    if(ytApiLoaded) return;
+    const tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.head.appendChild(tag);
+    ytApiLoaded = true;
+  }
+
+  // Called by YT API once loaded
+  window.onYouTubeIframeAPIReady = function(){
+    // create player with an empty video; we'll load by ID later
+    ytPlayer = new YT.Player('playerPlaceholder', {
+      height: '202',
+      width: '100%',
+      playerVars: {
+        autoplay: 0,
+        controls: 1,
+        rel: 0,
+        modestbranding: 1,
+        playsinline: 1,
+        fs: 0,
+        iv_load_policy: 3,
+        disablekb: 1,
+        enablejsapi: 1
+      },
+      events: {
+        'onReady': (e) => { playerReady = true; updatePlayPauseButton(); },
+        'onStateChange': onPlayerStateChange,
+        'onError': (e) => { console.warn('YT Player error', e); }
+      }
+    });
+  };
+
+  // Player state change handler (autoplay next)
+  function onPlayerStateChange(event){
+    const YTPlayerState = window.YT && window.YT.PlayerState ? window.YT.PlayerState : { ENDED: 0, PLAYING: 1, PAUSED: 2 };
+    if(event.data === YTPlayerState.ENDED){
+      // autoplay next in same category
+      playNext();
+    } else if(event.data === YTPlayerState.PLAYING){
+      isPlaying = true; updatePlayPauseButton();
+    } else if(event.data === YTPlayerState.PAUSED){
+      isPlaying = false; updatePlayPauseButton();
+    }
+  }
+
+  // ---------- Player control helpers ----------
+  function openPlayerDock(){
+    playerDock.style.display = 'block';
+    playerDock.setAttribute('aria-hidden','false');
+    loadYouTubeIframeAPI();
+    updatePlayerMeta();
+  }
+  function stopAndHidePlayer(){
+    if(ytPlayer && playerReady){
+      try { ytPlayer.stopVideo(); } catch(e){}
+    }
+    isPlaying = false;
+    updatePlayPauseButton();
+    playerDock.style.display = 'none';
+    playerDock.setAttribute('aria-hidden','true');
+  }
+  function updatePlayerMeta(){
+    const vid = activePlaylist[currentIndex];
+    if(!vid) return;
+    playerTitle.textContent = vid.title || 'Untitled';
+    playerThumb.src = vid.thumb || getThumbUrl(vid.id);
+    playerSub.textContent = `${currentIndex+1} / ${activePlaylist.length} • ${titleCase(currentCategory||'')}`;
+  }
+  function playCurrent(){
+    if(!activePlaylist || activePlaylist.length === 0 || currentIndex < 0) return;
+    const vid = activePlaylist[currentIndex];
+    if(!vid || !vid.id) return;
+    openPlayerDock();
+    updatePlayerMeta();
+    if(playerReady && ytPlayer){
+      try {
+        ytPlayer.loadVideoById({ videoId: vid.id, startSeconds: 0 });
+        ytPlayer.playVideo();
+      } catch (e){
+        // fallback: replace iframe src directly (rare)
+        createFallbackIframe(vid.id);
+      }
+    } else {
+      // player not ready yet — create fallback iframe with enablejsapi=1 so YT API will takeover
+      createFallbackIframe(vid.id);
+      // player will be ready when API attaches
+    }
+  }
+
+  function createFallbackIframe(id){
+    // Replace placeholder with a simple iframe with player parameters so YT API can find it later
+    const src = `https://www.youtube.com/embed/${id}?enablejsapi=1&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&controls=1&fs=0`;
+    playerPlaceholder.innerHTML = `<iframe id="ytFallback" class="player-iframe" src="${src}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+  }
+
+  function playNext(){
+    if(!activePlaylist || activePlaylist.length === 0) return;
+    if(currentIndex < activePlaylist.length - 1){
+      currentIndex++;
+      playCurrent();
+    } else {
+      // reached end — stop or loop? We stop here (you can change to loop if desired)
+      isPlaying = false;
+      updatePlayPauseButton();
+    }
+  }
+  function playPrev(){
+    if(!activePlaylist || activePlaylist.length === 0) return;
+    if(currentIndex > 0){
+      currentIndex--;
+      playCurrent();
+    } else {
+      // at start, restart current
+      playCurrent();
+    }
+  }
+  function togglePlayPause(){
+    if(!ytPlayer || !playerReady) return;
+    try {
+      const state = ytPlayer.getPlayerState();
+      if(state === YT.PlayerState.PLAYING){
+        ytPlayer.pauseVideo();
+        isPlaying = false;
+      } else {
+        ytPlayer.playVideo();
+        isPlaying = true;
+      }
+    } catch(e){
+      console.warn('togglePlayPause error', e);
+    }
+    updatePlayPauseButton();
+  }
+  function updatePlayPauseButton(){
+    btnPlayPause.textContent = isPlaying ? '⏸' : '▶';
+  }
+
+  // ---------- UI wiring ----------
+  btnNext.addEventListener('click', () => { playNext(); });
+  btnPrev.addEventListener('click', () => { playPrev(); });
+  btnPlayPause.addEventListener('click', () => { togglePlayPause(); });
+  btnClose.addEventListener('click', () => { stopAndHidePlayer(); });
+
+  // ---------- Auto-scroll for category bar (kept from original) ----------
+  let autoScrollEnabled = true;
+  let autoScrollStep = 0.4; // px per ms
+  let lastFrame = null;
+  let userInteracting = false;
+  let resumeTimeout = null;
+
+  function autoScrollFrame(ts){
+    if(!lastFrame) lastFrame = ts;
+    const dt = ts - lastFrame;
+    lastFrame = ts;
+    if(autoScrollEnabled && !userInteracting){
+      catScroll.scrollLeft += autoScrollStep * dt;
+      if(catScroll.scrollLeft + catScroll.clientWidth >= catScroll.scrollWidth - 1){
+        catScroll.scrollTo({ left: 0 });
+      }
+    }
+    window.requestAnimationFrame(autoScrollFrame);
+  }
+
+  function pauseAutoScroll(){
+    userInteracting = true;
+    if(resumeTimeout) clearTimeout(resumeTimeout);
+    resumeTimeout = setTimeout(()=>{ userInteracting = false; }, 1800);
+  }
+
+  catScroll.addEventListener('pointerdown', e => { pauseAutoScroll(); });
+  catScroll.addEventListener('touchstart', e => { pauseAutoScroll(); }, {passive:true});
+  catScroll.addEventListener('wheel', e => { pauseAutoScroll(); }, {passive:true});
+  catScroll.addEventListener('scroll', () => { pauseAutoScroll(); });
+
+  // ---------- Firestore listeners (kept behavior) ----------
+  function startCategoryListener(){
+    const col = collection(db, "categories");
+    // real-time snapshot
+    onSnapshot(col, snap => {
+      const out = [];
+      snap.forEach(d => {
+        const data = d.data();
+        out.push({ id: d.id, name: data.name || d.id });
+      });
+      out.sort((a,b)=> (a.name || '').localeCompare(b.name || ''));
+      categories = out;
+      if(!currentCategory && categories.length) currentCategory = categories[0].id;
+      // if currentCategory was deleted, fallback
+      if(currentCategory && !categories.find(c=>c.id===currentCategory)){
+        currentCategory = (categories[0] && categories[0].id) || null;
+      }
+      renderCategoryBar();
+      buildActivePlaylist();
+      renderList();
+    }, err => {
+      console.error("categories snapshot error", err);
+      // fallback: keep existing categories if network fails
+    });
+  }
+
+  function startVideoListener(){
+    const col = collection(db, "videos");
+    const q = query(col, orderBy("createdAt", "desc"));
+    onSnapshot(q, snap => {
+      const rows = [];
+      snap.forEach(d => {
+        const data = d.data();
+        rows.push({ ...data, docId: d.id });
+      });
+      const normalized = rows.map(normalizeVideoItem);
+      const builtInNormalized = builtinVideos.map(normalizeVideoItem);
+      allVideos = [...normalized, ...builtInNormalized];
+      if(!currentCategory){
+        if(categories && categories.length) currentCategory = categories[0].id;
+        else if(allVideos.length) currentCategory = allVideos[0].category;
+      }
+      buildActivePlaylist();
+      renderList();
+    }, err => {
+      console.error("videos snapshot error", err);
+      allVideos = builtinVideos.map(normalizeVideoItem);
+      renderList();
+    });
+  }
+
+  // ---------- Search wiring ----------
+  searchInput.addEventListener('input', () => { renderList(); });
+
+  // ---------- Init ----------
+  (function init(){
+    startCategoryListener();
+    startVideoListener();
+    window.requestAnimationFrame(autoScrollFrame);
+  })();
+
+  // ---------- Basic client hardening ----------
+  document.addEventListener('contextmenu', e => e.preventDefault());
+</script>
+
+<script>
+// Disable Right Click
+document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+});
+
+// Disable Key Shortcuts
+document.addEventListener('keydown', function(e) {
+
+    // Block F12
+    if (e.keyCode == 123) {
+        e.preventDefault();
+    }
+
+    // Block Ctrl+Shift+I / Ctrl+Shift+J / Ctrl+U
+    if (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74)) {
+        e.preventDefault();
+    }
+
+    if (e.ctrlKey && e.keyCode == 85) {
+        e.preventDefault();
+    }
+
+    // Block Ctrl+S, Ctrl+C,
+    if (e.ctrlKey && (e.keyCode == 83 || e.keyCode == 67)) {
+        e.preventDefault();
+    }
+});
+</script>
+
+</body>
+</html>
