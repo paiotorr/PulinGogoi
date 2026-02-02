@@ -2,284 +2,77 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Joi Zubeen Da - PAIOTORR</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Team Video Submission · JoiZubeenDa</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-<meta http-equiv="X-Content-Type-Options" content="nosniff" />
-<meta http-equiv="X-Frame-Options" content="DENY" />
-<meta name="referrer" content="no-referrer" />
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta http-equiv="X-Frame-Options" content="DENY">
 
 <style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%}
-  body{
-    font-family:Arial,Helvetica,sans-serif;
-    background:#fff;color:#000;
-    -webkit-touch-callout:none;-webkit-user-select:none;
-    -khtml-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;
-    overflow-x:hidden;
-  }
-
-  .header{background:#000;color:#fff;text-align:center;padding:14px 12px 10px; position: relative;}
-  .header-title{font-size:20px;font-weight:700;margin-bottom:8px}
-  .login-btn{position:absolute;left:10px;top:10px;padding:6px 12px;border-radius:18px;border:1px solid #fff;background:transparent;color:#fff;font-size:12px;text-decoration:none;display:inline-block;line-height:1;cursor:pointer;transition:opacity .12s, transform .06s}
-  .login-btn:active{transform:translateY(1px)}
-  .login-btn[aria-disabled="true"]{opacity:.5;pointer-events:none}
-
-  .cat-wrap{
-    margin:12px auto 0;
-    max-width:100%;
-    width:100%;
-    overflow:hidden;
-    padding:10px 8px 20px;
-    box-sizing:border-box;
-  }
-
-  .cat-scroll{
-    display:flex;
-    gap:14px;
-    align-items:center;
-    padding:6px 12px;
-    overflow-x:auto;
-    -webkit-overflow-scrolling:touch;
-    scroll-behavior:smooth;
-    scrollbar-width:none;
-  }
-  .cat-scroll::-webkit-scrollbar{ display:none; }
-
-  .category-pill{
-    flex: 0 0 auto;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    padding:12px 26px;
-    border-radius:40px;
-    background:#000;
-    color:#fff;
-    font-weight:700;
-    font-size:15px;
-    white-space:nowrap;
-    cursor:pointer;
-    user-select:none;
-    transition:transform .08s, background .12s, color .12s;
-    border: 2px solid transparent;
-  }
-  .category-pill:active{ transform: translateY(1px); }
-  .category-pill:focus{ outline: none; box-shadow: 0 0 0 3px rgba(0,0,0,0.08); }
-
-  .category-pill.active{
-    background:#fff;
-    color:#000;
-    border-color:#000;
-  }
-
-  .content{max-width:900px;margin:16px auto 30px;padding:0 10px}
-  .search-wrapper{text-align:center;margin-bottom:16px}
-  #searchInput{width:100%;max-width:400px;padding:10px 12px;border-radius:22px;border:1px solid #ccc;font-size:14px}
-  .video-list{list-style:none}
-  .video-item{display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid #eee;cursor:pointer;transition:background .12s,transform .06s}
-  .video-item:hover{background:#f7f7f7}
-  .serial{font-size:13px;min-width:28px}
-  .thumb-wrapper{flex-shrink:0;width:120px;height:68px;overflow:hidden;border-radius:6px;background:#ddd}
-  .thumb-wrapper img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;user-drag:none}
-  .video-title{font-size:14px;line-height:1.2}
-  .no-results{text-align:center;padding:24px 0;font-size:14px;color:#555;display:none}
-  .site-footer{text-align:center;padding:16px 10px 22px;color:#777;font-size:13px}
-  .end-note{text-align:center;padding:8px 0;color:#333}
-
-  /* --- NOW PLAYING highlight --- */
-  /* Soft black background to subtly indicate the active video */
-  .video-item.playing{
-    background: rgba(0,0,0,0.08);
-    transition: background 0.22s ease;
-  }
-
-  /* --- PLAYER: container + responsive rules --- */
-  .player-wrap{
-    max-width:900px;
-    width:100%;
-    margin: 12px auto;
-    background: #000;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 8px 20px rgba(0,0,0,.08);
-  }
-  /* keep perfect aspect ratio and full width (modern browsers) */
-  .player-frame{
-    width:100%;
-    aspect-ratio: 16/9;
-    background: #000;
-    display:block;
-    border:0;
-    position: relative;
-  }
-  /* ensure the iframe injected by YT fills container */
-  .player-frame iframe { position:absolute; inset:0; width:100%; height:100%; border:0; display:block; }
-
-  /* player controls MUST appear below the video and be responsive */
-  .player-controls{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    padding:10px;
-    background:#fff;
-    color:#000;
-    flex-wrap:wrap;
-  }
-  .player-controls .left {
-    display:flex; gap:8px; align-items:center;
-  }
-  .player-controls .center {
-    flex:1 1 auto; min-width:150px; display:flex; gap:8px; align-items:center;
-  }
-  .player-controls .right {
-    display:flex; gap:8px; align-items:center; justify-content:flex-end;
-  }
-
-  .btn {
-    background:#111;color:#fff;border:none;padding:8px 10px;border-radius:8px;font-size:14px;cursor:pointer;
-    display:inline-flex;align-items:center;gap:6px;
-  }
-  .btn.secondary { background:#eee;color:#111; }
-  .track {
-    width:100%;
-    height:8px;
-    background:#eee;
-    border-radius:6px;
-    position:relative;
-    cursor:pointer;
-    min-width:120px;
-  }
-  .track .progress {
-    position:absolute; left:0; top:0; bottom:0; width:0%; background:#111; border-radius:6px;
-  }
-  .meta-title { font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:240px; }
-
-  /* Background Play active state (polish) */
-  #bgPlayBtn.active{
-    background:#000;
-    color:#fff;
-    font-weight:700;
-    border: 1px solid #111;
-  }
-
-  /* Full Screen button active state */
-  #fsBtn.active{
-    background:#000;
-    color:#fff;
-    font-weight:700;
-    border: 1px solid #111;
-  }
-
-  /* Fullscreen-specific styles (when using the Fullscreen API) */
-  .player-wrap:fullscreen,
-  .player-wrap:-webkit-full-screen,
-  .player-wrap:-moz-full-screen,
-  .player-wrap:-ms-fullscreen {
-    width:100%;
-    height:100%;
-    max-width:none;
-    margin:0;
-    border-radius:0;
-    box-shadow:none;
-  }
-  .player-wrap:fullscreen .player-frame,
-  .player-wrap:-webkit-full-screen .player-frame,
-  .player-wrap:-moz-full-screen .player-frame,
-  .player-wrap:-ms-fullscreen .player-frame {
-    aspect-ratio: auto;
-    height:100%;
-  }
-
-  /* Fallback (simulate fullscreen) if Fullscreen API not available */
-  .player-wrap.fs-fallback {
-    position:fixed !important;
-    top:0; left:0; right:0; bottom:0;
-    width:100% !important;
-    height:100% !important;
-    z-index:99999;
-    border-radius:0 !important;
-  }
-  .player-wrap.fs-fallback .player-frame { height:100%; aspect-ratio:auto; }
-
-  /* ensure controls never overflow wide screens and wrap on tiny devices */
-  @media (max-width:520px){
-    .player-controls { padding:8px; gap:8px; }
-    .meta-title { max-width:140px; font-size:12px; }
-    .btn { padding:8px 8px; font-size:13px; }
-    .track { height:6px; }
-  }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;background:#fafafa;color:#000;min-height:100vh}
+header{background:#000;color:#fff;padding:16px;text-align:center;display:flex;align-items:center;justify-content:space-between;gap:12px}
+header h1{font-size:20px;margin:0}
+.header-actions{display:flex;gap:8px;align-items:center}
+.header-actions button{background:transparent;border:1px solid rgba(255,255,255,0.18);color:#fff;padding:8px 10px;border-radius:8px;cursor:pointer}
+.header-actions button:hover{opacity:0.92}
+main{max-width:520px;margin:30px auto;padding:0 14px}
+.card{background:#fff;border-radius:10px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.08)}
+label{display:block;font-size:13px;font-weight:700;margin-bottom:6px}
+input,select,button{
+  width:100%;padding:11px 12px;margin-bottom:14px;
+  border-radius:6px;border:1px solid #ccc;font-size:14px
+}
+button.primary{background:#000;color:#fff;border:none;font-weight:700;cursor:pointer}
+.preview{display:none;margin-top:10px;border-top:1px solid #eee;padding-top:14px}
+.preview img{width:100%;border-radius:6px}
+.preview-title{font-size:14px;font-weight:700;margin-top:8px}
+.status{font-size:13px;margin-top:10px;min-height:20px}
+.status.ok{color:green}
+.status.err{color:#c00}
+footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
 </style>
 </head>
+
 <body>
 
-  <header class="header" role="banner">
-    <a class="login-btn" href="/ZubeenDa/login.html" aria-label="Login">LOGIN</a>
-    <div class="header-title">Joi Zubeen Da - Paiotorr</div>
+<header>
+  <h1>Video Submission</h1>
+  <div class="header-actions">
+    <button id="btnLogout">Logout</button>
+  </div>
+</header>
 
-    <div class="cat-wrap" id="catWrap" aria-hidden="false" style="position:relative;">
-      <div id="catScroll" class="cat-scroll" role="tablist" aria-label="Categories"></div>
-    </div>
-  </header>
+<main>
+  <div class="card">
 
-  <main class="content" role="main">
+    <label for="videoUrl">YouTube Video URL</label>
+    <input id="videoUrl" type="url" placeholder="https://youtu.be/..." required>
 
-    <!-- EMBEDDED PLAYER (fixed: use YT IFrame API) -->
-    <div id="playerContainer" class="player-wrap" aria-hidden="true" style="display:none;">
-      <!-- container where YT API will create the iframe -->
-      <div id="playerInner">
-        <!-- replaced iframe with a container div so YT API will insert iframe correctly -->
-        <div id="ytPlayer" class="player-frame"></div>
-      </div>
+    <label for="category">Select Category</label>
+    <select id="category" aria-label="Select category"></select>
 
-      <!-- CONTROLS: always below the video (this is the change you requested) -->
-      <div class="player-controls" id="playerControls" aria-hidden="false" >
-        <div class="left">
-          <button class="btn" id="prevBtn" title="Previous">⏮</button>
-          <button class="btn" id="playPauseBtn" title="Play/Pause">▶</button>
-          <button class="btn" id="nextBtn" title="Next">⏭</button>
-        </div>
+    <button id="addBtn" class="primary">Add Video</button>
 
-        <div class="center">
-          <div class="meta-title" id="playerTitle">No video</div>
-          <div style="flex:1 1 40%;">
-            <div class="track" id="progressTrack" aria-label="Playback progress">
-              <div class="progress" id="progressBar"></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="right">
-          <div id="timeLabel" style="font-size:13px;">0:00 / 0:00</div>
-          <!-- 🔵 Background Play button (default OFF - script will sync state) -->
-          <button class="btn secondary" id="bgPlayBtn" title="Background Play">🎧 OFF</button>
-
-          <!-- 🖵 Full Screen button (NEW) -->
-          <button class="btn secondary" id="fsBtn" title="Full Screen" aria-pressed="false">⛶</button>
-
-          <button class="btn secondary" id="closePlayer" title="Close Player">✕</button>
-        </div>
-      </div>
+    <div class="preview" id="preview">
+      <img id="thumb" alt="Thumbnail">
+      <div class="preview-title" id="videoTitle"></div>
     </div>
 
-    <div class="search-wrapper">
-      <input type="text" id="searchInput" placeholder="Search videos in this section…" aria-label="Search videos"/>
-    </div>
+    <div class="status" id="status"></div>
 
-    <ul id="videoList" class="video-list" aria-live="polite"></ul>
-    <div id="noResults" class="no-results">No videos found for this search.</div>
+  </div>
+</main>
 
-    <div class="end-note"><strong>More Coming Soon.....</strong></div>
-  </main>
-
-  <footer class="site-footer" role="contentinfo">
-    <div class="copyright">&copy; 2026 PAIOTORR</div>
-  </footer>
+<footer>© 2026 JoiZubeenDa · Internal Team Tool</footer>
 
 <script type="module">
-  // Firebase imports
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import {
+    getFirestore, collection, doc, getDoc, addDoc, setDoc,
+    onSnapshot, serverTimestamp, query, where, getDocs
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
   // ---------- Firebase config ----------
   const firebaseConfig = {
@@ -292,771 +85,310 @@
   };
 
   const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
   const db = getFirestore(app);
 
   // ---------- DOM ----------
-  const catScroll = document.getElementById('catScroll');
-  const searchInput = document.getElementById('searchInput');
-  const videoListEl = document.getElementById('videoList');
-  const noResultsEl = document.getElementById('noResults');
-
-  // Player DOM
-  const playerContainer = document.getElementById('playerContainer');
-  const ytPlayerContainer = document.getElementById('ytPlayer'); // replaced iframe ref
-  const playerControls = document.getElementById('playerControls');
-  const playPauseBtn = document.getElementById('playPauseBtn');
-  const prevBtn = document.getElementById('prevBtn');
-  const nextBtn = document.getElementById('nextBtn');
-  const playerTitle = document.getElementById('playerTitle');
-  const progressBar = document.getElementById('progressBar');
-  const progressTrack = document.getElementById('progressTrack');
-  const timeLabel = document.getElementById('timeLabel');
-  const closePlayer = document.getElementById('closePlayer');
-  const bgPlayBtn = document.getElementById('bgPlayBtn'); // 🔵 BACKGROUND PLAY button
-  const fsBtn = document.getElementById('fsBtn'); // <-- Full Screen button
-
-  // ---------- Defaults & fallback ----------
-  const builtinVideos = [];
-
-  // ---------- State ----------
-  let categories = [];            // [{ id, name }]
-  let currentCategory = null;     // category id (doc id or fallback string)
-  let allVideos = [];             // array of normalized video objects (from Firestore + builtins)
-  let categoriesUnsub = null;
-  let videosUnsub = null;
-
-  // Player state
-  let activePlaylist = [];        // videos for current category (array of normalized items)
-  let currentIndex = -1;          // index in activePlaylist
-  let ytPlayer = null;            // YT.Player instance
-  let playerReady = false;
-  let isPlaying = false;
-  let progressTimer = null;
-
-  // Fullscreen state (keeps a JS-level flag for visual feedback)
-  let isFsActive = false;
-  let fsApiAvailable = !!(playerContainer.requestFullscreen || playerContainer.webkitRequestFullscreen || playerContainer.mozRequestFullScreen || playerContainer.msRequestFullscreen);
+  const videoUrlEl = document.getElementById("videoUrl");
+  const categoryEl = document.getElementById("category");
+  const addBtn = document.getElementById("addBtn");
+  const previewEl = document.getElementById("preview");
+  const thumbEl = document.getElementById("thumb");
+  const videoTitleEl = document.getElementById("videoTitle");
+  const statusEl = document.getElementById("status");
+  const btnLogout = document.getElementById("btnLogout");
 
   // ---------- Helpers ----------
-  function titleCase(s){ return String(s).replace(/\b\w/g, c => c.toUpperCase()); }
-  function getYouTubeId(url){
-    try{
+  function ytId(url){
+    if(!url) return null;
+    try {
       const u = new URL(url);
-      if(u.hostname === 'youtu.be') return u.pathname.slice(1);
-      return u.searchParams.get('v') || '';
-    } catch(e){ return ''; }
-  }
-  function getThumbUrl(id){ return id ? 'https://img.youtube.com/vi/' + id + '/hqdefault.jpg' : ''; }
-  function normalizeVideoItem(item){
-    const id = item.id || getYouTubeId(item.url || '');
-    const url = item.url || (id ? `https://youtu.be/${id}` : '');
-    return {
-      id: item.id || id || '',
-      category: (item.category || item.cat || 'song').toString(),
-      title: item.title || item.name || (id ? `YouTube · ${id}` : 'Untitled'),
-      url,
-      thumb: item.thumb || (id ? getThumbUrl(id) : ''),
-      addedBy: item.addedBy || item.user || 'team',
-      time: item.time || item.addedOn || (item.createdAt && item.createdAt.toDate ? item.createdAt.toDate().toLocaleString() : '')
-    };
-  }
-
-  // ---------- Render categories (pills) ----------
-  function renderCategoryBar(){
-    catScroll.innerHTML = '';
-    const list = (categories && categories.length) ? categories : defaultCats.map(c => ({ id: c, name: c }));
-    list.forEach(cat => {
-      const pill = document.createElement('button');
-      pill.className = 'category-pill' + ((currentCategory === cat.id) ? ' active' : '');
-      pill.setAttribute('role','tab');
-      pill.setAttribute('aria-selected', (currentCategory === cat.id) ? 'true' : 'false');
-      pill.dataset.cat = cat.id;
-      pill.tabIndex = 0;
-      pill.innerText = titleCase(cat.name || cat.id);
-      pill.addEventListener('click', () => {
-        setActiveCategory(cat.id, true);
-      });
-      pill.addEventListener('keydown', e => {
-        if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveCategory(cat.id, true); }
-      });
-      catScroll.appendChild(pill);
-    });
-  }
-  function setActiveCategory(catId, shouldScrollIntoView){
-    currentCategory = catId;
-    Array.from(catScroll.children).forEach(btn => {
-      if(btn.dataset.cat === catId){
-        btn.classList.add('active');
-        btn.setAttribute('aria-selected','true');
-        if(shouldScrollIntoView){
-          const rect = btn.getBoundingClientRect();
-          const wrapRect = catScroll.getBoundingClientRect();
-          const offset = rect.left - wrapRect.left - (wrapRect.width/2) + (rect.width/2);
-          catScroll.scrollBy({ left: offset, behavior: 'smooth' });
-        }
-      } else {
-        btn.classList.remove('active');
-        btn.setAttribute('aria-selected','false');
+      const host = (u.hostname || '').replace('www.','').toLowerCase();
+      if(host === 'youtu.be') {
+        const id = u.pathname.slice(1);
+        return id || null;
       }
-    });
-
-    // rebuild active playlist for the selected category
-    buildActivePlaylist();
-    renderList();
-  }
-
-  function buildActivePlaylist(){
-    // Filter by exact category id (category doc id) only
-    activePlaylist = allVideos.filter(v => String(v.category).toLowerCase() === String(currentCategory).toLowerCase());
-    // preserve ordering same as allVideos (which is newest->older). You can change ordering later if needed.
-    // reset current index if it is out of bounds
-    if(currentIndex < 0 || currentIndex >= activePlaylist.length){
-      currentIndex = -1;
+      if(host.endsWith('youtube.com') || host === 'youtube.com' || host === 'm.youtube.com'){
+        if(u.pathname === '/watch'){
+          return u.searchParams.get('v') || null;
+        }
+        if(u.pathname.startsWith('/shorts/')){
+          const parts = u.pathname.split('/');
+          return parts[2] || null;
+        }
+        const embedMatch = u.pathname.match(/\/embed\/([A-Za-z0-9_-]+)/);
+        if(embedMatch) return embedMatch[1];
+        if(u.searchParams.get('v')) return u.searchParams.get('v');
+      }
+      return null;
+    } catch(e){
+      return null;
     }
   }
 
-  // ---------- Render videos list ----------
-  function renderList(){
-    const q = (searchInput.value || '').trim().toLowerCase();
-    const filtered = allVideos.filter(v => {
-      if(!currentCategory) return true;
-      if(String(v.category).toLowerCase() !== String(currentCategory).toLowerCase()) return false;
-      return (v.title || '').toLowerCase().includes(q);
-    });
-
-    videoListEl.innerHTML = '';
-    noResultsEl.style.display = filtered.length ? 'none' : 'block';
-
-    filtered.forEach((video, i) => {
-      const id = getYouTubeId(video.url || '');
-      const li = document.createElement('li');
-      li.className='video-item'; li.setAttribute('role','link'); li.tabIndex=0;
-      li.dataset.url = video.url || ''; // used by now-playing highlight mapping
-
-      // Clicking now plays inside the embedded player (no redirect)
-      const activate = ()=> {
-        // Determine index inside activePlaylist (category-based)
-        buildActivePlaylist();
-        const idx = activePlaylist.findIndex(v => (v.url||'') === (video.url||''));
-        // If not in the activePlaylist because categories mismatch (rare), just play from filtered list
-        const playIdx = idx >= 0 ? idx : (() => {
-          // add temporarily this video as single-item playlist
-          activePlaylist = [video];
-          return 0;
-        })();
-        playVideoAtIndex(playIdx);
-      };
-
-      li.addEventListener('click',activate);
-      li.addEventListener('keydown',e=>{ if(e.key==='Enter' || e.key===' ') activate(); });
-
-      const serial = document.createElement('div'); serial.className='serial'; serial.textContent=(i+1)+')';
-      const thumbWrap = document.createElement('div'); thumbWrap.className='thumb-wrapper';
-      const img = document.createElement('img'); img.alt = video.title || 'Video';
-      img.src = video.thumb || getThumbUrl(id);
-      thumbWrap.appendChild(img);
-
-      const titleDiv = document.createElement('div'); titleDiv.className='video-title'; titleDiv.textContent = video.title || 'Untitled Video';
-
-      li.appendChild(serial); li.appendChild(thumbWrap); li.appendChild(titleDiv);
-      videoListEl.appendChild(li);
-    });
-
-    // Ensure highlight is correct after re-render
-    updateNowPlayingHighlight();
+  function ytThumb(id){ return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : ''; }
+  function nowReadable(){ return new Date().toLocaleString(); }
+  function setStatus(text, ok){
+    statusEl.textContent = text || "";
+    statusEl.className = ok ? "status ok" : (text ? "status err" : "status");
   }
 
-  // ---------- Now-playing highlight helper ----------
-  function updateNowPlayingHighlight(){
+  async function fetchYouTubeTitle(originalUrl, idFallback){
+    const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(originalUrl)}&format=json`;
     try {
-      const items = videoListEl.querySelectorAll('.video-item');
-      const currentVideo = (activePlaylist && activePlaylist[currentIndex]) ? activePlaylist[currentIndex] : null;
-      items.forEach(li => {
-        const url = li.dataset.url || '';
-        li.classList.toggle('playing', currentVideo && url === currentVideo.url);
-      });
-    } catch(e){}
+      const res = await fetch(oembedUrl);
+      if(!res.ok) throw new Error('oEmbed returned ' + res.status);
+      const data = await res.json();
+      if(data && data.title) return data.title;
+      throw new Error('Invalid oEmbed response');
+    } catch (err) {
+      console.warn('YouTube oEmbed failed:', err);
+      return `YouTube · ${idFallback || 'unknown'}`;
+    }
   }
 
-  // ---------- Player control functions (REWRITTEN to use YT.Player) ----------
-  function showPlayer(){
-    playerContainer.style.display = 'block';
-    playerContainer.setAttribute('aria-hidden','false');
-  }
-  function hidePlayer(){
-    playerContainer.style.display = 'none';
-    playerContainer.setAttribute('aria-hidden','true');
-    stopProgressTimer();
-    isPlaying = false;
-    updatePlayButton();
-    // optionally stop video
-    try { if (playerReady && ytPlayer) { ytPlayer.stopVideo(); } } catch(e){}
-    // ensure fullscreen state cleared if open
-    exitFullScreenImmediate();
-  }
-
-  function playVideoAtIndex(idx){
-    if(!playerReady) {
-      // if player not ready yet, attempt to set currentIndex and show player with the ID in the src once ready
-      currentIndex = idx;
-      const video = activePlaylist[currentIndex];
-      if(video){
-        playerTitle.textContent = video.title || 'Untitled';
-      }
-      updateNowPlayingHighlight();
-      showPlayer();
+  // ---------- Auth & Role Guard (team only) ----------
+  let currentUser = null;
+  onAuthStateChanged(auth, async (user) => {
+    if(!user){
+      sessionStorage.removeItem("jzd_session");
+      location.replace("login.html");
       return;
     }
-    if(!Array.isArray(activePlaylist) || activePlaylist.length === 0) return;
-    if(idx < 0 || idx >= activePlaylist.length) return;
-    currentIndex = idx;
-    const video = activePlaylist[currentIndex];
-    const vid = getYouTubeId(video.url || '');
-    if(!vid) return;
-
-    // update highlight before loading to give immediate feedback
-    updateNowPlayingHighlight();
-
+    currentUser = user;
     try {
-      // Use the official API to load and play the video
-      ytPlayer.loadVideoById({videoId: vid});
-    } catch (err) {
-      // fallback: cue then play
-      try { ytPlayer.cueVideoById(vid); } catch(e){}
-    }
-    playerTitle.textContent = video.title || 'Untitled';
-    showPlayer();
-    isPlaying = true;
-    updatePlayButton();
-    resetProgressBar();
-    startProgressTimer();
-  }
-
-  function prevVideo(){
-    if(currentIndex > 0){
-      playVideoAtIndex(currentIndex - 1);
-    } else {
-      // at beginning -> do nothing or optionally loop
-    }
-  }
-  function nextVideo(){
-    if(currentIndex < activePlaylist.length - 1){
-      playVideoAtIndex(currentIndex + 1);
-    } else {
-      // reached end: stop
-      isPlaying = false;
-      updatePlayButton();
-      stopProgressTimer();
-      // clear highlight when nothing is playing
-      updateNowPlayingHighlight();
-    }
-  }
-
-  function togglePlayPause(){
-    if(playerReady && ytPlayer) {
-      try {
-        const state = ytPlayer.getPlayerState();
-        if(state === YT.PlayerState.PLAYING || state === YT.PlayerState.BUFFERING) {
-          ytPlayer.pauseVideo();
+      const udoc = await getDoc(doc(db, "users", user.uid));
+      if(!udoc.exists()){
+        alert("No role assigned. Contact admin.");
+        await signOut(auth);
+        location.replace("login.html");
+        return;
+      }
+      const u = udoc.data();
+      if(u.role !== "team"){
+        if(u.role === "admin"){
+          location.replace("admin.html");
         } else {
-          ytPlayer.playVideo();
+          alert("Team access required.");
+          await signOut(auth);
+          location.replace("login.html");
         }
-        // The onStateChange handler will update isPlaying & UI
-      } catch (e) {
-        // fallback: toggle the flag
-        isPlaying = !isPlaying;
-        updatePlayButton();
+        return;
       }
-    } else {
-      // not ready: attempt to play when ready
-      isPlaying = true;
-      updatePlayButton();
-    }
-  }
 
-  function updatePlayButton(){
-    playPauseBtn.textContent = isPlaying ? '⏸' : '▶';
-  }
+      sessionStorage.setItem("jzd_session", JSON.stringify({
+        uid: user.uid,
+        email: user.email,
+        role: u.role,
+        name: u.name || ""
+      }));
 
-  function resetProgressBar(){
-    progressBar.style.width = '0%';
-    timeLabel.textContent = '0:00 / 0:00';
-  }
+      // Start real-time category listener
+      startCategoryListener();
 
-  // ---------- Progress timer (improved using YT API when available) ----------
-  function startProgressTimer(){
-    stopProgressTimer();
-    progressTimer = setInterval(() => {
-      if(playerReady && ytPlayer) {
-        try {
-          const dur = ytPlayer.getDuration() || 0;
-          const cur = ytPlayer.getCurrentTime() || 0;
-          if(dur > 0) {
-            const pct = Math.min(100, (cur / dur) * 100);
-            progressBar.style.width = pct + '%';
-            // format times
-            const fmt = t => {
-              const s = Math.floor(t || 0);
-              const m = Math.floor(s / 60);
-              const sec = String(s % 60).padStart(2,'0');
-              return m + ':' + sec;
-            };
-            timeLabel.textContent = fmt(cur) + ' / ' + fmt(dur);
-          } else {
-            // duration unknown yet; show spinner-like behavior
-            const currentWidth = parseFloat(progressBar.style.width || '0') || 0;
-            const next = Math.min(90, currentWidth + 0.6);
-            progressBar.style.width = next + '%';
-            timeLabel.textContent = isPlaying ? 'Playing' : 'Paused';
-          }
-        } catch(e){
-          // fallback visual only
-          const currentWidth = parseFloat(progressBar.style.width || '0') || 0;
-          const next = Math.min(100, currentWidth + 0.5);
-          progressBar.style.width = next + '%';
-          timeLabel.textContent = isPlaying ? 'Playing' : 'Paused';
-        }
-      } else {
-        // not ready - visual progress
-        const currentWidth = parseFloat(progressBar.style.width || '0') || 0;
-        const next = Math.min(100, currentWidth + 0.5);
-        progressBar.style.width = next + '%';
-        timeLabel.textContent = isPlaying ? 'Playing' : 'Paused';
-      }
-    }, 700);
-  }
-  function stopProgressTimer(){
-    if(progressTimer) { clearInterval(progressTimer); progressTimer = null; }
-    // don't wipe UI entirely; keep current state
-  }
-
-  // Seek by clicking track (best-effort: uses YT API if available)
-  progressTrack.addEventListener('click', (e) => {
-    const rect = progressTrack.getBoundingClientRect();
-    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    progressBar.style.width = (pct * 100) + '%';
-    if(playerReady && ytPlayer) {
-      try {
-        const dur = ytPlayer.getDuration() || 0;
-        const seekTo = dur * pct;
-        ytPlayer.seekTo(seekTo, true);
-      } catch(e){}
+    } catch (err) {
+      console.error(err);
+      alert("Auth verification failed. Re-login required.");
+      await signOut(auth);
+      location.replace("login.html");
     }
   });
 
-  // Control button listeners
-  playPauseBtn.addEventListener('click', () => { togglePlayPause(); });
-  prevBtn.addEventListener('click', () => { prevVideo(); });
-  nextBtn.addEventListener('click', () => { nextVideo(); });
-  closePlayer.addEventListener('click', () => { hidePlayer(); });
-
-  // ---------- Screen Orientation helpers (NEW) ----------
-  async function lockLandscape(){
-    try{
-      if (screen.orientation && screen.orientation.lock) {
-        // Attempt a general landscape lock; browsers may accept 'landscape' or 'landscape-primary'
-        await screen.orientation.lock('landscape');
-      }
-    } catch(e){
-      // If locking fails (iOS Safari or denied), fail silently and continue (we don't break playback)
-      // console.debug('Orientation lock failed or unsupported', e);
-    }
-  }
-  function unlockOrientation(){
-    try{
-      // Some browsers support unlock(), others ignore.
-      if (screen.orientation && screen.orientation.unlock) {
-        screen.orientation.unlock();
-      }
-    } catch(e){}
-  }
-
-  // ---------- Fullscreen logic (UPDATED: orientation lock/unlock) ----------
-  function updateFsBtn(){
-    try {
-      fsBtn.classList.toggle('active', isFsActive);
-      fsBtn.setAttribute('aria-pressed', String(Boolean(isFsActive)));
-      // keep icon same for simplicity
-      fsBtn.textContent = '⛶';
-    } catch(e){}
-  }
-
-  // Enter fullscreen via API or fallback
-  async function enterFullScreen(){
-    if(!playerContainer) return;
-    // Try standard API
-    try {
-      if (playerContainer.requestFullscreen) {
-        await playerContainer.requestFullscreen();
-        // only attempt orientation lock after native fullscreen was entered
-        await lockLandscape();
-        isFsActive = true;
-        updateFsBtn();
-        return;
-      } else if (playerContainer.webkitRequestFullscreen) {
-        await playerContainer.webkitRequestFullscreen();
-        await lockLandscape();
-        isFsActive = true;
-        updateFsBtn();
-        return;
-      } else if (playerContainer.mozRequestFullScreen) {
-        await playerContainer.mozRequestFullScreen();
-        await lockLandscape();
-        isFsActive = true;
-        updateFsBtn();
-        return;
-      } else if (playerContainer.msRequestFullscreen) {
-        await playerContainer.msRequestFullscreen();
-        await lockLandscape();
-        isFsActive = true;
-        updateFsBtn();
-        return;
-      }
-    } catch (e) {
-      // ignore and fallback below
-    }
-
-    // Fallback: simulate fullscreen via CSS class (works when API blocked/not available)
-    playerContainer.classList.add('fs-fallback');
-    isFsActive = true;
-    updateFsBtn();
-    // Attempt orientation lock even for fallback (may fail silently)
-    try { lockLandscape(); } catch(e){}
-  }
-
-  // Exit fullscreen via API or fallback
-  async function exitFullScreen(){
-    try {
-      const docFs = (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
-      if (docFs) {
-        if (document.exitFullscreen) {
-          await document.exitFullscreen();
-          await unlockOrientation();
-          isFsActive = false;
-          updateFsBtn();
-          return;
-        } else if (document.webkitExitFullscreen) {
-          await document.webkitExitFullscreen();
-          await unlockOrientation();
-          isFsActive = false;
-          updateFsBtn();
-          return;
-        } else if (document.mozCancelFullScreen) {
-          await document.mozCancelFullScreen();
-          await unlockOrientation();
-          isFsActive = false;
-          updateFsBtn();
-          return;
-        } else if (document.msExitFullscreen) {
-          await document.msExitFullscreen();
-          await unlockOrientation();
-          isFsActive = false;
-          updateFsBtn();
-          return;
-        }
-      }
-    } catch (e){
-      // ignore and continue to fallback cleanup
-    }
-
-    // Fallback cleanup
-    playerContainer.classList.remove('fs-fallback');
-    isFsActive = false;
-    updateFsBtn();
-    try { unlockOrientation(); } catch(e){}
-  }
-
-  // Immediate exit used when hiding player (no await)
-  function exitFullScreenImmediate(){
-    try {
-      if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement) {
-        if (document.exitFullscreen) document.exitFullscreen();
-        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-        else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
-        else if (document.msExitFullscreen) document.msExitFullscreen();
-      }
-    } catch(e){}
-    playerContainer.classList.remove('fs-fallback');
-    isFsActive = false;
-    updateFsBtn();
-    try { unlockOrientation(); } catch(e){}
-  }
-
-  function toggleFullScreen(){
-    const docFs = (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
-    if (docFs || playerContainer.classList.contains('fs-fallback') || isFsActive) {
-      exitFullScreen();
-    } else {
-      enterFullScreen();
-    }
-  }
-
-  // Listen for changes (user pressed ESC or browser changed fullscreen state)
-  function onFsChange(){
-    const docFs = (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
-    if (docFs) {
-      isFsActive = true;
-      playerContainer.classList.remove('fs-fallback');
-    } else {
-      // not in native fullscreen - clear JS flag and fallback class, and unlock orientation
-      playerContainer.classList.remove('fs-fallback');
-      isFsActive = false;
-      try { unlockOrientation(); } catch(e){}
-    }
-    updateFsBtn();
-  }
-
-  // Bind FS button
-  fsBtn.addEventListener('click', () => { toggleFullScreen(); });
-
-  // Fullscreen change events (cross-browser)
-  document.addEventListener('fullscreenchange', onFsChange);
-  document.addEventListener('webkitfullscreenchange', onFsChange);
-  document.addEventListener('mozfullscreenchange', onFsChange);
-  document.addEventListener('MSFullscreenChange', onFsChange);
-
-  // ---------- Auto-scroll for category bar ----------
-  let autoScrollEnabled = true;
-  let autoScrollStep = 0.4; // px per ms
-  let lastFrame = null;
-  let userInteracting = false;
-  let resumeTimeout = null;
-
-  function autoScrollFrame(ts){
-    if(!lastFrame) lastFrame = ts;
-    const dt = ts - lastFrame;
-    lastFrame = ts;
-    if(autoScrollEnabled && !userInteracting){
-      catScroll.scrollLeft += autoScrollStep * dt;
-      if(catScroll.scrollLeft + catScroll.clientWidth >= catScroll.scrollWidth - 1){
-        catScroll.scrollTo({ left: 0 });
-      }
-    }
-    window.requestAnimationFrame(autoScrollFrame);
-  }
-
-  function pauseAutoScroll(){
-    userInteracting = true;
-    if(resumeTimeout) clearTimeout(resumeTimeout);
-    resumeTimeout = setTimeout(()=>{ userInteracting = false; }, 1800);
-  }
-
-  catScroll.addEventListener('pointerdown', e => { pauseAutoScroll(); });
-  catScroll.addEventListener('touchstart', e => { pauseAutoScroll(); }, {passive:true});
-  catScroll.addEventListener('wheel', e => { pauseAutoScroll(); }, {passive:true});
-  catScroll.addEventListener('scroll', () => { pauseAutoScroll(); });
-
-  // ---------- Firestore listeners ----------
-  const defaultCats = ['song','live','interview'];
-
-  // helper to normalize category names for robust matching
-  function normCatKey(s){
-    return (String(s || '').toLowerCase().replace(/[^a-z0-9]/g,'')).trim();
-  }
-  const preferredCatKey = normCatKey('ZG HiT Songs');
-
+  // ---------- Categories (real-time) ----------
+  let categoriesUnsub = null;
   function startCategoryListener(){
     if(categoriesUnsub) categoriesUnsub();
     const col = collection(db, "categories");
+
     categoriesUnsub = onSnapshot(col, snap => {
-      const out = [];
+      // Preserve any user selection (so we don't clobber a user's manual choice if categories update)
+      const previousValue = categoryEl.value || "";
+
+      // Collect categories from snapshot
+      const arr = [];
       snap.forEach(d => {
         const data = d.data();
-        out.push({ id: d.id, name: data.name || d.id });
+        arr.push({ id: d.id, name: data.name || d.id });
       });
-      out.sort((a,b)=> (a.name || '').localeCompare(b.name || ''));
-      categories = out;
 
-      // Choose default category: prefer "ZG HiT Songs" if present (robust matching), else first
-      if(!currentCategory && categories.length){
-        const found = categories.find(c => {
-          return normCatKey(c.name || c.id) === preferredCatKey;
+      // Clear and rebuild options, always include the disabled placeholder first
+      categoryEl.innerHTML = "";
+
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "Select a category";
+      placeholder.disabled = true;
+      // do not set selected here unconditionally; we'll set selection below
+      categoryEl.appendChild(placeholder);
+
+      if(arr.length === 0){
+        // Fallback static options when DB has none
+        const fallback = ['song','live','interview'];
+        fallback.forEach(c => {
+          const opt = document.createElement("option");
+          opt.value = c;
+          opt.textContent = c;
+          categoryEl.appendChild(opt);
         });
-        currentCategory = found ? found.id : categories[0].id;
+      } else {
+        arr.sort((a,b)=> a.name.localeCompare(b.name));
+        arr.forEach(item => {
+          const opt = document.createElement("option");
+          opt.value = item.id;
+          opt.textContent = item.name;
+          categoryEl.appendChild(opt);
+        });
       }
 
-      // ensure currentCategory still exists
-      if(currentCategory && !categories.find(c=>c.id===currentCategory)){
-        currentCategory = (categories[0] && categories[0].id) || defaultCats[0];
+      // Restore previous selection if it still exists; otherwise select placeholder (no category)
+      if(previousValue){
+        const matching = Array.from(categoryEl.options).find(o => o.value === previousValue);
+        if(matching){
+          matching.selected = true;
+        } else {
+          placeholder.selected = true;
+        }
+      } else {
+        // No previous selection (first load / user hasn't picked) — ensure placeholder is selected
+        placeholder.selected = true;
       }
-
-      renderCategoryBar();
-      renderList();
     }, err => {
       console.error("categories snapshot error", err);
-      if(!categories || categories.length === 0){
-        categories = defaultCats.map(c => ({ id: c, name: c }));
-        if(!currentCategory) currentCategory = categories[0].id;
-        renderCategoryBar();
-      }
     });
   }
 
-  function startVideoListener(){
-    if(videosUnsub) videosUnsub();
-    const col = collection(db, "videos");
-    const q = query(col, orderBy("createdAt", "desc"));
-    videosUnsub = onSnapshot(q, snap => {
-      const rows = [];
-      snap.forEach(d => {
-        const data = d.data();
-        rows.push({ ...data, docId: d.id });
-      });
-      const normalized = rows.map(normalizeVideoItem);
-      const builtInNormalized = builtinVideos.map(normalizeVideoItem);
-      allVideos = [...normalized, ...builtInNormalized];
+  // ---------- Duplicate check helper ----------
+  // This function queries Firestore for existing videos using both legacy fields and new canonical fields.
+  async function checkDuplicateVideo(videoId, videoTitle) {
+    // Normalize basic inputs used in equality checks (exact match required by requirement)
+    const id = (videoId || "").trim();
+    const title = (videoTitle || "").trim();
 
-      // If no category chosen yet, try to choose preferred category if it exists
-      if(!currentCategory){
-        if(categories && categories.length){
-          const found = categories.find(c => normCatKey(c.name || c.id) === preferredCatKey);
-          currentCategory = found ? found.id : categories[0].id;
-        } else if(allVideos.length){
-          currentCategory = allVideos[0].category;
-        }
-      }
-      buildActivePlaylist();
-      renderList();
-    }, err => {
-      console.error("videos snapshot error", err);
-      allVideos = builtinVideos.map(normalizeVideoItem);
-      buildActivePlaylist();
-      renderList();
-    });
-  }
+    // If either is missing, treat as not duplicate here (safety)
+    if(!id && !title) return false;
 
-  // ---------- Search wiring ----------
-  searchInput.addEventListener('input', () => { renderList(); });
+    const videosCol = collection(db, "videos");
 
-  // ---------- Initialize YT Player integration ----------
-  // IMPORTANT: window.onYouTubeIframeAPIReady must be defined in global scope so the loaded YT API can call it.
-  window.onYouTubeIframeAPIReady = function () {
-    // Create YT.Player inside container with proper playerVars (including origin)
     try {
-      ytPlayer = new YT.Player('ytPlayer', {
-        height: '100%',
-        width: '100%',
-        videoId: '',
-        playerVars: {
-          autoplay: 1,
-          playsinline: 1,
-          rel: 0,
-          modestbranding: 1,
-          enablejsapi: 1,
-          origin: window.location.origin || (window.location.protocol + '//' + window.location.host)
-        },
-        events: {
-          onReady: function () {
-            playerReady = true;
-            // if a selection was made before ready, attempt to play it
-            if (currentIndex >= 0 && activePlaylist[currentIndex]) {
-              const vid = getYouTubeId(activePlaylist[currentIndex].url || '');
-              if (vid) {
-                try { ytPlayer.loadVideoById(vid); } catch(e){}
-              }
-            }
-          },
-          onStateChange: function (e) {
-            // Update UI based on player state
-            if (e.data === YT.PlayerState.PLAYING) {
-              isPlaying = true;
-              updatePlayButton();
-              startProgressTimer();
-            } else if (e.data === YT.PlayerState.PAUSED) {
-              isPlaying = false;
-              updatePlayButton();
-              stopProgressTimer();
-            } else if (e.data === YT.PlayerState.ENDED) {
-              isPlaying = false;
-              updatePlayButton();
-              // Auto play next
-              nextVideo();
-            } else if (e.data === YT.PlayerState.BUFFERING) {
-              // keep playing flag
-            }
-          }
-        }
-      });
+      // 1) Check existing by id fields: 'id' OR 'videoId'
+      if(id) {
+        const qA = query(videosCol, where("id", "==", id));
+        const snapA = await getDocs(qA);
+        if(snapA.size > 0) return true;
+
+        const qB = query(videosCol, where("videoId", "==", id));
+        const snapB = await getDocs(qB);
+        if(snapB.size > 0) return true;
+      }
+
+      // 2) Check existing by title fields: 'title' OR 'videoTitle'
+      if(title) {
+        const qC = query(videosCol, where("title", "==", title));
+        const snapC = await getDocs(qC);
+        if(snapC.size > 0) return true;
+
+        const qD = query(videosCol, where("videoTitle", "==", title));
+        const snapD = await getDocs(qD);
+        if(snapD.size > 0) return true;
+      }
+
+      // No duplicates found
+      return false;
+
     } catch (err) {
-      console.error('YT.Player creation failed', err);
+      console.error("Duplicate check failed:", err);
+      // If duplicate-check fails due to permission or network, fail-safe: do NOT block save automatically.
+      // Instead, surface an error so the user can retry.
+      throw new Error("Could not verify duplicates (network/permission). Try again.");
     }
-  };
-
-  // ---------- 🔵 BACKGROUND PLAY (IMPROVED & SAFE) ----------
-  // Purpose: allow the user to manually enable background audio where the browser/OS allows it.
-  // State is remembered in localStorage and the player will try to resume playback if the page becomes hidden,
-  // the window blurs, or the browser tries to pause the video. This is best-effort and will gracefully
-  // fall back if the OS blocks background playback.
-  let backgroundPlayEnabled = localStorage.getItem('bgPlay') === '1';
-  function updateBgBtn(){
-    try {
-      bgPlayBtn.textContent = backgroundPlayEnabled ? '🎧 ON' : '🎧 OFF';
-      bgPlayBtn.classList.toggle('active', backgroundPlayEnabled);
-    } catch(e){}
   }
-  updateBgBtn();
 
-  bgPlayBtn.addEventListener('click', () => {
-    backgroundPlayEnabled = !backgroundPlayEnabled;
-    try { localStorage.setItem('bgPlay', backgroundPlayEnabled ? '1' : '0'); } catch(e){}
-    updateBgBtn();
+  // ---------- Add video ----------
+  addBtn.addEventListener("click", async () => {
+    setStatus("", false);
+    const url = (videoUrlEl.value || "").trim();
+    const categoryId = categoryEl.value;
+    const id = ytId(url);
 
-    // Try to resume playback immediately when enabling
-    if (backgroundPlayEnabled && ytPlayer && playerReady) {
-      try { ytPlayer.playVideo(); } catch(e){}
+    if(!id){
+      setStatus("Invalid or unsupported YouTube URL. Supported: youtube.com/watch?v=, youtu.be/, youtube.com/shorts/", false);
+      return;
     }
-  });
+    // Enforce explicit category selection. (Exact user-visible message required by spec.)
+    if(!categoryId){
+      setStatus("Please select a category before submitting.", false);
+      return;
+    }
 
-  function tryResumePlayback(){
-    if (!backgroundPlayEnabled) return;
-    if (!ytPlayer || !playerReady) return;
+    addBtn.disabled = true;
+    addBtn.textContent = "Checking...";
+
     try {
-      const state = ytPlayer.getPlayerState();
-      if (state !== YT.PlayerState.PLAYING) {
-        // Attempt to play — browser may ignore if autoplay policy blocks it,
-        // but this is a safe, single attempt (no tight loops).
-        ytPlayer.playVideo();
+      const thumb = ytThumb(id);
+
+      // Fetch the real title from YouTube (oEmbed). Fallback to id-based title if oEmbed fails.
+      const title = await fetchYouTubeTitle(url, id);
+
+      // --- duplicate check (core fix) ---
+      const isDuplicate = await checkDuplicateVideo(id, title);
+      if(isDuplicate){
+        setStatus("This video has already been added.", false);
+        addBtn.disabled = false;
+        addBtn.textContent = "Add Video";
+        return;
       }
-    } catch(e){}
-  }
 
-  // When tab/app changes (page visibility)
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden && backgroundPlayEnabled) {
-      // small delay to let browser process visibility change
-      setTimeout(tryResumePlayback, 400);
+      // --- prepare document with both legacy and canonical fields ---
+      const videoDoc = {
+        // legacy-friendly fields (used by other pages already)
+        id,               // legacy id field
+        title,            // legacy title field
+        url,              // legacy url
+
+        // canonical fields required by spec
+        videoId: id,
+        videoTitle: title,
+        videoUrl: url,
+
+        // meta
+        category: categoryId,
+        thumb,
+        addedBy: currentUser.email || "",
+        createdAt: serverTimestamp(),
+        time: nowReadable()
+      };
+
+      // Add to Firestore (collection 'videos')
+      await addDoc(collection(db, "videos"), videoDoc);
+
+      // Show preview & success
+      thumbEl.src = thumb;
+      videoTitleEl.textContent = title;
+      previewEl.style.display = "block";
+      setStatus("Video added successfully ✔", true);
+
+      // clear input
+      videoUrlEl.value = "";
+
+    } catch (err) {
+      console.error(err);
+      setStatus("Failed to add video: " + (err.message || err), false);
+    } finally {
+      addBtn.disabled = false;
+      addBtn.textContent = "Add Video";
     }
   });
 
-  // When window loses focus (screen lock, app switch on some platforms)
-  window.addEventListener('blur', () => {
-    if (backgroundPlayEnabled) {
-      setTimeout(tryResumePlayback, 500);
-    }
+  // ---------- Logout ----------
+  btnLogout.addEventListener('click', async () => {
+    try { await signOut(auth); } catch(_) {}
+    sessionStorage.removeItem("jzd_session");
+    location.replace("login.html");
   });
 
-  // Also attempt to resume on pageshow (when coming back) if background mode is enabled
-  window.addEventListener('pageshow', () => {
-    if (backgroundPlayEnabled) {
-      setTimeout(tryResumePlayback, 300);
-    }
-  });
-
-  // ---------- Init ----------
-  (function init(){
-    startCategoryListener();
-    startVideoListener();
-    window.requestAnimationFrame(autoScrollFrame);
-  })();
-
-  // ---------- Prevent easy scraping (non-breaking) ----------
+  // ---------- Small client hardening (non-breaking) ----------
   document.addEventListener('contextmenu', e => e.preventDefault());
-  document.addEventListener('selectstart', e => {});
 </script>
-
-<!-- Load the YouTube IFrame API (not a module) so the global callback will run -->
-<script src="https://www.youtube.com/iframe_api"></script>
-
 <script>
 // Disable Right Click
 document.addEventListener('contextmenu', function(e) {
