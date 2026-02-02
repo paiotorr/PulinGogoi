@@ -156,6 +156,45 @@
     border: 1px solid #111;
   }
 
+  /* Full Screen button active state */
+  #fsBtn.active{
+    background:#000;
+    color:#fff;
+    font-weight:700;
+    border: 1px solid #111;
+  }
+
+  /* Fullscreen-specific styles (when using the Fullscreen API) */
+  .player-wrap:fullscreen,
+  .player-wrap:-webkit-full-screen,
+  .player-wrap:-moz-full-screen,
+  .player-wrap:-ms-fullscreen {
+    width:100%;
+    height:100%;
+    max-width:none;
+    margin:0;
+    border-radius:0;
+    box-shadow:none;
+  }
+  .player-wrap:fullscreen .player-frame,
+  .player-wrap:-webkit-full-screen .player-frame,
+  .player-wrap:-moz-full-screen .player-frame,
+  .player-wrap:-ms-fullscreen .player-frame {
+    aspect-ratio: auto;
+    height:100%;
+  }
+
+  /* Fallback (simulate fullscreen) if Fullscreen API not available */
+  .player-wrap.fs-fallback {
+    position:fixed !important;
+    top:0; left:0; right:0; bottom:0;
+    width:100% !important;
+    height:100% !important;
+    z-index:99999;
+    border-radius:0 !important;
+  }
+  .player-wrap.fs-fallback .player-frame { height:100%; aspect-ratio:auto; }
+
   /* ensure controls never overflow wide screens and wrap on tiny devices */
   @media (max-width:520px){
     .player-controls { padding:8px; gap:8px; }
@@ -207,6 +246,10 @@
           <div id="timeLabel" style="font-size:13px;">0:00 / 0:00</div>
           <!-- 🔵 Background Play button (default OFF - script will sync state) -->
           <button class="btn secondary" id="bgPlayBtn" title="Background Play">🎧 OFF</button>
+
+          <!-- 🖵 Full Screen button (NEW) -->
+          <button class="btn secondary" id="fsBtn" title="Full Screen" aria-pressed="false">⛶</button>
+
           <button class="btn secondary" id="closePlayer" title="Close Player">✕</button>
         </div>
       </div>
@@ -263,6 +306,7 @@
   const timeLabel = document.getElementById('timeLabel');
   const closePlayer = document.getElementById('closePlayer');
   const bgPlayBtn = document.getElementById('bgPlayBtn'); // 🔵 BACKGROUND PLAY button
+  const fsBtn = document.getElementById('fsBtn'); // <-- Full Screen button
 
   // ---------- Defaults & fallback ----------
   const builtinVideos = [];
@@ -281,6 +325,10 @@
   let playerReady = false;
   let isPlaying = false;
   let progressTimer = null;
+
+  // Fullscreen state (keeps a JS-level flag for visual feedback)
+  let isFsActive = false;
+  let fsApiAvailable = !!(playerContainer.requestFullscreen || playerContainer.webkitRequestFullscreen || playerContainer.mozRequestFullScreen || playerContainer.msRequestFullscreen);
 
   // ---------- Helpers ----------
   function titleCase(s){ return String(s).replace(/\b\w/g, c => c.toUpperCase()); }
@@ -420,6 +468,8 @@
     updatePlayButton();
     // optionally stop video
     try { if (playerReady && ytPlayer) { ytPlayer.stopVideo(); } } catch(e){}
+    // ensure fullscreen state cleared if open
+    exitFullScreenImmediate();
   }
 
   function playVideoAtIndex(idx){
@@ -570,6 +620,122 @@
   prevBtn.addEventListener('click', () => { prevVideo(); });
   nextBtn.addEventListener('click', () => { nextVideo(); });
   closePlayer.addEventListener('click', () => { hidePlayer(); });
+
+  // ---------- Fullscreen logic (NEW) ----------
+  // Uses Browser Fullscreen API when available; falls back to "simulated" fullscreen via CSS class if not.
+  function updateFsBtn(){
+    try {
+      fsBtn.classList.toggle('active', isFsActive);
+      fsBtn.setAttribute('aria-pressed', String(Boolean(isFsActive)));
+      // change icon / label if desired
+      fsBtn.textContent = isFsActive ? '⛶' : '⛶';
+    } catch(e){}
+  }
+
+  // Enter fullscreen via API or fallback
+  async function enterFullScreen(){
+    if(!playerContainer) return;
+    // Try standard API
+    try {
+      if (playerContainer.requestFullscreen) {
+        await playerContainer.requestFullscreen();
+        return;
+      } else if (playerContainer.webkitRequestFullscreen) {
+        await playerContainer.webkitRequestFullscreen();
+        return;
+      } else if (playerContainer.mozRequestFullScreen) {
+        await playerContainer.mozRequestFullScreen();
+        return;
+      } else if (playerContainer.msRequestFullscreen) {
+        await playerContainer.msRequestFullscreen();
+        return;
+      }
+    } catch (e) {
+      // ignore and fallback to simulated fullscreen below
+    }
+
+    // Fallback: simulate fullscreen via CSS class (works when API blocked/not available)
+    playerContainer.classList.add('fs-fallback');
+    isFsActive = true;
+    updateFsBtn();
+  }
+
+  // Exit fullscreen via API or fallback
+  async function exitFullScreen(){
+    try {
+      if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement) {
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+          return;
+        } else if (document.webkitExitFullscreen) {
+          await document.webkitExitFullscreen();
+          return;
+        } else if (document.mozCancelFullScreen) {
+          await document.mozCancelFullScreen();
+          return;
+        } else if (document.msExitFullscreen) {
+          await document.msExitFullscreen();
+          return;
+        }
+      }
+    } catch (e){
+      // ignore and continue to fallback cleanup
+    }
+
+    // Fallback cleanup
+    playerContainer.classList.remove('fs-fallback');
+    isFsActive = false;
+    updateFsBtn();
+  }
+
+  // Immediate exit used when hiding player (no await)
+  function exitFullScreenImmediate(){
+    try {
+      if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement) {
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+        else if (document.msExitFullscreen) document.msExitFullscreen();
+      }
+    } catch(e){}
+    playerContainer.classList.remove('fs-fallback');
+    isFsActive = false;
+    updateFsBtn();
+  }
+
+  function toggleFullScreen(){
+    // If we're already in simulated fallback, treat as active too.
+    const docFs = (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+    if (docFs || playerContainer.classList.contains('fs-fallback') || isFsActive) {
+      exitFullScreen();
+    } else {
+      enterFullScreen();
+    }
+  }
+
+  // Listen for changes (user pressed ESC or browser changed fullscreen state)
+  function onFsChange(){
+    const docFs = (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+    if (docFs) {
+      isFsActive = true;
+      // ensure fallback class removed (API is controlling)
+      playerContainer.classList.remove('fs-fallback');
+    } else {
+      // not in native fullscreen - clear JS flag and fallback class
+      playerContainer.classList.remove('fs-fallback');
+      isFsActive = false;
+    }
+    updateFsBtn();
+  }
+
+  // Bind FS button
+  fsBtn.addEventListener('click', () => { toggleFullScreen(); });
+
+  // Fullscreen change events (cross-browser)
+  document.addEventListener('fullscreenchange', onFsChange);
+  document.addEventListener('webkitfullscreenchange', onFsChange);
+  document.addEventListener('mozfullscreenchange', onFsChange);
+  document.addEventListener('MSFullscreenChange', onFsChange);
 
   // ---------- Auto-scroll for category bar ----------
   let autoScrollEnabled = true;
