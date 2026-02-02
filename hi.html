@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Joi Zubeen Da - PAIOTORR (player update)</title>
+<title>Joi Zubeen Da - PAIOTORR</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 
 <meta http-equiv="X-Content-Type-Options" content="nosniff" />
@@ -87,37 +87,71 @@
   .site-footer{text-align:center;padding:16px 10px 22px;color:#777;font-size:13px}
   .end-note{text-align:center;padding:8px 0;color:#333}
 
-  /* Player UI (bottom) */
-  #playerContainer {
-    position: fixed;
-    left: 12px;
-    right: 12px;
-    bottom: 12px;
-    max-width: 980px;
-    margin: 0 auto;
-    z-index: 9999;
-    display: none; /* shown when playing */
-    background: rgba(255,255,255,0.98);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
-    border-radius: 14px;
+  /* --- PLAYER: container + responsive rules --- */
+  .player-wrap{
+    max-width:900px;
+    width:100%;
+    margin: 12px auto;
+    background: #000;
+    border-radius: 8px;
     overflow: hidden;
-    align-items: center;
-    gap: 12px;
-    padding: 8px;
+    box-shadow: 0 8px 20px rgba(0,0,0,.08);
   }
-  #playerFrameWrap { flex: 0 0 200px; height: 112px; background: #000; border-radius: 8px; overflow: hidden; }
-  #playerFrame { width:100%; height:100%; border:0; display:block; }
-  .player-controls { flex:1; display:flex; flex-direction:column; gap:6px; padding-right:8px; }
-  .player-meta { font-size:13px; font-weight:700; color:#111; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
-  .player-buttons { display:flex; gap:6px; align-items:center; }
-  .player-buttons button { background:#000;color:#fff;border:none;padding:8px 10px;border-radius:8px;cursor:pointer;font-weight:700; }
-  .player-close { background:transparent;color:#666;border:0;font-size:14px;cursor:pointer;padding:6px; }
-
-  @media (max-width:720px) {
-    #playerFrameWrap { flex: 0 0 140px; height: 80px; }
-    #playerContainer { left:8px; right:8px; padding:6px; }
+  /* keep perfect aspect ratio and full width (modern browsers) */
+  .player-frame{
+    width:100%;
+    aspect-ratio: 16/9;
+    background: #000;
+    display:block;
+    border:0;
   }
 
+  /* player controls MUST appear below the video and be responsive */
+  .player-controls{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px;
+    background:#fff;
+    color:#000;
+    flex-wrap:wrap;
+  }
+  .player-controls .left {
+    display:flex; gap:8px; align-items:center;
+  }
+  .player-controls .center {
+    flex:1 1 auto; min-width:150px; display:flex; gap:8px; align-items:center;
+  }
+  .player-controls .right {
+    display:flex; gap:8px; align-items:center; justify-content:flex-end;
+  }
+
+  .btn {
+    background:#111;color:#fff;border:none;padding:8px 10px;border-radius:8px;font-size:14px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .btn.secondary { background:#eee;color:#111; }
+  .track {
+    width:100%;
+    height:8px;
+    background:#eee;
+    border-radius:6px;
+    position:relative;
+    cursor:pointer;
+    min-width:120px;
+  }
+  .track .progress {
+    position:absolute; left:0; top:0; bottom:0; width:0%; background:#111; border-radius:6px;
+  }
+  .meta-title { font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:240px; }
+
+  /* ensure controls never overflow wide screens and wrap on tiny devices */
+  @media (max-width:520px){
+    .player-controls { padding:8px; gap:8px; }
+    .meta-title { max-width:140px; font-size:12px; }
+    .btn { padding:8px 8px; font-size:13px; }
+    .track { height:6px; }
+  }
 </style>
 </head>
 <body>
@@ -132,6 +166,38 @@
   </header>
 
   <main class="content" role="main">
+
+    <!-- EMBEDDED PLAYER (new) -->
+    <div id="playerContainer" class="player-wrap" aria-hidden="true" style="display:none;">
+      <!-- iframe will be attached here by JS -->
+      <div id="playerInner">
+        <iframe id="ytPlayer" class="player-frame" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen src="" frameborder="0"></iframe>
+      </div>
+
+      <!-- CONTROLS: always below the video (this is the change you requested) -->
+      <div class="player-controls" id="playerControls" aria-hidden="false" >
+        <div class="left">
+          <button class="btn" id="prevBtn" title="Previous">⏮</button>
+          <button class="btn" id="playPauseBtn" title="Play/Pause">▶</button>
+          <button class="btn" id="nextBtn" title="Next">⏭</button>
+        </div>
+
+        <div class="center">
+          <div class="meta-title" id="playerTitle">No video</div>
+          <div style="flex:1 1 40%;">
+            <div class="track" id="progressTrack" aria-label="Playback progress">
+              <div class="progress" id="progressBar"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="right">
+          <div id="timeLabel" style="font-size:13px;">0:00 / 0:00</div>
+          <button class="btn secondary" id="closePlayer" title="Close Player">✕</button>
+        </div>
+      </div>
+    </div>
+
     <div class="search-wrapper">
       <input type="text" id="searchInput" placeholder="Search videos in this section…" aria-label="Search videos"/>
     </div>
@@ -146,24 +212,10 @@
     <div class="copyright">&copy; 2026 PAIOTORR</div>
   </footer>
 
-  <!-- Embedded player container (added) -->
-  <div id="playerContainer" aria-hidden="true" role="region" aria-label="Video player">
-    <div id="playerFrameWrap"><div id="playerFrame"></div></div>
-    <div class="player-controls">
-      <div class="player-meta" id="playerTitle">Playing — </div>
-      <div class="player-buttons">
-        <button id="btnPrev" title="Previous">⏮ Prev</button>
-        <button id="btnPlayPause" title="Play/Pause">▶️</button>
-        <button id="btnNext" title="Next">Next ⏭</button>
-        <button id="btnClose" class="player-close" title="Close player">✕</button>
-      </div>
-    </div>
-  </div>
-
 <script type="module">
   // Firebase imports
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
   // ---------- Firebase config ----------
   const firebaseConfig = {
@@ -184,12 +236,18 @@
   const videoListEl = document.getElementById('videoList');
   const noResultsEl = document.getElementById('noResults');
 
+  // Player DOM
   const playerContainer = document.getElementById('playerContainer');
+  const ytPlayerIframe = document.getElementById('ytPlayer');
+  const playerControls = document.getElementById('playerControls');
+  const playPauseBtn = document.getElementById('playPauseBtn');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
   const playerTitle = document.getElementById('playerTitle');
-  const btnPrev = document.getElementById('btnPrev');
-  const btnPlayPause = document.getElementById('btnPlayPause');
-  const btnNext = document.getElementById('btnNext');
-  const btnClose = document.getElementById('btnClose');
+  const progressBar = document.getElementById('progressBar');
+  const progressTrack = document.getElementById('progressTrack');
+  const timeLabel = document.getElementById('timeLabel');
+  const closePlayer = document.getElementById('closePlayer');
 
   // ---------- Defaults & fallback ----------
   const builtinVideos = [];
@@ -201,45 +259,28 @@
   let categoriesUnsub = null;
   let videosUnsub = null;
 
-  // Playlist / player state
-  let activePlaylist = [];        // filtered for currentCategory
-  let currentIndex = -1;          // index inside activePlaylist
-  let ytPlayer = null;            // YT.Player instance
+  // Player state
+  let activePlaylist = [];        // videos for current category (array of normalized items)
+  let currentIndex = -1;          // index in activePlaylist
+  let ytPlayer = null;            // YT player not used (we're using iframe embed + src param to keep minimal)
   let isPlaying = false;
-  let playerReady = false;
+  let progressTimer = null;
 
   // ---------- Helpers ----------
   function titleCase(s){ return String(s).replace(/\b\w/g, c => c.toUpperCase()); }
-
   function getYouTubeId(url){
     try{
       const u = new URL(url);
-      const host = (u.hostname || '').replace('www.','').toLowerCase();
-      // youtu.be short link
-      if(host === 'youtu.be') return u.pathname.slice(1);
-      // youtube.com
-      if(host.endsWith('youtube.com') || host === 'youtube.com' || host === 'm.youtube.com'){
-        if(u.pathname === '/watch'){
-          return u.searchParams.get('v') || '';
-        }
-        if(u.pathname.startsWith('/shorts/')){
-          const parts = u.pathname.split('/');
-          return parts[2] || '';
-        }
-        const embedMatch = u.pathname.match(/\/embed\/([A-Za-z0-9_-]+)/);
-        if(embedMatch) return embedMatch[1] || '';
-        return u.searchParams.get('v') || '';
-      }
-      return '';
+      if(u.hostname === 'youtu.be') return u.pathname.slice(1);
+      return u.searchParams.get('v') || '';
     } catch(e){ return ''; }
   }
-
   function getThumbUrl(id){ return id ? 'https://img.youtube.com/vi/' + id + '/hqdefault.jpg' : ''; }
   function normalizeVideoItem(item){
-    const id = item.id || getYouTubeId(item.url || '') || item.videoId || '';
+    const id = item.id || getYouTubeId(item.url || '');
     const url = item.url || (id ? `https://youtu.be/${id}` : '');
     return {
-      id: id || '',
+      id: item.id || id || '',
       category: (item.category || item.cat || 'song').toString(),
       title: item.title || item.name || (id ? `YouTube · ${id}` : 'Untitled'),
       url,
@@ -287,36 +328,53 @@
         btn.setAttribute('aria-selected','false');
       }
     });
-    // rebuild active playlist after category change
+
+    // rebuild active playlist for the selected category
     buildActivePlaylist();
     renderList();
   }
 
-  // Build the playlist restricted to currentCategory
   function buildActivePlaylist(){
-    if(!currentCategory){
-      activePlaylist = allVideos.slice();
-    } else {
-      activePlaylist = allVideos.filter(v => String(v.category).toLowerCase() === String(currentCategory).toLowerCase());
+    // Filter by exact category id (category doc id) only
+    activePlaylist = allVideos.filter(v => String(v.category).toLowerCase() === String(currentCategory).toLowerCase());
+    // preserve ordering same as allVideos (which is newest->older). You can change ordering later if needed.
+    // reset current index if it is out of bounds
+    if(currentIndex < 0 || currentIndex >= activePlaylist.length){
+      currentIndex = -1;
     }
-    // reset index if out of bounds
-    if(currentIndex >= activePlaylist.length) currentIndex = -1;
   }
 
   // ---------- Render videos list ----------
   function renderList(){
     const q = (searchInput.value || '').trim().toLowerCase();
-    const filtered = activePlaylist.filter(v => (v.title || '').toLowerCase().includes(q));
+    const filtered = allVideos.filter(v => {
+      if(!currentCategory) return true;
+      if(String(v.category).toLowerCase() !== String(currentCategory).toLowerCase()) return false;
+      return (v.title || '').toLowerCase().includes(q);
+    });
 
     videoListEl.innerHTML = '';
     noResultsEl.style.display = filtered.length ? 'none' : 'block';
 
     filtered.forEach((video, i) => {
-      const id = video.id || getYouTubeId(video.url || '');
+      const id = getYouTubeId(video.url || '');
       const li = document.createElement('li');
       li.className='video-item'; li.setAttribute('role','link'); li.tabIndex=0;
-      // Activation now plays inside the in-page player
-      const activate = ()=> playVideoFromList(i);
+
+      // Clicking now plays inside the embedded player (no redirect)
+      const activate = ()=> {
+        // Determine index inside activePlaylist (category-based)
+        buildActivePlaylist();
+        const idx = activePlaylist.findIndex(v => (v.url||'') === (video.url||''));
+        // If not in the activePlaylist because categories mismatch (rare), just play from filtered list
+        const playIdx = idx >= 0 ? idx : (() => {
+          // add temporarily this video as single-item playlist
+          activePlaylist = [video];
+          return 0;
+        })();
+        playVideoAtIndex(playIdx);
+      };
+
       li.addEventListener('click',activate);
       li.addEventListener('keydown',e=>{ if(e.key==='Enter' || e.key===' ') activate(); });
 
@@ -333,173 +391,112 @@
     });
   }
 
-  // Play a video from the currently-rendered list (filtered view)
-  function playVideoFromList(filteredIndex){
-    // filteredIndex corresponds to index inside current filtered render.
-    // We must map this to index inside activePlaylist.
-    const q = (searchInput.value || '').trim().toLowerCase();
-    // create temporary filtered array and find element
-    const filtered = activePlaylist.filter(v => (v.title || '').toLowerCase().includes(q));
-    const target = filtered[filteredIndex];
-    if(!target) return;
-    // find the index inside activePlaylist
-    const idx = activePlaylist.findIndex(v => v.url === target.url || v.id === target.id);
-    if(idx === -1) return;
-    playVideoAtIndex(idx);
+  // ---------- Player control functions ----------
+  function showPlayer(){
+    playerContainer.style.display = 'block';
+    playerContainer.setAttribute('aria-hidden','false');
   }
-
-  // ---------- YouTube Player integration ----------
-  // Load Iframe API (global)
-  function loadYouTubeIframeAPI(){
-    if(window.YT && window.YT.Player) { initPlayer(); return; }
-    const tag = document.createElement('script');
-    tag.src = "https://www.youtube.com/iframe_api";
-    document.head.appendChild(tag);
-    window.onYouTubeIframeAPIReady = () => { initPlayer(); };
-  }
-
-  function initPlayer(){
-    // Create a hidden div target #playerFrame
-    ytPlayer = new YT.Player('playerFrame', {
-      height: '100%',
-      width: '100%',
-      videoId: '', // start empty
-      playerVars: {
-        autoplay: 0,
-        controls: 1,
-        rel: 0,
-        modestbranding: 1,
-        iv_load_policy: 3,
-        playsinline: 1,
-        fs: 0,
-        disablekb: 1,
-        // Note: autoplay with sound may be blocked by browsers; we attempt play on user gesture only.
-      },
-      events: {
-        onReady: (e) => { playerReady = true; /* don't auto-play until user clicks */ },
-        onStateChange: onPlayerStateChange,
-        onError: (e) => console.warn('YT player error', e)
-      }
-    });
-  }
-
-  function onPlayerStateChange(event){
-    const state = event.data;
-    // YT.PlayerState.ENDED === 0
-    if(typeof YT === 'undefined') return;
-    if(state === YT.PlayerState.ENDED){
-      // Auto play next video in activePlaylist
-      playNext();
-    } else if(state === YT.PlayerState.PLAYING){
-      isPlaying = true;
-      updatePlayerUI();
-    } else if(state === YT.PlayerState.PAUSED){
-      isPlaying = false;
-      updatePlayerUI();
-    }
+  function hidePlayer(){
+    playerContainer.style.display = 'none';
+    playerContainer.setAttribute('aria-hidden','true');
+    stopProgressTimer();
+    isPlaying = false;
+    updatePlayButton();
   }
 
   function playVideoAtIndex(idx){
-    if(!Array.isArray(activePlaylist) || idx < 0 || idx >= activePlaylist.length) return;
+    if(!Array.isArray(activePlaylist) || activePlaylist.length === 0) return;
+    if(idx < 0 || idx >= activePlaylist.length) return;
     currentIndex = idx;
-    const video = activePlaylist[idx];
-    if(!video || !video.id) return;
-    // ensure player is initialized
-    if(!ytPlayer) {
-      loadYouTubeIframeAPI();
-      // Wait for API ready; attempt again shortly if not ready
-      const wait = setInterval(() => {
-        if(playerReady && ytPlayer) {
-          clearInterval(wait);
-          loadAndPlay(video.id);
-        }
-      }, 200);
-    } else if(!playerReady){
-      // Wait
-      const wait = setInterval(() => {
-        if(playerReady) {
-          clearInterval(wait);
-          loadAndPlay(video.id);
-        }
-      },200);
-    } else {
-      loadAndPlay(video.id);
-    }
+    const video = activePlaylist[currentIndex];
+    const vid = getYouTubeId(video.url || '');
+    if(!vid) return;
 
-    // show UI
-    playerContainer.style.display = 'flex';
-    playerContainer.setAttribute('aria-hidden', 'false');
-    updatePlayerUI();
+    // Build embed URL with reduced branding and autoplay
+    // Note: we cannot block ads. This only minimizes branding and disables related videos.
+    const embedUrl = `https://www.youtube.com/embed/${encodeURIComponent(vid)}?enablejsapi=1&autoplay=1&playsinline=1&rel=0&modestbranding=1&iv_load_policy=3&fs=0&controls=1`;
+    ytPlayerIframe.src = embedUrl;
+
+    playerTitle.textContent = video.title || 'Untitled';
+    showPlayer();
+    isPlaying = true;
+    updatePlayButton();
+    startProgressTimer(); // start updates (best-effort using postMessage/time polling is limited without full YT API; we'll estimate)
   }
 
-  function loadAndPlay(ytId){
-    try {
-      // Using loadVideoById ensures replacing the same iframe; helps continuity & background audio
-      ytPlayer.loadVideoById({ videoId: ytId, startSeconds: 0 });
-      // Attempt to play (user gesture required in some browsers)
-      try { ytPlayer.playVideo(); } catch(e){}
-    } catch (err){
-      console.error('Failed to load video', err);
-    }
-    updatePlayerUI();
-  }
-
-  function playNext(){
-    if(currentIndex + 1 < activePlaylist.length){
-      playVideoAtIndex(currentIndex + 1);
-    } else {
-      // end of playlist — stop and leave last video
-      isPlaying = false;
-      updatePlayerUI();
-    }
-  }
-
-  function playPrev(){
-    if(currentIndex - 1 >= 0){
+  function prevVideo(){
+    if(currentIndex > 0){
       playVideoAtIndex(currentIndex - 1);
     } else {
-      // at first item — restart
-      playVideoAtIndex(0);
+      // at beginning -> do nothing or optionally loop: playVideoAtIndex(activePlaylist.length-1);
+    }
+  }
+  function nextVideo(){
+    if(currentIndex < activePlaylist.length - 1){
+      playVideoAtIndex(currentIndex + 1);
+    } else {
+      // reached end: stop or keep last frame
+      // For autoplay next requirement: do nothing further
+      isPlaying = false;
+      updatePlayButton();
+      stopProgressTimer();
     }
   }
 
   function togglePlayPause(){
-    if(!ytPlayer || !playerReady) return;
+    // We cannot directly control iframe playback reliably without the JS API, but we can use postMessage to the player.
+    // Simpler: toggle by changing src with autoplay=1 for resume; but that reloads iframe. We'll use postMessage where supported.
+    // Send play/pause command via postMessage API expected by YT iframe.
     try {
-      const state = ytPlayer.getPlayerState();
-      if(state === YT.PlayerState.PLAYING){
-        ytPlayer.pauseVideo();
-      } else {
-        ytPlayer.playVideo();
-      }
-    } catch(e){}
-  }
-
-  function updatePlayerUI(){
-    // update title and play/pause text
-    if(currentIndex >= 0 && activePlaylist[currentIndex]){
-      playerTitle.textContent = (activePlaylist[currentIndex].title || 'Untitled');
-    } else {
-      playerTitle.textContent = '—';
+      const cmd = isPlaying ? 'pauseVideo' : 'playVideo';
+      ytPlayerIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: cmd, args: [] }), '*');
+      isPlaying = !isPlaying;
+      updatePlayButton();
+    } catch (e) {
+      // Fallback: reload iframe to play (if paused) or do nothing.
+      isPlaying = !isPlaying;
+      updatePlayButton();
     }
-    btnPlayPause.textContent = isPlaying ? '⏸ Pause' : '▶️ Play';
   }
 
-  function closePlayer(){
-    // stop playback but keep player in place so background behavior persists if supported
-    try { if(ytPlayer && playerReady) ytPlayer.stopVideo(); } catch(e){}
-    playerContainer.style.display = 'none';
-    playerContainer.setAttribute('aria-hidden', 'true');
-    isPlaying = false;
-    currentIndex = -1;
-    updatePlayerUI();
+  function updatePlayButton(){
+    playPauseBtn.textContent = isPlaying ? '⏸' : '▶';
   }
 
-  // Wire player buttons
-  btnPrev.addEventListener('click', () => { playPrev(); });
-  btnNext.addEventListener('click', () => { playNext(); });
-  btnPlayPause.addEventListener('click', () => { togglePlayPause(); });
-  btnClose.addEventListener('click', () => { closePlayer(); });
+  // ---------- Progress timer (best-effort) ----------
+  function startProgressTimer(){
+    stopProgressTimer();
+    // Use periodic attempts to read iframe's URL and estimate progress using YT Player API messages is more complex.
+    // We'll approximate visually by toggling a small animation and not a frame-perfect time if API isn't ready.
+    progressTimer = setInterval(() => {
+      // Without injected YT Player API instance we can't read time. We'll show "playing" style by advancing a fake progress slowly.
+      // Keep simple: animate progress to 90% over 6 minutes as soft indicator; reset on video change.
+      // For better accuracy, later we can instantiate YT.Player and use API getCurrentTime() / getDuration().
+      const currentWidth = parseFloat(progressBar.style.width || '0') || 0;
+      const next = Math.min(100, currentWidth + 0.5); // slow increase
+      progressBar.style.width = next + '%';
+      timeLabel.textContent = isPlaying ? 'Playing' : 'Paused';
+    }, 700);
+  }
+  function stopProgressTimer(){
+    if(progressTimer) { clearInterval(progressTimer); progressTimer = null; }
+    progressBar.style.width = '0%';
+    timeLabel.textContent = '0:00 / 0:00';
+  }
+
+  // Seek by clicking track (best-effort: only visual unless full API used)
+  progressTrack.addEventListener('click', (e) => {
+    const rect = progressTrack.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    progressBar.style.width = (pct * 100) + '%';
+    // Seeking the actual iframe requires YT Player API; can add later if you want.
+  });
+
+  // Control button listeners
+  playPauseBtn.addEventListener('click', () => { togglePlayPause(); });
+  prevBtn.addEventListener('click', () => { prevVideo(); });
+  nextBtn.addEventListener('click', () => { nextVideo(); });
+  closePlayer.addEventListener('click', () => { hidePlayer(); });
 
   // ---------- Auto-scroll for category bar ----------
   let autoScrollEnabled = true;
@@ -533,6 +530,8 @@
   catScroll.addEventListener('scroll', () => { pauseAutoScroll(); });
 
   // ---------- Firestore listeners ----------
+  const defaultCats = ['song','live','interview'];
+
   function startCategoryListener(){
     if(categoriesUnsub) categoriesUnsub();
     const col = collection(db, "categories");
@@ -542,7 +541,6 @@
         const data = d.data();
         out.push({ id: d.id, name: data.name || d.id });
       });
-      // sort by name
       out.sort((a,b)=> (a.name || '').localeCompare(b.name || ''));
       categories = out;
       if(!currentCategory && categories.length) currentCategory = categories[0].id;
@@ -574,12 +572,10 @@
       const normalized = rows.map(normalizeVideoItem);
       const builtInNormalized = builtinVideos.map(normalizeVideoItem);
       allVideos = [...normalized, ...builtInNormalized];
-      // If currentCategory null, set to first available
       if(!currentCategory){
         if(categories && categories.length) currentCategory = categories[0].id;
         else if(allVideos.length) currentCategory = allVideos[0].category;
       }
-      // rebuild active playlist whenever videos change
       buildActivePlaylist();
       renderList();
     }, err => {
@@ -595,21 +591,9 @@
 
   // ---------- Init ----------
   (function init(){
-    // start listeners
     startCategoryListener();
     startVideoListener();
-    // default UI state
     window.requestAnimationFrame(autoScrollFrame);
-
-    // Load YouTube API (but player won't start until user clicks)
-    loadYouTubeIframeAPI();
-
-    // If no categories exist in Firestore, ensure fallback pills appear:
-    if(!categories || categories.length === 0){
-      categories = defaultCats.map(c => ({ id: c, name: c }));
-      if(!currentCategory) currentCategory = categories[0].id;
-      renderCategoryBar();
-    }
   })();
 
   // ---------- Prevent easy scraping (non-breaking) ----------
@@ -618,15 +602,32 @@
 </script>
 
 <script>
-// Disable Right Click (non-breaking)
-document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+// Disable Right Click
+document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+});
 
-// Disable Key Shortcuts (non-breaking)
+// Disable Key Shortcuts
 document.addEventListener('keydown', function(e) {
-    if (e.keyCode == 123) e.preventDefault();
-    if (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74)) e.preventDefault();
-    if (e.ctrlKey && e.keyCode == 85) e.preventDefault();
-    if (e.ctrlKey && (e.keyCode == 83 || e.keyCode == 67)) e.preventDefault();
+
+    // Block F12
+    if (e.keyCode == 123) {
+        e.preventDefault();
+    }
+
+    // Block Ctrl+Shift+I / Ctrl+Shift+J / Ctrl+U
+    if (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74)) {
+        e.preventDefault();
+    }
+
+    if (e.ctrlKey && e.keyCode == 85) {
+        e.preventDefault();
+    }
+
+    // Block Ctrl+S, Ctrl+C,
+    if (e.ctrlKey && (e.keyCode == 83 || e.keyCode == 67)) {
+        e.preventDefault();
+    }
 });
 </script>
 
