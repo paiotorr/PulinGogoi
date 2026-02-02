@@ -104,7 +104,10 @@
     background: #000;
     display:block;
     border:0;
+    position: relative;
   }
+  /* ensure the iframe injected by YT fills container */
+  .player-frame iframe { position:absolute; inset:0; width:100%; height:100%; border:0; display:block; }
 
   /* player controls MUST appear below the video and be responsive */
   .player-controls{
@@ -167,11 +170,12 @@
 
   <main class="content" role="main">
 
-    <!-- EMBEDDED PLAYER (new) -->
+    <!-- EMBEDDED PLAYER (fixed: use YT IFrame API) -->
     <div id="playerContainer" class="player-wrap" aria-hidden="true" style="display:none;">
-      <!-- iframe will be attached here by JS -->
+      <!-- container where YT API will create the iframe -->
       <div id="playerInner">
-        <iframe id="ytPlayer" class="player-frame" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen src="" frameborder="0"></iframe>
+        <!-- replaced iframe with a container div so YT API will insert iframe correctly -->
+        <div id="ytPlayer" class="player-frame"></div>
       </div>
 
       <!-- CONTROLS: always below the video (this is the change you requested) -->
@@ -238,7 +242,7 @@
 
   // Player DOM
   const playerContainer = document.getElementById('playerContainer');
-  const ytPlayerIframe = document.getElementById('ytPlayer');
+  const ytPlayerContainer = document.getElementById('ytPlayer'); // replaced iframe ref
   const playerControls = document.getElementById('playerControls');
   const playPauseBtn = document.getElementById('playPauseBtn');
   const prevBtn = document.getElementById('prevBtn');
@@ -262,7 +266,8 @@
   // Player state
   let activePlaylist = [];        // videos for current category (array of normalized items)
   let currentIndex = -1;          // index in activePlaylist
-  let ytPlayer = null;            // YT player not used (we're using iframe embed + src param to keep minimal)
+  let ytPlayer = null;            // YT.Player instance
+  let playerReady = false;
   let isPlaying = false;
   let progressTimer = null;
 
@@ -391,7 +396,7 @@
     });
   }
 
-  // ---------- Player control functions ----------
+  // ---------- Player control functions (REWRITTEN to use YT.Player) ----------
   function showPlayer(){
     playerContainer.style.display = 'block';
     playerContainer.setAttribute('aria-hidden','false');
@@ -402,9 +407,21 @@
     stopProgressTimer();
     isPlaying = false;
     updatePlayButton();
+    // optionally stop video
+    try { if (playerReady && ytPlayer) { ytPlayer.stopVideo(); } } catch(e){}
   }
 
   function playVideoAtIndex(idx){
+    if(!playerReady) {
+      // if player not ready yet, attempt to set currentIndex and show player with the ID in the src once ready
+      currentIndex = idx;
+      const video = activePlaylist[currentIndex];
+      if(video){
+        playerTitle.textContent = video.title || 'Untitled';
+      }
+      showPlayer();
+      return;
+    }
     if(!Array.isArray(activePlaylist) || activePlaylist.length === 0) return;
     if(idx < 0 || idx >= activePlaylist.length) return;
     currentIndex = idx;
@@ -412,31 +429,33 @@
     const vid = getYouTubeId(video.url || '');
     if(!vid) return;
 
-    // Build embed URL with reduced branding and autoplay
-    // Note: we cannot block ads. This only minimizes branding and disables related videos.
-    const embedUrl = `https://www.youtube.com/embed/${encodeURIComponent(vid)}?enablejsapi=1&autoplay=1&playsinline=1&rel=0&modestbranding=1&iv_load_policy=3&fs=0&controls=1`;
-    ytPlayerIframe.src = embedUrl;
-
+    try {
+      // Use the official API to load and play the video
+      ytPlayer.loadVideoById({videoId: vid});
+    } catch (err) {
+      // fallback: cue then play
+      try { ytPlayer.cueVideoById(vid); } catch(e){}
+    }
     playerTitle.textContent = video.title || 'Untitled';
     showPlayer();
     isPlaying = true;
     updatePlayButton();
-    startProgressTimer(); // start updates (best-effort using postMessage/time polling is limited without full YT API; we'll estimate)
+    resetProgressBar();
+    startProgressTimer();
   }
 
   function prevVideo(){
     if(currentIndex > 0){
       playVideoAtIndex(currentIndex - 1);
     } else {
-      // at beginning -> do nothing or optionally loop: playVideoAtIndex(activePlaylist.length-1);
+      // at beginning -> do nothing or optionally loop
     }
   }
   function nextVideo(){
     if(currentIndex < activePlaylist.length - 1){
       playVideoAtIndex(currentIndex + 1);
     } else {
-      // reached end: stop or keep last frame
-      // For autoplay next requirement: do nothing further
+      // reached end: stop
       isPlaying = false;
       updatePlayButton();
       stopProgressTimer();
@@ -444,17 +463,23 @@
   }
 
   function togglePlayPause(){
-    // We cannot directly control iframe playback reliably without the JS API, but we can use postMessage to the player.
-    // Simpler: toggle by changing src with autoplay=1 for resume; but that reloads iframe. We'll use postMessage where supported.
-    // Send play/pause command via postMessage API expected by YT iframe.
-    try {
-      const cmd = isPlaying ? 'pauseVideo' : 'playVideo';
-      ytPlayerIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: cmd, args: [] }), '*');
-      isPlaying = !isPlaying;
-      updatePlayButton();
-    } catch (e) {
-      // Fallback: reload iframe to play (if paused) or do nothing.
-      isPlaying = !isPlaying;
+    if(playerReady && ytPlayer) {
+      try {
+        const state = ytPlayer.getPlayerState();
+        if(state === YT.PlayerState.PLAYING || state === YT.PlayerState.BUFFERING) {
+          ytPlayer.pauseVideo();
+        } else {
+          ytPlayer.playVideo();
+        }
+        // The onStateChange handler will update isPlaying & UI
+      } catch (e) {
+        // fallback: toggle the flag
+        isPlaying = !isPlaying;
+        updatePlayButton();
+      }
+    } else {
+      // not ready: attempt to play when ready
+      isPlaying = true;
       updatePlayButton();
     }
   }
@@ -463,33 +488,70 @@
     playPauseBtn.textContent = isPlaying ? '⏸' : '▶';
   }
 
-  // ---------- Progress timer (best-effort) ----------
-  function startProgressTimer(){
-    stopProgressTimer();
-    // Use periodic attempts to read iframe's URL and estimate progress using YT Player API messages is more complex.
-    // We'll approximate visually by toggling a small animation and not a frame-perfect time if API isn't ready.
-    progressTimer = setInterval(() => {
-      // Without injected YT Player API instance we can't read time. We'll show "playing" style by advancing a fake progress slowly.
-      // Keep simple: animate progress to 90% over 6 minutes as soft indicator; reset on video change.
-      // For better accuracy, later we can instantiate YT.Player and use API getCurrentTime() / getDuration().
-      const currentWidth = parseFloat(progressBar.style.width || '0') || 0;
-      const next = Math.min(100, currentWidth + 0.5); // slow increase
-      progressBar.style.width = next + '%';
-      timeLabel.textContent = isPlaying ? 'Playing' : 'Paused';
-    }, 700);
-  }
-  function stopProgressTimer(){
-    if(progressTimer) { clearInterval(progressTimer); progressTimer = null; }
+  function resetProgressBar(){
     progressBar.style.width = '0%';
     timeLabel.textContent = '0:00 / 0:00';
   }
 
-  // Seek by clicking track (best-effort: only visual unless full API used)
+  // ---------- Progress timer (improved using YT API when available) ----------
+  function startProgressTimer(){
+    stopProgressTimer();
+    progressTimer = setInterval(() => {
+      if(playerReady && ytPlayer) {
+        try {
+          const dur = ytPlayer.getDuration() || 0;
+          const cur = ytPlayer.getCurrentTime() || 0;
+          if(dur > 0) {
+            const pct = Math.min(100, (cur / dur) * 100);
+            progressBar.style.width = pct + '%';
+            // format times
+            const fmt = t => {
+              const s = Math.floor(t || 0);
+              const m = Math.floor(s / 60);
+              const sec = String(s % 60).padStart(2,'0');
+              return m + ':' + sec;
+            };
+            timeLabel.textContent = fmt(cur) + ' / ' + fmt(dur);
+          } else {
+            // duration unknown yet; show spinner-like behavior
+            const currentWidth = parseFloat(progressBar.style.width || '0') || 0;
+            const next = Math.min(90, currentWidth + 0.6);
+            progressBar.style.width = next + '%';
+            timeLabel.textContent = isPlaying ? 'Playing' : 'Paused';
+          }
+        } catch(e){
+          // fallback visual only
+          const currentWidth = parseFloat(progressBar.style.width || '0') || 0;
+          const next = Math.min(100, currentWidth + 0.5);
+          progressBar.style.width = next + '%';
+          timeLabel.textContent = isPlaying ? 'Playing' : 'Paused';
+        }
+      } else {
+        // not ready - visual progress
+        const currentWidth = parseFloat(progressBar.style.width || '0') || 0;
+        const next = Math.min(100, currentWidth + 0.5);
+        progressBar.style.width = next + '%';
+        timeLabel.textContent = isPlaying ? 'Playing' : 'Paused';
+      }
+    }, 700);
+  }
+  function stopProgressTimer(){
+    if(progressTimer) { clearInterval(progressTimer); progressTimer = null; }
+    // don't wipe UI entirely; keep current state
+  }
+
+  // Seek by clicking track (best-effort: uses YT API if available)
   progressTrack.addEventListener('click', (e) => {
     const rect = progressTrack.getBoundingClientRect();
     const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     progressBar.style.width = (pct * 100) + '%';
-    // Seeking the actual iframe requires YT Player API; can add later if you want.
+    if(playerReady && ytPlayer) {
+      try {
+        const dur = ytPlayer.getDuration() || 0;
+        const seekTo = dur * pct;
+        ytPlayer.seekTo(seekTo, true);
+      } catch(e){}
+    }
   });
 
   // Control button listeners
@@ -589,6 +651,60 @@
   // ---------- Search wiring ----------
   searchInput.addEventListener('input', () => { renderList(); });
 
+  // ---------- Initialize YT Player integration ----------
+  // IMPORTANT: window.onYouTubeIframeAPIReady must be defined in global scope so the loaded YT API can call it.
+  window.onYouTubeIframeAPIReady = function () {
+    // Create YT.Player inside container with proper playerVars (including origin)
+    try {
+      ytPlayer = new YT.Player('ytPlayer', {
+        height: '100%',
+        width: '100%',
+        videoId: '',
+        playerVars: {
+          autoplay: 1,
+          playsinline: 1,
+          rel: 0,
+          modestbranding: 1,
+          enablejsapi: 1,
+          origin: window.location.origin || (window.location.protocol + '//' + window.location.host)
+        },
+        events: {
+          onReady: function () {
+            playerReady = true;
+            // if a selection was made before ready, attempt to play it
+            if (currentIndex >= 0 && activePlaylist[currentIndex]) {
+              const vid = getYouTubeId(activePlaylist[currentIndex].url || '');
+              if (vid) {
+                try { ytPlayer.loadVideoById(vid); } catch(e){}
+              }
+            }
+          },
+          onStateChange: function (e) {
+            // Update UI based on player state
+            if (e.data === YT.PlayerState.PLAYING) {
+              isPlaying = true;
+              updatePlayButton();
+              startProgressTimer();
+            } else if (e.data === YT.PlayerState.PAUSED) {
+              isPlaying = false;
+              updatePlayButton();
+              stopProgressTimer();
+            } else if (e.data === YT.PlayerState.ENDED) {
+              isPlaying = false;
+              updatePlayButton();
+              // Auto play next
+              nextVideo();
+            } else if (e.data === YT.PlayerState.BUFFERING) {
+              // keep playing flag
+            }
+          }
+        }
+      });
+    } catch (err) {
+      console.error('YT.Player creation failed', err);
+    }
+  };
+
   // ---------- Init ----------
   (function init(){
     startCategoryListener();
@@ -600,6 +716,9 @@
   document.addEventListener('contextmenu', e => e.preventDefault());
   document.addEventListener('selectstart', e => {});
 </script>
+
+<!-- Load the YouTube IFrame API (not a module) so the global callback will run -->
+<script src="https://www.youtube.com/iframe_api"></script>
 
 <script>
 // Disable Right Click
