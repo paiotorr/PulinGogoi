@@ -267,38 +267,26 @@ footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
     });
   }
 
-  // ---------- Duplicate check helper ----------
-  async function checkDuplicateVideo(videoId, videoTitle) {
+  // ---------- Duplicate check helper (FIXED) ----------
+  // Enforce uniqueness on (videoId + category) only.
+  async function checkDuplicateVideo(videoId, categoryId) {
     const id = (videoId || "").trim();
-    const title = (videoTitle || "").trim();
+    const cat = (categoryId || "").toString().trim();
 
-    if(!id && !title) return false;
+    if(!id || !cat) return false; // can't check properly without both
 
     const videosCol = collection(db, "videos");
 
     try {
-      if(id) {
-        const qA = query(videosCol, where("id", "==", id));
-        const snapA = await getDocs(qA);
-        if(snapA.size > 0) return true;
+      // Query videos where videoId == id AND category == selected category
+      const q = query(
+        videosCol,
+        where("videoId", "==", id),
+        where("category", "==", cat)
+      );
 
-        const qB = query(videosCol, where("videoId", "==", id));
-        const snapB = await getDocs(qB);
-        if(snapB.size > 0) return true;
-      }
-
-      if(title) {
-        const qC = query(videosCol, where("title", "==", title));
-        const snapC = await getDocs(qC);
-        if(snapC.size > 0) return true;
-
-        const qD = query(videosCol, where("videoTitle", "==", title));
-        const snapD = await getDocs(qD);
-        if(snapD.size > 0) return true;
-      }
-
-      return false;
-
+      const snap = await getDocs(q);
+      return snap.size > 0; // true => duplicate inside same category
     } catch (err) {
       console.error("Duplicate check failed:", err);
       throw new Error("Could not verify duplicates (network/permission). Try again.");
@@ -329,9 +317,10 @@ footer{text-align:center;font-size:12px;color:#777;padding:18px 10px 24px}
 
       const title = await fetchYouTubeTitle(url, id);
 
-      const isDuplicate = await checkDuplicateVideo(id, title);
+      // NOTE: changed to check uniqueness within the selected category only
+      const isDuplicate = await checkDuplicateVideo(id, categoryId);
       if(isDuplicate){
-        setStatus("This video has already been added.", false);
+        setStatus("This video has already been added to the selected category.", false);
         addBtn.disabled = false;
         addBtn.textContent = "Add Video";
         return;
