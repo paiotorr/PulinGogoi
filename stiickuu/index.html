@@ -393,7 +393,7 @@
     }
 
     function deleteSticker(id) {
-      if (!confirm("Delete this sticker?")) return;
+      // Removed the alert/confirm popup completely to make it silent
       state.stickers = state.stickers.filter(s => s.id !== id);
       delete state.cart[id];
       saveStickers();
@@ -448,16 +448,10 @@
     }
 
     async function orderViaInstagram() {
+      // Validate silently without generating any pop-up alerts
       const selectedLoc = PICKUP_LOCATIONS.find(l => l.name === state.pickupPlace);
-      
-      if (!selectedLoc) {
-        alert("Please select a pickup place.");
-        return;
-      }
-
-      if (totalQty() < selectedLoc.min) {
-        alert(`Please add at least ${selectedLoc.min} stickers to your cart for this pickup location.`);
-        return;
+      if (!selectedLoc || totalQty() < selectedLoc.min) {
+        return; 
       }
       
       const text = buildMsg();
@@ -471,29 +465,15 @@
       const btn = document.getElementById("orderBtn");
       if (btn) {
         btn.textContent = copied 
-          ? "✅ Copied! Redirecting to Instagram..."
-          : "⚠️ Redirecting to Instagram...";
+          ? "✅ Copied! Opening Chat..."
+          : "⚠️ Opening Chat...";
         btn.disabled = true;
 
+        // Clean & Silent Redirect
         setTimeout(() => {
-          // Optimized & Strengthened Redirection Logic
-          const userAgent = navigator.userAgent.toLowerCase();
-          const isIgApp = userAgent.includes('instagram');
-          
-          if (isIgApp) {
-            // IF INSIDE INSTAGRAM APP BROWSER: Attempt to escape using the native URI scheme
-            window.location.href = `instagram://user?username=${state.igHandle}`;
-            // Fallback safety to messaging endpoint
-            setTimeout(() => {
-              window.location.href = `https://ig.me/m/${state.igHandle}`;
-              setTimeout(() => { window.close(); }, 300);
-            }, 500);
-          } else {
-            // IF OUTSIDE: Go DIRECTLY to the explicit Instagram Messaging page
-            // This reliably opens the messaging intent on Mobile and the DM web-portal on Desktop
-            window.location.href = `https://ig.me/m/${state.igHandle}`;
-          }
-        }, 600);
+          // By strictly using the HTTPS link and window.top, we avoid the OS "Open in another app" popup completely
+          window.top.location.href = `https://ig.me/m/${state.igHandle}`;
+        }, 500);
       }
     }
 
