@@ -324,7 +324,7 @@
     const INSTAGRAM_USERNAME = "stiickuu";
 
 
-    // 2. STICKER CATEGORIES
+         // 2. STICKER CATEGORIES
     // Add new categories to the first list, and assign them a color in the second list.
     const CATEGORIES = ["All", "Cool", "Cartoon", "Anime", "SuperHero", "Cricketers"];
     
@@ -374,9 +374,6 @@
       { id: 19, name: "Rabo", category: "Cool", price: 10, image: "https://drive.google.com/file/d/1z0RcWDsk0tk8bfv5Y9h5558-LHthAatu/view?usp=sharing" },
       { id: 20, name: "Hato", category: "Cool", price: 10, image: "https://drive.google.com/file/d/1Qmvtd673zJQtys3mQV2Eo7MnT7d53QB_/view?usp=sharing" },
       
-
-
-
     ];
 
     // ============================================================================
@@ -505,21 +502,38 @@ Please confirm! 🙏`;
       const btn = document.getElementById("orderBtn");
       if (btn) {
         btn.textContent = copied 
-          ? "✅ Copied! Opening Instagram Chat..."
+          ? "✅ Copied! Redirecting to Instagram..."
           : "⚠️ Copy failed — copy manually";
         btn.disabled = true;
 
-        setTimeout(() => { 
-          // 1. Directly open the official Instagram Direct Messaging link
-          // This will break out of in-app browsers and native OS intercepts will route to the IG app DMs
-          const dmLink = `https://ig.me/m/${state.igHandle}`;
-          window.location.href = dmLink;
+        setTimeout(() => {
+          // Check if user is on a mobile device (where Instagram app is likely installed)
+          const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+          const isIgApp = /instagram/i.test(navigator.userAgent || navigator.vendor || window.opera);
           
-          // 2. Attempt to cleanly close the browser behind them
-          setTimeout(() => {
-            window.close();
-          }, 600);
-          
+          if (isIgApp) {
+            // If they are IN the Instagram App webview:
+            // Force escape the webview and go to the profile using the custom deep link scheme
+            window.location.href = `instagram://user?username=${state.igHandle}`;
+            
+            // Backup mechanism to try to redirect and close the webview
+            setTimeout(() => {
+              window.location.href = `https://ig.me/m/${state.igHandle}`;
+              setTimeout(() => { window.close(); }, 300);
+            }, 250);
+            
+          } else {
+            // Normal Browser (Chrome, Safari, Facebook app, etc.)
+            // 1. Fire the deep link first to aggressively attempt to open the native IG App
+            if (isMobile) {
+              window.location.href = `instagram://user?username=${state.igHandle}`;
+            }
+            
+            // 2. Immediately follow up with the official ig.me link (works on desktop and acts as a universal link on mobile)
+            setTimeout(() => {
+              window.location.href = `https://ig.me/m/${state.igHandle}`;
+            }, 150);
+          }
         }, 800);
       }
     }
