@@ -306,8 +306,43 @@
   <div id="app"></div>
 
   <script>
+    // ============================================================================
+    // ⚙️ APP SETTINGS & CONFIGURATION
+    // Easy Management Section - Edit the details below to update your shop!
+    // ============================================================================
+
+    // 1. INSTAGRAM USERNAME (Do not include the @ symbol)
     const INSTAGRAM_USERNAME = "stiickuu";
 
+
+    // 2. STICKER CATEGORIES
+    // Add new categories to the first list, and assign them a color in the second list.
+    const CATEGORIES = ["All", "Anime", "Cartoon", "Cricketers", "Sportsmen", "Celebrities"];
+    
+    const CAT_COLOR = {
+      Anime: "#ff6b6b", 
+      Cartoon: "#f5a623", 
+      Cricketers: "#4caf50",
+      Sportsmen: "#4d96ff", 
+      Celebrities: "#c77dff"
+    };
+
+
+    // 3. PICKUP LOCATIONS & MINIMUM ORDERS
+    // Add or modify places here. 'min' refers to the minimum stickers required.
+    const PICKUP_LOCATIONS = [
+      { name: "Front of - Morning Glory Higher Secondary School", min: 1 },
+      { name: "Front of - Higher Secondary school", min: 2 },
+      { name: "Tiniali of - SANKARDEV SHISU VIDYA NIKETAN BOGINADI", min: 2 },
+      { name: "Near - Bogindi Market", min: 4 },
+      { name: "Near - Bogindi Police station", min: 5 },
+      { name: "Near - Rose Bud Academy", min: 3 }
+    ];
+
+
+    // 4. STICKER INVENTORY
+    // To add a new sticker, copy one line, change the 'id' to the next number, 
+    // and update the name, category, price, and image link.
     const DEFAULT_STICKERS = [
       { id: 1, name: "Naruto", category: "Anime", price: 20, image: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=naruto&backgroundColor=ffeb3b" },
       { id: 2, name: "Goku", category: "Anime", price: 20, image: "https://drive.google.com/file/d/1b0C71U8HFKD7fG-VhQaM7Pcrd5hKQTz2/view?usp=drivesdk" },
@@ -321,23 +356,12 @@
       { id: 10, name: "Messi", category: "Sportsmen", price: 25, image: "https://drive.google.com/file/d/1msti_xgaufqIds5qQy9ATSUTE-WaPn2V/view?usp=drivesdk" },
       { id: 11, name: "Pokimon", category: "Anime", price: 20, image: "https://drive.google.com/thumbnail?id=1ZKHl0-SnNbAcGWCHpm4uhtknUrJrs8HV&sz=w400" },
       { id: 12, name: "HI", category: "Anime", price: 20, image: "https://drive.google.com/file/d/1ay06cqanV5kDCmEUvC3YcMC7YOCMqr27/view?usp=drivesdk" },
-
     ];
 
-    const CATEGORIES = ["All", "Anime", "Cartoon", "Cricketers", "Sportsmen", "Celebrities"];
-    const CAT_COLOR = {
-      Anime: "#ff6b6b", Cartoon: "#f5a623", Cricketers: "#4caf50",
-      Sportsmen: "#4d96ff", Celebrities: "#c77dff"
-    };
-
-    const PICKUP_LOCATIONS = [
-      { name: "Front of - Morning Glory Higher Secondary School", min: 1 },
-      { name: "Front of - Higher Secondary school", min: 2 },
-      { name: "Tiniali of - SANKARDEV SHISU VIDYA NIKETAN BOGINADI", min: 2 },
-      { name: "Near - Bogindi Market", min: 4 },
-      { name: "Near - Bogindi Police station", min: 5 },
-      { name: "Near - Rose Bud Academy", min: 3 }
-    ];
+    // ============================================================================
+    // END OF SETTINGS 
+    // (Do not modify the core logic below unless necessary)
+    // ============================================================================
 
     const state = {
       stickers: DEFAULT_STICKERS.slice(),
@@ -415,7 +439,6 @@
       
       const lines = [];
       Object.entries(grouped()).forEach(([cat, items], index) => {
-        // Add an empty line between categories
         if (index > 0) lines.push("");
         
         lines.push(`[ ${cat} ]`);
@@ -460,13 +483,23 @@ Please confirm! 🙏`;
 
       const btn = document.getElementById("orderBtn");
       if (btn) {
+        // Detect if the user is inside the Instagram App
+        const isInstagramApp = /Instagram/i.test(navigator.userAgent);
+        
         btn.textContent = copied 
-          ? "✅ Copied! Go back to Instagram & Paste" 
+          ? (isInstagramApp ? "✅ Copied! Go back & Paste" : "✅ Copied! Redirecting...")
           : "⚠️ Copy failed — copy manually";
         btn.disabled = true;
-      }
 
-      setTimeout(() => { window.close(); }, 800);
+        setTimeout(() => { 
+          if (isInstagramApp) {
+            window.close(); // Close tab if in IG App
+          } else {
+            // Redirect straight to Instagram Profile if in a regular browser
+            window.location.href = `https://instagram.com/${state.igHandle}`;
+          }
+        }, 800);
+      }
     }
 
     function closeCart() {
