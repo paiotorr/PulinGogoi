@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Sticker Shop</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── SECURITY: block all text selection & image drag ── */
+    body, body * {
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+    img { pointer-events: none; -webkit-user-drag: none; user-drag: none; }
+
+    /* Allow selection only inside inputs/selects */
+    input, select, textarea {
+      -webkit-user-select: text;
+      -moz-user-select: text;
+      -ms-user-select: text;
+      user-select: text;
+    }
+    /* Message box: block selection & copy specifically */
+    .message-box {
+      -webkit-user-select: none !important;
+      -moz-user-select: none !important;
+      -ms-user-select: none !important;
+      user-select: none !important;
+      pointer-events: none;
+      cursor: default;
+    }
+    body {
+      font-family: Nunito, sans-serif;
+      background: #fff5f5;
+      min-height: 100vh;
+    }
+    .btn {
+      border: none;
+      cursor: pointer;
+      border-radius: 12px;
+      font-family: 'Fredoka One', cursive;
+      transition: transform .12s, box-shadow .12s;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 14px rgba(0,0,0,.13); }
+    .btn:active { transform: translateY(0); }
+    .card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 3px 16px rgba(0,0,0,.07);
+      overflow: hidden;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .card:hover { transform: translateY(-4px); box-shadow: 0 8px 26px rgba(0,0,0,.11); }
+    input, select {
+      font-family: Nunito, sans-serif;
+      border: 2px solid #ffd6d6;
+      border-radius: 10px;
+      padding: 9px 12px;
+      outline: none;
+      font-size: 14px;
+      width: 100%;
+      background: white;
+    }
+    input:focus, select:focus { border-color: #ff0000; }
+    ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: #ff9999; border-radius: 4px; }
+
+    .header {
+  background: #ff0000; /* pure red */
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 20px rgba(255,0,0,.3);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .brand { font-family: 'Fredoka One'; font-size: 22px; color: white; line-height: 1; }
+    .subtitle { font-size: 11px; color: rgba(255,255,255,.8); font-weight: 700; margin-top: 1px; }
+    .header-actions { display: flex; gap: 8px; }
+
+    .categories {
+      padding: 16px 18px 0;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .categories::-webkit-scrollbar { display: none; }
+    .category-btn {
+      padding: 8px 16px;
+      font-size: 13px;
+      white-space: nowrap;
+      font-family: 'Fredoka One';
+    }
+
+    .grid {
+      padding: 18px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill,minmax(158px,1fr));
+      gap: 16px;
+    }
+    .empty-grid {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 50px;
+      color: #ccc;
+      font-family: 'Fredoka One';
+      font-size: 18px;
+    }
+    .product-top {
+      padding: 14px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 120px;
+      position: relative;
+    }
+    .product-image { width: 88px; height: 88px; object-fit: contain; border-radius: 10px; }
+    .product-body { padding: 11px 13px; }
+    .product-name { font-family: 'Fredoka One'; font-size: 15px; color: #222; }
+    .chip {
+      border-radius: 20px;
+      padding: 2px 9px;
+      font-size: 11px;
+      font-weight: 800;
+      display: inline-block;
+      margin-top: 3px;
+    }
+    .price { font-family: 'Fredoka One'; color: #ff0000; font-size: 20px; margin-top: 7px; }
+    .qty-control {
+      display: flex;
+      align-items: center;
+      margin-top: 10px;
+      border: 2px solid #ffd6d6;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .qty-btn {
+      flex: 1;
+      background: #ffe0e0;
+      color: #ff0000;
+      height: 36px;
+      font-size: 22px;
+      border-radius: 0;
+      padding: 0;
+    }
+    .qty-btn:disabled { background: #fff5f5; color: #ccc; }
+    .qty-val {
+      flex: 1;
+      text-align: center;
+      font-family: 'Fredoka One';
+      font-size: 18px;
+      color: #bbb;
+    }
+    .qty-val.active { color: #ff0000; }
+    .in-cart, .add-hint {
+      margin-top: 9px;
+      border-radius: 10px;
+      padding: 7px 0;
+      text-align: center;
+      font-family: 'Fredoka One';
+      font-size: 13px;
+    }
+    .in-cart { background: #ff0000; color: white; }
+    .add-hint { background: #fff5f5; color: #bbb; }
+    .qty-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #ff0000;
+      color: white;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-family: 'Fredoka One';
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: none;
+    }
+    .overlay.open { display: flex; }
+    .backdrop { flex: 1; background: rgba(0,0,0,.42); }
+    .drawer {
+      width: 350px;
+      background: white;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .drawer-head { display: flex; justify-content: space-between; align-items: center; }
+    .drawer-title { font-family: 'Fredoka One'; font-size: 22px; color: #ff0000; }
+    .drawer-actions { display: flex; gap: 7px; }
+    .small-btn { padding: 6px 11px; font-size: 12px; }
+    .back-btn { background: #fff0f0; color: #ff0000; }
+    .close-btn { background: #f5f5f5; color: #555; padding: 6px 11px; font-size: 17px; }
+    .empty-cart {
+      text-align: center;
+      padding: 50px;
+      color: #ccc;
+      font-family: 'Fredoka One';
+      font-size: 17px;
+    }
+    .empty-cart span { font-size: 13px; font-family: Nunito; }
+    .cat-head {
+      background: #fff0f0;
+      border-radius: 10px;
+      padding: 6px 12px;
+      font-family: 'Fredoka One';
+      font-size: 14px;
+      margin-bottom: 7px;
+    }
+    .cart-item, .summary-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 6px;
+      border-bottom: 1px solid #fff0f0;
+    }
+    .cart-image { width: 46px; height: 46px; border-radius: 9px; object-fit: contain; background: #fff5f5; }
+    .cart-name { font-family: 'Fredoka One'; font-size: 14px; color: #222; }
+    .cart-sub { font-size: 12px; color: #999; margin-top: 1px; }
+    .mini-qty { display: flex; align-items: center; gap: 6px; }
+    .mini-btn { background: #ffe0e0; color: #ff0000; width: 28px; height: 28px; font-size: 18px; padding: 0; }
+    .mini-val { font-family: 'Fredoka One'; font-size: 16px; min-width: 20px; text-align: center; color: #ff0000; }
+    .item-total { font-family: 'Fredoka One'; font-size: 15px; color: #ff0000; min-width: 46px; text-align: right; }
+    .grand-total {
+      background: linear-gradient(135deg,#16a34a,#4ade80);
+      border-radius: 12px;
+      padding: 9px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .grand-total.multi-cat {
+      background: linear-gradient(135deg,#16a34a,#4ade80);
+    }
+    .grand-total span:first-child { color: white; font-family: 'Fredoka One'; font-size: 13px; }
+    .grand-total .value { color: white; font-family: 'Fredoka One'; font-size: 19px; }
+    .order-btn {
+      background: linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);
+      color: white;
+      padding: 16px 0;
+      font-size: 20px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+      width: 100%;
+    }
+
+    .ready {
+      background: #f0fdf4;
+      border-radius: 13px;
+      padding: 10px 13px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .ready-title { font-family: 'Fredoka One'; color: #16a34a; font-size: 14px; }
+    .ready-sub { font-size: 11px; color: #555; line-height: 1.5; }
+    .summary-wrap {
+      background: #fff8f8;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #ffd6d6;
+    }
+    .summary-head {
+      background: #fff0f0;
+      padding: 6px 12px;
+      font-family: 'Fredoka One';
+      font-size: 13px;
+    }
+    .summary-image { width: 38px; height: 38px; border-radius: 8px; object-fit: contain; background: #fff5f5; }
+    .summary-name { font-family: 'Fredoka One'; font-size: 13px; }
+    .summary-sub { font-size: 11px; color: #999; }
+    .summary-total { font-family: 'Fredoka One'; color: #ff0000; font-size: 14px; }
+    .message-box {
+      width: 100%;
+      min-height: 160px;
+      border: 2px solid #ffd6d6;
+      border-radius: 12px;
+      padding: 12px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      resize: vertical;
+    }
+    .missing-tail {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #777;
+      background: #fff8f8;
+      border: 1px dashed #ffcccc;
+      border-radius: 12px;
+      padding: 10px 12px;
+      line-height: 1.5;
+    }
+    @keyframes igGlow {
+      0%   { box-shadow: 0 0 0 0 rgba(255,0,0,0.8), 0 0 16px 4px rgba(255,0,0,0.4); transform: scale(1); }
+      50%  { box-shadow: 0 0 0 8px rgba(255,0,0,0), 0 0 24px 8px rgba(255,0,0,0.25); transform: scale(1.03); }
+      100% { box-shadow: 0 0 0 0 rgba(255,0,0,0.8), 0 0 16px 4px rgba(255,0,0,0.4); transform: scale(1); }
+    }
+    .ig-btn-active {
+      animation: igGlow 1.2s ease-in-out infinite;
+      outline: 3px solid white;
+      position: relative;
+    }
+    .ig-btn-fading {
+      transition: box-shadow 1.5s ease, outline 1.5s ease, opacity 1.5s ease;
+      box-shadow: none !important;
+      outline: none !important;
+      opacity: 0.85;
+    }
+    @keyframes copyPulse {
+      0%   { box-shadow: 0 0 0 0 rgba(255,0,0,0.9); transform: scale(1); background: #ff0000; color: white; }
+      30%  { box-shadow: 0 0 0 12px rgba(255,0,0,0); transform: scale(1.07); background: #ff0000; color: white; }
+      50%  { background: white; color: #ff0000; transform: scale(1.04); }
+      75%  { background: #ff0000; color: white; transform: scale(1.06); }
+      100% { box-shadow: 0 0 0 0 rgba(255,0,0,0); transform: scale(1); background: #ff0000; color: white; }
+    }
+    .copy-btn-pulse {
+      animation: copyPulse 0.6s ease 0s 3;
+      outline: 3px solid white !important;
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    const INSTAGRAM_USERNAME = "stiickuu";
+
+    const DEFAULT_STICKERS = [
+      { id: 1, name: "Naruto", category: "Anime", price: 20, image: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=naruto&backgroundColor=ffeb3b" },
+      { id: 2, name: "Goku", category: "Anime", price: 20, image: "https://drive.google.com/file/d/1b0C71U8HFKD7fG-VhQaM7Pcrd5hKQTz2/view?usp=drivesdk" },
+      { id: 3, name: "Luffy", category: "Anime", price: 20, image: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=luffy&backgroundColor=f44336" },
+      { id: 4, name: "Pikachu", category: "Cartoon", price: 15, image: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=pikachu&backgroundColor=ffeb3b" },
+      { id: 5, name: "Tom & Jerry", category: "Cartoon", price: 15, image: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=tom&backgroundColor=4caf50" },
+      { id: 6, name: "SpongeBob", category: "Cartoon", price: 15, image: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=sponge&backgroundColor=ffeb3b" },
+      { id: 7, name: "Virat Kohli", category: "Cricketers", price: 25, image: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=virat&backgroundColor=2196f3" },
+      { id: 8, name: "MS Dhoni", category: "Cricketers", price: 25, image: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=dhoni&backgroundColor=3f51b5" },
+      { id: 9, name: "Ronaldo", category: "Sportsmen", price: 25, image: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=ronaldo&backgroundColor=e91e63" },
+      { id: 10, name: "Messi", category: "Sportsmen", price: 25, image: "https://drive.google.com/file/d/1msti_xgaufqIds5qQy9ATSUTE-WaPn2V/view?usp=drivesdk" },
+      { id: 11, name: "Pokimon", category: "Anime", price: 20, image: "https://drive.google.com/thumbnail?id=1ZKHl0-SnNbAcGWCHpm4uhtknUrJrs8HV&sz=w400" },
+      { id: 12, name: "HI", category: "Anime", price: 20, image: "https://drive.google.com/file/d/1ay06cqanV5kDCmEUvC3YcMC7YOCMqr27/view?usp=drivesdk" },
+
+    ];
+
+    const CATEGORIES = ["All", "Anime", "Cartoon", "Cricketers", "Sportsmen", "Celebrities"];
+    const CAT_COLOR = {
+      Anime: "#ff6b6b", Cartoon: "#f5a623", Cricketers: "#4caf50",
+      Sportsmen: "#4d96ff", Celebrities: "#c77dff"
+    };
+
+    const state = {
+      stickers: DEFAULT_STICKERS.slice(),
+      cart: {},
+      activeCategory: "All",
+      cartOpen: false,
+      orderStep: 0,
+      copied: false,
+      copyCountdown: 0,
+      igHandle: INSTAGRAM_USERNAME,
+      adminIg: INSTAGRAM_USERNAME,
+      newS: { name: "", category: "Anime", price: "", image: "" },
+      adminOpen: false
+    };
+
+    const app = document.getElementById('app');
+
+    // Auto-convert any Google Drive share link to a working thumbnail URL
+    function fixDriveUrl(url) {
+      if (!url) return url;
+      // Handle: https://drive.google.com/file/d/FILE_ID/view...
+      const m1 = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (m1) return `https://drive.google.com/thumbnail?id=${m1[1]}&sz=w400`;
+      // Handle: ?id=FILE_ID or &id=FILE_ID
+      const m2 = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      if (url.includes('drive.google.com') && m2) return `https://drive.google.com/thumbnail?id=${m2[1]}&sz=w400`;
+      return url;
+    }
+
+    // Load any previously added stickers from localStorage
+    try {
+      const saved = localStorage.getItem('customStickers');
+      if (saved) JSON.parse(saved).forEach(s => state.stickers.push(s));
+    } catch(e) {}
+
+    function saveStickers() {
+      try { localStorage.setItem('customStickers', JSON.stringify(state.stickers.filter(s => s.id > 11))); } catch(e) {}
+    }
+
+    function addSticker() {
+      const n = state.newS;
+      if (!n.name.trim() || !n.price) { alert("Please fill in Name and Price!"); return; }
+      const maxId = Math.max(...state.stickers.map(s => s.id));
+      const imgUrl = fixDriveUrl(n.image.trim()) || `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${encodeURIComponent(n.name)}`;
+      state.stickers.push({ id: maxId + 1, name: n.name.trim(), category: n.category, price: Number(n.price), image: imgUrl });
+      state.newS = { name: "", category: "Anime", price: "", image: "" };
+      state.adminOpen = false;
+      saveStickers();
+      render();
+    }
+
+    function deleteSticker(id) {
+      if (!confirm("Delete this sticker?")) return;
+      state.stickers = state.stickers.filter(s => s.id !== id);
+      delete state.cart[id];
+      saveStickers();
+      render();
+    }
+
+    function getQty(id) {
+      return state.cart[id] || 0;
+    }
+
+    function changeQty(id, delta) {
+      const next = { ...state.cart };
+      const val = (next[id] || 0) + delta;
+      if (val <= 0) delete next[id];
+      else next[id] = val;
+      state.cart = next;
+      render();
+    }
+
+    function filteredStickers() {
+      return state.activeCategory === "All"
+        ? state.stickers
+        : state.stickers.filter(s => s.category === state.activeCategory);
+    }
+
+    function cartStickers() {
+      return state.stickers.filter(s => state.cart[s.id] > 0);
+    }
+
+    function totalQty() {
+      return cartStickers().reduce((a, s) => a + state.cart[s.id], 0);
+    }
+
+    function grandTotal() {
+      return cartStickers().reduce((a, s) => a + state.cart[s.id] * s.price, 0);
+    }
+
+    function grouped() {
+      return cartStickers().reduce((acc, s) => {
+        if (!acc[s.category]) acc[s.category] = [];
+        acc[s.category].push(s);
+        return acc;
+      }, {});
+    }
+
+    function buildMsg() {
+      const lines = [];
+      Object.entries(grouped()).forEach(([cat, items]) => {
+        lines.push(`[ ${cat} ]`);
+        items.forEach(s => {
+          lines.push(`  • ${s.name}  x${state.cart[s.id]}  = Rs.${state.cart[s.id] * s.price}`);
+        });
+      });
+      return `Hi @${state.igHandle}! 👋
+I want to order these stickers:
+
+${lines.join("\n")}
+
+Total: Rs.${grandTotal()}
+
+Please confirm! 🙏`;
+    }
+
+    async function orderViaInstagram() {
+      // Step 1: silently copy the order message to clipboard
+      const text = buildMsg();
+      let copied = false;
+
+      window._allowCopy = true;
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        try {
+          await navigator.clipboard.writeText(text);
+          copied = true;
+        } catch {}
+      }
+
+      if (!copied) {
+        try {
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          ta.style.cssText = "position:fixed;top:-9999px;left:-9999px;opacity:0;";
+          document.body.appendChild(ta);
+          ta.focus();
+          ta.select();
+          copied = document.execCommand("copy");
+          document.body.removeChild(ta);
+        } catch { copied = false; }
+      }
+
+      window._allowCopy = false;
+
+      // Step 2: show brief feedback on the button
+      const btn = document.getElementById("orderBtn");
+      if (btn) {
+        btn.textContent = copied ? "✅ Message Copied! Opening Instagram…" : "📲 Opening Instagram…";
+        btn.disabled = true;
+      }
+
+      // Step 3: open Instagram DM after a short delay so the clipboard write settles
+      setTimeout(() => {
+        window.open(`https://instagram.com/stiickuu/`, "_blank", "noopener,noreferrer");
+        // Reset button
+        if (btn) {
+          btn.textContent = "📲 Order via Instagram";
+          btn.disabled = false;
+        }
+      }, 600);
+    }
+
+    // Keep these stubs so nothing else breaks
+    function copyMsg() { return orderViaInstagram(); }
+    function openIG() { return orderViaInstagram(); }
+
+    function applyIGGlow() {
+      const igBtn = document.getElementById("openIGBtn");
+      if (igBtn) {
+        igBtn.classList.remove("ig-btn-fading");
+        igBtn.classList.add("ig-btn-active");
+      }
+    }
+
+    function fadeIGGlow() {
+      const igBtn = document.getElementById("openIGBtn");
+      if (igBtn) {
+        igBtn.classList.remove("ig-btn-active");
+        igBtn.classList.add("ig-btn-fading");
+        setTimeout(() => {
+          igBtn.classList.remove("ig-btn-fading");
+          igBtn.style.opacity = "";
+        }, 1600);
+      }
+    }
+
+    function closeCart() {
+      state.cartOpen = false;
+      state.orderStep = 0;
+      state.copied = false;
+      state.copyCountdown = 0;
+      if (window._copyCountdownInterval) clearInterval(window._copyCountdownInterval);
+      if (window._copyExpireTimeout) clearTimeout(window._copyExpireTimeout);
+      render();
+    }
+
+    function render() {
+      const filtered = filteredStickers();
+      const groupedCart = grouped();
+      const qty = totalQty();
+      const total = grandTotal();
+
+      app.innerHTML = `
+        <div style="font-family: Nunito, sans-serif; background: #fff5f5; min-height: 100vh;">
+          <header class="header">
+            <div class="header-left">
+              <span style="font-size: 28px">🎨</span>
+              <div>
+                <div class="brand">@${state.igHandle}</div>
+                <div class="subtitle">PAIOTORR</div>
+              </div>
+            </div>
+            <div class="header-actions">
+              <button class="btn" id="adminBtn" style="background:rgba(255,255,255,0.25);color:white;padding:8px 13px;font-size:20px;font-family:'Fredoka One';" title="Add Sticker">＋</button>
+              <button class="btn" id="cartBtn" style="background: white; color: #ff0000; padding: 8px 16px; font-family: 'Fredoka One'; font-size: 14px; display: flex; align-items: center; gap: 5px;">
+                🛒 Cart
+                ${qty > 0 ? `<span style="background:#ff0000;color:white;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;">${qty}</span>` : ""}
+              </button>
+            </div>
+          </header>
+
+          <div class="categories">
+            ${CATEGORIES.map(cat => `
+              <button class="btn category-btn" data-cat="${cat}" style="
+                background: ${state.activeCategory === cat ? (CAT_COLOR[cat] || "#ff0000") : "white"};
+                color: ${state.activeCategory === cat ? "white" : "#666"};
+                border: 2px solid ${state.activeCategory === cat ? "transparent" : "#ffd6d6"};
+              ">${cat}</button>
+            `).join("")}
+          </div>
+
+          <div class="grid">
+            ${filtered.length === 0 ? `
+              <div class="empty-grid">
+                No stickers here yet 😅
+              </div>
+            ` : filtered.map(s => {
+              const q = getQty(s.id);
+              const color = CAT_COLOR[s.category] || "#ff0000";
+              return `
+                <div class="card">
+                  <div class="product-top" style="background: ${color}18;">
+                    <img src="${fixDriveUrl(s.image)}" alt="${s.name}" class="product-image" onerror="this.src='https://api.dicebear.com/7.x/fun-emoji/svg?seed=${s.id}'" />
+                    ${q > 0 ? `<div class="qty-badge">${q}</div>` : ""}
+                    ${s.id > 11 ? `<button class="btn" data-delete="${s.id}" style="position:absolute;top:6px;left:8px;background:rgba(255,0,0,0.15);color:#ff0000;padding:2px 7px;font-size:14px;border-radius:8px;">✕</button>` : ""}
+                  </div>
+                  <div class="product-body">
+                    <div class="product-name">${s.name}</div>
+                    <span class="chip" style="background:${color}22;color:${color};">${s.category}</span>
+                    <div class="price">₹${s.price}</div>
+
+                    <div class="qty-control">
+                      <button class="btn qty-btn" data-minus="${s.id}" ${q === 0 ? "disabled" : ""} style="background:${q === 0 ? "#fff5f5" : "#ffe0e0"};color:${q === 0 ? "#ccc" : "#ff0000"};">−</button>
+                      <span class="qty-val ${q > 0 ? "active" : ""}">${q}</span>
+                      <button class="btn qty-btn" data-plus="${s.id}">+</button>
+                    </div>
+
+                    ${q > 0 ? `
+                      <div class="in-cart">✅ In Cart — ₹${q * s.price}</div>
+                    ` : `
+                      <div class="add-hint">Press + to add</div>
+                    `}
+                  </div>
+                </div>
+              `;
+            }).join("")}
+          </div>
+
+          ${state.cartOpen ? `
+            <div class="overlay open" id="drawerOverlay">
+              <div class="backdrop" id="backdrop"></div>
+              <div class="drawer">
+                <div class="drawer-head">
+                  <span class="drawer-title">🛒 Cart</span>
+                  <div class="drawer-actions">
+                    <button class="btn close-btn" id="closeBtn">✕</button>
+                  </div>
+                </div>
+
+                ${qty === 0 ? `
+                  <div class="empty-cart">
+                    Cart is empty 😅<br />
+                    <span>Press + on any sticker!</span>
+                  </div>
+                ` : `
+                  ${Object.entries(groupedCart).map(([cat, items]) => `
+                    <div>
+                      <div class="cat-head" style="background:${(CAT_COLOR[cat] || "#ff0000")}18;color:${CAT_COLOR[cat] || "#ff0000"};">${cat}</div>
+                      ${items.map(s => `
+                        <div class="cart-item">
+                          <img src="${fixDriveUrl(s.image)}" alt="${s.name}" class="cart-image" onerror="this.src='https://api.dicebear.com/7.x/fun-emoji/svg?seed=${s.id}'" />
+                          <div style="flex:1;">
+                            <div class="cart-name">${s.name}</div>
+                            <div class="cart-sub">₹${s.price} each</div>
+                          </div>
+                          <div class="mini-qty">
+                            <button class="btn mini-btn" data-minus="${s.id}">−</button>
+                            <span class="mini-val">${state.cart[s.id]}</span>
+                            <button class="btn mini-btn" data-plus="${s.id}">+</button>
+                          </div>
+                          <div class="item-total">₹${state.cart[s.id] * s.price}</div>
+                        </div>
+                      `).join("")}
+                    </div>
+                  `).join("")}
+
+                  <div class="grand-total${Object.keys(groupedCart).length > 1 ? ' multi-cat' : ''}">
+                    <span>Grand Total</span>
+                    <span class="value">₹${total}</span>
+                  </div>
+
+                  <button class="btn order-btn" id="orderBtn">Order via Instagram</button>
+                `}
+              </div>
+            </div>
+          ` : ""}
+
+          ${state.adminOpen ? `
+            <div class="overlay open" id="adminOverlay">
+              <div class="backdrop" id="adminBackdrop"></div>
+              <div class="drawer" style="width:320px;gap:12px;">
+                <div class="drawer-head">
+                  <span class="drawer-title">➕ Add Sticker</span>
+                  <button class="btn close-btn" id="closeAdminBtn">✕</button>
+                </div>
+
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                  <div>
+                    <div style="font-family:'Fredoka One';font-size:13px;color:#555;margin-bottom:4px;">Sticker Name *</div>
+                    <input type="text" id="newName" placeholder="e.g. Shinchan" value="${state.newS.name}" style="width:100%;" />
+                  </div>
+                  <div>
+                    <div style="font-family:'Fredoka One';font-size:13px;color:#555;margin-bottom:4px;">Category *</div>
+                    <select id="newCat" style="width:100%;">
+                      ${["Anime","Cartoon","Cricketers","Sportsmen","Celebrities"].map(c => `<option value="${c}" ${state.newS.category===c?"selected":""}>${c}</option>`).join("")}
+                    </select>
+                  </div>
+                  <div>
+                    <div style="font-family:'Fredoka One';font-size:13px;color:#555;margin-bottom:4px;">Price (₹) *</div>
+                    <input type="number" id="newPrice" placeholder="e.g. 20" value="${state.newS.price}" min="1" style="width:100%;" />
+                  </div>
+                  <div>
+                    <div style="font-family:'Fredoka One';font-size:13px;color:#555;margin-bottom:4px;">Image URL / Google Drive Link</div>
+                    <input type="text" id="newImage" placeholder="Paste Google Drive or any image link" value="${state.newS.image}" style="width:100%;" />
+                    <div style="font-size:11px;color:#aaa;margin-top:4px;">💡 Paste your Google Drive share link — it will be fixed automatically!</div>
+                  </div>
+                  <button class="btn" id="saveNewBtn" style="background:#ff0000;color:white;padding:14px;font-size:16px;font-family:'Fredoka One';width:100%;margin-top:4px;">
+                    ✅ Add Sticker
+                  </button>
+                </div>
+              </div>
+            </div>
+          ` : ""}
+        </div>
+      `;
+
+      document.getElementById("cartBtn").addEventListener("click", () => {
+        state.cartOpen = true;
+        state.orderStep = 0;
+        render();
+      });
+
+      document.getElementById("adminBtn").addEventListener("click", () => {
+        state.adminOpen = true;
+        render();
+      });
+
+      document.querySelectorAll("[data-delete]").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          deleteSticker(Number(btn.dataset.delete));
+        });
+      });
+
+      document.querySelectorAll("[data-cat]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          state.activeCategory = btn.dataset.cat;
+          render();
+        });
+      });
+
+      document.querySelectorAll("[data-plus]").forEach(btn => {
+        btn.addEventListener("click", () => changeQty(Number(btn.dataset.plus), 1));
+      });
+
+      document.querySelectorAll("[data-minus]").forEach(btn => {
+        btn.addEventListener("click", () => changeQty(Number(btn.dataset.minus), -1));
+      });
+
+      if (state.cartOpen) {
+        document.getElementById("backdrop").addEventListener("click", closeCart);
+        document.getElementById("closeBtn").addEventListener("click", closeCart);
+        const orderBtn = document.getElementById("orderBtn");
+        if (orderBtn) orderBtn.addEventListener("click", orderViaInstagram);
+      }
+
+      if (state.adminOpen) {
+        document.getElementById("adminBackdrop").addEventListener("click", () => { state.adminOpen = false; render(); });
+        document.getElementById("closeAdminBtn").addEventListener("click", () => { state.adminOpen = false; render(); });
+        document.getElementById("saveNewBtn").addEventListener("click", () => {
+          state.newS.name = document.getElementById("newName").value;
+          state.newS.category = document.getElementById("newCat").value;
+          state.newS.price = document.getElementById("newPrice").value;
+          state.newS.image = document.getElementById("newImage").value;
+          addSticker();
+        });
+        // Live-save form inputs so they don't reset on re-render
+        ["newName","newCat","newPrice","newImage"].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.addEventListener("input", () => {
+            state.newS.name = document.getElementById("newName").value;
+            state.newS.category = document.getElementById("newCat").value;
+            state.newS.price = document.getElementById("newPrice").value;
+            state.newS.image = document.getElementById("newImage").value;
+          });
+        });
+      }
+    }
+
+    render();
+  </script>
+
+  <script>
+    // ══════════════════════════════════════════════
+    //  SECURITY LAYER — Maximum Protection
+    // ══════════════════════════════════════════════
+
+    // 1. Block right-click context menu everywhere
+    document.addEventListener("contextmenu", function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }, true);
+
+    // 2. Block keyboard shortcuts: F12, Ctrl+U, Ctrl+S, Ctrl+Shift+I,
+    //    Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+Shift+K, Ctrl+P, Ctrl+A
+    document.addEventListener("keydown", function(e) {
+      const key = e.key ? e.key.toLowerCase() : "";
+      const ctrl = e.ctrlKey || e.metaKey;
+      const shift = e.shiftKey;
+      if (e.keyCode === 123) { e.preventDefault(); return false; }
+      if (ctrl && shift && (key === "i" || key === "j" || key === "c" || key === "k")) {
+        e.preventDefault(); return false;
+      }
+      if (ctrl && !shift && (key === "u" || key === "s" || key === "p" || key === "a")) {
+        e.preventDefault(); return false;
+      }
+    }, true);
+
+    // 3. Block drag-start on everything
+    document.addEventListener("dragstart", function(e) {
+      e.preventDefault();
+      return false;
+    }, true);
+
+    // 4. Block copy/cut events — only allow programmatic copy via copyMsg()
+    document.addEventListener("copy", function(e) {
+      if (!window._allowCopy) {
+        e.preventDefault();
+        return false;
+      }
+    }, true);
+    document.addEventListener("cut", function(e) {
+      e.preventDefault();
+      return false;
+    }, true);
+
+    // 5. Block selectstart on the message box
+    document.addEventListener("selectstart", function(e) {
+      const box = document.getElementById("messageBox");
+      if (box && (e.target === box || box.contains(e.target))) {
+        e.preventDefault();
+        return false;
+      }
+    }, true);
+
+    // 6. Detect DevTools open (size-based) and blur page
+    (function devToolsGuard() {
+      const threshold = 160;
+      function check() {
+        if (
+          window.outerWidth - window.innerWidth > threshold ||
+          window.outerHeight - window.innerHeight > threshold
+        ) {
+          document.body.style.filter = "blur(8px)";
+          document.body.style.pointerEvents = "none";
+        } else {
+          document.body.style.filter = "";
+          document.body.style.pointerEvents = "";
+        }
+      }
+      window.addEventListener("resize", check);
+      setInterval(check, 1000);
+    })();
+  </script>
+</body>
+</html>
