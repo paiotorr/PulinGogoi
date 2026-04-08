@@ -291,7 +291,7 @@
     .custom-option:hover:not(.locked) { background: #fff5f5; }
     .custom-option.selected { background: #ffe0e0; border-bottom: 1px solid #ffd6d6; }
     
-    /* NEW: Locked / Blurry Styling for unavailable options */
+    /* Locked / Blurry Styling for unavailable options */
     .custom-option.locked {
       opacity: 0.45;
       filter: grayscale(80%);
@@ -301,31 +301,20 @@
     
     .opt-name { font-family: 'Fredoka One'; font-size: 13px; color: #222; }
     .opt-min { font-size: 11px; color: #777; font-weight: 700; }
-
-    @keyframes copyPulse {
-      0%   { box-shadow: 0 0 0 0 rgba(255,0,0,0.9); transform: scale(1); background: #ff0000; color: white; }
-      30%  { box-shadow: 0 0 0 12px rgba(255,0,0,0); transform: scale(1.07); background: #ff0000; color: white; }
-      50%  { background: white; color: #ff0000; transform: scale(1.04); }
-      75%  { background: #ff0000; color: white; transform: scale(1.06); }
-      100% { box-shadow: 0 0 0 0 rgba(255,0,0,0); transform: scale(1); background: #ff0000; color: white; }
-    }
   </style>
 </head>
 <body>
   <div id="app"></div>
 
   <script>
+    "use strict";
     // ============================================================================
     // ⚙️ APP SETTINGS & CONFIGURATION
     // Easy Management Section - Edit the details below to update your shop!
     // ============================================================================
 
-    // 1. INSTAGRAM USERNAME (Do not include the @ symbol)
     const INSTAGRAM_USERNAME = "stiickuu";
 
-
-         // 2. STICKER CATEGORIES
-    // Add new categories to the first list, and assign them a color in the second list.
     const CATEGORIES = ["All", "Cool", "Cartoon", "Anime", "SuperHero", "Cricketers"];
     
     const CAT_COLOR = {
@@ -336,9 +325,6 @@
       SuperHero: "#1FF0FF"
     };
 
-
-    // 3. PICKUP LOCATIONS & MINIMUM ORDERS
-    // Add or modify places here. 'min' refers to the minimum stickers required.
     const PICKUP_LOCATIONS = [
       { name: "Front of - Morning Glory Higher Secondary School", min: 1 },
       { name: "Front of - Higher Secondary school", min: 2 },
@@ -348,10 +334,6 @@
       { name: "Near - Rose Bud Academy", min: 3 }
     ];
 
-
-    // 4. STICKER INVENTORY
-    // To add a new sticker, copy one line, change the 'id' to the next number, 
-    // and update the name, category, price, and image link.
     const DEFAULT_STICKERS = [
       { id: 1, name: "EyeRo", category: "Anime", price: 10, image: "https://drive.google.com/file/d/12OAd4ckdsedQGT1f0u58vIEskwSFRlqK/view?usp=sharing" },
       { id: 2, name: "Doraemon", category: "Anime", price: 10, image: "https://drive.google.com/file/d/18y9i-kjBjcMTU6qeFVAs7zPU4NRVuHv8/view?usp=sharing" },
@@ -373,12 +355,10 @@
       { id: 18, name: "SpiderMan", category: "SuperHero", price: 10, image: "https://drive.google.com/file/d/1wEfjtZzgexRDupjGuIKXS9ddQBKc7uGE/view?usp=sharing" },
       { id: 19, name: "Rabo", category: "Cool", price: 10, image: "https://drive.google.com/file/d/1z0RcWDsk0tk8bfv5Y9h5558-LHthAatu/view?usp=sharing" },
       { id: 20, name: "Hato", category: "Cool", price: 10, image: "https://drive.google.com/file/d/1Qmvtd673zJQtys3mQV2Eo7MnT7d53QB_/view?usp=sharing" },
-      
     ];
 
     // ============================================================================
     // END OF SETTINGS 
-    // (Do not modify the core logic below unless necessary)
     // ============================================================================
 
     const state = {
@@ -464,18 +444,7 @@
           lines.push(`  • ${s.name}  x${state.cart[s.id]}  = Rs.${state.cart[s.id] * s.price}`);
         });
       });
-      return `Hi @${state.igHandle}! 👋
-I want to order these stickers:
-
-${lines.join("\n")}
-
-Pickup Place: ${state.pickupPlace}
-
-Total: Rs.${grandTotal()}
-
-Order Date: ${dateString}
-
-Please confirm! 🙏`;
+      return `Hi @${state.igHandle}! 👋\nI want to order these stickers:\n\n${lines.join("\n")}\n\nPickup Place: ${state.pickupPlace}\n\nTotal: Rs.${grandTotal()}\n\nOrder Date: ${dateString}\n\nPlease confirm! 🙏`;
     }
 
     async function orderViaInstagram() {
@@ -503,38 +472,28 @@ Please confirm! 🙏`;
       if (btn) {
         btn.textContent = copied 
           ? "✅ Copied! Redirecting to Instagram..."
-          : "⚠️ Copy failed — copy manually";
+          : "⚠️ Redirecting to Instagram...";
         btn.disabled = true;
 
         setTimeout(() => {
-          // Check if user is on a mobile device (where Instagram app is likely installed)
-          const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-          const isIgApp = /instagram/i.test(navigator.userAgent || navigator.vendor || window.opera);
+          // Optimized & Strengthened Redirection Logic
+          const userAgent = navigator.userAgent.toLowerCase();
+          const isIgApp = userAgent.includes('instagram');
           
           if (isIgApp) {
-            // If they are IN the Instagram App webview:
-            // Force escape the webview and go to the profile using the custom deep link scheme
+            // IF INSIDE INSTAGRAM APP BROWSER: Attempt to escape using the native URI scheme
             window.location.href = `instagram://user?username=${state.igHandle}`;
-            
-            // Backup mechanism to try to redirect and close the webview
+            // Fallback safety to messaging endpoint
             setTimeout(() => {
               window.location.href = `https://ig.me/m/${state.igHandle}`;
               setTimeout(() => { window.close(); }, 300);
-            }, 250);
-            
+            }, 500);
           } else {
-            // Normal Browser (Chrome, Safari, Facebook app, etc.)
-            // 1. Fire the deep link first to aggressively attempt to open the native IG App
-            if (isMobile) {
-              window.location.href = `instagram://user?username=${state.igHandle}`;
-            }
-            
-            // 2. Immediately follow up with the official ig.me link (works on desktop and acts as a universal link on mobile)
-            setTimeout(() => {
-              window.location.href = `https://ig.me/m/${state.igHandle}`;
-            }, 150);
+            // IF OUTSIDE: Go DIRECTLY to the explicit Instagram Messaging page
+            // This reliably opens the messaging intent on Mobile and the DM web-portal on Desktop
+            window.location.href = `https://ig.me/m/${state.igHandle}`;
           }
-        }, 800);
+        }, 600);
       }
     }
 
@@ -551,7 +510,6 @@ Please confirm! 🙏`;
       const qty = totalQty();
       const total = grandTotal();
 
-      // Ensure the currently selected location is still valid based on cart quantity.
       if (state.pickupPlace) {
         const checkLoc = PICKUP_LOCATIONS.find(l => l.name === state.pickupPlace);
         if (checkLoc && qty < checkLoc.min) {
@@ -559,7 +517,6 @@ Please confirm! 🙏`;
         }
       }
 
-      // Button State Logic
       let btnDisabled = true;
       let btnText = "Order via Instagram";
       
@@ -573,14 +530,11 @@ Please confirm! 🙏`;
         btnDisabled = false;
       }
 
-      // SMART SORTING logic:
       const sortedLocations = [...PICKUP_LOCATIONS].sort((a, b) => {
         const aLocked = qty < a.min;
         const bLocked = qty < b.min;
-        
         if (!aLocked && bLocked) return -1;
         if (aLocked && !bLocked) return 1;
-        
         return a.min - b.min;
       });
 
