@@ -484,13 +484,19 @@ Please confirm! 🙏`;
       const btn = document.getElementById("orderBtn");
       if (btn) {
         btn.textContent = copied 
-          ? "✅ Copied! Redirecting to DM..."
+          ? "✅ Copied! Opening Instagram Chat..."
           : "⚠️ Copy failed — copy manually";
         btn.disabled = true;
 
         setTimeout(() => { 
-          // Redirect straight to Instagram Direct Messages regardless of the browser
+          // 1. Directly open the native Instagram App's Direct Messaging screen
           window.location.href = `https://ig.me/m/${state.igHandle}`;
+          
+          // 2. Attempt to close the browser (or in-app browser) immediately after redirecting
+          setTimeout(() => {
+            window.close();
+          }, 300);
+          
         }, 800);
       }
     }
