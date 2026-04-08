@@ -487,7 +487,7 @@ Please confirm! 🙏`;
         const isInstagramApp = /Instagram/i.test(navigator.userAgent);
         
         btn.textContent = copied 
-          ? (isInstagramApp ? "✅ Copied! Go back & Paste" : "✅ Copied! Redirecting...")
+          ? (isInstagramApp ? "✅ Copied! Go back & Paste" : "✅ Copied! Redirecting to DM...")
           : "⚠️ Copy failed — copy manually";
         btn.disabled = true;
 
@@ -495,8 +495,8 @@ Please confirm! 🙏`;
           if (isInstagramApp) {
             window.close(); // Close tab if in IG App
           } else {
-            // Redirect straight to Instagram Profile if in a regular browser
-            window.location.href = `https://instagram.com/${state.igHandle}`;
+            // Redirect straight to Instagram Direct Messages for the specific user
+            window.location.href = `https://ig.me/m/${state.igHandle}`;
           }
         }, 800);
       }
