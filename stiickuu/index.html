@@ -404,7 +404,7 @@
     } catch(e) {}
 
     function saveStickers() {
-      try { localStorage.setItem('customStickers', JSON.stringify(state.stickers.filter(s => s.id > 11))); } catch(e) {}
+      try { localStorage.setItem('customStickers', JSON.stringify(state.stickers.filter(s => s.isCustom))); } catch(e) {}
     }
 
     function addSticker() {
@@ -412,8 +412,14 @@
       if (!n.name.trim() || !n.price) { alert("Please fill in Name and Price!"); return; }
       const maxId = Math.max(...state.stickers.map(s => s.id));
       const imgUrl = fixDriveUrl(n.image.trim()) || `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${encodeURIComponent(n.name)}`;
-      state.stickers.push({ id: maxId + 1, name: n.name.trim(), category: n.category, price: Number(n.price), image: imgUrl });
-      state.newS = { name: "", category: "Anime", price: "", image: "" };
+state.stickers.push({
+  id: maxId + 1,
+  name: n.name.trim(),
+  category: n.category,
+  price: Number(n.price),
+  image: imgUrl,
+  isCustom: true
+});      state.newS = { name: "", category: "Anime", price: "", image: "" };
       state.adminOpen = false;
       saveStickers();
       render();
@@ -591,7 +597,7 @@ Please confirm! 🙏`;
                   <div class="product-top" style="background: ${color}18;">
                     <img src="${fixDriveUrl(s.image)}" alt="${s.name}" class="product-image" onerror="this.src='https://api.dicebear.com/7.x/fun-emoji/svg?seed=${s.id}'" />
                     ${q > 0 ? `<div class="qty-badge">${q}</div>` : ""}
-                    ${s.id > 11 ? `<button class="btn" data-delete="${s.id}" style="position:absolute;top:6px;left:8px;background:rgba(255,0,0,0.15);color:#ff0000;padding:2px 7px;font-size:14px;border-radius:8px;">✕</button>` : ""}
+                    ${s.isCustom ? `<button class="btn" data-delete="${s.id}" style="position:absolute;top:6px;left:8px;background:rgba(255,0,0,0.15);color:#ff0000;padding:2px 7px;font-size:14px;border-radius:8px;">✕</button>` : ""}
                   </div>
                   <div class="product-body">
                     <div class="product-name">${s.name}</div>
