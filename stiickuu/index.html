@@ -461,18 +461,32 @@
         btn.disabled = true;
 
         setTimeout(() => {
-          // PHANTOM LINK REDIRECT APPROACH:
-          // This forces the OS to handle the link, breaking out of the IG in-app browser sandbox.
-          const link = document.createElement('a');
-          link.href = `https://ig.me/m/${state.igHandle}`;
-          link.target = '_top'; 
-          link.rel = 'noopener noreferrer';
-          
-          document.body.appendChild(link);
-          link.click();
-          
-          // Cleanup immediately
-          document.body.removeChild(link);
+          // Detect User Device and Environment
+          const ua = navigator.userAgent || navigator.vendor || window.opera;
+          const isAndroid = /android/i.test(ua);
+          const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+          const isIgApp = /instagram/i.test(ua);
+
+          if (isIgApp) {
+            // IF INSIDE INSTAGRAM IN-APP BROWSER: 
+            // We use Deep Intents to force the OS to jump to the actual app profile
+            if (isAndroid) {
+              window.location.href = `intent://user?username=${state.igHandle}#Intent;package=com.instagram.android;scheme=instagram;end;`;
+            } else if (isIOS) {
+              window.location.href = `instagram://user?username=${state.igHandle}`;
+            } else {
+              window.location.href = `instagram://user?username=${state.igHandle}`;
+            }
+          } else {
+            // Normal desktop or mobile browser
+            window.location.href = `https://ig.me/m/${state.igHandle}`;
+          }
+
+          // Safety Fallback: In case the user's OS blocks the intent, fall back to the web portal after a delay.
+          setTimeout(() => {
+            window.location.href = `https://ig.me/m/${state.igHandle}`;
+          }, 2000);
+
         }, 500);
       }
     }
