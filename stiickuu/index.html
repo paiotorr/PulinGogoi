@@ -49,8 +49,8 @@
       font-family: 'Fredoka One', cursive;
       transition: transform .12s, box-shadow .12s;
     }
-    .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 14px rgba(0,0,0,.13); }
-    .btn:active { transform: translateY(0); }
+    .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 14px rgba(0,0,0,.13); }
+    .btn:active:not(:disabled) { transform: translateY(0); }
     .card {
       background: white;
       border-radius: 20px;
@@ -154,7 +154,7 @@
       border-radius: 0;
       padding: 0;
     }
-    .qty-btn:disabled { background: #fff5f5; color: #ccc; }
+    .qty-btn:disabled { background: #fff5f5; color: #ccc; cursor: not-allowed; }
     .qty-val {
       flex: 1;
       text-align: center;
@@ -475,8 +475,12 @@ Please confirm! 🙏`;
     }
 
     async function orderViaInstagram() {
+  if (totalQty() < 5) {
+    alert("Please add at least 5 stickers to your cart before ordering.");
+    return;
+  }
+  
   const text = buildMsg();
-
   let copied = false;
 
   try {
@@ -647,7 +651,9 @@ Please confirm! 🙏`;
                     <span class="value">₹${total}</span>
                   </div>
 
-                  <button class="btn order-btn" id="orderBtn">Order via Instagram</button>
+                  <button class="btn order-btn" id="orderBtn" ${qty < 5 ? 'disabled style="background: #e5e7eb; color: #9ca3af; box-shadow: none;"' : ''}>
+                    ${qty < 5 ? '⚠️ Minimum 5 stickers to order' : 'Order via Instagram'}
+                  </button>
                 `}
               </div>
             </div>
