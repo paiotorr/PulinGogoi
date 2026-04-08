@@ -493,19 +493,38 @@ Please confirm! 🙏`;
       const btn = document.getElementById("orderBtn");
       if (btn) {
         btn.textContent = copied 
-          ? "✅ Copied! Opening Instagram Chat..."
+          ? "✅ Copied! Redirecting to Instagram..."
           : "⚠️ Copy failed — copy manually";
         btn.disabled = true;
 
-        setTimeout(() => { 
-          // 1. Directly open the native Instagram App's Direct Messaging screen
-          window.location.href = `https://ig.me/m/${state.igHandle}`;
+        setTimeout(() => {
+          // Check if user is on a mobile device (where Instagram app is likely installed)
+          const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+          const isIgApp = /instagram/i.test(navigator.userAgent || navigator.vendor || window.opera);
           
-          // 2. Attempt to close the browser (or in-app browser) immediately after redirecting
-          setTimeout(() => {
-            window.close();
-          }, 300);
-          
+          if (isIgApp) {
+            // If they are IN the Instagram App webview:
+            // Force escape the webview and go to the profile using the custom deep link scheme
+            window.location.href = `instagram://user?username=${state.igHandle}`;
+            
+            // Backup mechanism to try to redirect and close the webview
+            setTimeout(() => {
+              window.location.href = `https://ig.me/m/${state.igHandle}`;
+              setTimeout(() => { window.close(); }, 300);
+            }, 250);
+            
+          } else {
+            // Normal Browser (Chrome, Safari, Facebook app, etc.)
+            // 1. Fire the deep link first to aggressively attempt to open the native IG App
+            if (isMobile) {
+              window.location.href = `instagram://user?username=${state.igHandle}`;
+            }
+            
+            // 2. Immediately follow up with the official ig.me link (works on desktop and acts as a universal link on mobile)
+            setTimeout(() => {
+              window.location.href = `https://ig.me/m/${state.igHandle}`;
+            }, 150);
+          }
         }, 800);
       }
     }
@@ -524,7 +543,6 @@ Please confirm! 🙏`;
       const total = grandTotal();
 
       // Ensure the currently selected location is still valid based on cart quantity.
-      // If they removed items and fell below the minimum, auto-reset their selection.
       if (state.pickupPlace) {
         const checkLoc = PICKUP_LOCATIONS.find(l => l.name === state.pickupPlace);
         if (checkLoc && qty < checkLoc.min) {
@@ -532,7 +550,7 @@ Please confirm! 🙏`;
         }
       }
 
-      // Button State Logic based on Selected Pickup Place
+      // Button State Logic
       let btnDisabled = true;
       let btnText = "Order via Instagram";
       
@@ -543,8 +561,19 @@ Please confirm! 🙏`;
       } else if (qty < selectedLoc.min) {
         btnText = `⚠️ Minimum ${selectedLoc.min} items required`;
       } else {
-        btnDisabled = false; // Enabled!
+        btnDisabled = false;
       }
+
+      // SMART SORTING logic:
+      const sortedLocations = [...PICKUP_LOCATIONS].sort((a, b) => {
+        const aLocked = qty < a.min;
+        const bLocked = qty < b.min;
+        
+        if (!aLocked && bLocked) return -1;
+        if (aLocked && !bLocked) return 1;
+        
+        return a.min - b.min;
+      });
 
       app.innerHTML = `
         <div style="font-family: Nunito, sans-serif; background: #fff5f5; min-height: 100vh;">
@@ -656,7 +685,7 @@ Please confirm! 🙏`;
                         <span style="color: #ff0000; font-size: 11px;">▼</span>
                       </div>
                       <div class="custom-options" id="pickupOptions">
-                        ${PICKUP_LOCATIONS.map(loc => {
+                        ${sortedLocations.map(loc => {
                           const isLocked = qty < loc.min;
                           return `
                           <div class="custom-option ${state.pickupPlace === loc.name ? 'selected' : ''} ${isLocked ? 'locked' : ''}" data-value="${loc.name}">
@@ -718,7 +747,6 @@ Please confirm! 🙏`;
         document.getElementById("backdrop").addEventListener("click", closeCart);
         document.getElementById("closeBtn").addEventListener("click", closeCart);
         
-        // Custom Dropdown Logic
         const pickupTrigger = document.getElementById("pickupTrigger");
         const pickupOptions = document.getElementById("pickupOptions");
         
@@ -731,15 +759,13 @@ Please confirm! 🙏`;
           document.querySelectorAll(".custom-option").forEach(opt => {
             opt.addEventListener("click", (e) => {
               e.stopPropagation();
-              // Prevent clicking if the option is locked!
               if (opt.classList.contains("locked")) return; 
               
               state.pickupPlace = opt.dataset.value;
-              render(); // Re-render to update the button text and state
+              render(); 
             });
           });
 
-          // Close dropdown if user clicks anywhere else in the drawer
           const drawer = document.querySelector(".drawer");
           if (drawer) {
             drawer.addEventListener("click", (e) => {
