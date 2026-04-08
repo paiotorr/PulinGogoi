@@ -473,6 +473,10 @@ state.stickers.push({
     }
 
     function buildMsg() {
+      const today = new Date();
+      // Formats date nicely, e.g., "08 Apr 2026"
+      const dateString = today.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+      
       const lines = [];
       Object.entries(grouped()).forEach(([cat, items]) => {
         lines.push(`[ ${cat} ]`);
@@ -486,6 +490,7 @@ I want to order these stickers:
 ${lines.join("\n")}
 
 Total: Rs.${grandTotal()}
+Order Date: ${dateString}
 
 Please confirm! 🙏`;
     }
