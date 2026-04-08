@@ -377,10 +377,7 @@
       orderStep: 0,
       copied: false,
       copyCountdown: 0,
-      igHandle: INSTAGRAM_USERNAME,
-      adminIg: INSTAGRAM_USERNAME,
-      newS: { name: "", category: "Anime", price: "", image: "" },
-      adminOpen: false
+      igHandle: INSTAGRAM_USERNAME
     };
 
     const app = document.getElementById('app');
@@ -405,24 +402,6 @@
 
     function saveStickers() {
       try { localStorage.setItem('customStickers', JSON.stringify(state.stickers.filter(s => s.isCustom))); } catch(e) {}
-    }
-
-    function addSticker() {
-      const n = state.newS;
-      if (!n.name.trim() || !n.price) { alert("Please fill in Name and Price!"); return; }
-      const maxId = Math.max(...state.stickers.map(s => s.id));
-      const imgUrl = fixDriveUrl(n.image.trim()) || `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${encodeURIComponent(n.name)}`;
-state.stickers.push({
-  id: maxId + 1,
-  name: n.name.trim(),
-  category: n.category,
-  price: Number(n.price),
-  image: imgUrl,
-  isCustom: true
-});      state.newS = { name: "", category: "Anime", price: "", image: "" };
-      state.adminOpen = false;
-      saveStickers();
-      render();
     }
 
     function deleteSticker(id) {
@@ -571,7 +550,6 @@ Please confirm! 🙏`;
               </div>
             </div>
             <div class="header-actions">
-              <button class="btn" id="adminBtn" style="background:rgba(255,255,255,0.25);color:white;padding:8px 13px;font-size:20px;font-family:'Fredoka One';" title="Add Sticker">＋</button>
               <button class="btn" id="cartBtn" style="background: white; color: #ff0000; padding: 8px 16px; font-family: 'Fredoka One'; font-size: 14px; display: flex; align-items: center; gap: 5px;">
                 🛒 Cart
                 ${qty > 0 ? `<span style="background:#ff0000;color:white;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;">${qty}</span>` : ""}
@@ -674,54 +652,12 @@ Please confirm! 🙏`;
               </div>
             </div>
           ` : ""}
-
-          ${state.adminOpen ? `
-            <div class="overlay open" id="adminOverlay">
-              <div class="backdrop" id="adminBackdrop"></div>
-              <div class="drawer" style="width:320px;gap:12px;">
-                <div class="drawer-head">
-                  <span class="drawer-title">➕ Add Sticker</span>
-                  <button class="btn close-btn" id="closeAdminBtn">✕</button>
-                </div>
-
-                <div style="display:flex;flex-direction:column;gap:10px;">
-                  <div>
-                    <div style="font-family:'Fredoka One';font-size:13px;color:#555;margin-bottom:4px;">Sticker Name *</div>
-                    <input type="text" id="newName" placeholder="e.g. Shinchan" value="${state.newS.name}" style="width:100%;" />
-                  </div>
-                  <div>
-                    <div style="font-family:'Fredoka One';font-size:13px;color:#555;margin-bottom:4px;">Category *</div>
-                    <select id="newCat" style="width:100%;">
-                      ${["Anime","Cartoon","Cricketers","Sportsmen","Celebrities"].map(c => `<option value="${c}" ${state.newS.category===c?"selected":""}>${c}</option>`).join("")}
-                    </select>
-                  </div>
-                  <div>
-                    <div style="font-family:'Fredoka One';font-size:13px;color:#555;margin-bottom:4px;">Price (₹) *</div>
-                    <input type="number" id="newPrice" placeholder="e.g. 20" value="${state.newS.price}" min="1" style="width:100%;" />
-                  </div>
-                  <div>
-                    <div style="font-family:'Fredoka One';font-size:13px;color:#555;margin-bottom:4px;">Image URL / Google Drive Link</div>
-                    <input type="text" id="newImage" placeholder="Paste Google Drive or any image link" value="${state.newS.image}" style="width:100%;" />
-                    <div style="font-size:11px;color:#aaa;margin-top:4px;">💡 Paste your Google Drive share link — it will be fixed automatically!</div>
-                  </div>
-                  <button class="btn" id="saveNewBtn" style="background:#ff0000;color:white;padding:14px;font-size:16px;font-family:'Fredoka One';width:100%;margin-top:4px;">
-                    ✅ Add Sticker
-                  </button>
-                </div>
-              </div>
-            </div>
-          ` : ""}
         </div>
       `;
 
       document.getElementById("cartBtn").addEventListener("click", () => {
         state.cartOpen = true;
         state.orderStep = 0;
-        render();
-      });
-
-      document.getElementById("adminBtn").addEventListener("click", () => {
-        state.adminOpen = true;
         render();
       });
 
@@ -752,28 +688,6 @@ Please confirm! 🙏`;
         document.getElementById("closeBtn").addEventListener("click", closeCart);
         const orderBtn = document.getElementById("orderBtn");
         if (orderBtn) orderBtn.addEventListener("click", orderViaInstagram);
-      }
-
-      if (state.adminOpen) {
-        document.getElementById("adminBackdrop").addEventListener("click", () => { state.adminOpen = false; render(); });
-        document.getElementById("closeAdminBtn").addEventListener("click", () => { state.adminOpen = false; render(); });
-        document.getElementById("saveNewBtn").addEventListener("click", () => {
-          state.newS.name = document.getElementById("newName").value;
-          state.newS.category = document.getElementById("newCat").value;
-          state.newS.price = document.getElementById("newPrice").value;
-          state.newS.image = document.getElementById("newImage").value;
-          addSticker();
-        });
-        // Live-save form inputs so they don't reset on re-render
-        ["newName","newCat","newPrice","newImage"].forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.addEventListener("input", () => {
-            state.newS.name = document.getElementById("newName").value;
-            state.newS.category = document.getElementById("newCat").value;
-            state.newS.price = document.getElementById("newPrice").value;
-            state.newS.image = document.getElementById("newImage").value;
-          });
-        });
       }
     }
 
