@@ -498,22 +498,19 @@ Please confirm! 🙏`;
   }
 
   const username = "stiickuu";
-  const androidLink = `intent://instagram.com/_u/${username}/#Intent;package=com.instagram.android;scheme=https;end`;
-  const iosLink = `instagram://user?username=${username}`;
+
+  // Android app deep link
+  const appLink = `intent://instagram.com/_u/${username}/#Intent;package=com.instagram.android;scheme=https;end`;
+
+  // Fallback website
   const webLink = `https://www.instagram.com/${username}/`;
 
-  const ua = navigator.userAgent.toLowerCase();
-  const isAndroid = ua.includes("android");
-  const isIOS = /iphone|ipad|ipod/.test(ua);
+  // Try to open the Instagram Android app directly
+  const a = document.createElement("a");
+  a.href = appLink;
+  a.click();
 
-  if (isAndroid) {
-    window.location.href = androidLink;
-  } else if (isIOS) {
-    window.location.href = iosLink;
-  } else {
-    window.location.href = webLink;
-  }
-
+  // Fallback if the app does not open
   setTimeout(() => {
     window.location.href = webLink;
     if (btn) {
@@ -522,30 +519,6 @@ Please confirm! 🙏`;
     }
   }, 1200);
 }
-
-    // Keep these stubs so nothing else breaks
-    function copyMsg() { return orderViaInstagram(); }
-    function openIG() { return orderViaInstagram(); }
-
-    function applyIGGlow() {
-      const igBtn = document.getElementById("openIGBtn");
-      if (igBtn) {
-        igBtn.classList.remove("ig-btn-fading");
-        igBtn.classList.add("ig-btn-active");
-      }
-    }
-
-    function fadeIGGlow() {
-      const igBtn = document.getElementById("openIGBtn");
-      if (igBtn) {
-        igBtn.classList.remove("ig-btn-active");
-        igBtn.classList.add("ig-btn-fading");
-        setTimeout(() => {
-          igBtn.classList.remove("ig-btn-fading");
-          igBtn.style.opacity = "";
-        }, 1600);
-      }
-    }
 
     function closeCart() {
       state.cartOpen = false;
