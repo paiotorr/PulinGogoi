@@ -326,14 +326,14 @@
 
     // 2. STICKER CATEGORIES
     // Add new categories to the first list, and assign them a color in the second list.
-    const CATEGORIES = ["All", "Anime", "Cartoon", "Cricketers", "Sportsmen", "Celebrities"];
+    const CATEGORIES = ["All", "Cool", "Cartoon", "Anime", "SuperHero", "Cricketers"];
     
     const CAT_COLOR = {
       Anime: "#ff6b6b", 
       Cartoon: "#f5a623", 
       Cricketers: "#4caf50",
-      Sportsmen: "#4d96ff", 
-      Celebrities: "#c77dff"
+      Cool: "#481FFF",
+      SuperHero: "#1FF0FF"
     };
 
 
@@ -353,18 +353,30 @@
     // To add a new sticker, copy one line, change the 'id' to the next number, 
     // and update the name, category, price, and image link.
     const DEFAULT_STICKERS = [
-      { id: 1, name: "Naruto", category: "Anime", price: 20, image: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=naruto&backgroundColor=ffeb3b" },
-      { id: 2, name: "Goku", category: "Anime", price: 20, image: "https://drive.google.com/file/d/1b0C71U8HFKD7fG-VhQaM7Pcrd5hKQTz2/view?usp=drivesdk" },
-      { id: 3, name: "Luffy", category: "Anime", price: 20, image: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=luffy&backgroundColor=f44336" },
-      { id: 4, name: "Pikachu", category: "Cartoon", price: 15, image: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=pikachu&backgroundColor=ffeb3b" },
-      { id: 5, name: "Tom & Jerry", category: "Cartoon", price: 15, image: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=tom&backgroundColor=4caf50" },
-      { id: 6, name: "SpongeBob", category: "Cartoon", price: 15, image: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=sponge&backgroundColor=ffeb3b" },
-      { id: 7, name: "Virat Kohli", category: "Cricketers", price: 25, image: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=virat&backgroundColor=2196f3" },
-      { id: 8, name: "MS Dhoni", category: "Cricketers", price: 25, image: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=dhoni&backgroundColor=3f51b5" },
-      { id: 9, name: "Ronaldo", category: "Sportsmen", price: 25, image: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=ronaldo&backgroundColor=e91e63" },
-      { id: 10, name: "Messi", category: "Sportsmen", price: 25, image: "https://drive.google.com/file/d/1msti_xgaufqIds5qQy9ATSUTE-WaPn2V/view?usp=drivesdk" },
-      { id: 11, name: "Pokimon", category: "Anime", price: 20, image: "https://drive.google.com/thumbnail?id=1ZKHl0-SnNbAcGWCHpm4uhtknUrJrs8HV&sz=w400" },
-      { id: 12, name: "HI", category: "Anime", price: 20, image: "https://drive.google.com/file/d/1ay06cqanV5kDCmEUvC3YcMC7YOCMqr27/view?usp=drivesdk" },
+      { id: 1, name: "EyeRo", category: "Anime", price: 10, image: "https://drive.google.com/file/d/12OAd4ckdsedQGT1f0u58vIEskwSFRlqK/view?usp=sharing" },
+      { id: 2, name: "Doraemon", category: "Anime", price: 10, image: "https://drive.google.com/file/d/18y9i-kjBjcMTU6qeFVAs7zPU4NRVuHv8/view?usp=sharing" },
+      { id: 3, name: "One Piece", category: "Anime", price: 10, image: "https://drive.google.com/file/d/1HBcKbflMjQ8PufMJQNtvJXnj4OCFRRS1/view?usp=sharing" },
+      { id: 4, name: "Oggy", category: "Cartoon", price: 10, image: "https://drive.google.com/file/d/1nkdQb_yLWxTTrsEWyUPQigT40L4Znhu8/view?usp=sharing" },
+      { id: 5, name: "Panda", category: "Cartoon", price: 10, image: "https://drive.google.com/file/d/1QzYv7qAHWdQZnZW03uDvrcdjLMXdSDJC/view?usp=sharing" },
+      { id: 6, name: "Tom", category: "Cartoon", price: 10, image: "https://drive.google.com/file/d/1tfU0WfMPYTggSKnQ9vpZkWHIBExxzHKk/view?usp=sharing" },
+      { id: 7, name: "Virat Kohli", category: "Cricketers", price: 10, image: "https://drive.google.com/file/d/16n25y2A5vNJJ06Xoms5orhGyrBHZtCvu/view?usp=sharing" },
+      { id: 8, name: "BlackHat", category: "Cool", price: 10, image: "https://drive.google.com/file/d/1zAyg_MYJoLM6LI7KSU1by7GsSJnOl_I-/view?usp=sharing" },
+      { id: 9, name: "Red Eye", category: "Cool", price: 10, image: "https://drive.google.com/file/d/1a9YnKS7xRy0CTUnxkmwN9i4eeo9-GbNk/view?usp=sharing" },
+      { id: 10, name: "The Child", category: "Cool", price: 10, image: "https://drive.google.com/file/d/1msti_xgaufqIds5qQy9ATSUTE-WaPn2V/view?usp=drivesdk" },
+      { id: 11, name: "Pokemon", category: "Anime", price: 10, image: "https://drive.google.com/thumbnail?id=1ZKHl0-SnNbAcGWCHpm4uhtknUrJrs8HV&sz=w400" },
+      { id: 12, name: "Ninja", category: "Anime", price: 10, image: "https://drive.google.com/file/d/1K17cUmXOgwuByDvGBk1SeeKDqFS3qU3u/view?usp=sharing" },
+      { id: 13, name: "Bablis", category: "Cool", price: 10, image: "https://drive.google.com/file/d/1lDMUAS0LVbXj9XJeFRN4W-Kty5tvFejo/view?usp=sharing" },
+      { id: 14, name: "BatMan", category: "SuperHero", price: 10, image: "https://drive.google.com/file/d/1NDXzibUxm-H7ORXp7VQaBn1QfZryiCst/view?usp=sharing" },
+      { id: 15, name: "Direction", category: "Cool", price: 10, image: "https://drive.google.com/file/d/1r_jUyaV6Mt_19DYTk1kJQbji_zr5HJbD/view?usp=sharing" },
+      { id: 16, name: "Tiger", category: "Cool", price: 10, image: "https://drive.google.com/file/d/1JAR-szLYI9XZjYtjxazY5I2dpyvx7Myy/view?usp=sharing" },
+      { id: 17, name: "Shivji", category: "Cool", price: 10, image: "https://drive.google.com/file/d/19Dkl7lvK-JfoDMOd2pkrHVhtJQj7y9_j/view?usp=sharing" },
+      { id: 18, name: "SpiderMan", category: "SuperHero", price: 10, image: "https://drive.google.com/file/d/1wEfjtZzgexRDupjGuIKXS9ddQBKc7uGE/view?usp=sharing" },
+      { id: 19, name: "Rabo", category: "Cool", price: 10, image: "https://drive.google.com/file/d/1z0RcWDsk0tk8bfv5Y9h5558-LHthAatu/view?usp=sharing" },
+      { id: 20, name: "Hato", category: "Cool", price: 10, image: "https://drive.google.com/file/d/1Qmvtd673zJQtys3mQV2Eo7MnT7d53QB_/view?usp=sharing" },
+      
+
+
+
     ];
 
     // ============================================================================
