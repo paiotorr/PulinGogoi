@@ -310,7 +310,6 @@
     "use strict";
     // ============================================================================
     // ⚙️ APP SETTINGS & CONFIGURATION
-    // Easy Management Section - Edit the details below to update your shop!
     // ============================================================================
 
     const INSTAGRAM_USERNAME = "stiickuu";
@@ -457,35 +456,24 @@
 
       const btn = document.getElementById("orderBtn");
       if (btn) {
-        btn.textContent = "✅ Copied! Opening App...";
+        btn.textContent = "✅ Copied! Opening Profile...";
         btn.disabled = true;
 
         setTimeout(() => {
-          // Detect User Device and Environment
+          // Detect User Environment
           const ua = navigator.userAgent || navigator.vendor || window.opera;
-          const isAndroid = /android/i.test(ua);
-          const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
           const isIgApp = /instagram/i.test(ua);
 
           if (isIgApp) {
-            // IF INSIDE INSTAGRAM IN-APP BROWSER: 
-            // We use Deep Intents to force the OS to jump to the actual app profile
-            if (isAndroid) {
-              window.location.href = `intent://user?username=${state.igHandle}#Intent;package=com.instagram.android;scheme=instagram;end;`;
-            } else if (isIOS) {
-              window.location.href = `instagram://user?username=${state.igHandle}`;
-            } else {
-              window.location.href = `instagram://user?username=${state.igHandle}`;
-            }
+            // THE NATIVE ROUTING TRICK:
+            // Since we are already inside the Instagram app browser, navigating to a standard instagram.com 
+            // URL forces the app to intercept the link internally. It immediately closes the web browser 
+            // and opens your native Instagram profile without triggering the "You're leaving our app" popup.
+            window.location.href = `https://www.instagram.com/${state.igHandle}`;
           } else {
-            // Normal desktop or mobile browser
+            // For standard web browsers (Chrome, Safari), we route directly to the messaging portal
             window.location.href = `https://ig.me/m/${state.igHandle}`;
           }
-
-          // Safety Fallback: In case the user's OS blocks the intent, fall back to the web portal after a delay.
-          setTimeout(() => {
-            window.location.href = `https://ig.me/m/${state.igHandle}`;
-          }, 2000);
 
         }, 500);
       }
