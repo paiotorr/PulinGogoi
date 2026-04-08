@@ -393,7 +393,6 @@
     }
 
     function deleteSticker(id) {
-      // Removed the alert/confirm popup completely to make it silent
       state.stickers = state.stickers.filter(s => s.id !== id);
       delete state.cart[id];
       saveStickers();
@@ -448,31 +447,32 @@
     }
 
     async function orderViaInstagram() {
-      // Validate silently without generating any pop-up alerts
       const selectedLoc = PICKUP_LOCATIONS.find(l => l.name === state.pickupPlace);
       if (!selectedLoc || totalQty() < selectedLoc.min) {
         return; 
       }
       
       const text = buildMsg();
-      let copied = false;
-
-      try {
-        await navigator.clipboard.writeText(text);
-        copied = true;
-      } catch {}
+      try { await navigator.clipboard.writeText(text); } catch {}
 
       const btn = document.getElementById("orderBtn");
       if (btn) {
-        btn.textContent = copied 
-          ? "✅ Copied! Opening Chat..."
-          : "⚠️ Opening Chat...";
+        btn.textContent = "✅ Copied! Opening App...";
         btn.disabled = true;
 
-        // Clean & Silent Redirect
         setTimeout(() => {
-          // By strictly using the HTTPS link and window.top, we avoid the OS "Open in another app" popup completely
-          window.top.location.href = `https://ig.me/m/${state.igHandle}`;
+          // PHANTOM LINK REDIRECT APPROACH:
+          // This forces the OS to handle the link, breaking out of the IG in-app browser sandbox.
+          const link = document.createElement('a');
+          link.href = `https://ig.me/m/${state.igHandle}`;
+          link.target = '_top'; 
+          link.rel = 'noopener noreferrer';
+          
+          document.body.appendChild(link);
+          link.click();
+          
+          // Cleanup immediately
+          document.body.removeChild(link);
         }, 500);
       }
     }
