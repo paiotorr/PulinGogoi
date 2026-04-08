@@ -487,38 +487,51 @@ Please confirm! 🙏`;
     async function orderViaInstagram() {
   const text = buildMsg();
 
+  let copied = false;
+
   try {
     await navigator.clipboard.writeText(text);
+    copied = true;
   } catch {}
 
   const btn = document.getElementById("orderBtn");
+
   if (btn) {
-    btn.textContent = "Opening Instagram…";
+    btn.textContent = copied 
+      ? "✅ Copied! Go back to Instagram & Paste" 
+      : "⚠️ Copy failed — copy manually";
     btn.disabled = true;
   }
 
-  const username = "stiickuu";
-
-  // Android app deep link
-  const appLink = `intent://instagram.com/_u/${username}/#Intent;package=com.instagram.android;scheme=https;end`;
-
-  // Fallback website
-  const webLink = `https://www.instagram.com/${username}/`;
-
-  // Try to open the Instagram Android app directly
-  const a = document.createElement("a");
-  a.href = appLink;
-  a.click();
-
-  // Fallback if the app does not open
+  // Try to close the page (may not work inside Instagram)
   setTimeout(() => {
-    window.location.href = webLink;
-    if (btn) {
-      btn.textContent = "📲 Order via Instagram";
-      btn.disabled = false;
-    }
-  }, 1200);
+    window.close();
+  }, 800);
 }
+
+    // Keep these stubs so nothing else breaks
+    function copyMsg() { return orderViaInstagram(); }
+    function openIG() { return orderViaInstagram(); }
+
+    function applyIGGlow() {
+      const igBtn = document.getElementById("openIGBtn");
+      if (igBtn) {
+        igBtn.classList.remove("ig-btn-fading");
+        igBtn.classList.add("ig-btn-active");
+      }
+    }
+
+    function fadeIGGlow() {
+      const igBtn = document.getElementById("openIGBtn");
+      if (igBtn) {
+        igBtn.classList.remove("ig-btn-active");
+        igBtn.classList.add("ig-btn-fading");
+        setTimeout(() => {
+          igBtn.classList.remove("ig-btn-fading");
+          igBtn.style.opacity = "";
+        }, 1600);
+      }
+    }
 
     function closeCart() {
       state.cartOpen = false;
