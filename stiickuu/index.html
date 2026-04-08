@@ -483,21 +483,14 @@ Please confirm! 🙏`;
 
       const btn = document.getElementById("orderBtn");
       if (btn) {
-        // Detect if the user is inside the Instagram App
-        const isInstagramApp = /Instagram/i.test(navigator.userAgent);
-        
         btn.textContent = copied 
-          ? (isInstagramApp ? "✅ Copied! Go back & Paste" : "✅ Copied! Redirecting to DM...")
+          ? "✅ Copied! Redirecting to DM..."
           : "⚠️ Copy failed — copy manually";
         btn.disabled = true;
 
         setTimeout(() => { 
-          if (isInstagramApp) {
-            window.close(); // Close tab if in IG App
-          } else {
-            // Redirect straight to Instagram Direct Messages for the specific user
-            window.location.href = `https://ig.me/m/${state.igHandle}`;
-          }
+          // Redirect straight to Instagram Direct Messages regardless of the browser
+          window.location.href = `https://ig.me/m/${state.igHandle}`;
         }, 800);
       }
     }
