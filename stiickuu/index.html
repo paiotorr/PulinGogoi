@@ -288,8 +288,17 @@
       border-bottom: 1px solid #fff0f0; display: flex; flex-direction: column; gap: 3px;
     }
     .custom-option:last-child { border-bottom: none; }
-    .custom-option:hover { background: #fff5f5; }
+    .custom-option:hover:not(.locked) { background: #fff5f5; }
     .custom-option.selected { background: #ffe0e0; border-bottom: 1px solid #ffd6d6; }
+    
+    /* NEW: Locked / Blurry Styling for unavailable options */
+    .custom-option.locked {
+      opacity: 0.45;
+      filter: grayscale(80%);
+      cursor: not-allowed;
+      background: #fdfdfd;
+    }
+    
     .opt-name { font-family: 'Fredoka One'; font-size: 13px; color: #222; }
     .opt-min { font-size: 11px; color: #777; font-weight: 700; }
 
@@ -514,6 +523,15 @@ Please confirm! 🙏`;
       const qty = totalQty();
       const total = grandTotal();
 
+      // Ensure the currently selected location is still valid based on cart quantity.
+      // If they removed items and fell below the minimum, auto-reset their selection.
+      if (state.pickupPlace) {
+        const checkLoc = PICKUP_LOCATIONS.find(l => l.name === state.pickupPlace);
+        if (checkLoc && qty < checkLoc.min) {
+          state.pickupPlace = ""; 
+        }
+      }
+
       // Button State Logic based on Selected Pickup Place
       let btnDisabled = true;
       let btnText = "Order via Instagram";
@@ -638,12 +656,16 @@ Please confirm! 🙏`;
                         <span style="color: #ff0000; font-size: 11px;">▼</span>
                       </div>
                       <div class="custom-options" id="pickupOptions">
-                        ${PICKUP_LOCATIONS.map(loc => `
-                          <div class="custom-option ${state.pickupPlace === loc.name ? 'selected' : ''}" data-value="${loc.name}">
+                        ${PICKUP_LOCATIONS.map(loc => {
+                          const isLocked = qty < loc.min;
+                          return `
+                          <div class="custom-option ${state.pickupPlace === loc.name ? 'selected' : ''} ${isLocked ? 'locked' : ''}" data-value="${loc.name}">
                             <div class="opt-name">${loc.name}</div>
-                            <div class="opt-min">Minimum order: ${loc.min} stickers</div>
+                            <div class="opt-min" style="${isLocked ? 'color: #ff4444;' : ''}">
+                              ${isLocked ? `🔒 Locked — Add ${loc.min - qty} more to unlock` : `✅ Unlocked — Min order: ${loc.min}`}
+                            </div>
                           </div>
-                        `).join("")}
+                        `}).join("")}
                       </div>
                     </div>
 
@@ -709,6 +731,9 @@ Please confirm! 🙏`;
           document.querySelectorAll(".custom-option").forEach(opt => {
             opt.addEventListener("click", (e) => {
               e.stopPropagation();
+              // Prevent clicking if the option is locked!
+              if (opt.classList.contains("locked")) return; 
+              
               state.pickupPlace = opt.dataset.value;
               render(); // Re-render to update the button text and state
             });
