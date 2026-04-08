@@ -485,51 +485,43 @@ Please confirm! 🙏`;
     }
 
     async function orderViaInstagram() {
-      // Step 1: silently copy the order message to clipboard
-      const text = buildMsg();
-      let copied = false;
+  const text = buildMsg();
 
-      window._allowCopy = true;
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {}
 
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        try {
-          await navigator.clipboard.writeText(text);
-          copied = true;
-        } catch {}
-      }
+  const btn = document.getElementById("orderBtn");
+  if (btn) {
+    btn.textContent = "Opening Instagram…";
+    btn.disabled = true;
+  }
 
-      if (!copied) {
-        try {
-          const ta = document.createElement("textarea");
-          ta.value = text;
-          ta.style.cssText = "position:fixed;top:-9999px;left:-9999px;opacity:0;";
-          document.body.appendChild(ta);
-          ta.focus();
-          ta.select();
-          copied = document.execCommand("copy");
-          document.body.removeChild(ta);
-        } catch { copied = false; }
-      }
+  const username = "stiickuu";
+  const androidLink = `intent://instagram.com/_u/${username}/#Intent;package=com.instagram.android;scheme=https;end`;
+  const iosLink = `instagram://user?username=${username}`;
+  const webLink = `https://www.instagram.com/${username}/`;
 
-      window._allowCopy = false;
+  const ua = navigator.userAgent.toLowerCase();
+  const isAndroid = ua.includes("android");
+  const isIOS = /iphone|ipad|ipod/.test(ua);
 
-      // Step 2: show brief feedback on the button
-      const btn = document.getElementById("orderBtn");
-      if (btn) {
-        btn.textContent = copied ? "✅ Message Copied! Opening Instagram…" : "📲 Opening Instagram…";
-        btn.disabled = true;
-      }
+  if (isAndroid) {
+    window.location.href = androidLink;
+  } else if (isIOS) {
+    window.location.href = iosLink;
+  } else {
+    window.location.href = webLink;
+  }
 
-      // Step 3: open Instagram DM after a short delay so the clipboard write settles
-      setTimeout(() => {
-        window.open(`https://instagram.com/stiickuu/`, "_blank", "noopener,noreferrer");
-        // Reset button
-        if (btn) {
-          btn.textContent = "📲 Order via Instagram";
-          btn.disabled = false;
-        }
-      }, 600);
+  setTimeout(() => {
+    window.location.href = webLink;
+    if (btn) {
+      btn.textContent = "📲 Order via Instagram";
+      btn.disabled = false;
     }
+  }, 1200);
+}
 
     // Keep these stubs so nothing else breaks
     function copyMsg() { return orderViaInstagram(); }
