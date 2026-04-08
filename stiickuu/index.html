@@ -68,22 +68,22 @@
       font-size: 14px;
       width: 100%;
       background: white;
-      appearance: auto;
+      cursor: pointer;
     }
     input:focus, select:focus { border-color: #ff0000; }
     ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: #ff9999; border-radius: 4px; }
 
     .header {
-      background: #ff0000; /* pure red */
-      padding: 14px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: 0 4px 20px rgba(255,0,0,.3);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
+  background: #ff0000; /* pure red */
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 20px rgba(255,0,0,.3);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
     .header-left { display: flex; align-items: center; gap: 10px; }
     .brand { font-family: 'Fredoka One'; font-size: 22px; color: white; line-height: 1; }
     .subtitle { font-size: 11px; color: rgba(255,255,255,.8); font-weight: 700; margin-top: 1px; }
@@ -260,45 +260,85 @@
       background: linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);
       color: white;
       padding: 16px 0;
-      font-size: 20px;
+      font-size: 18px;
       font-family: 'Nunito', sans-serif;
       font-weight: 800;
       letter-spacing: 0.3px;
       width: 100%;
     }
 
-    /* ── CUSTOM SELECT STYLING ── */
-    .custom-select { position: relative; width: 100%; user-select: none; }
-    .custom-select-trigger {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 12px 14px; background: white; border: 2px solid #ffd6d6;
-      border-radius: 10px; cursor: pointer; font-family: 'Nunito', sans-serif;
-      font-size: 13px; font-weight: 700; color: #444; transition: border-color 0.2s;
+    .ready {
+      background: #f0fdf4;
+      border-radius: 13px;
+      padding: 10px 13px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
     }
-    .custom-select-trigger:hover { border-color: #ffb3b3; }
-    .custom-options {
-      position: absolute; top: 100%; left: 0; right: 0; background: white;
-      border: 2px solid #ffd6d6; border-radius: 12px; margin-top: 6px;
-      box-shadow: 0 8px 25px rgba(255,0,0,0.15); z-index: 300;
-      max-height: 220px; overflow-y: auto; display: none; flex-direction: column;
+    .ready-title { font-family: 'Fredoka One'; color: #16a34a; font-size: 14px; }
+    .ready-sub { font-size: 11px; color: #555; line-height: 1.5; }
+    .summary-wrap {
+      background: #fff8f8;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #ffd6d6;
     }
-    .custom-options.open { display: flex; }
-    .custom-option {
-      padding: 12px 14px; cursor: pointer; transition: background 0.2s;
-      border-bottom: 1px solid #fff0f0; display: flex; flex-direction: column; gap: 3px;
+    .summary-head {
+      background: #fff0f0;
+      padding: 6px 12px;
+      font-family: 'Fredoka One';
+      font-size: 13px;
     }
-    .custom-option:last-child { border-bottom: none; }
-    .custom-option:hover { background: #fff5f5; }
-    .custom-option.selected { background: #ffe0e0; border-bottom: 1px solid #ffd6d6; }
-    .opt-name { font-family: 'Fredoka One'; font-size: 13px; color: #222; }
-    .opt-min { font-size: 11px; color: #777; font-weight: 700; }
-
+    .summary-image { width: 38px; height: 38px; border-radius: 8px; object-fit: contain; background: #fff5f5; }
+    .summary-name { font-family: 'Fredoka One'; font-size: 13px; }
+    .summary-sub { font-size: 11px; color: #999; }
+    .summary-total { font-family: 'Fredoka One'; color: #ff0000; font-size: 14px; }
+    .message-box {
+      width: 100%;
+      min-height: 160px;
+      border: 2px solid #ffd6d6;
+      border-radius: 12px;
+      padding: 12px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      resize: vertical;
+    }
+    .missing-tail {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #777;
+      background: #fff8f8;
+      border: 1px dashed #ffcccc;
+      border-radius: 12px;
+      padding: 10px 12px;
+      line-height: 1.5;
+    }
+    @keyframes igGlow {
+      0%   { box-shadow: 0 0 0 0 rgba(255,0,0,0.8), 0 0 16px 4px rgba(255,0,0,0.4); transform: scale(1); }
+      50%  { box-shadow: 0 0 0 8px rgba(255,0,0,0), 0 0 24px 8px rgba(255,0,0,0.25); transform: scale(1.03); }
+      100% { box-shadow: 0 0 0 0 rgba(255,0,0,0.8), 0 0 16px 4px rgba(255,0,0,0.4); transform: scale(1); }
+    }
+    .ig-btn-active {
+      animation: igGlow 1.2s ease-in-out infinite;
+      outline: 3px solid white;
+      position: relative;
+    }
+    .ig-btn-fading {
+      transition: box-shadow 1.5s ease, outline 1.5s ease, opacity 1.5s ease;
+      box-shadow: none !important;
+      outline: none !important;
+      opacity: 0.85;
+    }
     @keyframes copyPulse {
       0%   { box-shadow: 0 0 0 0 rgba(255,0,0,0.9); transform: scale(1); background: #ff0000; color: white; }
       30%  { box-shadow: 0 0 0 12px rgba(255,0,0,0); transform: scale(1.07); background: #ff0000; color: white; }
       50%  { background: white; color: #ff0000; transform: scale(1.04); }
       75%  { background: #ff0000; color: white; transform: scale(1.06); }
       100% { box-shadow: 0 0 0 0 rgba(255,0,0,0); transform: scale(1); background: #ff0000; color: white; }
+    }
+    .copy-btn-pulse {
+      animation: copyPulse 0.6s ease 0s 3;
+      outline: 3px solid white !important;
     }
   </style>
 </head>
@@ -307,6 +347,15 @@
 
   <script>
     const INSTAGRAM_USERNAME = "stiickuu";
+
+    const PICKUP_LOCATIONS = [
+      { name: "Front of - Morning Glory Higher Secondary School", min: 1 },
+      { name: "Front of - Higher Secondary school", min: 2 },
+      { name: "Tiniali of - SANKARDEV SHISU VIDYA NIKETAN BOGINADI", min: 2 },
+      { name: "Near - Bogindi Market", min: 4 },
+      { name: "Near - Bogindi Police station", min: 5 },
+      { name: "Near - Rose Bud Academy", min: 3 }
+    ];
 
     const DEFAULT_STICKERS = [
       { id: 1, name: "Naruto", category: "Anime", price: 20, image: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=naruto&backgroundColor=ffeb3b" },
@@ -321,7 +370,6 @@
       { id: 10, name: "Messi", category: "Sportsmen", price: 25, image: "https://drive.google.com/file/d/1msti_xgaufqIds5qQy9ATSUTE-WaPn2V/view?usp=drivesdk" },
       { id: 11, name: "Pokimon", category: "Anime", price: 20, image: "https://drive.google.com/thumbnail?id=1ZKHl0-SnNbAcGWCHpm4uhtknUrJrs8HV&sz=w400" },
       { id: 12, name: "HI", category: "Anime", price: 20, image: "https://drive.google.com/file/d/1ay06cqanV5kDCmEUvC3YcMC7YOCMqr27/view?usp=drivesdk" },
-
     ];
 
     const CATEGORIES = ["All", "Anime", "Cartoon", "Cricketers", "Sportsmen", "Celebrities"];
@@ -330,15 +378,6 @@
       Sportsmen: "#4d96ff", Celebrities: "#c77dff"
     };
 
-    const PICKUP_LOCATIONS = [
-      { name: "Front of - Morning Glory Higher Secondary School", min: 1 },
-      { name: "Front of - Higher Secondary school", min: 2 },
-      { name: "Tiniali of - SANKARDEV SHISU VIDYA NIKETAN BOGINADI", min: 2 },
-      { name: "Near - Bogindi Market", min: 4 },
-      { name: "Near - Bogindi Police station", min: 5 },
-      { name: "Near - Rose Bud Academy", min: 3 }
-    ];
-
     const state = {
       stickers: DEFAULT_STICKERS.slice(),
       cart: {},
@@ -346,21 +385,26 @@
       cartOpen: false,
       orderStep: 0,
       copied: false,
+      copyCountdown: 0,
       igHandle: INSTAGRAM_USERNAME,
-      pickupPlace: "" 
+      selectedPickup: ""
     };
 
     const app = document.getElementById('app');
 
+    // Auto-convert any Google Drive share link to a working thumbnail URL
     function fixDriveUrl(url) {
       if (!url) return url;
+      // Handle: https://drive.google.com/file/d/FILE_ID/view...
       const m1 = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
       if (m1) return `https://drive.google.com/thumbnail?id=${m1[1]}&sz=w400`;
+      // Handle: ?id=FILE_ID or &id=FILE_ID
       const m2 = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
       if (url.includes('drive.google.com') && m2) return `https://drive.google.com/thumbnail?id=${m2[1]}&sz=w400`;
       return url;
     }
 
+    // Load any previously added stickers from localStorage
     try {
       const saved = localStorage.getItem('customStickers');
       if (saved) JSON.parse(saved).forEach(s => state.stickers.push(s));
@@ -378,7 +422,9 @@
       render();
     }
 
-    function getQty(id) { return state.cart[id] || 0; }
+    function getQty(id) {
+      return state.cart[id] || 0;
+    }
 
     function changeQty(id, delta) {
       const next = { ...state.cart };
@@ -395,11 +441,17 @@
         : state.stickers.filter(s => s.category === state.activeCategory);
     }
 
-    function cartStickers() { return state.stickers.filter(s => state.cart[s.id] > 0); }
+    function cartStickers() {
+      return state.stickers.filter(s => state.cart[s.id] > 0);
+    }
 
-    function totalQty() { return cartStickers().reduce((a, s) => a + state.cart[s.id], 0); }
+    function totalQty() {
+      return cartStickers().reduce((a, s) => a + state.cart[s.id], 0);
+    }
 
-    function grandTotal() { return cartStickers().reduce((a, s) => a + state.cart[s.id] * s.price, 0); }
+    function grandTotal() {
+      return cartStickers().reduce((a, s) => a + state.cart[s.id] * s.price, 0);
+    }
 
     function grouped() {
       return cartStickers().reduce((acc, s) => {
@@ -411,6 +463,7 @@
 
     function buildMsg() {
       const today = new Date();
+      // Formats date nicely, e.g., "08 Apr 2026"
       const dateString = today.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
       
       const lines = [];
@@ -425,51 +478,75 @@ I want to order these stickers:
 
 ${lines.join("\n")}
 
-Pickup Place: ${state.pickupPlace}
-
 Total: Rs.${grandTotal()}
-
+Pickup Place: ${state.selectedPickup}
 Order Date: ${dateString}
 
 Please confirm! 🙏`;
     }
 
     async function orderViaInstagram() {
-      const selectedLoc = PICKUP_LOCATIONS.find(l => l.name === state.pickupPlace);
-      
-      if (!selectedLoc) {
-        alert("Please select a pickup place.");
-        return;
+  const selectedLoc = PICKUP_LOCATIONS.find(loc => loc.name === state.selectedPickup);
+  
+  if (!selectedLoc || totalQty() < selectedLoc.min) {
+    alert("Please meet the minimum order requirement for your selected pickup place.");
+    return;
+  }
+  
+  const text = buildMsg();
+  let copied = false;
+
+  try {
+    await navigator.clipboard.writeText(text);
+    copied = true;
+  } catch {}
+
+  const btn = document.getElementById("orderBtn");
+
+  if (btn) {
+    btn.textContent = copied 
+      ? "✅ Copied! Go back to Instagram & Paste" 
+      : "⚠️ Copy failed — copy manually";
+    btn.disabled = true;
+  }
+
+  // Try to close the page (may not work inside Instagram)
+  setTimeout(() => {
+    window.close();
+  }, 800);
+}
+
+    // Keep these stubs so nothing else breaks
+    function copyMsg() { return orderViaInstagram(); }
+    function openIG() { return orderViaInstagram(); }
+
+    function applyIGGlow() {
+      const igBtn = document.getElementById("openIGBtn");
+      if (igBtn) {
+        igBtn.classList.remove("ig-btn-fading");
+        igBtn.classList.add("ig-btn-active");
       }
+    }
 
-      if (totalQty() < selectedLoc.min) {
-        alert(`Please add at least ${selectedLoc.min} stickers to your cart for this pickup location.`);
-        return;
+    function fadeIGGlow() {
+      const igBtn = document.getElementById("openIGBtn");
+      if (igBtn) {
+        igBtn.classList.remove("ig-btn-active");
+        igBtn.classList.add("ig-btn-fading");
+        setTimeout(() => {
+          igBtn.classList.remove("ig-btn-fading");
+          igBtn.style.opacity = "";
+        }, 1600);
       }
-      
-      const text = buildMsg();
-      let copied = false;
-
-      try {
-        await navigator.clipboard.writeText(text);
-        copied = true;
-      } catch {}
-
-      const btn = document.getElementById("orderBtn");
-      if (btn) {
-        btn.textContent = copied 
-          ? "✅ Copied! Go back to Instagram & Paste" 
-          : "⚠️ Copy failed — copy manually";
-        btn.disabled = true;
-      }
-
-      setTimeout(() => { window.close(); }, 800);
     }
 
     function closeCart() {
       state.cartOpen = false;
       state.orderStep = 0;
       state.copied = false;
+      state.copyCountdown = 0;
+      if (window._copyCountdownInterval) clearInterval(window._copyCountdownInterval);
+      if (window._copyExpireTimeout) clearTimeout(window._copyExpireTimeout);
       render();
     }
 
@@ -478,19 +555,17 @@ Please confirm! 🙏`;
       const groupedCart = grouped();
       const qty = totalQty();
       const total = grandTotal();
-
-      // Button State Logic based on Selected Pickup Place
-      let btnDisabled = true;
-      let btnText = "Order via Instagram";
       
-      const selectedLoc = PICKUP_LOCATIONS.find(l => l.name === state.pickupPlace);
+      let canOrder = false;
+      let btnText = "Order via Instagram";
+      let selectedLoc = PICKUP_LOCATIONS.find(loc => loc.name === state.selectedPickup);
 
-      if (!state.pickupPlace) {
-        btnText = "⚠️ Select a pickup place";
+      if (!state.selectedPickup) {
+         btnText = "⚠️ Select a pickup place first";
       } else if (qty < selectedLoc.min) {
-        btnText = `⚠️ Minimum ${selectedLoc.min} items required`;
+         btnText = `⚠️ Minimum ${selectedLoc.min} stickers for this place`;
       } else {
-        btnDisabled = false; // Enabled!
+         canOrder = true;
       }
 
       app.innerHTML = `
@@ -523,7 +598,9 @@ Please confirm! 🙏`;
 
           <div class="grid">
             ${filtered.length === 0 ? `
-              <div class="empty-grid">No stickers here yet 😅</div>
+              <div class="empty-grid">
+                No stickers here yet 😅
+              </div>
             ` : filtered.map(s => {
               const q = getQty(s.id);
               const color = CAT_COLOR[s.category] || "#ff0000";
@@ -594,32 +671,24 @@ Please confirm! 🙏`;
                     </div>
                   `).join("")}
 
-                  <div style="margin-top: 10px; padding: 12px; background: #fff8f8; border: 1px solid #ffd6d6; border-radius: 12px;">
-                    <div style="font-family:'Fredoka One';font-size:14px;color:#ff0000;margin-bottom:8px;">📍 Pickup Details</div>
-                    
-                    <div class="custom-select" id="customPickupSelect">
-                      <div class="custom-select-trigger" id="pickupTrigger">
-                        <span>${state.pickupPlace ? state.pickupPlace : '-- Choose Pickup Location --'}</span>
-                        <span style="color: #ff0000; font-size: 11px;">▼</span>
-                      </div>
-                      <div class="custom-options" id="pickupOptions">
-                        ${PICKUP_LOCATIONS.map(loc => `
-                          <div class="custom-option ${state.pickupPlace === loc.name ? 'selected' : ''}" data-value="${loc.name}">
-                            <div class="opt-name">${loc.name}</div>
-                            <div class="opt-min">Minimum order: ${loc.min} stickers</div>
-                          </div>
-                        `).join("")}
-                      </div>
-                    </div>
-
-                  </div>
-
-                  <div class="grand-total${Object.keys(groupedCart).length > 1 ? ' multi-cat' : ''}" style="margin-top: 4px;">
+                  <div class="grand-total${Object.keys(groupedCart).length > 1 ? ' multi-cat' : ''}">
                     <span>Grand Total</span>
                     <span class="value">₹${total}</span>
                   </div>
+                  
+                  <div style="margin-top: 5px;">
+                    <div style="font-family:'Fredoka One';font-size:14px;color:#333;margin-bottom:6px;">📍 Select Pickup Place *</div>
+                    <select id="pickupSelect" style="width:100%; border: 2px solid #ffd6d6; background: #fff8f8; font-weight: 600;">
+                      <option value="">-- Choose Pickup Location --</option>
+                      ${PICKUP_LOCATIONS.map(loc => `
+                        <option value="${loc.name}" ${state.selectedPickup === loc.name ? "selected" : ""}>
+                          ${loc.name} (Min Order: ${loc.min})
+                        </option>
+                      `).join("")}
+                    </select>
+                  </div>
 
-                  <button class="btn order-btn" id="orderBtn" ${btnDisabled ? 'disabled style="background: #e5e7eb; color: #9ca3af; box-shadow: none; font-size: 16px;"' : ''}>
+                  <button class="btn order-btn" id="orderBtn" ${!canOrder ? 'disabled style="background: #e5e7eb; color: #9ca3af; box-shadow: none; font-size: 15px;"' : ''}>
                     ${btnText}
                   </button>
                 `}
@@ -661,33 +730,12 @@ Please confirm! 🙏`;
         document.getElementById("backdrop").addEventListener("click", closeCart);
         document.getElementById("closeBtn").addEventListener("click", closeCart);
         
-        // Custom Dropdown Logic
-        const pickupTrigger = document.getElementById("pickupTrigger");
-        const pickupOptions = document.getElementById("pickupOptions");
-        
-        if (pickupTrigger && pickupOptions) {
-          pickupTrigger.addEventListener("click", (e) => {
-            e.stopPropagation();
-            pickupOptions.classList.toggle("open");
-          });
-
-          document.querySelectorAll(".custom-option").forEach(opt => {
-            opt.addEventListener("click", (e) => {
-              e.stopPropagation();
-              state.pickupPlace = opt.dataset.value;
-              render(); // Re-render to update the button text and state
+        const pickupSelect = document.getElementById("pickupSelect");
+        if (pickupSelect) {
+            pickupSelect.addEventListener("change", (e) => {
+                state.selectedPickup = e.target.value;
+                render();
             });
-          });
-
-          // Close dropdown if user clicks anywhere else in the drawer
-          const drawer = document.querySelector(".drawer");
-          if (drawer) {
-            drawer.addEventListener("click", (e) => {
-              if (pickupOptions.classList.contains("open") && !pickupTrigger.contains(e.target)) {
-                pickupOptions.classList.remove("open");
-              }
-            });
-          }
         }
 
         const orderBtn = document.getElementById("orderBtn");
@@ -702,27 +750,64 @@ Please confirm! 🙏`;
     // ══════════════════════════════════════════════
     //  SECURITY LAYER — Maximum Protection
     // ══════════════════════════════════════════════
-    document.addEventListener("contextmenu", function(e) { e.preventDefault(); e.stopPropagation(); return false; }, true);
+
+    // 1. Block right-click context menu everywhere
+    document.addEventListener("contextmenu", function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }, true);
+
+    // 2. Block keyboard shortcuts: F12, Ctrl+U, Ctrl+S, Ctrl+Shift+I,
+    //    Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+Shift+K, Ctrl+P, Ctrl+A
     document.addEventListener("keydown", function(e) {
       const key = e.key ? e.key.toLowerCase() : "";
       const ctrl = e.ctrlKey || e.metaKey;
       const shift = e.shiftKey;
       if (e.keyCode === 123) { e.preventDefault(); return false; }
-      if (ctrl && shift && (key === "i" || key === "j" || key === "c" || key === "k")) { e.preventDefault(); return false; }
-      if (ctrl && !shift && (key === "u" || key === "s" || key === "p" || key === "a")) { e.preventDefault(); return false; }
-    }, true);
-    document.addEventListener("dragstart", function(e) { e.preventDefault(); return false; }, true);
-    document.addEventListener("copy", function(e) { if (!window._allowCopy) { e.preventDefault(); return false; } }, true);
-    document.addEventListener("cut", function(e) { e.preventDefault(); return false; }, true);
-    document.addEventListener("selectstart", function(e) {
-      const box = document.getElementById("messageBox");
-      if (box && (e.target === box || box.contains(e.target))) { e.preventDefault(); return false; }
+      if (ctrl && shift && (key === "i" || key === "j" || key === "c" || key === "k")) {
+        e.preventDefault(); return false;
+      }
+      if (ctrl && !shift && (key === "u" || key === "s" || key === "p" || key === "a")) {
+        e.preventDefault(); return false;
+      }
     }, true);
 
+    // 3. Block drag-start on everything
+    document.addEventListener("dragstart", function(e) {
+      e.preventDefault();
+      return false;
+    }, true);
+
+    // 4. Block copy/cut events — only allow programmatic copy via copyMsg()
+    document.addEventListener("copy", function(e) {
+      if (!window._allowCopy) {
+        e.preventDefault();
+        return false;
+      }
+    }, true);
+    document.addEventListener("cut", function(e) {
+      e.preventDefault();
+      return false;
+    }, true);
+
+    // 5. Block selectstart on the message box
+    document.addEventListener("selectstart", function(e) {
+      const box = document.getElementById("messageBox");
+      if (box && (e.target === box || box.contains(e.target))) {
+        e.preventDefault();
+        return false;
+      }
+    }, true);
+
+    // 6. Detect DevTools open (size-based) and blur page
     (function devToolsGuard() {
       const threshold = 160;
       function check() {
-        if (window.outerWidth - window.innerWidth > threshold || window.outerHeight - window.innerHeight > threshold) {
+        if (
+          window.outerWidth - window.innerWidth > threshold ||
+          window.outerHeight - window.innerHeight > threshold
+        ) {
           document.body.style.filter = "blur(8px)";
           document.body.style.pointerEvents = "none";
         } else {
