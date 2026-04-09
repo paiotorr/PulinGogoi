@@ -368,7 +368,8 @@
       orderStep: 0,
       copied: false,
       igHandle: INSTAGRAM_USERNAME,
-      pickupPlace: "" 
+      pickupPlace: "",
+      ordering: false
     };
 
     const app = document.getElementById('app');
@@ -445,23 +446,12 @@
       return `Hi @${state.igHandle}! 👋\nI want to order these stickers:\n\n${lines.join("\n")}\n\nPickup Place: ${state.pickupPlace}\n\nTotal: Rs.${grandTotal()}\n\nOrder Date: ${dateString}\n\nPlease confirm! 🙏`;
     }
 
-    function resetOrderBtn() {
-      const btn = document.getElementById("orderBtn");
-      if (btn) {
-        btn.textContent = "Order via Instagram";
-        btn.disabled = false;
-        btn.style.background = "linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)";
-        btn.style.color = "white";
-        btn.style.opacity = "1";
-      }
-    }
-
     async function orderViaInstagram() {
       const selectedLoc = PICKUP_LOCATIONS.find(l => l.name === state.pickupPlace);
       if (!selectedLoc || totalQty() < selectedLoc.min) {
-        return; 
+        return;
       }
-      
+
       const text = buildMsg();
 
       // Clipboard copy with fallback for Instagram WebView
@@ -479,39 +469,54 @@
         } catch {}
       }
 
-      const btn = document.getElementById("orderBtn");
-      if (btn) {
-        btn.textContent = "✅ Copied! Opening Chat...";
-        btn.disabled = true;
+      // Set ordering state — render() will show "Copied! Opening Chat..."
+      state.ordering = true;
+      render();
 
-        // Auto-reset after 4 seconds — works whether user taps GO BACK or CONTINUE
-        setTimeout(resetOrderBtn, 4000);
+      // Auto-reset after 5 seconds (covers GO BACK case in Instagram WebView)
+      const resetTimer = setTimeout(() => {
+        state.ordering = false;
+        render();
+      }, 5000);
 
-        setTimeout(() => {
-          const ua = navigator.userAgent || navigator.vendor || window.opera || "";
-          const isIgApp = /instagram/i.test(ua);
-          const isAndroid = /android/i.test(ua);
+      setTimeout(() => {
+        const ua = navigator.userAgent || navigator.vendor || window.opera || "";
+        const isIgApp = /instagram/i.test(ua);
+        const isAndroid = /android/i.test(ua);
 
-          if (isIgApp) {
-            if (isAndroid) {
-              window.location.href =
-                `intent://user?username=${state.igHandle}#Intent;` +
-                `package=com.instagram.android;` +
-                `scheme=instagram;` +
-                `S.browser_fallback_url=https%3A%2F%2Fig.me%2Fm%2F${state.igHandle};` +
-                `end`;
-            } else {
-              window.location.href = `instagram://user?username=${state.igHandle}`;
-              setTimeout(() => {
-                window.location.href = `https://ig.me/m/${state.igHandle}`;
-              }, 1000);
-            }
+        if (isIgApp) {
+          if (isAndroid) {
+            window.location.href =
+              `intent://user?username=${state.igHandle}#Intent;` +
+              `package=com.instagram.android;` +
+              `scheme=instagram;` +
+              `S.browser_fallback_url=https%3A%2F%2Fig.me%2Fm%2F${state.igHandle};` +
+              `end`;
           } else {
-            window.location.href = `https://ig.me/m/${state.igHandle}`;
+            // iOS
+            window.location.href = `instagram://user?username=${state.igHandle}`;
+            setTimeout(() => {
+              window.location.href = `https://ig.me/m/${state.igHandle}`;
+            }, 1000);
           }
-        }, 500);
+        } else {
+          window.location.href = `https://ig.me/m/${state.igHandle}`;
+        }
+      }, 600);
+    }
+
+    // Reset button when user returns to page (all browsers + WebViews)
+    function onPageReturn() {
+      if (state.ordering) {
+        state.ordering = false;
+        render();
       }
     }
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") onPageReturn();
+    });
+    window.addEventListener("pageshow", onPageReturn);
+    window.addEventListener("focus", onPageReturn);
 
     function closeCart() {
       state.cartOpen = false;
@@ -538,7 +543,10 @@
       
       const selectedLoc = PICKUP_LOCATIONS.find(l => l.name === state.pickupPlace);
 
-      if (!state.pickupPlace) {
+      if (state.ordering) {
+        btnText = "✅ Copied! Opening Chat...";
+        btnDisabled = true;
+      } else if (!state.pickupPlace) {
         btnText = "⚠️ Select a pickup place";
       } else if (qty < selectedLoc.min) {
         btnText = `⚠️ Minimum ${selectedLoc.min} items required`;
