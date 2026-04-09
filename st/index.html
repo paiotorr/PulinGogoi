@@ -500,11 +500,10 @@
         render();
       }
     }
-    // These three together cover every return scenario in Instagram WebView
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") resetOrdering(); });
     window.addEventListener("focus", resetOrdering);
     window.addEventListener("pageshow", resetOrdering);
-    // Polling fallback — Instagram WebView sometimes suppresses all of the above
+    // Polling fallback for Instagram WebView which suppresses all events above
     setInterval(() => { if (state.ordering && document.visibilityState === "visible") resetOrdering(); }, 300);
 
     function closeCart() {
@@ -532,13 +531,12 @@
       
       const selectedLoc = PICKUP_LOCATIONS.find(l => l.name === state.pickupPlace);
 
-      if (state.ordering) {
-        btnText = "✅ Copied! Opening Chat...";
-        btnDisabled = true;
-      } else if (!state.pickupPlace) {
+      if (!state.pickupPlace) {
         btnText = "⚠️ Select a pickup place";
       } else if (qty < selectedLoc.min) {
         btnText = `⚠️ Minimum ${selectedLoc.min} items required`;
+      } else if (state.ordering) {
+        btnDisabled = true;
       } else {
         btnDisabled = false;
       }
