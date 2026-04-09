@@ -6,8 +6,17 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="robots" content="noindex, nofollow" />
   <title>Sticker Shop</title>
+  <!-- Preconnect to font servers so TCP+TLS is ready before CSS requests them -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- Non-blocking font load -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" media="print" onload="this.media='all'" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" /></noscript>
+  <!-- DNS prefetch for Google Drive (all product images) -->
+  <link rel="dns-prefetch" href="https://drive.google.com" />
+  <link rel="preconnect" href="https://drive.google.com" crossorigin />
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
+    /* font-display:swap so text shows instantly in fallback font */
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -41,6 +50,7 @@
       font-family: Nunito, sans-serif;
       background: #fff5f5;
       min-height: 100vh;
+      font-display: swap;
     }
     .btn {
       border: none;
@@ -58,7 +68,18 @@
       overflow: hidden;
       transition: transform .2s, box-shadow .2s;
     }
+    /* Shimmer skeleton while images load */
+    .product-image[src=""] , .product-image:not([src]) {
+      background: linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s infinite;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
     .card:hover { transform: translateY(-4px); box-shadow: 0 8px 26px rgba(0,0,0,.11); }
+    .card { will-change: transform; }
     input, select {
       font-family: Nunito, sans-serif;
       border: 2px solid #ffd6d6;
@@ -302,6 +323,12 @@
     .opt-name { font-family: 'Fredoka One'; font-size: 13px; color: #222; }
     .opt-min { font-size: 11px; color: #777; font-weight: 700; }
   </style>
+  <link rel="preload" as="image" href="https://drive.google.com/thumbnail?id=12OAd4ckdsedQGT1f0u58vIEskwSFRlqK&sz=w400" />
+  <link rel="preload" as="image" href="https://drive.google.com/thumbnail?id=18y9i-kjBjcMTU6qeFVAs7zPU4NRVuHv8&sz=w400" />
+  <link rel="preload" as="image" href="https://drive.google.com/thumbnail?id=1HBcKbflMjQ8PufMJQNtvJXnj4OCFRRS1&sz=w400" />
+  <link rel="preload" as="image" href="https://drive.google.com/thumbnail?id=1nkdQb_yLWxTTrsEWyUPQigT40L4Znhu8&sz=w400" />
+  <link rel="preload" as="image" href="https://drive.google.com/thumbnail?id=1QzYv7qAHWdQZnZW03uDvrcdjLMXdSDJC&sz=w400" />
+  <link rel="preload" as="image" href="https://drive.google.com/thumbnail?id=1tfU0WfMPYTggSKnQ9vpZkWHIBExxzHKk&sz=w400" />
 </head>
 <body>
   <div id="app"></div>
@@ -368,7 +395,8 @@
       orderStep: 0,
       copied: false,
       igHandle: INSTAGRAM_USERNAME,
-      pickupPlace: "" 
+      pickupPlace: "",
+      ordering: false
     };
 
     const app = document.getElementById('app');
@@ -447,38 +475,50 @@
 
     async function orderViaInstagram() {
       const selectedLoc = PICKUP_LOCATIONS.find(l => l.name === state.pickupPlace);
-      if (!selectedLoc || totalQty() < selectedLoc.min) {
-        return; 
-      }
-      
+      if (!selectedLoc || totalQty() < selectedLoc.min) return;
+
       const text = buildMsg();
-      try { await navigator.clipboard.writeText(text); } catch {}
-
-      const btn = document.getElementById("orderBtn");
-      if (btn) {
-        btn.textContent = "✅ Copied! Opening Chat...";
-        btn.disabled = true;
-
-        setTimeout(() => {
-          const ua = navigator.userAgent || navigator.vendor || window.opera;
-          const isIgApp = /instagram/i.test(ua);
-
-          if (isIgApp) {
-            // SPECIFICALLY FOR INSTAGRAM IN-BUILT BROWSER ONLY
-            // 1. Direct to official DM link (Meta natively handles this without a popup)
-            window.location.href = `https://ig.me/m/${state.igHandle}`;
-            
-            // 2. Aggressively close the browser tab to exit the webview
-            setTimeout(() => {
-              window.close();
-            }, 100);
-          } else {
-            // standard browsers 
-            window.location.href = `https://ig.me/m/${state.igHandle}`;
-          }
-        }, 500);
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        try {
+          const ta = document.createElement("textarea");
+          ta.value = text; ta.style.cssText = "position:fixed;top:-9999px;left:-9999px;opacity:0;";
+          document.body.appendChild(ta); ta.focus(); ta.select();
+          document.execCommand("copy"); document.body.removeChild(ta);
+        } catch {}
       }
+
+      state.ordering = true;
+      render();
+
+      setTimeout(() => {
+        const ua = navigator.userAgent || navigator.vendor || window.opera || "";
+        const isIgApp = /instagram/i.test(ua);
+        const isAndroid = /android/i.test(ua);
+        if (isIgApp) {
+          if (isAndroid) {
+            window.location.href =
+              `intent://user?username=${state.igHandle}#Intent;` +
+              `package=com.instagram.android;scheme=instagram;` +
+              `S.browser_fallback_url=https%3A%2F%2Fig.me%2Fm%2F${state.igHandle};end`;
+          } else {
+            window.location.href = `instagram://user?username=${state.igHandle}`;
+            setTimeout(() => { window.location.href = `https://ig.me/m/${state.igHandle}`; }, 1000);
+          }
+        } else {
+          window.location.href = `https://ig.me/m/${state.igHandle}`;
+        }
+      }, 500);
     }
+
+    function resetOrdering() {
+      if (state.ordering) { state.ordering = false; render(); }
+    }
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") resetOrdering(); });
+    window.addEventListener("focus", resetOrdering);
+    window.addEventListener("pageshow", resetOrdering);
+    setInterval(() => { if (state.ordering && document.visibilityState === "visible") resetOrdering(); }, 300);
 
     function closeCart() {
       state.cartOpen = false;
@@ -509,6 +549,8 @@
         btnText = "⚠️ Select a pickup place";
       } else if (qty < selectedLoc.min) {
         btnText = `⚠️ Minimum ${selectedLoc.min} items required`;
+      } else if (state.ordering) {
+        btnDisabled = true;
       } else {
         btnDisabled = false;
       }
@@ -558,7 +600,7 @@
               return `
                 <div class="card">
                   <div class="product-top" style="background: ${color}18;">
-                    <img src="${fixDriveUrl(s.image)}" alt="${s.name}" class="product-image" onerror="this.src='https://api.dicebear.com/7.x/fun-emoji/svg?seed=${s.id}'" />
+                    <img src="${fixDriveUrl(s.image)}" alt="${s.name}" class="product-image" loading="lazy" decoding="async" onerror="this.src='https://api.dicebear.com/7.x/fun-emoji/svg?seed=${s.id}'" />
                     ${q > 0 ? `<div class="qty-badge">${q}</div>` : ""}
                     ${s.isCustom ? `<button class="btn" data-delete="${s.id}" style="position:absolute;top:6px;left:8px;background:rgba(255,0,0,0.15);color:#ff0000;padding:2px 7px;font-size:14px;border-radius:8px;">✕</button>` : ""}
                   </div>
@@ -606,7 +648,7 @@
                       <div class="cat-head" style="background:${(CAT_COLOR[cat] || "#ff0000")}18;color:${CAT_COLOR[cat] || "#ff0000"};">${cat}</div>
                       ${items.map(s => `
                         <div class="cart-item">
-                          <img src="${fixDriveUrl(s.image)}" alt="${s.name}" class="cart-image" onerror="this.src='https://api.dicebear.com/7.x/fun-emoji/svg?seed=${s.id}'" />
+                          <img src="${fixDriveUrl(s.image)}" alt="${s.name}" class="cart-image" loading="lazy" decoding="async" onerror="this.src='https://api.dicebear.com/7.x/fun-emoji/svg?seed=${s.id}'" />
                           <div style="flex:1;">
                             <div class="cart-name">${s.name}</div>
                             <div class="cart-sub">₹${s.price} each</div>
