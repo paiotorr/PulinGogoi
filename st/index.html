@@ -579,6 +579,37 @@
       render();
     }
 
+    function buildGridHTML() {
+      const filtered = state.activeCategory === "All"
+        ? state.stickers
+        : state.stickers.filter(s => s.category === state.activeCategory);
+      if (filtered.length === 0) {
+        return `<div class="empty-grid">No stickers here yet 😅</div>`;
+      }
+      return filtered.map(s => {
+        const q = state.cart[s.id] || 0;
+        const color = CAT_COLOR[s.category] || "#ff0000";
+        return `<div class="card">
+          <div class="product-top" style="background:${color}18;position:relative;">
+            <img src="${fixDriveUrl(s.image)}" alt="${s.name}" class="product-image" loading="lazy" decoding="async" onerror="this.src='https://api.dicebear.com/7.x/fun-emoji/svg?seed=${s.id}'"/>
+            ${q>0?`<div class="qty-badge">${q}</div>`:""}
+            ${s.isCustom?`<button class="btn" data-delete="${s.id}" style="position:absolute;top:6px;left:8px;background:rgba(255,0,0,0.15);color:#ff0000;padding:2px 7px;font-size:14px;border-radius:8px;">✕</button>`:""}
+          </div>
+          <div class="product-body">
+            <div class="product-name">${s.name}</div>
+            <span class="chip" style="background:${color}22;color:${color};">${s.category}</span>
+            <div class="price">₹${s.price}</div>
+            <div class="qty-control">
+              <button class="btn qty-btn" data-minus="${s.id}" ${q===0?"disabled":""} style="background:${q===0?"#fff5f5":"#ffe0e0"};color:${q===0?"#ccc":"#ff0000"};">−</button>
+              <span class="qty-val ${q>0?"active":""}">${q}</span>
+              <button class="btn qty-btn" data-plus="${s.id}">+</button>
+            </div>
+            ${q>0?`<div class="in-cart">✅ In Cart — ₹${q*s.price}</div>`:`<div class="add-hint">Press + to add</div>`}
+          </div>
+        </div>`;
+      }).join("");
+    }
+
     function render() {
       const filtered = filteredStickers();
       const groupedCart = grouped();
@@ -615,10 +646,12 @@
         return a.min - b.min;
       });
 
-      // ── SCROLL PRESERVATION: save positions before re-render ──
-      const _savedPageScroll = window.scrollY || window.pageYOffset || 0;
-      const _drawerEl = document.querySelector(".drawer");
-      const _savedDrawerScroll = _drawerEl ? _drawerEl.scrollTop : 0;
+      const _drawerScrollTop = (document.querySelector(".drawer") || {}).scrollTop || 0;
+      const _prevBelt = document.getElementById("catDrumBelt");
+      const _prevBeltHTML = _prevBelt ? _prevBelt.innerHTML : "";
+      const _prevBeltLeft = _prevBelt ? _prevBelt.style.left : "";
+      const _prevBg = document.getElementById("catDrumBg");
+      const _prevBgColor = _prevBg ? _prevBg.style.background : "";
 
       app.innerHTML = `
         <div style="font-family: Nunito, sans-serif; background: #fff5f5; min-height: 100vh;">
@@ -644,6 +677,7 @@
           </div>
 
           <div class="grid" id="productGrid">
+            ${buildGridHTML()}
           </div>
 
           ${state.cartOpen ? `
@@ -723,16 +757,30 @@
         </div>
       `;
 
-      // ── SCROLL PRESERVATION: restore positions after re-render ──
-      window.scrollTo({ top: _savedPageScroll, left: 0, behavior: "instant" });
-      const _newDrawerEl = document.querySelector(".drawer");
-      if (_newDrawerEl && _savedDrawerScroll > 0) _newDrawerEl.scrollTop = _savedDrawerScroll;
-
       document.getElementById("cartBtn").addEventListener("click", () => {
         state.cartOpen = true;
         state.orderStep = 0;
         render();
       });
+
+      // restore drum belt immediately so there is no blank frame before _initDial runs
+      if (_prevBeltHTML) {
+        const _newBelt = document.getElementById("catDrumBelt");
+        const _newBg   = document.getElementById("catDrumBg");
+        if (_newBelt) { _newBelt.innerHTML = _prevBeltHTML; _newBelt.style.left = _prevBeltLeft; }
+        if (_newBg)   { _newBg.style.background = _prevBgColor; }
+      }
+
+      if (_drawerScrollTop > 0) {
+        const _d = document.querySelector(".drawer");
+        if (_d) _d.scrollTop = _drawerScrollTop;
+      }
+
+      // attach events for the inline-rendered grid
+      document.querySelectorAll("#productGrid [data-plus]").forEach(b =>
+        b.addEventListener("click", () => changeQty(Number(b.dataset.plus), 1)));
+      document.querySelectorAll("#productGrid [data-minus]").forEach(b =>
+        b.addEventListener("click", () => changeQty(Number(b.dataset.minus), -1)));
 
       document.querySelectorAll("[data-delete]").forEach(btn => {
         btn.addEventListener("click", (e) => {
@@ -771,35 +819,7 @@
       window._renderGrid = function() {
         const gridEl = document.getElementById("productGrid");
         if (!gridEl) return;
-        const filtered = state.activeCategory === "All"
-          ? state.stickers
-          : state.stickers.filter(s => s.category === state.activeCategory);
-        if (filtered.length === 0) {
-          gridEl.innerHTML = `<div class="empty-grid">No stickers here yet 😅</div>`;
-          return;
-        }
-        gridEl.innerHTML = filtered.map(s => {
-          const q = state.cart[s.id] || 0;
-          const color = CAT_COLOR[s.category] || "#ff0000";
-          return `<div class="card">
-            <div class="product-top" style="background:${color}18;position:relative;">
-              <img src="${fixDriveUrl(s.image)}" alt="${s.name}" class="product-image" loading="lazy" decoding="async" onerror="this.src='https://api.dicebear.com/7.x/fun-emoji/svg?seed=${s.id}'"/>
-              ${q>0?`<div class="qty-badge">${q}</div>`:""}
-              ${s.isCustom?`<button class="btn" data-delete="${s.id}" style="position:absolute;top:6px;left:8px;background:rgba(255,0,0,0.15);color:#ff0000;padding:2px 7px;font-size:14px;border-radius:8px;">✕</button>`:""}
-            </div>
-            <div class="product-body">
-              <div class="product-name">${s.name}</div>
-              <span class="chip" style="background:${color}22;color:${color};">${s.category}</span>
-              <div class="price">₹${s.price}</div>
-              <div class="qty-control">
-                <button class="btn qty-btn" data-minus="${s.id}" ${q===0?"disabled":""} style="background:${q===0?"#fff5f5":"#ffe0e0"};color:${q===0?"#ccc":"#ff0000"};">−</button>
-                <span class="qty-val ${q>0?"active":""}">${q}</span>
-                <button class="btn qty-btn" data-plus="${s.id}">+</button>
-              </div>
-              ${q>0?`<div class="in-cart">✅ In Cart — ₹${q*s.price}</div>`:`<div class="add-hint">Press + to add</div>`}
-            </div>
-          </div>`;
-        }).join("");
+        gridEl.innerHTML = buildGridHTML();
         gridEl.querySelectorAll("[data-plus]").forEach(b =>
           b.addEventListener("click", () => changeQty(Number(b.dataset.plus), 1)));
         gridEl.querySelectorAll("[data-minus]").forEach(b =>
@@ -817,40 +837,39 @@
         const N   = CATEGORIES.length;
         let cur   = Math.max(0, CATEGORIES.indexOf(state.activeCategory));
 
-        // ── build 5 slots, measure the widest pill, use that as slotW ────
-        belt.innerHTML = "";
-        const slots = [];
-        for (let s = 0; s < 5; s++) {
-          const slot = document.createElement("div");
-          slot.className = "cat-drum-slot" + (s === 2 ? " active" : "");
-          const pill = document.createElement("div");
-          pill.className = "cat-drum-pill";
-          pill.textContent = CATEGORIES[s % N]; // temp text to measure
-          slot.appendChild(pill);
-          belt.appendChild(slot);
-          slots.push({ slot, pill });
+        let slotW, slots;
+
+        if (belt.children.length === 5 && window._drumSlotW) {
+          // belt already populated (restored after render) — skip DOM rebuild to prevent blink
+          slotW = window._drumSlotW;
+          slots = Array.from(belt.children).map(slot => ({ slot, pill: slot.querySelector(".cat-drum-pill") }));
+        } else {
+          // first load — build slots and measure
+          belt.innerHTML = "";
+          slots = [];
+          for (let s = 0; s < 5; s++) {
+            const slot = document.createElement("div");
+            slot.className = "cat-drum-slot" + (s === 2 ? " active" : "");
+            const pill = document.createElement("div");
+            pill.className = "cat-drum-pill";
+            pill.textContent = CATEGORIES[s % N];
+            slot.appendChild(pill);
+            belt.appendChild(slot);
+            slots.push({ slot, pill });
+          }
+          const tempPill = document.createElement("div");
+          tempPill.className = "cat-drum-pill";
+          tempPill.style.cssText = "position:absolute;visibility:hidden;white-space:nowrap;";
+          document.body.appendChild(tempPill);
+          let maxW = 0;
+          CATEGORIES.forEach(cat => { tempPill.textContent = cat; maxW = Math.max(maxW, tempPill.offsetWidth); });
+          document.body.removeChild(tempPill);
+          slotW = maxW + 20;
+          window._drumSlotW = slotW;
+          slots.forEach(({ slot }) => { slot.style.width = slotW + "px"; });
+          const beltBase = drum.offsetWidth / 2 - 2.5 * slotW;
+          belt.style.left = beltBase + "px";
         }
-
-        // measure the widest pill across all categories
-        const tempPill = document.createElement("div");
-        tempPill.className = "cat-drum-pill";
-        tempPill.style.cssText = "position:absolute;visibility:hidden;white-space:nowrap;";
-        document.body.appendChild(tempPill);
-        let maxW = 0;
-        CATEGORIES.forEach(cat => {
-          tempPill.textContent = cat;
-          maxW = Math.max(maxW, tempPill.offsetWidth);
-        });
-        document.body.removeChild(tempPill);
-
-        // slot width = pill width + small breathing room (16px each side)
-        const slotW = maxW + 20;
-
-        slots.forEach(({ slot }) => { slot.style.width = slotW + "px"; });
-
-        // belt left: centre slot (index 2) must sit at drum centre
-        const beltBase = drum.offsetWidth / 2 - 2.5 * slotW;
-        belt.style.left = beltBase + "px";
 
         // ── paint ─────────────────────────────────────────────
         function colorOf(idx) { return CAT_COLOR[CATEGORIES[idx]] || "#ff0000"; }
@@ -942,6 +961,11 @@
       if (state.cartOpen) {
         document.getElementById("backdrop").addEventListener("click", closeCart);
         document.getElementById("closeBtn").addEventListener("click", closeCart);
+
+        document.querySelectorAll(".mini-btn[data-plus]").forEach(b =>
+          b.addEventListener("click", () => changeQty(Number(b.dataset.plus), 1)));
+        document.querySelectorAll(".mini-btn[data-minus]").forEach(b =>
+          b.addEventListener("click", () => changeQty(Number(b.dataset.minus), -1)));
         
         const pickupTrigger = document.getElementById("pickupTrigger");
         const pickupOptions = document.getElementById("pickupOptions");
