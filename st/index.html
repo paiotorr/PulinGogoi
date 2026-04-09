@@ -110,28 +110,73 @@
     .subtitle { font-size: 11px; color: rgba(255,255,255,.8); font-weight: 700; margin-top: 1px; }
     .header-actions { display: flex; gap: 8px; }
 
-    .categories-wrap {
-      padding: 16px 0 8px;
-      overflow: hidden;
+    /* ── CATEGORY DIAL ── */
+    .cat-dial-section {
+      padding: 10px 0 4px;
       position: relative;
+      overflow: hidden;
     }
-    .categories {
+    /* sliding colour backdrop */
+    .cat-dial-bg {
+      position: absolute;
+      inset: 0;
+      transition: background 0.35s ease;
+      opacity: 0.13;
+      pointer-events: none;
+    }
+    /* the scrollable track */
+    .cat-dial-track {
       display: flex;
-      gap: 8px;
-      padding: 0 18px;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 0;
       overflow-x: auto;
       scrollbar-width: none;
-      scroll-behavior: auto;
-      white-space: nowrap;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-x;
+      cursor: grab;
     }
-    .categories::-webkit-scrollbar { display: none; }
-    .category-btn {
-      padding: 8px 16px;
-      font-size: 13px;
-      white-space: nowrap;
-      font-family: 'Fredoka One';
+    .cat-dial-track:active { cursor: grabbing; }
+    .cat-dial-track::-webkit-scrollbar { display: none; }
+    /* spacers to let first/last item centre */
+    .cat-dial-spacer { flex-shrink: 0; }
+    .cat-dial-item {
       flex-shrink: 0;
-      transition: background 0.2s, color 0.2s, border-color 0.2s;
+      scroll-snap-align: center;
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-family: 'Fredoka One';
+      font-size: 14px;
+      white-space: nowrap;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: transform 0.22s, opacity 0.22s, background 0.22s, color 0.22s, border-color 0.22s, box-shadow 0.22s;
+      will-change: transform, opacity;
+    }
+    .cat-dial-item.active {
+      transform: scale(1.15);
+      box-shadow: 0 4px 18px rgba(0,0,0,0.18);
+      z-index: 2;
+    }
+    .cat-dial-item.near {
+      transform: scale(1.0);
+      opacity: 0.75;
+    }
+    .cat-dial-item.far {
+      transform: scale(0.88);
+      opacity: 0.45;
+    }
+    /* centre focus line */
+    .cat-dial-focus {
+      position: absolute;
+      top: 0; bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 2px;
+      background: rgba(0,0,0,0.06);
+      pointer-events: none;
+      border-radius: 1px;
     }
 
     .grid {
@@ -590,15 +635,23 @@
             </div>
           </header>
 
-          <div class="categories-wrap">
-            <div class="categories" id="categoriesBar">
-              ${CATEGORIES.map(cat => `
-                <button class="btn category-btn" data-cat="${cat}" style="
-                  background: ${state.activeCategory === cat ? (CAT_COLOR[cat] || "#ff0000") : "white"};
-                  color: ${state.activeCategory === cat ? "white" : "#666"};
-                  border: 2px solid ${state.activeCategory === cat ? "transparent" : "#ffd6d6"};
-                ">${cat}</button>
-              `).join("")}
+          <div class="cat-dial-section" id="catDialSection">
+            <div class="cat-dial-bg" id="catDialBg"></div>
+            <div class="cat-dial-focus"></div>
+            <div class="cat-dial-track" id="catDialTrack">
+              <div class="cat-dial-spacer" id="catSpacerL"></div>
+              ${CATEGORIES.map((cat, i) => `
+                <div class="cat-dial-item ${state.activeCategory === cat ? 'active' : ''}"
+                  data-cat="${cat}"
+                  data-idx="${i}"
+                  style="
+                    background: ${state.activeCategory === cat ? (CAT_COLOR[cat] || '#ff0000') : 'white'};
+                    color: ${state.activeCategory === cat ? 'white' : '#888'};
+                    border-color: ${state.activeCategory === cat ? 'transparent' : '#ffd6d6'};
+                  "
+                >${cat}</div>
+              `).join('')}
+              <div class="cat-dial-spacer" id="catSpacerR"></div>
             </div>
           </div>
 
@@ -734,103 +787,183 @@
         });
       });
 
-      // ── Circular carousel scroll ──────────────────────────────────────────
-      (function initCarousel() {
-        const bar = document.getElementById("categoriesBar");
-        if (!bar) return;
+      // ══════════════════════════════════════════════════════
+      //  CATEGORY DIAL ENGINE — snap-scroll + tick sound
+      // ══════════════════════════════════════════════════════
+      (function initDial() {
+        const track   = document.getElementById("catDialTrack");
+        const bg      = document.getElementById("catDialBg");
+        const spacerL = document.getElementById("catSpacerL");
+        const spacerR = document.getElementById("catSpacerR");
+        if (!track || !bg) return;
 
-        const realBtns = [...bar.querySelectorAll("[data-cat]")];
-        const totalReal = realBtns.length;
-        if (totalReal === 0) return;
+        const items = [...track.querySelectorAll(".cat-dial-item")];
+        const N = items.length;
+        if (N === 0) return;
 
-        // Build: [clone-tail] + [real buttons] + [clone-head]
-        // Clone last N buttons before the first, clone first N buttons after the last
-        const CLONE_COUNT = totalReal; // full set cloned on each side
-
-        // Prepend clones of the LAST N real buttons
-        for (let i = totalReal - 1; i >= totalReal - CLONE_COUNT; i--) {
-          const clone = realBtns[i].cloneNode(true);
-          clone.setAttribute("data-clone", "pre");
-          clone.addEventListener("click", () => {
-            state.activeCategory = clone.dataset.cat;
-            render();
-          });
-          bar.insertBefore(clone, bar.firstChild);
+        // ── AudioContext tick (wind-up clock ratchet) ──────────
+        let audioCtx = null;
+        function getCtx() {
+          if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          return audioCtx;
         }
-
-        // Append clones of the FIRST N real buttons
-        for (let i = 0; i < CLONE_COUNT; i++) {
-          const clone = realBtns[i].cloneNode(true);
-          clone.setAttribute("data-clone", "post");
-          clone.addEventListener("click", () => {
-            state.activeCategory = clone.dataset.cat;
-            render();
-          });
-          bar.appendChild(clone);
-        }
-
-        // All buttons after DOM update
-        const allBtns = [...bar.querySelectorAll(".category-btn")];
-        // Real buttons now start at index CLONE_COUNT
-        const realStart = CLONE_COUNT;
-
-        // Find the active real button and scroll to it instantly
-        const activeIndex = realStart + CATEGORIES.indexOf(state.activeCategory);
-        const activeEl = allBtns[activeIndex];
-        if (!activeEl) return;
-
-        // Instant-jump to keep real section in view (no animation on init)
-        const barRect = bar.getBoundingClientRect();
-        const btnRect = activeEl.getBoundingClientRect();
-        const centerOffset = btnRect.left - barRect.left - (barRect.width / 2) + (btnRect.width / 2);
-        bar.scrollLeft += centerOffset;
-
-        // Smooth animated scroll helper
-        function smoothScrollTo(target, duration = 380) {
-          const start = bar.scrollLeft;
-          const diff = target - start;
-          let startTime = null;
-          function ease(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
-          function step(ts) {
-            if (!startTime) startTime = ts;
-            const elapsed = ts - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            bar.scrollLeft = start + diff * ease(progress);
-            if (progress < 1) requestAnimationFrame(step);
-            else {
-              // After scroll ends, silently jump if we've landed in a clone zone
-              jumpIfInClone();
+        function playTick() {
+          try {
+            const ctx = getCtx();
+            // Short sharp click: noise burst shaped into a tick
+            const buf = ctx.createBuffer(1, ctx.sampleRate * 0.04, ctx.sampleRate);
+            const data = buf.getChannelData(0);
+            for (let i = 0; i < data.length; i++) {
+              // decaying noise — mechanical ratchet feel
+              data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 6);
             }
-          }
-          requestAnimationFrame(step);
+            const src = ctx.createBufferSource();
+            src.buffer = buf;
+            // bandpass to give it that "it it it" mid click tone
+            const bp = ctx.createBiquadFilter();
+            bp.type = "bandpass";
+            bp.frequency.value = 2200;
+            bp.Q.value = 0.8;
+            const gain = ctx.createGain();
+            gain.gain.value = 0.55;
+            src.connect(bp); bp.connect(gain); gain.connect(ctx.destination);
+            src.start();
+          } catch(e) {}
         }
 
-        function jumpIfInClone() {
-          const all = [...bar.querySelectorAll(".category-btn")];
-          const realBtnsNow = all.slice(CLONE_COUNT, CLONE_COUNT + totalReal);
-          // Width of one full set of real buttons
-          const setWidth = realBtnsNow.reduce((acc, b) => acc + b.offsetWidth + 8, 0);
+        // ── Spacers so first/last item centres ────────────────
+        function setSpacers() {
+          const hw = track.offsetWidth / 2;
+          const fw = items[0] ? items[0].offsetWidth / 2 : 50;
+          const lw = items[N-1] ? items[N-1].offsetWidth / 2 : 50;
+          spacerL.style.minWidth = (hw - fw) + "px";
+          spacerR.style.minWidth = (hw - lw) + "px";
+        }
+        setSpacers();
+        window.addEventListener("resize", setSpacers);
 
-          if (bar.scrollLeft < realBtnsNow[0].offsetLeft - bar.offsetLeft - 10) {
-            bar.scrollLeft += setWidth;
-          } else if (bar.scrollLeft > realBtnsNow[totalReal - 1].offsetLeft - bar.offsetLeft + realBtnsNow[totalReal - 1].offsetWidth - bar.offsetWidth + 10) {
-            bar.scrollLeft -= setWidth;
+        // ── Find nearest centred item ─────────────────────────
+        function getNearestIndex() {
+          const centre = track.scrollLeft + track.offsetWidth / 2;
+          let best = 0, bestDist = Infinity;
+          items.forEach((el, i) => {
+            const mid = el.offsetLeft + el.offsetWidth / 2;
+            const d = Math.abs(mid - centre);
+            if (d < bestDist) { bestDist = d; best = i; }
+          });
+          return best;
+        }
+
+        // ── Scroll active item to centre (instant or smooth) ──
+        function scrollToIndex(idx, smooth = true) {
+          const el = items[idx];
+          if (!el) return;
+          const target = el.offsetLeft + el.offsetWidth / 2 - track.offsetWidth / 2;
+          if (smooth) {
+            track.style.scrollBehavior = "smooth";
+            track.scrollLeft = target;
+            setTimeout(() => { track.style.scrollBehavior = "auto"; }, 400);
+          } else {
+            track.style.scrollBehavior = "auto";
+            track.scrollLeft = target;
           }
         }
 
-        // Scroll active button to center with wrap-around
-        const activeRealIndex = CATEGORIES.indexOf(state.activeCategory);
-        if (activeRealIndex === -1) return;
+        // ── Update visual state of all items + bg colour ──────
+        let lastIdx = CATEGORIES.indexOf(state.activeCategory);
+        if (lastIdx < 0) lastIdx = 0;
 
-        const targetBtn = allBtns[realStart + activeRealIndex];
-        if (!targetBtn) return;
+        function updateVisuals(idx) {
+          const cat = CATEGORIES[idx];
+          const color = CAT_COLOR[cat] || "#ff0000";
+          bg.style.background = color;
+          items.forEach((el, i) => {
+            const dist = Math.abs(i - idx);
+            el.classList.remove("active","near","far");
+            if (dist === 0) {
+              el.classList.add("active");
+              el.style.background = color;
+              el.style.color = "white";
+              el.style.borderColor = "transparent";
+            } else {
+              el.classList.add(dist === 1 ? "near" : "far");
+              el.style.background = "white";
+              el.style.color = dist === 1 ? "#888" : "#bbb";
+              el.style.borderColor = dist === 1 ? "#ffd6d6" : "#f5e5e5";
+            }
+          });
+        }
+        updateVisuals(lastIdx);
+        scrollToIndex(lastIdx, false);
 
-        const bRect = bar.getBoundingClientRect();
-        const tRect = targetBtn.getBoundingClientRect();
-        const scrollTarget = bar.scrollLeft + tRect.left - bRect.left - (bRect.width / 2) + (tRect.width / 2);
-        smoothScrollTo(scrollTarget);
+        // ── Scroll → live update visuals + tick on step ───────
+        let ticking = false;
+        track.addEventListener("scroll", () => {
+          if (!ticking) {
+            ticking = true;
+            requestAnimationFrame(() => {
+              const idx = getNearestIndex();
+              if (idx !== lastIdx) {
+                playTick();
+                lastIdx = idx;
+                updateVisuals(idx);
+                // update state so grid refilters in real time
+                state.activeCategory = CATEGORIES[idx];
+                render();
+              }
+              ticking = false;
+            });
+          }
+        }, { passive: true });
+
+        // ── Snap on touch/mouse end ────────────────────────────
+        function onScrollEnd() {
+          const idx = getNearestIndex();
+          scrollToIndex(idx, true);
+          if (state.activeCategory !== CATEGORIES[idx]) {
+            state.activeCategory = CATEGORIES[idx];
+            render();
+          }
+        }
+        let scrollTimer;
+        track.addEventListener("scroll", () => {
+          clearTimeout(scrollTimer);
+          scrollTimer = setTimeout(onScrollEnd, 120);
+        }, { passive: true });
+
+        // ── Click on any item to jump to it ───────────────────
+        items.forEach((el, i) => {
+          el.addEventListener("click", () => {
+            if (i !== lastIdx) {
+              playTick();
+              state.activeCategory = CATEGORIES[i];
+              lastIdx = i;
+              scrollToIndex(i, true);
+              updateVisuals(i);
+              render();
+            }
+          });
+        });
+
+        // ── Mouse drag support (desktop) ──────────────────────
+        let isDragging = false, dragStartX = 0, dragStartSL = 0;
+        track.addEventListener("mousedown", e => {
+          isDragging = true;
+          dragStartX = e.clientX;
+          dragStartSL = track.scrollLeft;
+          track.style.scrollBehavior = "auto";
+        });
+        window.addEventListener("mousemove", e => {
+          if (!isDragging) return;
+          track.scrollLeft = dragStartSL - (e.clientX - dragStartX);
+        });
+        window.addEventListener("mouseup", () => {
+          if (!isDragging) return;
+          isDragging = false;
+          onScrollEnd();
+        });
       })();
-      // ─────────────────────────────────────────────────────────────────────
+      // ══════════════════════════════════════════════════════
 
       document.querySelectorAll("[data-plus]").forEach(btn => {
         btn.addEventListener("click", () => changeQty(Number(btn.dataset.plus), 1));
