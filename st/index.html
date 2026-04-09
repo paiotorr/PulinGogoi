@@ -448,198 +448,58 @@
     async function orderViaInstagram() {
       const selectedLoc = PICKUP_LOCATIONS.find(l => l.name === state.pickupPlace);
       if (!selectedLoc || totalQty() < selectedLoc.min) {
-        return;
+        return; 
       }
-
+      
       const text = buildMsg();
 
-      // ── Step 1: Copy order text to clipboard ──────────────────────────────
-      let copied = false;
+      // Clipboard copy with fallback for WebViews
       try {
         await navigator.clipboard.writeText(text);
-        copied = true;
-      } catch (e) {
-        // Fallback for WebViews that block navigator.clipboard
+      } catch {
         try {
           const ta = document.createElement("textarea");
           ta.value = text;
           ta.style.cssText = "position:fixed;top:-9999px;left:-9999px;opacity:0;";
           document.body.appendChild(ta);
-          ta.focus();
-          ta.select();
-          copied = document.execCommand("copy");
+          ta.focus(); ta.select();
+          document.execCommand("copy");
           document.body.removeChild(ta);
-        } catch (e2) { copied = false; }
+        } catch {}
       }
 
       const btn = document.getElementById("orderBtn");
       if (btn) {
-        btn.textContent = copied ? "✅ Copied! Opening DM..." : "📋 Opening DM...";
+        btn.textContent = "✅ Copied! Opening Chat...";
         btn.disabled = true;
-      }
 
-      // ── Step 2: Detect environment ────────────────────────────────────────
-      const ua = (navigator.userAgent || navigator.vendor || window.opera || "").toLowerCase();
-      const isInstagramWebView = /instagram/i.test(ua);
-      const isAndroid = /android/i.test(ua);
-      const isIOS = /iphone|ipad|ipod/i.test(ua);
+        setTimeout(() => {
+          const ua = navigator.userAgent || navigator.vendor || window.opera || "";
+          const isIgApp = /instagram/i.test(ua);
+          const isAndroid = /android/i.test(ua);
 
-      // ── Step 3: Show the paste-reminder overlay ───────────────────────────
-      // Instagram DM URLs cannot pre-fill text — this is an Instagram limitation.
-      // We show a friendly reminder to paste before navigating away.
-      showPasteOverlay(copied, () => {
-        navigateToInstagramDM(isInstagramWebView, isAndroid, isIOS);
-      });
-    }
-
-    function navigateToInstagramDM(isInstagramWebView, isAndroid, isIOS) {
-      const username = state.igHandle;
-
-      if (isInstagramWebView) {
-        // ── Inside Instagram's own WebView ───────────────────────────────
-        // Using instagram:// scheme forces the app to open its own native DM screen.
-        // On Android we use the intent:// scheme for reliability.
-        if (isAndroid) {
-          // intent:// opens Instagram DM natively and exits the WebView
-          window.location.href =
-            `intent://instagram.com/#Intent;` +
-            `package=com.instagram.android;` +
-            `scheme=https;` +
-            `S.browser_fallback_url=https%3A%2F%2Fig.me%2Fm%2F${username};` +
-            `end`;
-        } else {
-          // iOS: instagram:// deep-link to DM, fallback to ig.me
-          var appLink = `instagram://user?username=${username}`;
-          var fallback = `https://ig.me/m/${username}`;
-          var start = Date.now();
-          var iframe = document.createElement("iframe");
-          iframe.style.display = "none";
-          iframe.src = appLink;
-          document.body.appendChild(iframe);
-          setTimeout(function() {
-            document.body.removeChild(iframe);
-            if (Date.now() - start < 1500) {
-              // app didn't open — use web fallback
-              window.location.href = fallback;
+          if (isIgApp) {
+            if (isAndroid) {
+              // Android: intent:// exits the WebView and opens Instagram DM natively
+              window.location.href =
+                `intent://user?username=${state.igHandle}#Intent;` +
+                `package=com.instagram.android;` +
+                `scheme=instagram;` +
+                `S.browser_fallback_url=https%3A%2F%2Fig.me%2Fm%2F${state.igHandle};` +
+                `end`;
+            } else {
+              // iOS: instagram:// deep-link closes WebView and opens DM
+              window.location.href = `instagram://user?username=${state.igHandle}`;
+              setTimeout(() => {
+                window.location.href = `https://ig.me/m/${state.igHandle}`;
+              }, 1000);
             }
-          }, 1000);
-        }
-      } else {
-        // ── Normal browser (Chrome, Safari, etc.) ────────────────────────
-        if (isAndroid) {
-          // Try native app first, fall back to web
-          var appUrl = `intent://instagram.com/direct/t/${username}#Intent;package=com.instagram.android;scheme=https;S.browser_fallback_url=https%3A%2F%2Fig.me%2Fm%2F${username};end`;
-          window.location.href = appUrl;
-        } else if (isIOS) {
-          var iosApp = `instagram://user?username=${username}`;
-          var iosFallback = `https://ig.me/m/${username}`;
-          var t0 = Date.now();
-          var fr = document.createElement("iframe");
-          fr.style.display = "none";
-          fr.src = iosApp;
-          document.body.appendChild(fr);
-          setTimeout(function() {
-            document.body.removeChild(fr);
-            if (Date.now() - t0 < 1500) window.location.href = iosFallback;
-          }, 1000);
-        } else {
-          // Desktop browser
-          window.open(`https://ig.me/m/${username}`, "_blank");
-        }
+          } else {
+            // Normal browser (Chrome, Safari, etc.)
+            window.location.href = `https://ig.me/m/${state.igHandle}`;
+          }
+        }, 500);
       }
-    }
-
-    function showPasteOverlay(copied, onProceed) {
-      // Remove any existing overlay
-      var old = document.getElementById("igPasteOverlay");
-      if (old) old.remove();
-
-      var overlay = document.createElement("div");
-      overlay.id = "igPasteOverlay";
-      overlay.style.cssText = `
-        position: fixed; inset: 0; z-index: 9999;
-        background: rgba(0,0,0,0.55);
-        display: flex; align-items: flex-end; justify-content: center;
-        font-family: 'Nunito', sans-serif;
-        animation: fadeInOverlay 0.2s ease;
-      `;
-
-      overlay.innerHTML = `
-        <style>
-          @keyframes fadeInOverlay { from { opacity:0; } to { opacity:1; } }
-          @keyframes slideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
-          #igPasteCard { animation: slideUp 0.25s ease; }
-          #igPasteCard .step {
-            display: flex; align-items: flex-start; gap: 12px;
-            padding: 10px 0; border-bottom: 1px solid #fff0f0;
-          }
-          #igPasteCard .step:last-of-type { border-bottom: none; }
-          #igPasteCard .step-num {
-            background: #ff0000; color: white; border-radius: 50%;
-            width: 26px; height: 26px; min-width: 26px;
-            display: flex; align-items: center; justify-content: center;
-            font-family: 'Fredoka One'; font-size: 14px; margin-top: 2px;
-          }
-          #igPasteCard .step-text { font-size: 14px; color: #333; line-height: 1.5; }
-          #igPasteCard .step-text b { color: #ff0000; }
-        </style>
-        <div id="igPasteCard" style="
-          background: white; border-radius: 24px 24px 0 0;
-          padding: 24px 22px 32px; width: 100%; max-width: 480px;
-          box-shadow: 0 -8px 30px rgba(0,0,0,0.15);
-        ">
-          <div style="text-align:center; margin-bottom: 16px;">
-            <div style="font-family:'Fredoka One';font-size:22px;color:#333;">
-              ${copied ? "✅ Order Copied!" : "📋 Almost There!"}
-            </div>
-            <div style="font-size:13px;color:#888;margin-top:4px;">
-              ${copied ? "Your order message is ready to paste." : "Tap the button below, then paste your order."}
-            </div>
-          </div>
-
-          <div style="background:#fff8f8;border-radius:14px;padding:14px 16px;margin-bottom:18px;">
-            <div class="step">
-              <div class="step-num">1</div>
-              <div class="step-text">${copied ? '<b>Order text is already copied</b> to your clipboard ✅' : '<b>Tap "Open Instagram DM"</b> below'}</div>
-            </div>
-            <div class="step">
-              <div class="step-num">2</div>
-              <div class="step-text">In Instagram DM, <b>tap the message box</b> and choose <b>Paste</b></div>
-            </div>
-            <div class="step">
-              <div class="step-num">3</div>
-              <div class="step-text"><b>Hit Send</b> — your order is confirmed! 🎉</div>
-            </div>
-          </div>
-
-          <button id="igProceedBtn" style="
-            width: 100%; padding: 16px; border: none; cursor: pointer;
-            background: linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);
-            color: white; border-radius: 14px;
-            font-family: 'Fredoka One'; font-size: 19px;
-            box-shadow: 0 4px 14px rgba(253,29,29,0.35);
-          ">📩 Open Instagram DM</button>
-
-          <button id="igDismissBtn" style="
-            width:100%; margin-top:10px; padding:10px; border:none; cursor:pointer;
-            background:transparent; color:#aaa; font-family:'Nunito',sans-serif;
-            font-size:13px; font-weight:700;
-          ">Cancel</button>
-        </div>
-      `;
-
-      document.body.appendChild(overlay);
-
-      document.getElementById("igProceedBtn").addEventListener("click", function() {
-        overlay.remove();
-        onProceed();
-      });
-      document.getElementById("igDismissBtn").addEventListener("click", function() {
-        overlay.remove();
-        // Re-enable order button
-        var btn = document.getElementById("orderBtn");
-        if (btn) { btn.textContent = "Order via Instagram"; btn.disabled = false; }
-      });
     }
 
     function closeCart() {
