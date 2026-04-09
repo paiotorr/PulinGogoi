@@ -110,73 +110,71 @@
     .subtitle { font-size: 11px; color: rgba(255,255,255,.8); font-weight: 700; margin-top: 1px; }
     .header-actions { display: flex; gap: 8px; }
 
-    /* ── CATEGORY DIAL ── */
-    .cat-dial-section {
-      padding: 10px 0 4px;
+    /* ── CATEGORY DRUM PICKER ── */
+    .cat-drum {
       position: relative;
+      height: 54px;
       overflow: hidden;
+      touch-action: pan-x;
+      user-select: none;
     }
-    /* sliding colour backdrop */
-    .cat-dial-bg {
+    /* colour glow behind active slot */
+    .cat-drum-bg {
       position: absolute;
       inset: 0;
-      transition: background 0.35s ease;
-      opacity: 0.13;
+      transition: background 0.3s;
+      opacity: 0.12;
       pointer-events: none;
     }
-    /* the scrollable track */
-    .cat-dial-track {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 6px 0;
-      overflow-x: auto;
-      scrollbar-width: none;
-      scroll-snap-type: x mandatory;
-      -webkit-overflow-scrolling: touch;
-      touch-action: pan-x;
-      cursor: grab;
-    }
-    .cat-dial-track:active { cursor: grabbing; }
-    .cat-dial-track::-webkit-scrollbar { display: none; }
-    /* spacers to let first/last item centre */
-    .cat-dial-spacer { flex-shrink: 0; }
-    .cat-dial-item {
-      flex-shrink: 0;
-      scroll-snap-align: center;
-      padding: 8px 18px;
-      border-radius: 20px;
-      font-family: 'Fredoka One';
-      font-size: 14px;
-      white-space: nowrap;
-      border: 2px solid transparent;
-      cursor: pointer;
-      transition: transform 0.22s, opacity 0.22s, background 0.22s, color 0.22s, border-color 0.22s, box-shadow 0.22s;
-      will-change: transform, opacity;
-    }
-    .cat-dial-item.active {
-      transform: scale(1.15);
-      box-shadow: 0 4px 18px rgba(0,0,0,0.18);
-      z-index: 2;
-    }
-    .cat-dial-item.near {
-      transform: scale(1.0);
-      opacity: 0.75;
-    }
-    .cat-dial-item.far {
-      transform: scale(0.88);
-      opacity: 0.45;
-    }
-    /* centre focus line */
-    .cat-dial-focus {
+    /* left/right edge fade so only 3 pills show */
+    .cat-drum::before,
+    .cat-drum::after {
+      content: '';
       position: absolute;
       top: 0; bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 2px;
-      background: rgba(0,0,0,0.06);
+      width: 22%;
+      z-index: 3;
       pointer-events: none;
-      border-radius: 1px;
+    }
+    .cat-drum::before { left: 0;  background: linear-gradient(to right, #fff5f5 30%, transparent); }
+    .cat-drum::after  { right: 0; background: linear-gradient(to left,  #fff5f5 30%, transparent); }
+    /* the sliding belt — positioned absolutely, moved by JS transform */
+    .cat-drum-belt {
+      position: absolute;
+      top: 0; bottom: 0;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      will-change: transform;
+      transition: transform 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .cat-drum-belt.no-transition { transition: none !important; }
+    /* each slot is exactly 1/3 of the drum width — set by JS */
+    .cat-drum-slot {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cat-drum-pill {
+      padding: 7px 16px;
+      border-radius: 20px;
+      font-family: 'Fredoka One';
+      font-size: 13px;
+      white-space: nowrap;
+      border: 2px solid #ffd6d6;
+      background: white;
+      color: #999;
+      transition: background 0.25s, color 0.25s, border-color 0.25s,
+                  transform 0.25s, box-shadow 0.25s, opacity 0.25s;
+      transform: scale(0.88);
+      opacity: 0.55;
+      cursor: pointer;
+    }
+    .cat-drum-slot.active .cat-drum-pill {
+      transform: scale(1.12);
+      opacity: 1;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
     }
 
     .grid {
@@ -635,59 +633,12 @@
             </div>
           </header>
 
-          <div class="cat-dial-section" id="catDialSection">
-            <div class="cat-dial-bg" id="catDialBg"></div>
-            <div class="cat-dial-focus"></div>
-            <div class="cat-dial-track" id="catDialTrack">
-              <div class="cat-dial-spacer" id="catSpacerL"></div>
-              ${CATEGORIES.map((cat, i) => `
-                <div class="cat-dial-item ${state.activeCategory === cat ? 'active' : ''}"
-                  data-cat="${cat}"
-                  data-idx="${i}"
-                  style="
-                    background: ${state.activeCategory === cat ? (CAT_COLOR[cat] || '#ff0000') : 'white'};
-                    color: ${state.activeCategory === cat ? 'white' : '#888'};
-                    border-color: ${state.activeCategory === cat ? 'transparent' : '#ffd6d6'};
-                  "
-                >${cat}</div>
-              `).join('')}
-              <div class="cat-dial-spacer" id="catSpacerR"></div>
-            </div>
+          <div class="cat-drum" id="catDrum">
+            <div class="cat-drum-bg" id="catDrumBg"></div>
+            <div class="cat-drum-belt" id="catDrumBelt"></div>
           </div>
 
-          <div class="grid">
-            ${filtered.length === 0 ? `
-              <div class="empty-grid">No stickers here yet 😅</div>
-            ` : filtered.map(s => {
-              const q = getQty(s.id);
-              const color = CAT_COLOR[s.category] || "#ff0000";
-              return `
-                <div class="card">
-                  <div class="product-top" style="background: ${color}18;">
-                    <img src="${fixDriveUrl(s.image)}" alt="${s.name}" class="product-image" loading="lazy" decoding="async" onerror="this.src='https://api.dicebear.com/7.x/fun-emoji/svg?seed=${s.id}'" />
-                    ${q > 0 ? `<div class="qty-badge">${q}</div>` : ""}
-                    ${s.isCustom ? `<button class="btn" data-delete="${s.id}" style="position:absolute;top:6px;left:8px;background:rgba(255,0,0,0.15);color:#ff0000;padding:2px 7px;font-size:14px;border-radius:8px;">✕</button>` : ""}
-                  </div>
-                  <div class="product-body">
-                    <div class="product-name">${s.name}</div>
-                    <span class="chip" style="background:${color}22;color:${color};">${s.category}</span>
-                    <div class="price">₹${s.price}</div>
-
-                    <div class="qty-control">
-                      <button class="btn qty-btn" data-minus="${s.id}" ${q === 0 ? "disabled" : ""} style="background:${q === 0 ? "#fff5f5" : "#ffe0e0"};color:${q === 0 ? "#ccc" : "#ff0000"};">−</button>
-                      <span class="qty-val ${q > 0 ? "active" : ""}">${q}</span>
-                      <button class="btn qty-btn" data-plus="${s.id}">+</button>
-                    </div>
-
-                    ${q > 0 ? `
-                      <div class="in-cart">✅ In Cart — ₹${q * s.price}</div>
-                    ` : `
-                      <div class="add-hint">Press + to add</div>
-                    `}
-                  </div>
-                </div>
-              `;
-            }).join("")}
+          <div class="grid" id="productGrid">
           </div>
 
           ${state.cartOpen ? `
@@ -780,197 +731,202 @@
         });
       });
 
-      document.querySelectorAll("[data-cat]").forEach(btn => {
-        btn.addEventListener("click", () => {
-          state.activeCategory = btn.dataset.cat;
-          render();
+      // dial items handle their own clicks — no separate data-cat listeners needed
+      // ── DIAL: re-init on every render since DOM is rebuilt ───────────────
+      if (!window._dialAudio) {
+        // AudioContext — created once, persisted across renders
+        window._dialAudio = { ctx: null };
+      }
+
+      window._tick = function() {
+        try {
+          if (!window._dialAudio.ctx)
+            window._dialAudio.ctx = new (window.AudioContext || window.webkitAudioContext)();
+          const ctx = window._dialAudio.ctx;
+          if (ctx.state === "suspended") ctx.resume();
+          const len = Math.floor(ctx.sampleRate * 0.035);
+          const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+          const d = buf.getChannelData(0);
+          for (let i = 0; i < len; i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/len, 7);
+          const src = ctx.createBufferSource();
+          src.buffer = buf;
+          const bp = ctx.createBiquadFilter();
+          bp.type = "bandpass"; bp.frequency.value = 2400; bp.Q.value = 1.2;
+          const g = ctx.createGain(); g.gain.value = 0.6;
+          src.connect(bp); bp.connect(g); g.connect(ctx.destination);
+          src.start();
+        } catch(e) {}
+      };
+
+      window._renderGrid = function() {
+        const gridEl = document.getElementById("productGrid");
+        if (!gridEl) return;
+        const filtered = state.activeCategory === "All"
+          ? state.stickers
+          : state.stickers.filter(s => s.category === state.activeCategory);
+        if (filtered.length === 0) {
+          gridEl.innerHTML = `<div class="empty-grid">No stickers here yet 😅</div>`;
+          return;
+        }
+        gridEl.innerHTML = filtered.map(s => {
+          const q = state.cart[s.id] || 0;
+          const color = CAT_COLOR[s.category] || "#ff0000";
+          return `<div class="card">
+            <div class="product-top" style="background:${color}18;position:relative;">
+              <img src="${fixDriveUrl(s.image)}" alt="${s.name}" class="product-image" loading="lazy" decoding="async" onerror="this.src='https://api.dicebear.com/7.x/fun-emoji/svg?seed=${s.id}'"/>
+              ${q>0?`<div class="qty-badge">${q}</div>`:""}
+              ${s.isCustom?`<button class="btn" data-delete="${s.id}" style="position:absolute;top:6px;left:8px;background:rgba(255,0,0,0.15);color:#ff0000;padding:2px 7px;font-size:14px;border-radius:8px;">✕</button>`:""}
+            </div>
+            <div class="product-body">
+              <div class="product-name">${s.name}</div>
+              <span class="chip" style="background:${color}22;color:${color};">${s.category}</span>
+              <div class="price">₹${s.price}</div>
+              <div class="qty-control">
+                <button class="btn qty-btn" data-minus="${s.id}" ${q===0?"disabled":""} style="background:${q===0?"#fff5f5":"#ffe0e0"};color:${q===0?"#ccc":"#ff0000"};">−</button>
+                <span class="qty-val ${q>0?"active":""}">${q}</span>
+                <button class="btn qty-btn" data-plus="${s.id}">+</button>
+              </div>
+              ${q>0?`<div class="in-cart">✅ In Cart — ₹${q*s.price}</div>`:`<div class="add-hint">Press + to add</div>`}
+            </div>
+          </div>`;
+        }).join("");
+        gridEl.querySelectorAll("[data-plus]").forEach(b =>
+          b.addEventListener("click", () => changeQty(Number(b.dataset.plus), 1)));
+        gridEl.querySelectorAll("[data-minus]").forEach(b =>
+          b.addEventListener("click", () => changeQty(Number(b.dataset.minus), -1)));
+        gridEl.querySelectorAll("[data-delete]").forEach(b =>
+          b.addEventListener("click", e => { e.stopPropagation(); deleteSticker(Number(b.dataset.delete)); }));
+      };
+
+      window._initDial = function() {
+        const drum  = document.getElementById("catDrum");
+        const belt  = document.getElementById("catDrumBelt");
+        const bg    = document.getElementById("catDrumBg");
+        if (!drum || !belt || !bg) return;
+
+        const N   = CATEGORIES.length;
+        let cur   = Math.max(0, CATEGORIES.indexOf(state.activeCategory));
+
+        // ── build 5 slots, measure the widest pill, use that as slotW ────
+        belt.innerHTML = "";
+        const slots = [];
+        for (let s = 0; s < 5; s++) {
+          const slot = document.createElement("div");
+          slot.className = "cat-drum-slot" + (s === 2 ? " active" : "");
+          const pill = document.createElement("div");
+          pill.className = "cat-drum-pill";
+          pill.textContent = CATEGORIES[s % N]; // temp text to measure
+          slot.appendChild(pill);
+          belt.appendChild(slot);
+          slots.push({ slot, pill });
+        }
+
+        // measure the widest pill across all categories
+        const tempPill = document.createElement("div");
+        tempPill.className = "cat-drum-pill";
+        tempPill.style.cssText = "position:absolute;visibility:hidden;white-space:nowrap;";
+        document.body.appendChild(tempPill);
+        let maxW = 0;
+        CATEGORIES.forEach(cat => {
+          tempPill.textContent = cat;
+          maxW = Math.max(maxW, tempPill.offsetWidth);
         });
-      });
+        document.body.removeChild(tempPill);
 
-      // ══════════════════════════════════════════════════════
-      //  CATEGORY DIAL ENGINE — snap-scroll + tick sound
-      // ══════════════════════════════════════════════════════
-      (function initDial() {
-        const track   = document.getElementById("catDialTrack");
-        const bg      = document.getElementById("catDialBg");
-        const spacerL = document.getElementById("catSpacerL");
-        const spacerR = document.getElementById("catSpacerR");
-        if (!track || !bg) return;
+        // slot width = pill width + small breathing room (16px each side)
+        const slotW = maxW + 20;
 
-        const items = [...track.querySelectorAll(".cat-dial-item")];
-        const N = items.length;
-        if (N === 0) return;
+        slots.forEach(({ slot }) => { slot.style.width = slotW + "px"; });
 
-        // ── AudioContext tick (wind-up clock ratchet) ──────────
-        let audioCtx = null;
-        function getCtx() {
-          if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-          return audioCtx;
-        }
-        function playTick() {
-          try {
-            const ctx = getCtx();
-            // Short sharp click: noise burst shaped into a tick
-            const buf = ctx.createBuffer(1, ctx.sampleRate * 0.04, ctx.sampleRate);
-            const data = buf.getChannelData(0);
-            for (let i = 0; i < data.length; i++) {
-              // decaying noise — mechanical ratchet feel
-              data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 6);
-            }
-            const src = ctx.createBufferSource();
-            src.buffer = buf;
-            // bandpass to give it that "it it it" mid click tone
-            const bp = ctx.createBiquadFilter();
-            bp.type = "bandpass";
-            bp.frequency.value = 2200;
-            bp.Q.value = 0.8;
-            const gain = ctx.createGain();
-            gain.gain.value = 0.55;
-            src.connect(bp); bp.connect(gain); gain.connect(ctx.destination);
-            src.start();
-          } catch(e) {}
-        }
+        // belt left: centre slot (index 2) must sit at drum centre
+        const beltBase = drum.offsetWidth / 2 - 2.5 * slotW;
+        belt.style.left = beltBase + "px";
 
-        // ── Spacers so first/last item centres ────────────────
-        function setSpacers() {
-          const hw = track.offsetWidth / 2;
-          const fw = items[0] ? items[0].offsetWidth / 2 : 50;
-          const lw = items[N-1] ? items[N-1].offsetWidth / 2 : 50;
-          spacerL.style.minWidth = (hw - fw) + "px";
-          spacerR.style.minWidth = (hw - lw) + "px";
-        }
-        setSpacers();
-        window.addEventListener("resize", setSpacers);
+        // ── paint ─────────────────────────────────────────────
+        function colorOf(idx) { return CAT_COLOR[CATEGORIES[idx]] || "#ff0000"; }
 
-        // ── Find nearest centred item ─────────────────────────
-        function getNearestIndex() {
-          const centre = track.scrollLeft + track.offsetWidth / 2;
-          let best = 0, bestDist = Infinity;
-          items.forEach((el, i) => {
-            const mid = el.offsetLeft + el.offsetWidth / 2;
-            const d = Math.abs(mid - centre);
-            if (d < bestDist) { bestDist = d; best = i; }
-          });
-          return best;
-        }
-
-        // ── Scroll active item to centre (instant or smooth) ──
-        function scrollToIndex(idx, smooth = true) {
-          const el = items[idx];
-          if (!el) return;
-          const target = el.offsetLeft + el.offsetWidth / 2 - track.offsetWidth / 2;
-          if (smooth) {
-            track.style.scrollBehavior = "smooth";
-            track.scrollLeft = target;
-            setTimeout(() => { track.style.scrollBehavior = "auto"; }, 400);
-          } else {
-            track.style.scrollBehavior = "auto";
-            track.scrollLeft = target;
-          }
-        }
-
-        // ── Update visual state of all items + bg colour ──────
-        let lastIdx = CATEGORIES.indexOf(state.activeCategory);
-        if (lastIdx < 0) lastIdx = 0;
-
-        function updateVisuals(idx) {
-          const cat = CATEGORIES[idx];
-          const color = CAT_COLOR[cat] || "#ff0000";
+        function paint(activeIdx) {
+          const color = colorOf(activeIdx);
           bg.style.background = color;
-          items.forEach((el, i) => {
-            const dist = Math.abs(i - idx);
-            el.classList.remove("active","near","far");
-            if (dist === 0) {
-              el.classList.add("active");
-              el.style.background = color;
-              el.style.color = "white";
-              el.style.borderColor = "transparent";
+          const offsets = [-2, -1, 0, 1, 2];
+          offsets.forEach((off, s) => {
+            const ri  = ((activeIdx + off) % N + N) % N;
+            const { slot, pill } = slots[s];
+            const isActive = off === 0;
+            slot.classList.toggle("active", isActive);
+            pill.textContent = CATEGORIES[ri];
+            if (isActive) {
+              pill.style.background  = color;
+              pill.style.color       = "white";
+              pill.style.borderColor = "transparent";
             } else {
-              el.classList.add(dist === 1 ? "near" : "far");
-              el.style.background = "white";
-              el.style.color = dist === 1 ? "#888" : "#bbb";
-              el.style.borderColor = dist === 1 ? "#ffd6d6" : "#f5e5e5";
+              pill.style.background  = "white";
+              pill.style.color       = Math.abs(off) === 1 ? "#777" : "#bbb";
+              pill.style.borderColor = Math.abs(off) === 1 ? "#ffd6d6" : "#eee";
             }
           });
         }
-        updateVisuals(lastIdx);
-        scrollToIndex(lastIdx, false);
 
-        // ── Scroll → live update visuals + tick on step ───────
-        let ticking = false;
-        track.addEventListener("scroll", () => {
-          if (!ticking) {
-            ticking = true;
-            requestAnimationFrame(() => {
-              const idx = getNearestIndex();
-              if (idx !== lastIdx) {
-                playTick();
-                lastIdx = idx;
-                updateVisuals(idx);
-                // update state so grid refilters in real time
-                state.activeCategory = CATEGORIES[idx];
-                render();
-              }
-              ticking = false;
-            });
-          }
-        }, { passive: true });
+        paint(cur);
 
-        // ── Snap on touch/mouse end ────────────────────────────
-        function onScrollEnd() {
-          const idx = getNearestIndex();
-          scrollToIndex(idx, true);
-          if (state.activeCategory !== CATEGORIES[idx]) {
-            state.activeCategory = CATEGORIES[idx];
-            render();
-          }
+        // ── drag ──────────────────────────────────────────────
+        let dragging = false, startX = 0, stepped = 0;
+        const STEP = slotW * 0.42;
+
+        function getX(e) { return e.touches ? e.touches[0].clientX : e.clientX; }
+
+        function advance(dir) {
+          cur = ((cur - dir) % N + N) % N;
+          window._tick();
+          paint(cur);
+          const shift = dir * slotW * 0.6;
+          belt.classList.add("no-transition");
+          belt.style.transform = `translateX(${shift}px)`;
+          requestAnimationFrame(() => requestAnimationFrame(() => {
+            belt.classList.remove("no-transition");
+            belt.style.transform = "translateX(0)";
+          }));
         }
-        let scrollTimer;
-        track.addEventListener("scroll", () => {
-          clearTimeout(scrollTimer);
-          scrollTimer = setTimeout(onScrollEnd, 120);
-        }, { passive: true });
 
-        // ── Click on any item to jump to it ───────────────────
-        items.forEach((el, i) => {
-          el.addEventListener("click", () => {
-            if (i !== lastIdx) {
-              playTick();
-              state.activeCategory = CATEGORIES[i];
-              lastIdx = i;
-              scrollToIndex(i, true);
-              updateVisuals(i);
-              render();
-            }
-          });
-        });
+        function onStart(e) {
+          dragging = true; startX = getX(e); stepped = 0;
+          belt.classList.add("no-transition");
+        }
+        function onMove(e) {
+          if (!dragging) return;
+          const delta = getX(e) - startX;
+          const stepsNow = Math.round(delta / STEP);
+          const diff = stepsNow - stepped;
+          if (diff !== 0) { stepped = stepsNow; advance(diff > 0 ? 1 : -1); }
+          belt.style.transform = `translateX(${(delta - stepped * STEP) * 0.3}px)`;
+        }
+        function onEnd() {
+          if (!dragging) return;
+          dragging = false;
+          belt.classList.remove("no-transition");
+          belt.style.transform = "translateX(0)";
+          state.activeCategory = CATEGORIES[cur];
+          window._renderGrid();
+        }
 
-        // ── Mouse drag support (desktop) ──────────────────────
-        let isDragging = false, dragStartX = 0, dragStartSL = 0;
-        track.addEventListener("mousedown", e => {
-          isDragging = true;
-          dragStartX = e.clientX;
-          dragStartSL = track.scrollLeft;
-          track.style.scrollBehavior = "auto";
-        });
-        window.addEventListener("mousemove", e => {
-          if (!isDragging) return;
-          track.scrollLeft = dragStartSL - (e.clientX - dragStartX);
-        });
-        window.addEventListener("mouseup", () => {
-          if (!isDragging) return;
-          isDragging = false;
-          onScrollEnd();
-        });
-      })();
-      // ══════════════════════════════════════════════════════
+        drum.addEventListener("touchstart",  onStart, { passive: true });
+        drum.addEventListener("touchmove",   onMove,  { passive: true });
+        drum.addEventListener("touchend",    onEnd);
+        drum.addEventListener("touchcancel", onEnd);
+        drum.addEventListener("mousedown",   onStart);
+        window.addEventListener("mousemove", onMove);
+        window.addEventListener("mouseup",   onEnd);
 
-      document.querySelectorAll("[data-plus]").forEach(btn => {
-        btn.addEventListener("click", () => changeQty(Number(btn.dataset.plus), 1));
-      });
+        // tap left/right pill to step one
+        slots[1].slot.addEventListener("click", () => { advance(-1); setTimeout(() => { state.activeCategory = CATEGORIES[cur]; window._renderGrid(); }, 340); });
+        slots[3].slot.addEventListener("click", () => { advance( 1); setTimeout(() => { state.activeCategory = CATEGORIES[cur]; window._renderGrid(); }, 340); });
+      };
 
-      document.querySelectorAll("[data-minus]").forEach(btn => {
-        btn.addEventListener("click", () => changeQty(Number(btn.dataset.minus), -1));
+      // call initDial every render (safe — IDs are stable, re-attaches cleanly)
+      requestAnimationFrame(() => {
+        if (window._initDial) window._initDial();
+        // populate grid after dial is ready
+        if (window._renderGrid) window._renderGrid();
       });
 
       if (state.cartOpen) {
