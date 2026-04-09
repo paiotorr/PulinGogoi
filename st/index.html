@@ -615,6 +615,11 @@
         return a.min - b.min;
       });
 
+      // ── SCROLL PRESERVATION: save positions before re-render ──
+      const _savedPageScroll = window.scrollY || window.pageYOffset || 0;
+      const _drawerEl = document.querySelector(".drawer");
+      const _savedDrawerScroll = _drawerEl ? _drawerEl.scrollTop : 0;
+
       app.innerHTML = `
         <div style="font-family: Nunito, sans-serif; background: #fff5f5; min-height: 100vh;">
           <header class="header">
@@ -717,6 +722,11 @@
           ` : ""}
         </div>
       `;
+
+      // ── SCROLL PRESERVATION: restore positions after re-render ──
+      window.scrollTo({ top: _savedPageScroll, left: 0, behavior: "instant" });
+      const _newDrawerEl = document.querySelector(".drawer");
+      if (_newDrawerEl && _savedDrawerScroll > 0) _newDrawerEl.scrollTop = _savedDrawerScroll;
 
       document.getElementById("cartBtn").addEventListener("click", () => {
         state.cartOpen = true;
