@@ -445,6 +445,17 @@
       return `Hi @${state.igHandle}! 👋\nI want to order these stickers:\n\n${lines.join("\n")}\n\nPickup Place: ${state.pickupPlace}\n\nTotal: Rs.${grandTotal()}\n\nOrder Date: ${dateString}\n\nPlease confirm! 🙏`;
     }
 
+    function resetOrderBtn() {
+      const btn = document.getElementById("orderBtn");
+      if (btn) {
+        btn.textContent = "Order via Instagram";
+        btn.disabled = false;
+        btn.style.background = "linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)";
+        btn.style.color = "white";
+        btn.style.opacity = "1";
+      }
+    }
+
     async function orderViaInstagram() {
       const selectedLoc = PICKUP_LOCATIONS.find(l => l.name === state.pickupPlace);
       if (!selectedLoc || totalQty() < selectedLoc.min) {
@@ -453,7 +464,7 @@
       
       const text = buildMsg();
 
-      // Clipboard copy with fallback for WebViews
+      // Clipboard copy with fallback for Instagram WebView
       try {
         await navigator.clipboard.writeText(text);
       } catch {
@@ -472,6 +483,9 @@
       if (btn) {
         btn.textContent = "✅ Copied! Opening Chat...";
         btn.disabled = true;
+
+        // Auto-reset after 4 seconds — works whether user taps GO BACK or CONTINUE
+        setTimeout(resetOrderBtn, 4000);
 
         setTimeout(() => {
           const ua = navigator.userAgent || navigator.vendor || window.opera || "";
@@ -498,33 +512,6 @@
         }, 500);
       }
     }
-
-    // When user comes back to this page (from Instagram or anywhere), re-enable the order button
-    document.addEventListener("visibilitychange", function() {
-      if (document.visibilityState === "visible") {
-        const btn = document.getElementById("orderBtn");
-        if (btn && btn.disabled && btn.textContent.includes("Copied")) {
-          btn.textContent = "Order via Instagram";
-          btn.disabled = false;
-        }
-      }
-    });
-
-    window.addEventListener("pageshow", function() {
-      const btn = document.getElementById("orderBtn");
-      if (btn && btn.disabled && btn.textContent.includes("Copied")) {
-        btn.textContent = "Order via Instagram";
-        btn.disabled = false;
-      }
-    });
-
-    window.addEventListener("focus", function() {
-      const btn = document.getElementById("orderBtn");
-      if (btn && btn.disabled && btn.textContent.includes("Copied")) {
-        btn.textContent = "Order via Instagram";
-        btn.disabled = false;
-      }
-    });
 
     function closeCart() {
       state.cartOpen = false;
