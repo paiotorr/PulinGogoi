@@ -110,19 +110,71 @@
     .subtitle { font-size: 11px; color: rgba(255,255,255,.8); font-weight: 700; margin-top: 1px; }
     .header-actions { display: flex; gap: 8px; }
 
-    .categories {
-      padding: 16px 18px 0;
-      display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      scrollbar-width: none;
+    /* ── CATEGORY DRUM PICKER ── */
+    .cat-drum {
+      position: relative;
+      height: 54px;
+      overflow: hidden;
+      touch-action: pan-x;
+      user-select: none;
     }
-    .categories::-webkit-scrollbar { display: none; }
-    .category-btn {
-      padding: 8px 16px;
+    /* colour glow behind active slot */
+    .cat-drum-bg {
+      position: absolute;
+      inset: 0;
+      transition: background 0.3s;
+      opacity: 0.12;
+      pointer-events: none;
+    }
+    /* left/right edge fade so only 3 pills show */
+    .cat-drum::before,
+    .cat-drum::after {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 22%;
+      z-index: 3;
+      pointer-events: none;
+    }
+    .cat-drum::before { left: 0;  background: linear-gradient(to right, #fff5f5 30%, transparent); }
+    .cat-drum::after  { right: 0; background: linear-gradient(to left,  #fff5f5 30%, transparent); }
+    /* the sliding belt — positioned absolutely, moved by JS transform */
+    .cat-drum-belt {
+      position: absolute;
+      top: 0; bottom: 0;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      will-change: transform;
+      transition: transform 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .cat-drum-belt.no-transition { transition: none !important; }
+    /* each slot is exactly 1/3 of the drum width — set by JS */
+    .cat-drum-slot {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cat-drum-pill {
+      padding: 7px 16px;
+      border-radius: 20px;
+      font-family: 'Fredoka One';
       font-size: 13px;
       white-space: nowrap;
-      font-family: 'Fredoka One';
+      border: 2px solid #ffd6d6;
+      background: white;
+      color: #999;
+      transition: background 0.25s, color 0.25s, border-color 0.25s,
+                  transform 0.25s, box-shadow 0.25s, opacity 0.25s;
+      transform: scale(0.88);
+      opacity: 0.55;
+      cursor: pointer;
+    }
+    .cat-drum-slot.active .cat-drum-pill {
+      transform: scale(1.12);
+      opacity: 1;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
     }
 
     .grid {
@@ -527,6 +579,37 @@
       render();
     }
 
+    function buildGridHTML() {
+      const filtered = state.activeCategory === "All"
+        ? state.stickers
+        : state.stickers.filter(s => s.category === state.activeCategory);
+      if (filtered.length === 0) {
+        return `<div class="empty-grid">No stickers here yet 😅</div>`;
+      }
+      return filtered.map(s => {
+        const q = state.cart[s.id] || 0;
+        const color = CAT_COLOR[s.category] || "#ff0000";
+        return `<div class="card">
+          <div class="product-top" style="background:${color}18;position:relative;">
+            <img src="${fixDriveUrl(s.image)}" alt="${s.name}" class="product-image" loading="lazy" decoding="async" onerror="this.src='https://api.dicebear.com/7.x/fun-emoji/svg?seed=${s.id}'"/>
+            ${q>0?`<div class="qty-badge">${q}</div>`:""}
+            ${s.isCustom?`<button class="btn" data-delete="${s.id}" style="position:absolute;top:6px;left:8px;background:rgba(255,0,0,0.15);color:#ff0000;padding:2px 7px;font-size:14px;border-radius:8px;">✕</button>`:""}
+          </div>
+          <div class="product-body">
+            <div class="product-name">${s.name}</div>
+            <span class="chip" style="background:${color}22;color:${color};">${s.category}</span>
+            <div class="price">₹${s.price}</div>
+            <div class="qty-control">
+              <button class="btn qty-btn" data-minus="${s.id}" ${q===0?"disabled":""} style="background:${q===0?"#fff5f5":"#ffe0e0"};color:${q===0?"#ccc":"#ff0000"};">−</button>
+              <span class="qty-val ${q>0?"active":""}">${q}</span>
+              <button class="btn qty-btn" data-plus="${s.id}">+</button>
+            </div>
+            ${q>0?`<div class="in-cart">✅ In Cart — ₹${q*s.price}</div>`:`<div class="add-hint">Press + to add</div>`}
+          </div>
+        </div>`;
+      }).join("");
+    }
+
     function render() {
       const filtered = filteredStickers();
       const groupedCart = grouped();
@@ -563,6 +646,13 @@
         return a.min - b.min;
       });
 
+      const _drawerScrollTop = (document.querySelector(".drawer") || {}).scrollTop || 0;
+      const _prevBelt = document.getElementById("catDrumBelt");
+      const _prevBeltHTML = _prevBelt ? _prevBelt.innerHTML : "";
+      const _prevBeltLeft = _prevBelt ? _prevBelt.style.left : "";
+      const _prevBg = document.getElementById("catDrumBg");
+      const _prevBgColor = _prevBg ? _prevBg.style.background : "";
+
       app.innerHTML = `
         <div style="font-family: Nunito, sans-serif; background: #fff5f5; min-height: 100vh;">
           <header class="header">
@@ -581,49 +671,13 @@
             </div>
           </header>
 
-          <div class="categories">
-            ${CATEGORIES.map(cat => `
-              <button class="btn category-btn" data-cat="${cat}" style="
-                background: ${state.activeCategory === cat ? (CAT_COLOR[cat] || "#ff0000") : "white"};
-                color: ${state.activeCategory === cat ? "white" : "#666"};
-                border: 2px solid ${state.activeCategory === cat ? "transparent" : "#ffd6d6"};
-              ">${cat}</button>
-            `).join("")}
+          <div class="cat-drum" id="catDrum">
+            <div class="cat-drum-bg" id="catDrumBg"></div>
+            <div class="cat-drum-belt" id="catDrumBelt"></div>
           </div>
 
-          <div class="grid">
-            ${filtered.length === 0 ? `
-              <div class="empty-grid">No stickers here yet 😅</div>
-            ` : filtered.map(s => {
-              const q = getQty(s.id);
-              const color = CAT_COLOR[s.category] || "#ff0000";
-              return `
-                <div class="card">
-                  <div class="product-top" style="background: ${color}18;">
-                    <img src="${fixDriveUrl(s.image)}" alt="${s.name}" class="product-image" loading="lazy" decoding="async" onerror="this.src='https://api.dicebear.com/7.x/fun-emoji/svg?seed=${s.id}'" />
-                    ${q > 0 ? `<div class="qty-badge">${q}</div>` : ""}
-                    ${s.isCustom ? `<button class="btn" data-delete="${s.id}" style="position:absolute;top:6px;left:8px;background:rgba(255,0,0,0.15);color:#ff0000;padding:2px 7px;font-size:14px;border-radius:8px;">✕</button>` : ""}
-                  </div>
-                  <div class="product-body">
-                    <div class="product-name">${s.name}</div>
-                    <span class="chip" style="background:${color}22;color:${color};">${s.category}</span>
-                    <div class="price">₹${s.price}</div>
-
-                    <div class="qty-control">
-                      <button class="btn qty-btn" data-minus="${s.id}" ${q === 0 ? "disabled" : ""} style="background:${q === 0 ? "#fff5f5" : "#ffe0e0"};color:${q === 0 ? "#ccc" : "#ff0000"};">−</button>
-                      <span class="qty-val ${q > 0 ? "active" : ""}">${q}</span>
-                      <button class="btn qty-btn" data-plus="${s.id}">+</button>
-                    </div>
-
-                    ${q > 0 ? `
-                      <div class="in-cart">✅ In Cart — ₹${q * s.price}</div>
-                    ` : `
-                      <div class="add-hint">Press + to add</div>
-                    `}
-                  </div>
-                </div>
-              `;
-            }).join("")}
+          <div class="grid" id="productGrid">
+            ${buildGridHTML()}
           </div>
 
           ${state.cartOpen ? `
@@ -709,6 +763,25 @@
         render();
       });
 
+      // restore drum belt immediately so there is no blank frame before _initDial runs
+      if (_prevBeltHTML) {
+        const _newBelt = document.getElementById("catDrumBelt");
+        const _newBg   = document.getElementById("catDrumBg");
+        if (_newBelt) { _newBelt.innerHTML = _prevBeltHTML; _newBelt.style.left = _prevBeltLeft; }
+        if (_newBg)   { _newBg.style.background = _prevBgColor; }
+      }
+
+      if (_drawerScrollTop > 0) {
+        const _d = document.querySelector(".drawer");
+        if (_d) _d.scrollTop = _drawerScrollTop;
+      }
+
+      // attach events for the inline-rendered grid
+      document.querySelectorAll("#productGrid [data-plus]").forEach(b =>
+        b.addEventListener("click", () => changeQty(Number(b.dataset.plus), 1)));
+      document.querySelectorAll("#productGrid [data-minus]").forEach(b =>
+        b.addEventListener("click", () => changeQty(Number(b.dataset.minus), -1)));
+
       document.querySelectorAll("[data-delete]").forEach(btn => {
         btn.addEventListener("click", (e) => {
           e.stopPropagation();
@@ -716,24 +789,183 @@
         });
       });
 
-      document.querySelectorAll("[data-cat]").forEach(btn => {
-        btn.addEventListener("click", () => {
-          state.activeCategory = btn.dataset.cat;
-          render();
-        });
-      });
+      // dial items handle their own clicks — no separate data-cat listeners needed
+      // ── DIAL: re-init on every render since DOM is rebuilt ───────────────
+      if (!window._dialAudio) {
+        // AudioContext — created once, persisted across renders
+        window._dialAudio = { ctx: null };
+      }
 
-      document.querySelectorAll("[data-plus]").forEach(btn => {
-        btn.addEventListener("click", () => changeQty(Number(btn.dataset.plus), 1));
-      });
+      window._tick = function() {
+        try {
+          if (!window._dialAudio.ctx)
+            window._dialAudio.ctx = new (window.AudioContext || window.webkitAudioContext)();
+          const ctx = window._dialAudio.ctx;
+          if (ctx.state === "suspended") ctx.resume();
+          const len = Math.floor(ctx.sampleRate * 0.035);
+          const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+          const d = buf.getChannelData(0);
+          for (let i = 0; i < len; i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/len, 7);
+          const src = ctx.createBufferSource();
+          src.buffer = buf;
+          const bp = ctx.createBiquadFilter();
+          bp.type = "bandpass"; bp.frequency.value = 2400; bp.Q.value = 1.2;
+          const g = ctx.createGain(); g.gain.value = 0.6;
+          src.connect(bp); bp.connect(g); g.connect(ctx.destination);
+          src.start();
+        } catch(e) {}
+      };
 
-      document.querySelectorAll("[data-minus]").forEach(btn => {
-        btn.addEventListener("click", () => changeQty(Number(btn.dataset.minus), -1));
+      window._renderGrid = function() {
+        const gridEl = document.getElementById("productGrid");
+        if (!gridEl) return;
+        gridEl.innerHTML = buildGridHTML();
+        gridEl.querySelectorAll("[data-plus]").forEach(b =>
+          b.addEventListener("click", () => changeQty(Number(b.dataset.plus), 1)));
+        gridEl.querySelectorAll("[data-minus]").forEach(b =>
+          b.addEventListener("click", () => changeQty(Number(b.dataset.minus), -1)));
+        gridEl.querySelectorAll("[data-delete]").forEach(b =>
+          b.addEventListener("click", e => { e.stopPropagation(); deleteSticker(Number(b.dataset.delete)); }));
+      };
+
+      window._initDial = function() {
+        const drum  = document.getElementById("catDrum");
+        const belt  = document.getElementById("catDrumBelt");
+        const bg    = document.getElementById("catDrumBg");
+        if (!drum || !belt || !bg) return;
+
+        const N   = CATEGORIES.length;
+        let cur   = Math.max(0, CATEGORIES.indexOf(state.activeCategory));
+
+        let slotW, slots;
+
+        if (belt.children.length === 5 && window._drumSlotW) {
+          // belt already populated (restored after render) — skip DOM rebuild to prevent blink
+          slotW = window._drumSlotW;
+          slots = Array.from(belt.children).map(slot => ({ slot, pill: slot.querySelector(".cat-drum-pill") }));
+        } else {
+          // first load — build slots and measure
+          belt.innerHTML = "";
+          slots = [];
+          for (let s = 0; s < 5; s++) {
+            const slot = document.createElement("div");
+            slot.className = "cat-drum-slot" + (s === 2 ? " active" : "");
+            const pill = document.createElement("div");
+            pill.className = "cat-drum-pill";
+            pill.textContent = CATEGORIES[s % N];
+            slot.appendChild(pill);
+            belt.appendChild(slot);
+            slots.push({ slot, pill });
+          }
+          const tempPill = document.createElement("div");
+          tempPill.className = "cat-drum-pill";
+          tempPill.style.cssText = "position:absolute;visibility:hidden;white-space:nowrap;";
+          document.body.appendChild(tempPill);
+          let maxW = 0;
+          CATEGORIES.forEach(cat => { tempPill.textContent = cat; maxW = Math.max(maxW, tempPill.offsetWidth); });
+          document.body.removeChild(tempPill);
+          slotW = maxW + 20;
+          window._drumSlotW = slotW;
+          slots.forEach(({ slot }) => { slot.style.width = slotW + "px"; });
+          const beltBase = drum.offsetWidth / 2 - 2.5 * slotW;
+          belt.style.left = beltBase + "px";
+        }
+
+        // ── paint ─────────────────────────────────────────────
+        function colorOf(idx) { return CAT_COLOR[CATEGORIES[idx]] || "#ff0000"; }
+
+        function paint(activeIdx) {
+          const color = colorOf(activeIdx);
+          bg.style.background = color;
+          const offsets = [-2, -1, 0, 1, 2];
+          offsets.forEach((off, s) => {
+            const ri  = ((activeIdx + off) % N + N) % N;
+            const { slot, pill } = slots[s];
+            const isActive = off === 0;
+            slot.classList.toggle("active", isActive);
+            pill.textContent = CATEGORIES[ri];
+            if (isActive) {
+              pill.style.background  = color;
+              pill.style.color       = "white";
+              pill.style.borderColor = "transparent";
+            } else {
+              pill.style.background  = "white";
+              pill.style.color       = Math.abs(off) === 1 ? "#777" : "#bbb";
+              pill.style.borderColor = Math.abs(off) === 1 ? "#ffd6d6" : "#eee";
+            }
+          });
+        }
+
+        paint(cur);
+
+        // ── drag ──────────────────────────────────────────────
+        let dragging = false, startX = 0, stepped = 0;
+        const STEP = slotW * 0.42;
+
+        function getX(e) { return e.touches ? e.touches[0].clientX : e.clientX; }
+
+        function advance(dir) {
+          cur = ((cur - dir) % N + N) % N;
+          window._tick();
+          paint(cur);
+          const shift = dir * slotW * 0.6;
+          belt.classList.add("no-transition");
+          belt.style.transform = `translateX(${shift}px)`;
+          requestAnimationFrame(() => requestAnimationFrame(() => {
+            belt.classList.remove("no-transition");
+            belt.style.transform = "translateX(0)";
+          }));
+        }
+
+        function onStart(e) {
+          dragging = true; startX = getX(e); stepped = 0;
+          belt.classList.add("no-transition");
+        }
+        function onMove(e) {
+          if (!dragging) return;
+          const delta = getX(e) - startX;
+          const stepsNow = Math.round(delta / STEP);
+          const diff = stepsNow - stepped;
+          if (diff !== 0) { stepped = stepsNow; advance(diff > 0 ? 1 : -1); }
+          belt.style.transform = `translateX(${(delta - stepped * STEP) * 0.3}px)`;
+        }
+        function onEnd() {
+          if (!dragging) return;
+          dragging = false;
+          belt.classList.remove("no-transition");
+          belt.style.transform = "translateX(0)";
+          state.activeCategory = CATEGORIES[cur];
+          window._renderGrid();
+        }
+
+        drum.addEventListener("touchstart",  onStart, { passive: true });
+        drum.addEventListener("touchmove",   onMove,  { passive: true });
+        drum.addEventListener("touchend",    onEnd);
+        drum.addEventListener("touchcancel", onEnd);
+        drum.addEventListener("mousedown",   onStart);
+        window.addEventListener("mousemove", onMove);
+        window.addEventListener("mouseup",   onEnd);
+
+        // tap left/right pill to step one
+        slots[1].slot.addEventListener("click", () => { advance(-1); setTimeout(() => { state.activeCategory = CATEGORIES[cur]; window._renderGrid(); }, 340); });
+        slots[3].slot.addEventListener("click", () => { advance( 1); setTimeout(() => { state.activeCategory = CATEGORIES[cur]; window._renderGrid(); }, 340); });
+      };
+
+      // call initDial every render (safe — IDs are stable, re-attaches cleanly)
+      requestAnimationFrame(() => {
+        if (window._initDial) window._initDial();
+        // populate grid after dial is ready
+        if (window._renderGrid) window._renderGrid();
       });
 
       if (state.cartOpen) {
         document.getElementById("backdrop").addEventListener("click", closeCart);
         document.getElementById("closeBtn").addEventListener("click", closeCart);
+
+        document.querySelectorAll(".mini-btn[data-plus]").forEach(b =>
+          b.addEventListener("click", () => changeQty(Number(b.dataset.plus), 1)));
+        document.querySelectorAll(".mini-btn[data-minus]").forEach(b =>
+          b.addEventListener("click", () => changeQty(Number(b.dataset.minus), -1)));
         
         const pickupTrigger = document.getElementById("pickupTrigger");
         const pickupOptions = document.getElementById("pickupOptions");
