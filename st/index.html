@@ -110,24 +110,28 @@
     .subtitle { font-size: 11px; color: rgba(255,255,255,.8); font-weight: 700; margin-top: 1px; }
     .header-actions { display: flex; gap: 8px; }
 
+    .categories-wrap {
+      padding: 16px 0 8px;
+      overflow: hidden;
+      position: relative;
+    }
     .categories {
-      padding: 16px 18px 8px;
       display: flex;
       gap: 8px;
+      padding: 0 18px;
       overflow-x: auto;
       scrollbar-width: none;
-      scroll-padding-inline: 18px;
+      scroll-behavior: auto;
+      white-space: nowrap;
     }
     .categories::-webkit-scrollbar { display: none; }
-    .categories::after {
-      content: '';
-      min-width: 10px;
-    }
     .category-btn {
       padding: 8px 16px;
       font-size: 13px;
       white-space: nowrap;
       font-family: 'Fredoka One';
+      flex-shrink: 0;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
     }
 
     .grid {
@@ -586,14 +590,16 @@
             </div>
           </header>
 
-          <div class="categories">
-            ${CATEGORIES.map(cat => `
-              <button class="btn category-btn" data-cat="${cat}" style="
-                background: ${state.activeCategory === cat ? (CAT_COLOR[cat] || "#ff0000") : "white"};
-                color: ${state.activeCategory === cat ? "white" : "#666"};
-                border: 2px solid ${state.activeCategory === cat ? "transparent" : "#ffd6d6"};
-              ">${cat}</button>
-            `).join("")}
+          <div class="categories-wrap">
+            <div class="categories" id="categoriesBar">
+              ${CATEGORIES.map(cat => `
+                <button class="btn category-btn" data-cat="${cat}" style="
+                  background: ${state.activeCategory === cat ? (CAT_COLOR[cat] || "#ff0000") : "white"};
+                  color: ${state.activeCategory === cat ? "white" : "#666"};
+                  border: 2px solid ${state.activeCategory === cat ? "transparent" : "#ffd6d6"};
+                ">${cat}</button>
+              `).join("")}
+            </div>
           </div>
 
           <div class="grid">
@@ -728,11 +734,103 @@
         });
       });
 
-      // Scroll the active category button into view so highlight is always visible
-      const activeBtn = document.querySelector(`[data-cat="${state.activeCategory}"]`);
-      if (activeBtn) {
-        activeBtn.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
-      }
+      // ── Circular carousel scroll ──────────────────────────────────────────
+      (function initCarousel() {
+        const bar = document.getElementById("categoriesBar");
+        if (!bar) return;
+
+        const realBtns = [...bar.querySelectorAll("[data-cat]")];
+        const totalReal = realBtns.length;
+        if (totalReal === 0) return;
+
+        // Build: [clone-tail] + [real buttons] + [clone-head]
+        // Clone last N buttons before the first, clone first N buttons after the last
+        const CLONE_COUNT = totalReal; // full set cloned on each side
+
+        // Prepend clones of the LAST N real buttons
+        for (let i = totalReal - 1; i >= totalReal - CLONE_COUNT; i--) {
+          const clone = realBtns[i].cloneNode(true);
+          clone.setAttribute("data-clone", "pre");
+          clone.addEventListener("click", () => {
+            state.activeCategory = clone.dataset.cat;
+            render();
+          });
+          bar.insertBefore(clone, bar.firstChild);
+        }
+
+        // Append clones of the FIRST N real buttons
+        for (let i = 0; i < CLONE_COUNT; i++) {
+          const clone = realBtns[i].cloneNode(true);
+          clone.setAttribute("data-clone", "post");
+          clone.addEventListener("click", () => {
+            state.activeCategory = clone.dataset.cat;
+            render();
+          });
+          bar.appendChild(clone);
+        }
+
+        // All buttons after DOM update
+        const allBtns = [...bar.querySelectorAll(".category-btn")];
+        // Real buttons now start at index CLONE_COUNT
+        const realStart = CLONE_COUNT;
+
+        // Find the active real button and scroll to it instantly
+        const activeIndex = realStart + CATEGORIES.indexOf(state.activeCategory);
+        const activeEl = allBtns[activeIndex];
+        if (!activeEl) return;
+
+        // Instant-jump to keep real section in view (no animation on init)
+        const barRect = bar.getBoundingClientRect();
+        const btnRect = activeEl.getBoundingClientRect();
+        const centerOffset = btnRect.left - barRect.left - (barRect.width / 2) + (btnRect.width / 2);
+        bar.scrollLeft += centerOffset;
+
+        // Smooth animated scroll helper
+        function smoothScrollTo(target, duration = 380) {
+          const start = bar.scrollLeft;
+          const diff = target - start;
+          let startTime = null;
+          function ease(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
+          function step(ts) {
+            if (!startTime) startTime = ts;
+            const elapsed = ts - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            bar.scrollLeft = start + diff * ease(progress);
+            if (progress < 1) requestAnimationFrame(step);
+            else {
+              // After scroll ends, silently jump if we've landed in a clone zone
+              jumpIfInClone();
+            }
+          }
+          requestAnimationFrame(step);
+        }
+
+        function jumpIfInClone() {
+          const all = [...bar.querySelectorAll(".category-btn")];
+          const realBtnsNow = all.slice(CLONE_COUNT, CLONE_COUNT + totalReal);
+          // Width of one full set of real buttons
+          const setWidth = realBtnsNow.reduce((acc, b) => acc + b.offsetWidth + 8, 0);
+
+          if (bar.scrollLeft < realBtnsNow[0].offsetLeft - bar.offsetLeft - 10) {
+            bar.scrollLeft += setWidth;
+          } else if (bar.scrollLeft > realBtnsNow[totalReal - 1].offsetLeft - bar.offsetLeft + realBtnsNow[totalReal - 1].offsetWidth - bar.offsetWidth + 10) {
+            bar.scrollLeft -= setWidth;
+          }
+        }
+
+        // Scroll active button to center with wrap-around
+        const activeRealIndex = CATEGORIES.indexOf(state.activeCategory);
+        if (activeRealIndex === -1) return;
+
+        const targetBtn = allBtns[realStart + activeRealIndex];
+        if (!targetBtn) return;
+
+        const bRect = bar.getBoundingClientRect();
+        const tRect = targetBtn.getBoundingClientRect();
+        const scrollTarget = bar.scrollLeft + tRect.left - bRect.left - (bRect.width / 2) + (tRect.width / 2);
+        smoothScrollTo(scrollTarget);
+      })();
+      // ─────────────────────────────────────────────────────────────────────
 
       document.querySelectorAll("[data-plus]").forEach(btn => {
         btn.addEventListener("click", () => changeQty(Number(btn.dataset.plus), 1));
