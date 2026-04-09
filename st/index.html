@@ -448,13 +448,11 @@
 
     async function orderViaInstagram() {
       const selectedLoc = PICKUP_LOCATIONS.find(l => l.name === state.pickupPlace);
-      if (!selectedLoc || totalQty() < selectedLoc.min) {
-        return;
-      }
+      if (!selectedLoc || totalQty() < selectedLoc.min) return;
 
       const text = buildMsg();
 
-      // Clipboard copy with fallback for Instagram WebView
+      // Copy to clipboard with WebView fallback
       try {
         await navigator.clipboard.writeText(text);
       } catch {
@@ -469,15 +467,8 @@
         } catch {}
       }
 
-      // Set ordering state — render() will show "Copied! Opening Chat..."
       state.ordering = true;
       render();
-
-      // Auto-reset after 5 seconds (covers GO BACK case in Instagram WebView)
-      const resetTimer = setTimeout(() => {
-        state.ordering = false;
-        render();
-      }, 5000);
 
       setTimeout(() => {
         const ua = navigator.userAgent || navigator.vendor || window.opera || "";
@@ -493,30 +484,28 @@
               `S.browser_fallback_url=https%3A%2F%2Fig.me%2Fm%2F${state.igHandle};` +
               `end`;
           } else {
-            // iOS
             window.location.href = `instagram://user?username=${state.igHandle}`;
-            setTimeout(() => {
-              window.location.href = `https://ig.me/m/${state.igHandle}`;
-            }, 1000);
+            setTimeout(() => { window.location.href = `https://ig.me/m/${state.igHandle}`; }, 1000);
           }
         } else {
           window.location.href = `https://ig.me/m/${state.igHandle}`;
         }
-      }, 600);
+      }, 500);
     }
 
-    // Reset button when user returns to page (all browsers + WebViews)
-    function onPageReturn() {
+    // Instantly reset button the moment user returns to this page
+    function resetOrdering() {
       if (state.ordering) {
         state.ordering = false;
         render();
       }
     }
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") onPageReturn();
-    });
-    window.addEventListener("pageshow", onPageReturn);
-    window.addEventListener("focus", onPageReturn);
+    // These three together cover every return scenario in Instagram WebView
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") resetOrdering(); });
+    window.addEventListener("focus", resetOrdering);
+    window.addEventListener("pageshow", resetOrdering);
+    // Polling fallback — Instagram WebView sometimes suppresses all of the above
+    setInterval(() => { if (state.ordering && document.visibilityState === "visible") resetOrdering(); }, 300);
 
     function closeCart() {
       state.cartOpen = false;
