@@ -350,7 +350,7 @@
     }
     .custom-select-trigger:hover { border-color: #ffb3b3; }
     .custom-options {
-      position: relative; left: 0; right: 0; background: white;
+      position: absolute; top: 100%; left: 0; right: 0; background: white;
       border: 2px solid #ffd6d6; border-radius: 12px; margin-top: 6px;
       box-shadow: 0 8px 25px rgba(255,0,0,0.15); z-index: 300;
       max-height: 220px; overflow-y: auto; display: none; flex-direction: column;
@@ -393,14 +393,15 @@
 
     const INSTAGRAM_USERNAME = "stiickuu";
 
-    const CATEGORIES = ["All", "Cool", "Cartoon", "Anime", "SuperHero", "Cricketers"];
+    const CATEGORIES = ["All", "Cool", "Cartoon", "Anime", "SuperHero", "Cricketers", "Cute"];
     
     const CAT_COLOR = {
       Anime: "#ff6b6b", 
       Cartoon: "#f5a623", 
       Cricketers: "#4caf50",
       Cool: "#481FFF",
-      SuperHero: "#1FF0FF"
+      SuperHero: "#1FF0FF",
+      Cute: "#F4C2C2"
     };
 
     const PICKUP_LOCATIONS = [
@@ -433,6 +434,24 @@
       { id: 18, name: "SpiderMan", category: "SuperHero", price: 10, image: "https://drive.google.com/file/d/1wEfjtZzgexRDupjGuIKXS9ddQBKc7uGE/view?usp=sharing" },
       { id: 19, name: "Rabo", category: "Cool", price: 10, image: "https://drive.google.com/file/d/1z0RcWDsk0tk8bfv5Y9h5558-LHthAatu/view?usp=sharing" },
       { id: 20, name: "Hato", category: "Cool", price: 10, image: "https://drive.google.com/file/d/1Qmvtd673zJQtys3mQV2Eo7MnT7d53QB_/view?usp=sharing" },
+      { id: 21, name: "A1", category: "Cute", price: 10, image: "https://drive.google.com/file/d/1ilahl-xunoLktCxb7Za1IDju1NgoBNnp/view?usp=sharing" },
+      { id: 22, name: "A2", category: "Cute", price: 10, image: "https://drive.google.com/file/d/1Eq2_tuYOti1l0FWiI0HMjuqm2LgUsthp/view?usp=sharing" },
+      { id: 23, name: "A3", category: "Cute", price: 10, image: "https://drive.google.com/file/d/1UDpcQhRdmRjA49JL5HAsqKrIZ2ZKgwZx/view?usp=sharing" },
+      { id: 24, name: "A4", category: "Cute", price: 10, image: "https://drive.google.com/file/d/1IuSzWuk2dACspWyF4Z3__iwdnr9PNGhj/view?usp=sharing" },
+      { id: 25, name: "A5", category: "Cute", price: 10, image: "https://drive.google.com/file/d/1Ba6ABk9b-iK2u-9s_Z76TgadGXR3UMMV/view?usp=sharing" },
+      { id: 26, name: "A6", category: "Cute", price: 10, image: "https://drive.google.com/file/d/1A70zS4DZ_2YDvxbY8XU7Qk8ltyKh7BIx/view?usp=drive_link" },
+      { id: 27, name: "A7", category: "Cute", price: 10, image: "https://drive.google.com/file/d/1281UP96LDw_OwXuynswV2o57K5BDzHp9/view?usp=drive_link" },
+      { id: 28, name: "A8", category: "Cute", price: 10, image: "https://drive.google.com/file/d/1C4SOwjJfgv1u6GWX3emEe2K8pklY0Y3l/view?usp=drive_link" },
+      { id: 29, name: "A9", category: "Cute", price: 10, image: "https://drive.google.com/file/d/1c2QJSpmtktSQ8HPgdPOU7H9LazDEQpfA/view?usp=drive_link" },
+      { id: 30, name: "A10", category: "Cute", price: 10, image: "https://drive.google.com/file/d/1cliUE9gzWsU5QH95yeVRYeQdgDoy_At6/view?usp=drive_link" },
+      { id: 31, name: "B1", category: "Cute", price: 10, image: "https://drive.google.com/file/d/1Rkdvt-XfZt8q5UhBMkRMeyY5leSGntu-/view?usp=drive_link" },
+
+
+            
+
+
+
+
     ];
 
     // ============================================================================
@@ -607,7 +626,18 @@
             ${q>0?`<div class="in-cart">✅ In Cart — ₹${q*s.price}</div>`:`<div class="add-hint">Press + to add</div>`}
           </div>
         </div>`;
-      }).join("");
+      }).join("") + `
+        <div class="card" style="opacity:0.75;">
+          <div class="product-top" style="background:#f5f5f5;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;">
+            <span style="font-size:32px;">🎨</span>
+            <span style="font-family:'Fredoka One';font-size:11px;color:#bbb;letter-spacing:1px;">MORE COMING</span>
+          </div>
+          <div class="product-body" style="text-align:center;">
+            <div class="product-name" style="color:#aaa;font-size:13px;">More Stickers</div>
+            <span class="chip" style="background:#f0f0f0;color:#bbb;margin-top:4px;">Soon ✨</span>
+            <div style="margin-top:10px;padding:7px 0;background:#f9f9f9;border-radius:10px;font-family:'Fredoka One';font-size:12px;color:#ccc;">Stay tuned! 🚀</div>
+          </div>
+        </div>`;
     }
 
     function render() {
@@ -864,7 +894,7 @@
           let maxW = 0;
           CATEGORIES.forEach(cat => { tempPill.textContent = cat; maxW = Math.max(maxW, tempPill.offsetWidth); });
           document.body.removeChild(tempPill);
-          slotW = maxW + 20;
+          slotW = maxW + 8;
           window._drumSlotW = slotW;
           slots.forEach(({ slot }) => { slot.style.width = slotW + "px"; });
           const beltBase = drum.offsetWidth / 2 - 2.5 * slotW;
@@ -873,6 +903,23 @@
 
         // ── paint ─────────────────────────────────────────────
         function colorOf(idx) { return CAT_COLOR[CATEGORIES[idx]] || "#ff0000"; }
+
+        function doSelect(targetIdx, fromLeft) {
+          if (targetIdx === cur) return;
+          cur = targetIdx;
+          window._tick();
+          paint(cur);
+          // fromLeft → belt starts shifted left, slides RIGHT into center
+          // fromRight → belt starts shifted right, slides LEFT into center
+          const shift = fromLeft ? -slotW : slotW;
+          belt.classList.add("no-transition");
+          belt.style.transform = `translateX(${shift}px)`;
+          requestAnimationFrame(() => requestAnimationFrame(() => {
+            belt.classList.remove("no-transition");
+            belt.style.transform = "translateX(0)";
+          }));
+          setTimeout(() => { state.activeCategory = CATEGORIES[cur]; window._renderGrid(); }, 340);
+        }
 
         function paint(activeIdx) {
           const color = colorOf(activeIdx);
@@ -884,6 +931,16 @@
             const isActive = off === 0;
             slot.classList.toggle("active", isActive);
             pill.textContent = CATEGORIES[ri];
+            // Give every non-active pill a direct onclick — ri and s are captured per-iteration
+            if (!isActive) {
+              const capturedRi = ri;
+              const isLeft = s < 2; // slots 0,1 are left of centre; 3,4 are right
+              pill.onclick = () => doSelect(capturedRi, isLeft);
+              pill.style.cursor = "pointer";
+            } else {
+              pill.onclick = null;
+              pill.style.cursor = "default";
+            }
             if (isActive) {
               pill.style.background  = color;
               pill.style.color       = "white";
@@ -898,13 +955,13 @@
 
         paint(cur);
 
-        // ── drag ──────────────────────────────────────────────
+        // ── drag (clicks handled directly on each pill inside paint()) ──
         let dragging = false, startX = 0, stepped = 0;
         const STEP = slotW * 0.42;
 
         function getX(e) { return e.touches ? e.touches[0].clientX : e.clientX; }
 
-        function advance(dir) {
+        function advanceDrag(dir) {
           cur = ((cur - dir) % N + N) % N;
           window._tick();
           paint(cur);
@@ -926,7 +983,7 @@
           const delta = getX(e) - startX;
           const stepsNow = Math.round(delta / STEP);
           const diff = stepsNow - stepped;
-          if (diff !== 0) { stepped = stepsNow; advance(diff > 0 ? 1 : -1); }
+          if (diff !== 0) { stepped = stepsNow; advanceDrag(diff > 0 ? 1 : -1); }
           belt.style.transform = `translateX(${(delta - stepped * STEP) * 0.3}px)`;
         }
         function onEnd() {
@@ -945,10 +1002,6 @@
         drum.addEventListener("mousedown",   onStart);
         window.addEventListener("mousemove", onMove);
         window.addEventListener("mouseup",   onEnd);
-
-        // tap left/right pill to step one
-        slots[1].slot.addEventListener("click", () => { advance(-1); setTimeout(() => { state.activeCategory = CATEGORIES[cur]; window._renderGrid(); }, 340); });
-        slots[3].slot.addEventListener("click", () => { advance( 1); setTimeout(() => { state.activeCategory = CATEGORIES[cur]; window._renderGrid(); }, 340); });
       };
 
       // call initDial every render (safe — IDs are stable, re-attaches cleanly)
@@ -1041,4 +1094,4 @@
     })();
   </script>
 </body>
-</html>v
+</html>
