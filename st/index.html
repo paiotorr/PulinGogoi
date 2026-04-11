@@ -626,7 +626,18 @@
             ${q>0?`<div class="in-cart">✅ In Cart — ₹${q*s.price}</div>`:`<div class="add-hint">Press + to add</div>`}
           </div>
         </div>`;
-      }).join("");
+      }).join("") + `
+        <div class="card" style="opacity:0.75;">
+          <div class="product-top" style="background:#f5f5f5;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;">
+            <span style="font-size:32px;">🎨</span>
+            <span style="font-family:'Fredoka One';font-size:11px;color:#bbb;letter-spacing:1px;">MORE COMING</span>
+          </div>
+          <div class="product-body" style="text-align:center;">
+            <div class="product-name" style="color:#aaa;font-size:13px;">More Stickers</div>
+            <span class="chip" style="background:#f0f0f0;color:#bbb;margin-top:4px;">Soon ✨</span>
+            <div style="margin-top:10px;padding:7px 0;background:#f9f9f9;border-radius:10px;font-family:'Fredoka One';font-size:12px;color:#ccc;">Stay tuned! 🚀</div>
+          </div>
+        </div>`;
     }
 
     function render() {
@@ -883,7 +894,7 @@
           let maxW = 0;
           CATEGORIES.forEach(cat => { tempPill.textContent = cat; maxW = Math.max(maxW, tempPill.offsetWidth); });
           document.body.removeChild(tempPill);
-          slotW = maxW + 20;
+          slotW = maxW + 8;
           window._drumSlotW = slotW;
           slots.forEach(({ slot }) => { slot.style.width = slotW + "px"; });
           const beltBase = drum.offsetWidth / 2 - 2.5 * slotW;
@@ -892,6 +903,23 @@
 
         // ── paint ─────────────────────────────────────────────
         function colorOf(idx) { return CAT_COLOR[CATEGORIES[idx]] || "#ff0000"; }
+
+        function doSelect(targetIdx, fromLeft) {
+          if (targetIdx === cur) return;
+          cur = targetIdx;
+          window._tick();
+          paint(cur);
+          // fromLeft → belt starts shifted left, slides RIGHT into center
+          // fromRight → belt starts shifted right, slides LEFT into center
+          const shift = fromLeft ? -slotW : slotW;
+          belt.classList.add("no-transition");
+          belt.style.transform = `translateX(${shift}px)`;
+          requestAnimationFrame(() => requestAnimationFrame(() => {
+            belt.classList.remove("no-transition");
+            belt.style.transform = "translateX(0)";
+          }));
+          setTimeout(() => { state.activeCategory = CATEGORIES[cur]; window._renderGrid(); }, 340);
+        }
 
         function paint(activeIdx) {
           const color = colorOf(activeIdx);
@@ -903,6 +931,16 @@
             const isActive = off === 0;
             slot.classList.toggle("active", isActive);
             pill.textContent = CATEGORIES[ri];
+            // Give every non-active pill a direct onclick — ri and s are captured per-iteration
+            if (!isActive) {
+              const capturedRi = ri;
+              const isLeft = s < 2; // slots 0,1 are left of centre; 3,4 are right
+              pill.onclick = () => doSelect(capturedRi, isLeft);
+              pill.style.cursor = "pointer";
+            } else {
+              pill.onclick = null;
+              pill.style.cursor = "default";
+            }
             if (isActive) {
               pill.style.background  = color;
               pill.style.color       = "white";
@@ -917,13 +955,13 @@
 
         paint(cur);
 
-        // ── drag ──────────────────────────────────────────────
+        // ── drag (clicks handled directly on each pill inside paint()) ──
         let dragging = false, startX = 0, stepped = 0;
         const STEP = slotW * 0.42;
 
         function getX(e) { return e.touches ? e.touches[0].clientX : e.clientX; }
 
-        function advance(dir) {
+        function advanceDrag(dir) {
           cur = ((cur - dir) % N + N) % N;
           window._tick();
           paint(cur);
@@ -945,7 +983,7 @@
           const delta = getX(e) - startX;
           const stepsNow = Math.round(delta / STEP);
           const diff = stepsNow - stepped;
-          if (diff !== 0) { stepped = stepsNow; advance(diff > 0 ? 1 : -1); }
+          if (diff !== 0) { stepped = stepsNow; advanceDrag(diff > 0 ? 1 : -1); }
           belt.style.transform = `translateX(${(delta - stepped * STEP) * 0.3}px)`;
         }
         function onEnd() {
@@ -964,10 +1002,6 @@
         drum.addEventListener("mousedown",   onStart);
         window.addEventListener("mousemove", onMove);
         window.addEventListener("mouseup",   onEnd);
-
-        // tap left/right pill to step one
-        slots[1].slot.addEventListener("click", () => { advance(-1); setTimeout(() => { state.activeCategory = CATEGORIES[cur]; window._renderGrid(); }, 340); });
-        slots[3].slot.addEventListener("click", () => { advance( 1); setTimeout(() => { state.activeCategory = CATEGORIES[cur]; window._renderGrid(); }, 340); });
       };
 
       // call initDial every render (safe — IDs are stable, re-attaches cleanly)
