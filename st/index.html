@@ -391,10 +391,11 @@
       font-size: 16px;
       pointer-events: none;
       opacity: 0.5;
+      z-index: 1;
     }
     .search-input {
       width: 100%;
-      padding: 10px 36px 10px 36px !important;
+      padding: 10px 40px 10px 36px !important;
       border-radius: 14px !important;
       border: 2px solid #ffd6d6 !important;
       font-size: 14px !important;
@@ -409,21 +410,25 @@
     .search-clear {
       position: absolute;
       right: 10px;
-      background: #ffd6d6;
+      background: #e0e0e0;
       border: none;
       border-radius: 50%;
-      width: 22px;
-      height: 22px;
-      font-size: 12px;
+      width: 20px;
+      height: 20px;
+      font-size: 11px;
       cursor: pointer;
-      color: #ff0000;
-      display: flex;
+      color: #555;
+      display: none;
       align-items: center;
       justify-content: center;
-      font-weight: 800;
+      font-weight: 900;
       padding: 0;
       line-height: 1;
+      z-index: 1;
+      transition: background 0.15s;
     }
+    .search-clear:hover { background: #bbb; color: #222; }
+    .search-clear.visible { display: flex; }
   </style>
   <link rel="preload" as="image" href="https://drive.google.com/thumbnail?id=12OAd4ckdsedQGT1f0u58vIEskwSFRlqK&sz=w400" />
   <link rel="preload" as="image" href="https://drive.google.com/thumbnail?id=18y9i-kjBjcMTU6qeFVAs7zPU4NRVuHv8&sz=w400" />
@@ -455,12 +460,12 @@
     };
 
     const PICKUP_LOCATIONS = [
-      { name: "Front of - Morning Glory Higher Secondary School", min: 1 },
-      { name: "Front of - Higher Secondary school", min: 2 },
-      { name: "Tiniali of - SANKARDEV SHISU VIDYA NIKETAN BOGINADI", min: 2 },
-      { name: "Near - Bogindi Market", min: 4 },
-      { name: "Near - Bogindi Police station", min: 5 },
-      { name: "Near - Rose Bud Academy", min: 3 }
+      { name: "Front of - Morning Glory Higher Secondary School", min: 5 },
+      { name: "Front of - Higher Secondary school", min: 5 },
+      { name: "Tiniali of - SANKARDEV SHISU VIDYA NIKETAN BOGINADI", min: 5 },
+      { name: "Near - Bogindi Market", min: 5 },
+      { name: "Near - Bogindi Police station", min: 7 },
+      { name: "Near - Rose Bud Academy", min: 6 }
     ];
 
     const DEFAULT_STICKERS = [
@@ -766,7 +771,7 @@
                 autocomplete="off"
                 spellcheck="false"
               />
-              ${state.searchQuery ? `<button class="search-clear" id="searchClear">✕</button>` : ""}
+              <button class="search-clear ${state.searchQuery ? 'visible' : ''}" id="searchClear" title="Clear">✕</button>
             </div>
           </div>
 
@@ -1075,17 +1080,20 @@
 
       // ── Search input listeners ──
       const searchInput = document.getElementById("searchInput");
+      const searchClear = document.getElementById("searchClear");
       if (searchInput) {
         searchInput.addEventListener("input", () => {
           state.searchQuery = searchInput.value;
+          searchClear && searchClear.classList.toggle("visible", !!searchInput.value);
           window._renderGrid && window._renderGrid();
         });
       }
-      const searchClear = document.getElementById("searchClear");
       if (searchClear) {
         searchClear.addEventListener("click", () => {
           state.searchQuery = "";
-          render();
+          if (searchInput) { searchInput.value = ""; searchInput.focus(); }
+          searchClear.classList.remove("visible");
+          window._renderGrid && window._renderGrid();
         });
       }
 
