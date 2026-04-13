@@ -378,14 +378,24 @@
     /* ── YOUTUBE-STYLE SCROLL HIDE ── */
     .subheader {
       position: sticky;
-      top: 108px; /* sits just below header + search bar */
-      z-index: 97;
+      top: 52px;
+      z-index: 99;
       background: #fff5f5;
       transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
       will-change: transform;
     }
-    .subheader.sub-hidden {
-      transform: translateY(-110%);
+    /* Search wrapper: hides with max-height transition */
+    #searchWrap {
+      max-height: 70px;
+      overflow: hidden;
+      transition: max-height 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    #searchWrap.s-hide {
+      max-height: 0;
+    }
+    /* Entire subheader slides up = both hidden */
+    .subheader.sub-hide {
+      transform: translateY(-100%);
     }
 
     /* ── SEARCH BAR ── */
@@ -772,23 +782,25 @@
             </div>
           </header>
 
-          <div class="search-bar" style="position:sticky;top:52px;z-index:98;background:#fff5f5;">
-            <div class="search-wrap">
-              <span class="search-icon">🔍</span>
-              <input
-                id="searchInput"
-                class="search-input"
-                type="text"
-                placeholder="Search stickers…"
-                value="${state.searchQuery.replace(/"/g, '&quot;')}"
-                autocomplete="off"
-                spellcheck="false"
-              />
-              <button class="search-clear ${state.searchQuery ? 'visible' : ''}" id="searchClear" title="Clear">✕</button>
-            </div>
-          </div>
-
           <div id="subheader" class="subheader">
+            <div id="searchWrap">
+              <div class="search-bar">
+                <div class="search-wrap">
+                  <span class="search-icon">🔍</span>
+                  <input
+                    id="searchInput"
+                    class="search-input"
+                    type="text"
+                    placeholder="Search stickers…"
+                    value="${state.searchQuery.replace(/"/g, '&quot;')}"
+                    autocomplete="off"
+                    spellcheck="false"
+                  />
+                  <button class="search-clear ${state.searchQuery ? 'visible' : ''}" id="searchClear" title="Clear">✕</button>
+                </div>
+              </div>
+            </div>
+
             <div class="cat-drum" id="catDrum">
               <div class="cat-drum-bg" id="catDrumBg"></div>
               <div class="cat-drum-belt" id="catDrumBelt"></div>
@@ -878,7 +890,9 @@
 
       // ── Re-apply scroll-hide state after DOM rebuild ──
       const _sub = document.getElementById("subheader");
-      if (_sub && window._subHidden) _sub.classList.add("sub-hidden");
+      const _sw  = document.getElementById("searchWrap");
+      if (_sub && window._subHide)    _sub.classList.add("sub-hide");
+      if (_sw  && window._searchHide) _sw.classList.add("s-hide");
 
       document.getElementById("cartBtn").addEventListener("click", () => {
         state.cartOpen = true;
@@ -1166,32 +1180,41 @@
       }
     }
 
-    // ── YouTube-style scroll hide: runs ONCE, works across all renders ──
+    // ── YouTube-style 3-state scroll hide ──
     (function initScrollHide() {
       let lastY = window.scrollY;
-      let ticking = false;
-      window._subHidden = false;
+      window._subHide    = false;
+      window._searchHide = false;
 
       window.addEventListener('scroll', function() {
-        if (ticking) return;
-        ticking = true;
-        requestAnimationFrame(function() {
-          const curY = window.scrollY;
-          const sub  = document.getElementById('subheader');
-          if (sub) {
-            if (curY > lastY && curY > 80) {
-              // Scrolling DOWN past 80px → hide search + categories
-              sub.classList.add('sub-hidden');
-              window._subHidden = true;
-            } else if (curY < lastY) {
-              // Scrolling UP even a little → show search + categories
-              sub.classList.remove('sub-hidden');
-              window._subHidden = false;
-            }
-          }
-          lastY = curY;
-          ticking = false;
-        });
+        const curY = window.scrollY;
+        const sub  = document.getElementById('subheader');
+        const sw   = document.getElementById('searchWrap');
+        if (!sub || !sw) { lastY = curY; return; }
+
+        if (curY <= 5) {
+          // ── AT TOP: show everything ──
+          sub.classList.remove('sub-hide');
+          sw.classList.remove('s-hide');
+          window._subHide    = false;
+          window._searchHide = false;
+
+        } else if (curY > lastY) {
+          // ── SCROLLING DOWN: hide both ──
+          sw.classList.add('s-hide');
+          sub.classList.add('sub-hide');
+          window._subHide    = true;
+          window._searchHide = true;
+
+        } else {
+          // ── SCROLLING UP (not at top): show category only, keep search hidden ──
+          sub.classList.remove('sub-hide');
+          sw.classList.add('s-hide');
+          window._subHide    = false;
+          window._searchHide = true;
+        }
+
+        lastY = curY;
       }, { passive: true });
     })();
 
