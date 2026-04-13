@@ -375,6 +375,29 @@
     .opt-name { font-family: 'Fredoka One'; font-size: 13px; color: #222; }
     .opt-min { font-size: 11px; color: #777; font-weight: 700; }
 
+    /* ── SCROLL HIDE ── */
+    #searchSticky {
+      position: sticky;
+      top: 0;
+      z-index: 99;
+      background: #fff5f5;
+      overflow: hidden;
+      max-height: 70px;
+      transition: max-height 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+    #searchSticky.s-hide { max-height: 0; }
+
+    #catSticky {
+      position: sticky;
+      top: 0;
+      z-index: 98;
+      background: #fff5f5;
+      max-height: 60px;
+      overflow: hidden;
+      transition: max-height 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+    #catSticky.c-hide { max-height: 0; }
+
     /* ── SEARCH BAR ── */
     .search-bar {
       padding: 10px 16px 6px;
@@ -759,25 +782,29 @@
             </div>
           </header>
 
-          <div class="search-bar">
-            <div class="search-wrap">
-              <span class="search-icon">🔍</span>
-              <input
-                id="searchInput"
-                class="search-input"
-                type="text"
-                placeholder="Search stickers…"
-                value="${state.searchQuery.replace(/"/g, '&quot;')}"
-                autocomplete="off"
-                spellcheck="false"
-              />
-              <button class="search-clear ${state.searchQuery ? 'visible' : ''}" id="searchClear" title="Clear">✕</button>
+          <div id="searchSticky">
+            <div class="search-bar">
+              <div class="search-wrap">
+                <span class="search-icon">🔍</span>
+                <input
+                  id="searchInput"
+                  class="search-input"
+                  type="text"
+                  placeholder="Search stickers…"
+                  value="${state.searchQuery.replace(/"/g, '&quot;')}"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+                <button class="search-clear ${state.searchQuery ? 'visible' : ''}" id="searchClear" title="Clear">✕</button>
+              </div>
             </div>
           </div>
 
-          <div class="cat-drum" id="catDrum">
-            <div class="cat-drum-bg" id="catDrumBg"></div>
-            <div class="cat-drum-belt" id="catDrumBelt"></div>
+          <div id="catSticky">
+            <div class="cat-drum" id="catDrum">
+              <div class="cat-drum-bg" id="catDrumBg"></div>
+              <div class="cat-drum-belt" id="catDrumBelt"></div>
+            </div>
           </div>
 
           <div class="grid" id="productGrid">
@@ -874,6 +901,9 @@
         if (_newBelt) { _newBelt.innerHTML = _prevBeltHTML; _newBelt.style.left = _prevBeltLeft; }
         if (_newBg)   { _newBg.style.background = _prevBgColor; }
       }
+
+      // Re-apply scroll hide state after every DOM rebuild
+      if (window.reapplyScrollState) reapplyScrollState();
 
       if (_drawerScrollTop > 0) {
         const _d = document.querySelector(".drawer");
@@ -1147,7 +1177,88 @@
       }
     }
 
+    // ── Set correct sticky top values based on REAL rendered heights ──
+    function applyTops() {
+      const header = document.querySelector('.header');
+      const ss = document.getElementById('searchSticky');
+      const cs = document.getElementById('catSticky');
+      if (!header || !ss || !cs) return;
+
+      const hH = header.offsetHeight;          // real header height (e.g. 66px)
+      const sH = ss.scrollHeight;              // real search bar height
+
+      window._hH = hH;
+      window._sH = sH;
+
+      ss.style.top = hH + 'px';
+      // cat sticks right below search if visible, or right below header if search hidden
+      cs.style.top = (window._sHide ? hH : hH + sH) + 'px';
+    }
+
+    // ── Re-apply classes after every render() ──
+    function reapplyScrollState() {
+      const ss = document.getElementById('searchSticky');
+      const cs = document.getElementById('catSticky');
+      if (ss && window._sHide) ss.classList.add('s-hide');
+      if (cs && window._cHide) cs.classList.add('c-hide');
+      applyTops();
+    }
+
+    // ── YouTube-style scroll hide ──
+    (function initScrollHide() {
+      window._sHide = false;
+      window._cHide = false;
+      window._hH    = 66; // fallback until measured
+      window._sH    = 56; // fallback until measured
+      let lastY = 0;
+
+      window.addEventListener('scroll', function () {
+        const curY = window.scrollY;
+        const ss   = document.getElementById('searchSticky');
+        const cs   = document.getElementById('catSticky');
+        if (!ss || !cs) { lastY = curY; return; }
+
+        const hH = window._hH || 66;
+        const sH = window._sH || 56;
+
+        if (curY <= 5) {
+          // AT TOP → show both
+          ss.classList.remove('s-hide');
+          cs.classList.remove('c-hide');
+          ss.style.top = hH + 'px';
+          cs.style.top = (hH + sH) + 'px';
+          window._sHide = false;
+          window._cHide = false;
+
+        } else if (curY > lastY) {
+          // SCROLLING DOWN → hide both
+          ss.classList.add('s-hide');
+          cs.classList.add('c-hide');
+          ss.style.top = hH + 'px';
+          cs.style.top = hH + 'px';
+          window._sHide = true;
+          window._cHide = true;
+
+        } else {
+          // SCROLLING UP → show category only, search stays hidden
+          ss.classList.add('s-hide');
+          cs.classList.remove('c-hide');
+          ss.style.top = hH + 'px';
+          cs.style.top = hH + 'px';   // sits right below header — fully visible
+          window._sHide = true;
+          window._cHide = false;
+        }
+
+        lastY = curY;
+      }, { passive: true });
+    })();
+
     render();
+    // Measure real heights after first paint and correct the tops
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      applyTops();
+      reapplyScrollState();
+    }));
   </script>
 
   <script>
