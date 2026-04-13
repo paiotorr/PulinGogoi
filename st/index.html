@@ -114,7 +114,6 @@
     .cat-drum {
       position: relative;
       height: 54px;
-      min-height: 54px;
       overflow: hidden;
       touch-action: pan-x;
       user-select: none;
@@ -376,26 +375,31 @@
     .opt-name { font-family: 'Fredoka One'; font-size: 13px; color: #222; }
     .opt-min { font-size: 11px; color: #777; font-weight: 700; }
 
-    /* ── YOUTUBE-STYLE SCROLL HIDE ── */
-    .subheader {
+    /* ── SCROLL HIDE: Search sticky bar ── */
+    #searchSticky {
       position: sticky;
       top: 52px;
       z-index: 99;
       background: #fff5f5;
-      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    /* Search wrapper: hides with max-height transition */
-    #searchWrap {
-      max-height: 70px;
       overflow: hidden;
-      transition: max-height 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+      max-height: 70px;
+      transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    #searchWrap.s-hide {
+    #searchSticky.s-hide {
       max-height: 0;
     }
-    /* Entire subheader slides up = both hidden */
-    .subheader.sub-hide {
-      transform: translateY(-100%);
+    /* ── SCROLL HIDE: Category sticky bar ── */
+    #catSticky {
+      position: sticky;
+      top: 108px;
+      z-index: 98;
+      background: #fff5f5;
+      overflow: hidden;
+      max-height: 60px;
+      transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    #catSticky.c-hide {
+      max-height: 0;
     }
 
     /* ── SEARCH BAR ── */
@@ -782,25 +786,25 @@
             </div>
           </header>
 
-          <div id="subheader" class="subheader">
-            <div id="searchWrap">
-              <div class="search-bar">
-                <div class="search-wrap">
-                  <span class="search-icon">🔍</span>
-                  <input
-                    id="searchInput"
-                    class="search-input"
-                    type="text"
-                    placeholder="Search stickers…"
-                    value="${state.searchQuery.replace(/"/g, '&quot;')}"
-                    autocomplete="off"
-                    spellcheck="false"
-                  />
-                  <button class="search-clear ${state.searchQuery ? 'visible' : ''}" id="searchClear" title="Clear">✕</button>
-                </div>
+          <div id="searchSticky">
+            <div class="search-bar">
+              <div class="search-wrap">
+                <span class="search-icon">🔍</span>
+                <input
+                  id="searchInput"
+                  class="search-input"
+                  type="text"
+                  placeholder="Search stickers…"
+                  value="${state.searchQuery.replace(/"/g, '&quot;')}"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+                <button class="search-clear ${state.searchQuery ? 'visible' : ''}" id="searchClear" title="Clear">✕</button>
               </div>
             </div>
+          </div>
 
+          <div id="catSticky">
             <div class="cat-drum" id="catDrum">
               <div class="cat-drum-bg" id="catDrumBg"></div>
               <div class="cat-drum-belt" id="catDrumBelt"></div>
@@ -888,11 +892,20 @@
         </div>
       `;
 
-      // ── Re-apply scroll-hide state after DOM rebuild ──
-      const _sub = document.getElementById("subheader");
-      const _sw  = document.getElementById("searchWrap");
-      if (_sub && window._subHide)    _sub.classList.add("sub-hide");
-      if (_sw  && window._searchHide) _sw.classList.add("s-hide");
+      // ── Re-apply scroll hide state after DOM rebuild ──
+      (function reapplyScrollState() {
+        const ss = document.getElementById('searchSticky');
+        const cs = document.getElementById('catSticky');
+        if (ss && window._sHide) ss.classList.add('s-hide');
+        if (cs) {
+          if (window._cHide) {
+            cs.classList.add('c-hide');
+          }
+          if (window._sHide) {
+            cs.style.top = '52px'; // cat moves up when search is hidden
+          }
+        }
+      })();
 
       document.getElementById("cartBtn").addEventListener("click", () => {
         state.cartOpen = true;
@@ -1180,47 +1193,43 @@
       }
     }
 
-    // ── YouTube-style 3-state scroll hide ──
+    // ══════════════════════════════════════════════
+    //  YOUTUBE-STYLE SCROLL HIDE (runs once at page load)
+    // ══════════════════════════════════════════════
     (function initScrollHide() {
-      let lastY = window.scrollY;
-      window._subHide    = false;
-      window._searchHide = false;
+      window._sHide = false; // search hidden?
+      window._cHide = false; // category hidden?
+      let lastY = 0;
 
-      window.addEventListener('scroll', function() {
+      window.addEventListener('scroll', function () {
         const curY = window.scrollY;
-        const sub  = document.getElementById('subheader');
-        const sw   = document.getElementById('searchWrap');
-        if (!sub || !sw) { lastY = curY; return; }
+        const ss = document.getElementById('searchSticky');
+        const cs = document.getElementById('catSticky');
+        if (!ss || !cs) { lastY = curY; return; }
 
         if (curY <= 5) {
-          // ── AT TOP: show everything ──
-          const wasHidden = sub.classList.contains('sub-hide');
-          sub.classList.remove('sub-hide');
-          sw.classList.remove('s-hide');
-          window._subHide    = false;
-          window._searchHide = false;
-          if (wasHidden && window._initDial) {
-            setTimeout(() => window._initDial(), 370);
-          }
+          // ── AT THE VERY TOP: show both ──
+          ss.classList.remove('s-hide');
+          cs.classList.remove('c-hide');
+          cs.style.top = '108px';
+          window._sHide = false;
+          window._cHide = false;
 
         } else if (curY > lastY) {
           // ── SCROLLING DOWN: hide both ──
-          sw.classList.add('s-hide');
-          sub.classList.add('sub-hide');
-          window._subHide    = true;
-          window._searchHide = true;
+          ss.classList.add('s-hide');
+          cs.classList.add('c-hide');
+          cs.style.top = '52px';
+          window._sHide = true;
+          window._cHide = true;
 
         } else {
-          // ── SCROLLING UP (not at top): show category only, keep search hidden ──
-          const wasHidden = sub.classList.contains('sub-hide');
-          sub.classList.remove('sub-hide');
-          sw.classList.add('s-hide');
-          window._subHide    = false;
-          window._searchHide = true;
-          // Wait for the slide-in transition to finish, then re-init drum
-          if (wasHidden && window._initDial) {
-            setTimeout(() => window._initDial(), 370);
-          }
+          // ── SCROLLING UP (not at top): show category only ──
+          ss.classList.add('s-hide');
+          cs.classList.remove('c-hide');
+          cs.style.top = '52px';
+          window._sHide = true;
+          window._cHide = false;
         }
 
         lastY = curY;
