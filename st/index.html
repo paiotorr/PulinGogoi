@@ -114,6 +114,7 @@
     .cat-drum {
       position: relative;
       height: 54px;
+      min-height: 54px;
       overflow: hidden;
       touch-action: pan-x;
       user-select: none;
@@ -1199,7 +1200,7 @@
           window._subHide    = false;
           window._searchHide = false;
           if (wasHidden && window._initDial) {
-            requestAnimationFrame(() => window._initDial());
+            setTimeout(() => window._initDial(), 370);
           }
 
         } else if (curY > lastY) {
@@ -1216,9 +1217,9 @@
           sw.classList.add('s-hide');
           window._subHide    = false;
           window._searchHide = true;
-          // Re-init the category drum so it renders correctly
+          // Wait for the slide-in transition to finish, then re-init drum
           if (wasHidden && window._initDial) {
-            requestAnimationFrame(() => window._initDial());
+            setTimeout(() => window._initDial(), 370);
           }
         }
 
