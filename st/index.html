@@ -375,6 +375,19 @@
     .opt-name { font-family: 'Fredoka One'; font-size: 13px; color: #222; }
     .opt-min { font-size: 11px; color: #777; font-weight: 700; }
 
+    /* ── YOUTUBE-STYLE SCROLL HIDE ── */
+    .subheader {
+      position: sticky;
+      top: 52px;
+      z-index: 99;
+      background: #fff5f5;
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      will-change: transform;
+    }
+    .subheader.sub-hidden {
+      transform: translateY(-110%);
+    }
+
     /* ── SEARCH BAR ── */
     .search-bar {
       padding: 10px 16px 6px;
@@ -759,25 +772,27 @@
             </div>
           </header>
 
-          <div class="search-bar">
-            <div class="search-wrap">
-              <span class="search-icon">🔍</span>
-              <input
-                id="searchInput"
-                class="search-input"
-                type="text"
-                placeholder="Search stickers…"
-                value="${state.searchQuery.replace(/"/g, '&quot;')}"
-                autocomplete="off"
-                spellcheck="false"
-              />
-              <button class="search-clear ${state.searchQuery ? 'visible' : ''}" id="searchClear" title="Clear">✕</button>
+          <div id="subheader" class="subheader">
+            <div class="search-bar">
+              <div class="search-wrap">
+                <span class="search-icon">🔍</span>
+                <input
+                  id="searchInput"
+                  class="search-input"
+                  type="text"
+                  placeholder="Search stickers…"
+                  value="${state.searchQuery.replace(/"/g, '&quot;')}"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+                <button class="search-clear ${state.searchQuery ? 'visible' : ''}" id="searchClear" title="Clear">✕</button>
+              </div>
             </div>
-          </div>
 
-          <div class="cat-drum" id="catDrum">
-            <div class="cat-drum-bg" id="catDrumBg"></div>
-            <div class="cat-drum-belt" id="catDrumBelt"></div>
+            <div class="cat-drum" id="catDrum">
+              <div class="cat-drum-bg" id="catDrumBg"></div>
+              <div class="cat-drum-belt" id="catDrumBelt"></div>
+            </div>
           </div>
 
           <div class="grid" id="productGrid">
@@ -860,6 +875,10 @@
           ` : ""}
         </div>
       `;
+
+      // ── Re-apply scroll-hide state after DOM rebuild ──
+      const _sub = document.getElementById("subheader");
+      if (_sub && window._subHidden) _sub.classList.add("sub-hidden");
 
       document.getElementById("cartBtn").addEventListener("click", () => {
         state.cartOpen = true;
@@ -1146,6 +1165,35 @@
         if (orderBtn) orderBtn.addEventListener("click", orderViaInstagram);
       }
     }
+
+    // ── YouTube-style scroll hide: runs ONCE, works across all renders ──
+    (function initScrollHide() {
+      let lastY = window.scrollY;
+      let ticking = false;
+      window._subHidden = false;
+
+      window.addEventListener('scroll', function() {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(function() {
+          const curY = window.scrollY;
+          const sub  = document.getElementById('subheader');
+          if (sub) {
+            if (curY > lastY && curY > 80) {
+              // Scrolling DOWN past 80px → hide search + categories
+              sub.classList.add('sub-hidden');
+              window._subHidden = true;
+            } else if (curY < lastY) {
+              // Scrolling UP even a little → show search + categories
+              sub.classList.remove('sub-hidden');
+              window._subHidden = false;
+            }
+          }
+          lastY = curY;
+          ticking = false;
+        });
+      }, { passive: true });
+    })();
 
     render();
   </script>
