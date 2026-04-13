@@ -382,7 +382,6 @@
       z-index: 99;
       background: #fff5f5;
       transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-      will-change: transform;
     }
     /* Search wrapper: hides with max-height transition */
     #searchWrap {
@@ -1194,10 +1193,14 @@
 
         if (curY <= 5) {
           // ── AT TOP: show everything ──
+          const wasHidden = sub.classList.contains('sub-hide');
           sub.classList.remove('sub-hide');
           sw.classList.remove('s-hide');
           window._subHide    = false;
           window._searchHide = false;
+          if (wasHidden && window._initDial) {
+            requestAnimationFrame(() => window._initDial());
+          }
 
         } else if (curY > lastY) {
           // ── SCROLLING DOWN: hide both ──
@@ -1208,10 +1211,15 @@
 
         } else {
           // ── SCROLLING UP (not at top): show category only, keep search hidden ──
+          const wasHidden = sub.classList.contains('sub-hide');
           sub.classList.remove('sub-hide');
           sw.classList.add('s-hide');
           window._subHide    = false;
           window._searchHide = true;
+          // Re-init the category drum so it renders correctly
+          if (wasHidden && window._initDial) {
+            requestAnimationFrame(() => window._initDial());
+          }
         }
 
         lastY = curY;
