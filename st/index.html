@@ -378,7 +378,7 @@
     /* ── SCROLL HIDE: Search sticky bar ── */
     #searchSticky {
       position: sticky;
-      top: 52px;
+      top: 0px; /* set dynamically by JS after render */
       z-index: 99;
       background: #fff5f5;
       overflow: hidden;
@@ -391,10 +391,10 @@
     /* ── SCROLL HIDE: Category sticky bar ── */
     #catSticky {
       position: sticky;
-      top: 108px;
+      top: 0px; /* set dynamically by JS after render */
       z-index: 98;
       background: #fff5f5;
-      overflow: hidden;
+      overflow: visible; /* let the drum show fully */
       max-height: 60px;
       transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
@@ -892,19 +892,29 @@
         </div>
       `;
 
-      // ── Re-apply scroll hide state after DOM rebuild ──
-      (function reapplyScrollState() {
+      // ── Measure real heights and set sticky tops correctly ──
+      (function setCorrectTops() {
+        const header = document.querySelector('.header');
         const ss = document.getElementById('searchSticky');
         const cs = document.getElementById('catSticky');
-        if (ss && window._sHide) ss.classList.add('s-hide');
-        if (cs) {
-          if (window._cHide) {
-            cs.classList.add('c-hide');
-          }
-          if (window._sHide) {
-            cs.style.top = '52px'; // cat moves up when search is hidden
-          }
-        }
+        if (!header || !ss || !cs) return;
+
+        const headerH = header.offsetHeight;
+        // Temporarily show search to measure its height
+        const wasHidden = window._sHide;
+        if (wasHidden) ss.style.maxHeight = '70px';
+        const searchH = ss.scrollHeight;
+        if (wasHidden) ss.style.maxHeight = '';
+
+        window._headerH = headerH;
+        window._searchH = searchH;
+
+        ss.style.top = headerH + 'px';
+        cs.style.top = (window._sHide ? headerH : headerH + searchH) + 'px';
+
+        // Re-apply hidden classes
+        if (window._sHide) ss.classList.add('s-hide');
+        if (window._cHide) cs.classList.add('c-hide');
       })();
 
       document.getElementById("cartBtn").addEventListener("click", () => {
@@ -1197,8 +1207,10 @@
     //  YOUTUBE-STYLE SCROLL HIDE (runs once at page load)
     // ══════════════════════════════════════════════
     (function initScrollHide() {
-      window._sHide = false; // search hidden?
-      window._cHide = false; // category hidden?
+      window._sHide   = false;
+      window._cHide   = false;
+      window._headerH = 0;
+      window._searchH = 0;
       let lastY = 0;
 
       window.addEventListener('scroll', function () {
@@ -1207,11 +1219,15 @@
         const cs = document.getElementById('catSticky');
         if (!ss || !cs) { lastY = curY; return; }
 
+        const hH = window._headerH || ss.offsetTop || 66;
+        const sH = window._searchH || 56;
+
         if (curY <= 5) {
-          // ── AT THE VERY TOP: show both ──
+          // ── AT TOP: show both ──
           ss.classList.remove('s-hide');
           cs.classList.remove('c-hide');
-          cs.style.top = '108px';
+          ss.style.top = hH + 'px';
+          cs.style.top = (hH + sH) + 'px';
           window._sHide = false;
           window._cHide = false;
 
@@ -1219,15 +1235,17 @@
           // ── SCROLLING DOWN: hide both ──
           ss.classList.add('s-hide');
           cs.classList.add('c-hide');
-          cs.style.top = '52px';
+          ss.style.top = hH + 'px';
+          cs.style.top = hH + 'px';
           window._sHide = true;
           window._cHide = true;
 
         } else {
-          // ── SCROLLING UP (not at top): show category only ──
+          // ── SCROLLING UP: show category only, search stays hidden ──
           ss.classList.add('s-hide');
           cs.classList.remove('c-hide');
-          cs.style.top = '52px';
+          ss.style.top = hH + 'px';
+          cs.style.top = hH + 'px';
           window._sHide = true;
           window._cHide = false;
         }
