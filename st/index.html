@@ -378,8 +378,8 @@
     /* ── YOUTUBE-STYLE SCROLL HIDE ── */
     .subheader {
       position: sticky;
-      top: 52px;
-      z-index: 99;
+      top: 108px; /* sits just below header + search bar */
+      z-index: 97;
       background: #fff5f5;
       transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
       will-change: transform;
@@ -772,23 +772,23 @@
             </div>
           </header>
 
-          <div id="subheader" class="subheader">
-            <div class="search-bar">
-              <div class="search-wrap">
-                <span class="search-icon">🔍</span>
-                <input
-                  id="searchInput"
-                  class="search-input"
-                  type="text"
-                  placeholder="Search stickers…"
-                  value="${state.searchQuery.replace(/"/g, '&quot;')}"
-                  autocomplete="off"
-                  spellcheck="false"
-                />
-                <button class="search-clear ${state.searchQuery ? 'visible' : ''}" id="searchClear" title="Clear">✕</button>
-              </div>
+          <div class="search-bar" style="position:sticky;top:52px;z-index:98;background:#fff5f5;">
+            <div class="search-wrap">
+              <span class="search-icon">🔍</span>
+              <input
+                id="searchInput"
+                class="search-input"
+                type="text"
+                placeholder="Search stickers…"
+                value="${state.searchQuery.replace(/"/g, '&quot;')}"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <button class="search-clear ${state.searchQuery ? 'visible' : ''}" id="searchClear" title="Clear">✕</button>
             </div>
+          </div>
 
+          <div id="subheader" class="subheader">
             <div class="cat-drum" id="catDrum">
               <div class="cat-drum-bg" id="catDrumBg"></div>
               <div class="cat-drum-belt" id="catDrumBelt"></div>
