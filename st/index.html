@@ -375,32 +375,28 @@
     .opt-name { font-family: 'Fredoka One'; font-size: 13px; color: #222; }
     .opt-min { font-size: 11px; color: #777; font-weight: 700; }
 
-    /* ── SCROLL HIDE: Search sticky bar ── */
+    /* ── SCROLL HIDE ── */
     #searchSticky {
       position: sticky;
-      top: 0px; /* set dynamically by JS after render */
+      top: 0;
       z-index: 99;
       background: #fff5f5;
       overflow: hidden;
       max-height: 70px;
-      transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: max-height 0.3s cubic-bezier(0.4,0,0.2,1);
     }
-    #searchSticky.s-hide {
-      max-height: 0;
-    }
-    /* ── SCROLL HIDE: Category sticky bar ── */
+    #searchSticky.s-hide { max-height: 0; }
+
     #catSticky {
       position: sticky;
-      top: 0px; /* set dynamically by JS after render */
+      top: 0;
       z-index: 98;
       background: #fff5f5;
-      overflow: visible; /* let the drum show fully */
       max-height: 60px;
-      transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+      transition: max-height 0.3s cubic-bezier(0.4,0,0.2,1);
     }
-    #catSticky.c-hide {
-      max-height: 0;
-    }
+    #catSticky.c-hide { max-height: 0; }
 
     /* ── SEARCH BAR ── */
     .search-bar {
@@ -892,31 +888,6 @@
         </div>
       `;
 
-      // ── Measure real heights and set sticky tops correctly ──
-      (function setCorrectTops() {
-        const header = document.querySelector('.header');
-        const ss = document.getElementById('searchSticky');
-        const cs = document.getElementById('catSticky');
-        if (!header || !ss || !cs) return;
-
-        const headerH = header.offsetHeight;
-        // Temporarily show search to measure its height
-        const wasHidden = window._sHide;
-        if (wasHidden) ss.style.maxHeight = '70px';
-        const searchH = ss.scrollHeight;
-        if (wasHidden) ss.style.maxHeight = '';
-
-        window._headerH = headerH;
-        window._searchH = searchH;
-
-        ss.style.top = headerH + 'px';
-        cs.style.top = (window._sHide ? headerH : headerH + searchH) + 'px';
-
-        // Re-apply hidden classes
-        if (window._sHide) ss.classList.add('s-hide');
-        if (window._cHide) cs.classList.add('c-hide');
-      })();
-
       document.getElementById("cartBtn").addEventListener("click", () => {
         state.cartOpen = true;
         state.orderStep = 0;
@@ -930,6 +901,9 @@
         if (_newBelt) { _newBelt.innerHTML = _prevBeltHTML; _newBelt.style.left = _prevBeltLeft; }
         if (_newBg)   { _newBg.style.background = _prevBgColor; }
       }
+
+      // Re-apply scroll hide state after every DOM rebuild
+      if (window.reapplyScrollState) reapplyScrollState();
 
       if (_drawerScrollTop > 0) {
         const _d = document.querySelector(".drawer");
@@ -1203,27 +1177,52 @@
       }
     }
 
-    // ══════════════════════════════════════════════
-    //  YOUTUBE-STYLE SCROLL HIDE (runs once at page load)
-    // ══════════════════════════════════════════════
+    // ── Set correct sticky top values based on REAL rendered heights ──
+    function applyTops() {
+      const header = document.querySelector('.header');
+      const ss = document.getElementById('searchSticky');
+      const cs = document.getElementById('catSticky');
+      if (!header || !ss || !cs) return;
+
+      const hH = header.offsetHeight;          // real header height (e.g. 66px)
+      const sH = ss.scrollHeight;              // real search bar height
+
+      window._hH = hH;
+      window._sH = sH;
+
+      ss.style.top = hH + 'px';
+      // cat sticks right below search if visible, or right below header if search hidden
+      cs.style.top = (window._sHide ? hH : hH + sH) + 'px';
+    }
+
+    // ── Re-apply classes after every render() ──
+    function reapplyScrollState() {
+      const ss = document.getElementById('searchSticky');
+      const cs = document.getElementById('catSticky');
+      if (ss && window._sHide) ss.classList.add('s-hide');
+      if (cs && window._cHide) cs.classList.add('c-hide');
+      applyTops();
+    }
+
+    // ── YouTube-style scroll hide ──
     (function initScrollHide() {
-      window._sHide   = false;
-      window._cHide   = false;
-      window._headerH = 0;
-      window._searchH = 0;
+      window._sHide = false;
+      window._cHide = false;
+      window._hH    = 66; // fallback until measured
+      window._sH    = 56; // fallback until measured
       let lastY = 0;
 
       window.addEventListener('scroll', function () {
         const curY = window.scrollY;
-        const ss = document.getElementById('searchSticky');
-        const cs = document.getElementById('catSticky');
+        const ss   = document.getElementById('searchSticky');
+        const cs   = document.getElementById('catSticky');
         if (!ss || !cs) { lastY = curY; return; }
 
-        const hH = window._headerH || ss.offsetTop || 66;
-        const sH = window._searchH || 56;
+        const hH = window._hH || 66;
+        const sH = window._sH || 56;
 
         if (curY <= 5) {
-          // ── AT TOP: show both ──
+          // AT TOP → show both
           ss.classList.remove('s-hide');
           cs.classList.remove('c-hide');
           ss.style.top = hH + 'px';
@@ -1232,7 +1231,7 @@
           window._cHide = false;
 
         } else if (curY > lastY) {
-          // ── SCROLLING DOWN: hide both ──
+          // SCROLLING DOWN → hide both
           ss.classList.add('s-hide');
           cs.classList.add('c-hide');
           ss.style.top = hH + 'px';
@@ -1241,11 +1240,11 @@
           window._cHide = true;
 
         } else {
-          // ── SCROLLING UP: show category only, search stays hidden ──
+          // SCROLLING UP → show category only, search stays hidden
           ss.classList.add('s-hide');
           cs.classList.remove('c-hide');
           ss.style.top = hH + 'px';
-          cs.style.top = hH + 'px';
+          cs.style.top = hH + 'px';   // sits right below header — fully visible
           window._sHide = true;
           window._cHide = false;
         }
@@ -1255,6 +1254,11 @@
     })();
 
     render();
+    // Measure real heights after first paint and correct the tops
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      applyTops();
+      reapplyScrollState();
+    }));
   </script>
 
   <script>
