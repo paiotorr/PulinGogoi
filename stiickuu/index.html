@@ -1447,6 +1447,7 @@
       // The main sticker image is always slide 0 automatically.
       const EXTRA_IMAGES = {
         1: ["https://drive.google.com/file/d/13oN7ztYD9vnjezBl74vndqopScBcBMia/view?usp=sharing"],
+        32:["https://drive.google.com/file/d/1RrI8Y2ODBPJDFOMUQuXhuBE9Xk_If5c_/view?usp=drive_link"],
         // Example — add extra review/product photos per sticker id:
         // 21: ["https://...", "https://..."],
       };
@@ -1474,11 +1475,18 @@
         const allImgs = [mainSrc, ...extras];
         totalSlides   = allImgs.length;
 
+        // Preload all slide images into browser cache BEFORE building HTML,
+        // so the <img> tags render immediately without a blank-then-load flash.
+        allImgs.forEach((src, i) => {
+          const preloader = new Image();
+          preloader.src = src;
+        });
+
         // Build slider HTML
         const track = document.getElementById("popupSliderTrack");
         track.innerHTML = allImgs.map((src, i) => `
           <div class="popup-slide" style="background:${color}28;">
-            <img src="${src}" alt="${sticker.name}" loading="${i === 0 ? 'eager' : 'lazy'}"
+            <img src="${src}" alt="${sticker.name}" loading="eager" decoding="sync"
                  onerror="this.src='https://api.dicebear.com/7.x/fun-emoji/svg?seed=${stickerId}'" />
           </div>
         `).join("");
@@ -1515,7 +1523,13 @@
       }
 
       // Touch/mouse swipe on slider
+      let _swipeAbort = null;
       function attachSwipe(el) {
+        // Cancel previous listeners cleanly — no DOM cloning that would detach images
+        if (_swipeAbort) _swipeAbort.abort();
+        _swipeAbort = new AbortController();
+        const signal = _swipeAbort.signal;
+
         let sx = 0, dragging = false;
         function onStart(e) { sx = (e.touches ? e.touches[0].clientX : e.clientX); dragging = true; }
         function onEnd(e) {
@@ -1524,16 +1538,10 @@
           const diff = sx - ex;
           if (Math.abs(diff) > 40) goToSlide(curSlide + (diff > 0 ? 1 : -1));
         }
-        // Remove old listeners by cloning
-        const fresh = el.cloneNode(false);
-        while (el.firstChild) fresh.appendChild(el.firstChild);
-        el.replaceWith(fresh);
-        // Re-get after replace
-        const wrap = document.getElementById("popupSliderWrap");
-        wrap.addEventListener("touchstart", onStart, { passive: true });
-        wrap.addEventListener("touchend",   onEnd);
-        wrap.addEventListener("mousedown",  onStart);
-        wrap.addEventListener("mouseup",    onEnd);
+        el.addEventListener("touchstart", onStart, { passive: true, signal });
+        el.addEventListener("touchend",   onEnd,   { signal });
+        el.addEventListener("mousedown",  onStart, { signal });
+        el.addEventListener("mouseup",    onEnd,   { signal });
       }
 
       // Close button & backdrop
@@ -1552,17 +1560,42 @@
 
       window._openStickerPopup = openPopup;
 
-      // Attach double-click to grid cards (delegated)
-      window._attachPopupListeners = function() {
-        const grid = document.getElementById("productGrid");
-        if (!grid || grid._popupListenerAttached) return;
-        grid._popupListenerAttached = true;
-        grid.addEventListener("dblclick", function(e) {
+      // ── Double-click / double-tap listener ──────────────────────────────
+      // Attached ONCE on `document` — never on the grid which gets rebuilt.
+      // This survives every render(), _renderGrid(), category change, search,
+      // bfcache restore, and tab-switch. No re-attachment ever needed.
+      (function attachGlobalDblClick() {
+        // Also handle touch double-tap (mobile browsers don't fire dblclick reliably)
+        let _lastTap = 0, _lastTarget = null;
+
+        document.addEventListener("dblclick", function(e) {
           if (e.target.closest("button")) return;
           const card = e.target.closest(".card[data-sticker-id]");
           if (card) window._openStickerPopup(parseInt(card.dataset.stickerId));
-        });
-      };
+        }, { passive: true });
+
+        document.addEventListener("touchend", function(e) {
+          const now = Date.now();
+          const target = e.target;
+          if (_lastTarget === target && now - _lastTap < 320) {
+            // Double-tap detected
+            if (target.closest("button")) { _lastTap = 0; _lastTarget = null; return; }
+            const card = target.closest(".card[data-sticker-id]");
+            if (card) {
+              e.preventDefault(); // prevent zoom
+              window._openStickerPopup(parseInt(card.dataset.stickerId));
+            }
+            _lastTap = 0;
+            _lastTarget = null;
+          } else {
+            _lastTap = now;
+            _lastTarget = target;
+          }
+        }, { passive: false });
+      })();
+
+      // _attachPopupListeners kept as a no-op for backward compatibility
+      window._attachPopupListeners = function() {};
     })();
   </script>
 
