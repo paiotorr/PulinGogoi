@@ -94,6 +94,134 @@
     input:focus, select:focus { border-color: #ff0000; }
     ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: #ff9999; border-radius: 4px; }
 
+    /* ── STICKER PREVIEW POPUP ── */
+    #stickerPopup {
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(4px);
+      padding: 16px;
+    }
+    #stickerPopup.open { display: flex; }
+
+    .popup-card {
+      background: white;
+      border-radius: 28px;
+      width: min(92vw, 380px);
+      max-height: 90vh;
+      overflow: hidden;
+      box-shadow: 0 24px 70px rgba(0,0,0,0.4);
+      animation: popIn 0.28s cubic-bezier(0.34,1.56,0.64,1);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    @keyframes popIn {
+      from { transform: scale(0.72); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+
+    /* ── Close button ── */
+    .popup-close-btn {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.85);
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #444;
+      z-index: 20;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transition: background 0.15s, transform 0.15s;
+    }
+    .popup-close-btn:hover { background: white; transform: scale(1.1); }
+
+    /* ── Image slider area ── */
+    .popup-slider-wrap {
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .popup-slider-track {
+      display: flex;
+      transition: transform 0.38s cubic-bezier(0.4,0,0.2,1);
+      will-change: transform;
+    }
+    .popup-slide {
+      flex-shrink: 0;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px 24px;
+      min-height: 260px;
+    }
+    .popup-slide img {
+      width: 210px;
+      height: 210px;
+      object-fit: contain;
+      border-radius: 18px;
+      pointer-events: none;
+      -webkit-user-drag: none;
+    }
+
+    /* ── Dot indicators ── */
+    .popup-dots {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 7px;
+      padding: 0 0 14px;
+      background: transparent;
+      /* dots sit inside slider wrap so they're on the color bg */
+    }
+    .popup-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.18);
+      transition: background 0.2s, transform 0.2s;
+      cursor: pointer;
+    }
+    .popup-dot.active {
+      background: rgba(0,0,0,0.55);
+      transform: scale(1.25);
+    }
+
+    /* ── Info section below slider ── */
+    .popup-info {
+      padding: 16px 20px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .popup-name { font-family: 'Fredoka One'; font-size: 23px; color: #222; }
+    .popup-meta { display: flex; align-items: center; gap: 10px; }
+    .popup-price { font-family: 'Fredoka One'; font-size: 21px; color: #ff0000; }
+
+    /* double-click hint on cards */
+    .dbl-hint {
+      font-size: 10px;
+      color: #bbb;
+      font-family: Nunito;
+      font-weight: 700;
+      text-align: center;
+      margin-top: 4px;
+      letter-spacing: 0.3px;
+    }
+
     .header {
       background: #ff0000; /* pure red */
       padding: 14px 20px;
@@ -563,6 +691,11 @@
 
     const app = document.getElementById('app');
 
+    // expose for popup
+    window._state = state;
+    window.fixDriveUrl = fixDriveUrl;
+    window.CAT_COLOR = CAT_COLOR;
+
     function fixDriveUrl(url) {
       if (!url) return url;
       const m1 = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
@@ -701,7 +834,7 @@
       return filtered.map(s => {
         const q = state.cart[s.id] || 0;
         const color = CAT_COLOR[s.category] || "#ff0000";
-        return `<div class="card">
+        return `<div class="card" data-sticker-id="${s.id}">
           <div class="product-top" style="background:${color}18;position:relative;">
             <img src="${fixDriveUrl(s.image)}" alt="${s.name}" class="product-image" loading="lazy" decoding="async" onerror="this.src='https://api.dicebear.com/7.x/fun-emoji/svg?seed=${s.id}'"/>
             ${q>0?`<div class="qty-badge">${q}</div>`:""}
@@ -711,6 +844,7 @@
             <div class="product-name">${s.name}</div>
             <span class="chip" style="background:${color}22;color:${color};">${s.category}</span>
             <div class="price">₹${s.price}</div>
+            <div class="dbl-hint">👆 Double-tap to preview</div>
             <div class="qty-control">
               <button class="btn qty-btn" data-minus="${s.id}" ${q===0?"disabled":""} style="background:${q===0?"#fff5f5":"#ffe0e0"};color:${q===0?"#ccc":"#ff0000"};">−</button>
               <span class="qty-val ${q>0?"active":""}">${q}</span>
@@ -1144,6 +1278,10 @@
         if (window._initDial) window._initDial();
         // populate grid after dial is ready
         if (window._renderGrid) window._renderGrid();
+        // attach double-click popup listeners
+        if (window._attachPopupListeners) window._attachPopupListeners();
+        // keep global state ref in sync
+        window._state = state;
       });
 
       if (state.cartOpen) {
@@ -1271,6 +1409,161 @@
       applyTops();
       reapplyScrollState();
     }));
+  </script>
+
+  <!-- ── STICKER PREVIEW POPUP ── -->
+  <div id="stickerPopup">
+    <div class="popup-card" id="popupCard">
+      <button class="popup-close-btn" id="popupCloseBtn" title="Close">✕</button>
+
+      <!-- Slider: color bg + image(s) + dots -->
+      <div class="popup-slider-wrap" id="popupSliderWrap">
+        <div class="popup-slider-track" id="popupSliderTrack">
+          <!-- slides injected by JS -->
+        </div>
+        <div class="popup-dots" id="popupDots"></div>
+      </div>
+
+      <div class="popup-info">
+        <div class="popup-name" id="popupName"></div>
+        <div class="popup-meta">
+          <span class="chip" id="popupChip"></span>
+          <span class="popup-price" id="popupPrice"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ══════════════════════════════════════════════
+    //  STICKER POPUP — clean image carousel
+    // ══════════════════════════════════════════════
+    (function() {
+      let curSlide = 0;
+      let totalSlides = 1;
+
+      // Per-sticker extra images (owner can add URLs here)
+      // Format: { stickerId: ["url1", "url2", ...] }
+      // The main sticker image is always slide 0 automatically.
+      const EXTRA_IMAGES = {
+        1: ["https://drive.google.com/file/d/13oN7ztYD9vnjezBl74vndqopScBcBMia/view?usp=sharing"],
+        // Example — add extra review/product photos per sticker id:
+        // 21: ["https://...", "https://..."],
+      };
+
+      function goToSlide(n) {
+        curSlide = Math.max(0, Math.min(n, totalSlides - 1));
+        const track = document.getElementById("popupSliderTrack");
+        if (track) track.style.transform = `translateX(-${curSlide * 100}%)`;
+        // update dots
+        document.querySelectorAll(".popup-dot").forEach((d, i) => {
+          d.classList.toggle("active", i === curSlide);
+        });
+      }
+
+      function openPopup(stickerId) {
+        const sticker = window._state && window._state.stickers.find(s => s.id === stickerId);
+        if (!sticker) return;
+
+        curSlide = 0;
+        const color = (window.CAT_COLOR && window.CAT_COLOR[sticker.category]) || "#ff0000";
+
+        // Build slides: main image + any extra images
+        const mainSrc = window.fixDriveUrl ? window.fixDriveUrl(sticker.image) : sticker.image;
+        const extras  = (EXTRA_IMAGES[stickerId] || []).map(u => window.fixDriveUrl ? window.fixDriveUrl(u) : u);
+        const allImgs = [mainSrc, ...extras];
+        totalSlides   = allImgs.length;
+
+        // Build slider HTML
+        const track = document.getElementById("popupSliderTrack");
+        track.innerHTML = allImgs.map((src, i) => `
+          <div class="popup-slide" style="background:${color}28;">
+            <img src="${src}" alt="${sticker.name}" loading="${i === 0 ? 'eager' : 'lazy'}"
+                 onerror="this.src='https://api.dicebear.com/7.x/fun-emoji/svg?seed=${stickerId}'" />
+          </div>
+        `).join("");
+        track.style.transform = "translateX(0)";
+
+        // Build dots (only show if >1 slide)
+        const dotsEl = document.getElementById("popupDots");
+        dotsEl.style.display = totalSlides > 1 ? "flex" : "none";
+        dotsEl.innerHTML = allImgs.map((_, i) =>
+          `<div class="popup-dot${i === 0 ? " active" : ""}" data-idx="${i}"></div>`
+        ).join("");
+        dotsEl.querySelectorAll(".popup-dot").forEach(d => {
+          d.addEventListener("click", () => goToSlide(parseInt(d.dataset.idx)));
+        });
+
+        // Info
+        document.getElementById("popupName").textContent  = sticker.name;
+        document.getElementById("popupPrice").textContent = "₹" + sticker.price;
+        const chip = document.getElementById("popupChip");
+        chip.textContent        = sticker.category;
+        chip.style.background   = color + "22";
+        chip.style.color        = color;
+
+        // Swipe support
+        attachSwipe(document.getElementById("popupSliderWrap"));
+
+        document.getElementById("stickerPopup").classList.add("open");
+        document.body.style.overflow = "hidden";
+      }
+
+      function closePopup() {
+        document.getElementById("stickerPopup").classList.remove("open");
+        document.body.style.overflow = "";
+      }
+
+      // Touch/mouse swipe on slider
+      function attachSwipe(el) {
+        let sx = 0, dragging = false;
+        function onStart(e) { sx = (e.touches ? e.touches[0].clientX : e.clientX); dragging = true; }
+        function onEnd(e) {
+          if (!dragging) return; dragging = false;
+          const ex = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+          const diff = sx - ex;
+          if (Math.abs(diff) > 40) goToSlide(curSlide + (diff > 0 ? 1 : -1));
+        }
+        // Remove old listeners by cloning
+        const fresh = el.cloneNode(false);
+        while (el.firstChild) fresh.appendChild(el.firstChild);
+        el.replaceWith(fresh);
+        // Re-get after replace
+        const wrap = document.getElementById("popupSliderWrap");
+        wrap.addEventListener("touchstart", onStart, { passive: true });
+        wrap.addEventListener("touchend",   onEnd);
+        wrap.addEventListener("mousedown",  onStart);
+        wrap.addEventListener("mouseup",    onEnd);
+      }
+
+      // Close button & backdrop
+      document.getElementById("popupCloseBtn").addEventListener("click", closePopup);
+      document.getElementById("stickerPopup").addEventListener("click", function(e) {
+        if (e.target === this) closePopup();
+      });
+
+      // Keyboard arrow support
+      document.addEventListener("keydown", function(e) {
+        if (!document.getElementById("stickerPopup").classList.contains("open")) return;
+        if (e.key === "ArrowRight") goToSlide(curSlide + 1);
+        if (e.key === "ArrowLeft")  goToSlide(curSlide - 1);
+        if (e.key === "Escape")     closePopup();
+      });
+
+      window._openStickerPopup = openPopup;
+
+      // Attach double-click to grid cards (delegated)
+      window._attachPopupListeners = function() {
+        const grid = document.getElementById("productGrid");
+        if (!grid || grid._popupListenerAttached) return;
+        grid._popupListenerAttached = true;
+        grid.addEventListener("dblclick", function(e) {
+          if (e.target.closest("button")) return;
+          const card = e.target.closest(".card[data-sticker-id]");
+          if (card) window._openStickerPopup(parseInt(card.dataset.stickerId));
+        });
+      };
+    })();
   </script>
 
   <script>
