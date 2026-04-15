@@ -311,6 +311,13 @@
       grid-template-columns: repeat(auto-fill,minmax(158px,1fr));
       gap: 16px;
     }
+    @media (max-width: 400px) {
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        padding: 12px;
+      }
+    }
     .empty-grid {
       grid-column: 1 / -1;
       text-align: center;
@@ -1034,6 +1041,9 @@
           ` : ""}
         </div>
       `;
+
+      // Lock / unlock background scroll based on cart state
+      document.body.style.overflow = state.cartOpen ? "hidden" : "";
 
       document.getElementById("cartBtn").addEventListener("click", () => {
         state.cartOpen = true;
