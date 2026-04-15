@@ -831,10 +831,15 @@
 
     function buildGridHTML() {
       const q = state.searchQuery.trim().toLowerCase();
-      let filtered = state.activeCategory === "All"
-        ? state.stickers
-        : state.stickers.filter(s => s.category === state.activeCategory);
-      if (q) filtered = filtered.filter(s => s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q));
+      let filtered;
+      if (q) {
+        // When searching, show results from ALL categories
+        filtered = state.stickers.filter(s => s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q));
+      } else {
+        filtered = state.activeCategory === "All"
+          ? state.stickers
+          : state.stickers.filter(s => s.category === state.activeCategory);
+      }
       if (filtered.length === 0) {
         return `<div class="empty-grid">No stickers here yet 😅</div>`;
       }
