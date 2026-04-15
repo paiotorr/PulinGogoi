@@ -1272,7 +1272,28 @@
         searchInput.addEventListener("input", () => {
           state.searchQuery = searchInput.value;
           searchClear && searchClear.classList.toggle("visible", !!searchInput.value);
-          window._renderGrid && window._renderGrid();
+          if (searchInput.value) {
+            // Save current category before switching to All (only save once)
+            if (!state._categoryBeforeSearch) {
+              state._categoryBeforeSearch = state.activeCategory;
+            }
+            // Switch to All without full render so input keeps focus
+            if (state.activeCategory !== "All") {
+              state.activeCategory = "All";
+              window._drumSlotW = null;
+              window._initDial && window._initDial();
+            }
+            window._renderGrid && window._renderGrid();
+          } else {
+            // Input emptied via backspace — restore previous category
+            if (state._categoryBeforeSearch) {
+              state.activeCategory = state._categoryBeforeSearch;
+              state._categoryBeforeSearch = null;
+              window._drumSlotW = null;
+              window._initDial && window._initDial();
+            }
+            window._renderGrid && window._renderGrid();
+          }
         });
       }
       if (searchClear) {
@@ -1280,6 +1301,13 @@
           state.searchQuery = "";
           if (searchInput) { searchInput.value = ""; searchInput.focus(); }
           searchClear.classList.remove("visible");
+          // Restore the category the user was on before searching
+          if (state._categoryBeforeSearch) {
+            state.activeCategory = state._categoryBeforeSearch;
+            state._categoryBeforeSearch = null;
+            window._drumSlotW = null;
+            window._initDial && window._initDial();
+          }
           window._renderGrid && window._renderGrid();
         });
       }
