@@ -1035,6 +1035,9 @@
         </div>
       `;
 
+      // Lock / unlock background scroll based on cart state
+      document.body.style.overflow = state.cartOpen ? "hidden" : "";
+
       document.getElementById("cartBtn").addEventListener("click", () => {
         state.cartOpen = true;
         state.orderStep = 0;
