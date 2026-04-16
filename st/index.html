@@ -6,585 +6,110 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="robots" content="noindex, nofollow" />
   <title>Sticker Shop</title>
-  <!-- Preconnect to font servers so TCP+TLS is ready before CSS requests them -->
   <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <!-- Non-blocking font load -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" media="print" onload="this.media='all'" />
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" /></noscript>
-  <!-- DNS prefetch for Google Drive (all product images) -->
   <link rel="dns-prefetch" href="https://drive.google.com" />
   <link rel="preconnect" href="https://drive.google.com" crossorigin />
   <style>
-    /* font-display:swap so text shows instantly in fallback font */
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    /* ── SECURITY: block all text selection & image drag ── */
-    body, body * {
-      -webkit-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-      user-select: none;
-      -webkit-touch-callout: none;
-    }
+    body, body * { -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; -webkit-touch-callout: none; }
     img { pointer-events: none; -webkit-user-drag: none; user-drag: none; }
-
-    /* Allow selection only inside inputs/selects */
-    input, select, textarea {
-      -webkit-user-select: text;
-      -moz-user-select: text;
-      -ms-user-select: text;
-      user-select: text;
-    }
-    /* Message box: block selection & copy specifically */
-    .message-box {
-      -webkit-user-select: none !important;
-      -moz-user-select: none !important;
-      -ms-user-select: none !important;
-      user-select: none !important;
-      pointer-events: none;
-      cursor: default;
-    }
-    body {
-      font-family: Nunito, sans-serif;
-      background: #fff5f5;
-      min-height: 100vh;
-      font-display: swap;
-    }
-    .btn {
-      border: none;
-      cursor: pointer;
-      border-radius: 12px;
-      font-family: 'Fredoka One', cursive;
-      transition: transform .12s, box-shadow .12s;
-    }
+    input, select, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-select: text; user-select: text; }
+    .message-box { -webkit-user-select: none !important; -moz-user-select: none !important; -ms-user-select: none !important; user-select: none !important; pointer-events: none; cursor: default; }
+    body { font-family: Nunito, sans-serif; background: #fff5f5; min-height: 100vh; font-display: swap; }
+    .btn { border: none; cursor: pointer; border-radius: 12px; font-family: 'Fredoka One', cursive; transition: transform .12s, box-shadow .12s; }
     .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 14px rgba(0,0,0,.13); }
     .btn:active:not(:disabled) { transform: translateY(0); }
-    .card {
-      background: white;
-      border-radius: 20px;
-      box-shadow: 0 3px 16px rgba(0,0,0,.07);
-      overflow: hidden;
-      transition: transform .2s, box-shadow .2s;
-    }
-    /* Shimmer skeleton while images load */
-    .product-image[src=""] , .product-image:not([src]) {
-      background: linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.2s infinite;
-    }
-    @keyframes shimmer {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
+    .card { background: white; border-radius: 20px; box-shadow: 0 3px 16px rgba(0,0,0,.07); overflow: hidden; transition: transform .2s, box-shadow .2s; }
+    .product-image[src=""], .product-image:not([src]) { background: linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     .card:hover { transform: translateY(-4px); box-shadow: 0 8px 26px rgba(0,0,0,.11); }
     .card { will-change: transform; }
-    input, select {
-      font-family: Nunito, sans-serif;
-      border: 2px solid #ffd6d6;
-      border-radius: 10px;
-      padding: 9px 12px;
-      outline: none;
-      font-size: 14px;
-      width: 100%;
-      background: white;
-      appearance: auto;
-    }
+    input, select { font-family: Nunito, sans-serif; border: 2px solid #ffd6d6; border-radius: 10px; padding: 9px 12px; outline: none; font-size: 14px; width: 100%; background: white; appearance: auto; }
     input:focus, select:focus { border-color: #ff0000; }
     ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: #ff9999; border-radius: 4px; }
-
-    /* ── STICKER PREVIEW POPUP ── */
-    #stickerPopup {
-      position: fixed;
-      inset: 0;
-      z-index: 500;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0,0,0,0.65);
-      backdrop-filter: blur(4px);
-      padding: 16px;
-    }
+    #stickerPopup { position: fixed; inset: 0; z-index: 500; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.65); backdrop-filter: blur(4px); padding: 16px; }
     #stickerPopup.open { display: flex; }
-
-    .popup-card {
-      background: white;
-      border-radius: 28px;
-      width: min(92vw, 380px);
-      max-height: 90vh;
-      overflow: hidden;
-      box-shadow: 0 24px 70px rgba(0,0,0,0.4);
-      animation: popIn 0.28s cubic-bezier(0.34,1.56,0.64,1);
-      position: relative;
-      display: flex;
-      flex-direction: column;
-    }
-    @keyframes popIn {
-      from { transform: scale(0.72); opacity: 0; }
-      to   { transform: scale(1);   opacity: 1; }
-    }
-
-    /* ── Close button ── */
-    .popup-close-btn {
-      position: absolute;
-      top: 14px;
-      right: 14px;
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.85);
-      border: none;
-      font-size: 16px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #444;
-      z-index: 20;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      transition: background 0.15s, transform 0.15s;
-    }
+    .popup-card { background: white; border-radius: 28px; width: min(92vw, 380px); max-height: 90vh; overflow: hidden; box-shadow: 0 24px 70px rgba(0,0,0,0.4); animation: popIn 0.28s cubic-bezier(0.34,1.56,0.64,1); position: relative; display: flex; flex-direction: column; }
+    @keyframes popIn { from { transform: scale(0.72); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .popup-close-btn { position: absolute; top: 14px; right: 14px; width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,0.85); border: none; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #444; z-index: 20; box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: background 0.15s, transform 0.15s; }
     .popup-close-btn:hover { background: white; transform: scale(1.1); }
-
-    /* ── Image slider area ── */
-    .popup-slider-wrap {
-      position: relative;
-      width: 100%;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-    .popup-slider-track {
-      display: flex;
-      transition: transform 0.38s cubic-bezier(0.4,0,0.2,1);
-      will-change: transform;
-    }
-    .popup-slide {
-      flex-shrink: 0;
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 32px 24px 24px;
-      min-height: 260px;
-    }
-    .popup-slide img {
-      width: 210px;
-      height: 210px;
-      object-fit: contain;
-      border-radius: 18px;
-      pointer-events: none;
-      -webkit-user-drag: none;
-    }
-
-    /* ── Dot indicators ── */
-    .popup-dots {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 7px;
-      padding: 0 0 14px;
-      background: transparent;
-      /* dots sit inside slider wrap so they're on the color bg */
-    }
-    .popup-dot {
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: rgba(0,0,0,0.18);
-      transition: background 0.2s, transform 0.2s;
-      cursor: pointer;
-    }
-    .popup-dot.active {
-      background: rgba(0,0,0,0.55);
-      transform: scale(1.25);
-    }
-
-    /* ── Info section below slider ── */
-    .popup-info {
-      padding: 16px 20px 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
+    .popup-slider-wrap { position: relative; width: 100%; overflow: hidden; flex-shrink: 0; }
+    .popup-slider-track { display: flex; transition: transform 0.38s cubic-bezier(0.4,0,0.2,1); will-change: transform; }
+    .popup-slide { flex-shrink: 0; width: 100%; display: flex; align-items: center; justify-content: center; padding: 32px 24px 24px; min-height: 260px; }
+    .popup-slide img { width: 210px; height: 210px; object-fit: contain; border-radius: 18px; pointer-events: none; -webkit-user-drag: none; }
+    .popup-dots { display: flex; justify-content: center; align-items: center; gap: 7px; padding: 0 0 14px; background: transparent; }
+    .popup-dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(0,0,0,0.18); transition: background 0.2s, transform 0.2s; cursor: pointer; }
+    .popup-dot.active { background: rgba(0,0,0,0.55); transform: scale(1.25); }
+    .popup-info { padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 6px; }
     .popup-name { font-family: 'Fredoka One'; font-size: 23px; color: #222; }
     .popup-meta { display: flex; align-items: center; gap: 10px; }
     .popup-price { font-family: 'Fredoka One'; font-size: 21px; color: #ff0000; }
-
-    /* double-click hint on cards */
-    .dbl-hint {
-      font-size: 10px;
-      color: #bbb;
-      font-family: Nunito;
-      font-weight: 700;
-      text-align: center;
-      margin-top: 4px;
-      letter-spacing: 0.3px;
-    }
-
-    .header {
-      background: #ff0000; /* pure red */
-      padding: 14px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: 0 4px 20px rgba(255,0,0,.3);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
+    .dbl-hint { font-size: 10px; color: #bbb; font-family: Nunito; font-weight: 700; text-align: center; margin-top: 4px; letter-spacing: 0.3px; }
+    .header { background: #ff0000; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(255,0,0,.3); position: sticky; top: 0; z-index: 100; }
     .header-left { display: flex; align-items: center; gap: 10px; }
     .brand { font-family: 'Fredoka One'; font-size: 22px; color: white; line-height: 1; }
     .subtitle { font-size: 11px; color: rgba(255,255,255,.8); font-weight: 700; margin-top: 1px; }
     .header-actions { display: flex; gap: 8px; }
-
-    /* ── CATEGORY DRUM PICKER ── */
-    .cat-drum {
-      position: relative;
-      height: 54px;
-      overflow: hidden;
-      touch-action: pan-x;
-      user-select: none;
-    }
-    /* colour glow behind active slot */
-    .cat-drum-bg {
-      position: absolute;
-      inset: 0;
-      transition: background 0.3s;
-      opacity: 0.12;
-      pointer-events: none;
-    }
-    /* left/right edge fade so only 3 pills show */
-    .cat-drum::before,
-    .cat-drum::after {
-      content: '';
-      position: absolute;
-      top: 0; bottom: 0;
-      width: 22%;
-      z-index: 3;
-      pointer-events: none;
-    }
-    .cat-drum::before { left: 0;  background: linear-gradient(to right, #fff5f5 30%, transparent); }
-    .cat-drum::after  { right: 0; background: linear-gradient(to left,  #fff5f5 30%, transparent); }
-    /* the sliding belt — positioned absolutely, moved by JS transform */
-    .cat-drum-belt {
-      position: absolute;
-      top: 0; bottom: 0;
-      display: flex;
-      align-items: center;
-      gap: 0;
-      will-change: transform;
-      transition: transform 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    }
+    .cat-drum { position: relative; height: 54px; overflow: hidden; touch-action: pan-x; user-select: none; }
+    .cat-drum-bg { position: absolute; inset: 0; transition: background 0.3s; opacity: 0.12; pointer-events: none; }
+    .cat-drum::before, .cat-drum::after { content: ''; position: absolute; top: 0; bottom: 0; width: 22%; z-index: 3; pointer-events: none; }
+    .cat-drum::before { left: 0; background: linear-gradient(to right, #fff5f5 30%, transparent); }
+    .cat-drum::after { right: 0; background: linear-gradient(to left, #fff5f5 30%, transparent); }
+    .cat-drum-belt { position: absolute; top: 0; bottom: 0; display: flex; align-items: center; gap: 0; will-change: transform; transition: transform 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
     .cat-drum-belt.no-transition { transition: none !important; }
-    /* each slot is exactly 1/3 of the drum width — set by JS */
-    .cat-drum-slot {
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .cat-drum-pill {
-      padding: 7px 16px;
-      border-radius: 20px;
-      font-family: 'Fredoka One';
-      font-size: 13px;
-      white-space: nowrap;
-      border: 2px solid #ffd6d6;
-      background: white;
-      color: #999;
-      transition: background 0.25s, color 0.25s, border-color 0.25s,
-                  transform 0.25s, box-shadow 0.25s, opacity 0.25s;
-      transform: scale(0.88);
-      opacity: 0.55;
-      cursor: pointer;
-    }
-    .cat-drum-slot.active .cat-drum-pill {
-      transform: scale(1.12);
-      opacity: 1;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-    }
-
-    .grid {
-      padding: 18px;
-      display: grid;
-      grid-template-columns: repeat(auto-fill,minmax(158px,1fr));
-      gap: 16px;
-    }
-    @media (max-width: 400px) {
-      .grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-        padding: 12px;
-      }
-    }
-    .empty-grid {
-      grid-column: 1 / -1;
-      text-align: center;
-      padding: 50px;
-      color: #ccc;
-      font-family: 'Fredoka One';
-      font-size: 18px;
-    }
-    .product-top {
-      padding: 14px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 120px;
-      position: relative;
-    }
+    .cat-drum-slot { flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    .cat-drum-pill { padding: 7px 16px; border-radius: 20px; font-family: 'Fredoka One'; font-size: 13px; white-space: nowrap; border: 2px solid #ffd6d6; background: white; color: #999; transition: background 0.25s, color 0.25s, border-color 0.25s, transform 0.25s, box-shadow 0.25s, opacity 0.25s; transform: scale(0.88); opacity: 0.55; cursor: pointer; }
+    .cat-drum-slot.active .cat-drum-pill { transform: scale(1.12); opacity: 1; box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+    .grid { padding: 18px; display: grid; grid-template-columns: repeat(auto-fill,minmax(158px,1fr)); gap: 16px; }
+    @media (max-width: 400px) { .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 12px; } }
+    .empty-grid { grid-column: 1 / -1; text-align: center; padding: 50px; color: #ccc; font-family: 'Fredoka One'; font-size: 18px; }
+    .product-top { padding: 14px; display: flex; justify-content: center; align-items: center; height: 120px; position: relative; }
     .product-image { width: 88px; height: 88px; object-fit: contain; border-radius: 10px; }
     .product-body { padding: 11px 13px; }
     .product-name { font-family: 'Fredoka One'; font-size: 15px; color: #222; }
-    .chip {
-      border-radius: 20px;
-      padding: 2px 9px;
-      font-size: 11px;
-      font-weight: 800;
-      display: inline-block;
-      margin-top: 3px;
-    }
+    .chip { border-radius: 20px; padding: 2px 9px; font-size: 11px; font-weight: 800; display: inline-block; margin-top: 3px; }
     .price { font-family: 'Fredoka One'; color: #ff0000; font-size: 20px; margin-top: 7px; }
-    .qty-control {
-      display: flex;
-      align-items: center;
-      margin-top: 10px;
-      border: 2px solid #ffd6d6;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-    .qty-btn {
-      flex: 1;
-      background: #ffe0e0;
-      color: #ff0000;
-      height: 36px;
-      font-size: 22px;
-      border-radius: 0;
-      padding: 0;
-    }
+    .qty-control { display: flex; align-items: center; margin-top: 10px; border: 2px solid #ffd6d6; border-radius: 12px; overflow: hidden; }
+    .qty-btn { flex: 1; background: #ffe0e0; color: #ff0000; height: 36px; font-size: 22px; border-radius: 0; padding: 0; }
     .qty-btn:disabled { background: #fff5f5; color: #ccc; cursor: not-allowed; }
-    .qty-val {
-      flex: 1;
-      text-align: center;
-      font-family: 'Fredoka One';
-      font-size: 18px;
-      color: #bbb;
-    }
+    .qty-val { flex: 1; text-align: center; font-family: 'Fredoka One'; font-size: 18px; color: #bbb; }
     .qty-val.active { color: #ff0000; }
-    .in-cart, .add-hint {
-      margin-top: 9px;
-      border-radius: 10px;
-      padding: 7px 0;
-      text-align: center;
-      font-family: 'Fredoka One';
-      font-size: 13px;
-    }
+    .in-cart, .add-hint { margin-top: 9px; border-radius: 10px; padding: 7px 0; text-align: center; font-family: 'Fredoka One'; font-size: 13px; }
     .in-cart { background: #ff0000; color: white; }
     .add-hint { background: #fff5f5; color: #bbb; }
-    .qty-badge {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      background: #ff0000;
-      color: white;
-      border-radius: 50%;
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      font-family: 'Fredoka One';
-    }
-
-    .overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 200;
-      display: none;
-    }
+    .qty-badge { position: absolute; top: 8px; right: 8px; background: #ff0000; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-family: 'Fredoka One'; }
+    .overlay { position: fixed; inset: 0; z-index: 200; display: none; }
     .overlay.open { display: flex; }
     .backdrop { flex: 1; background: rgba(0,0,0,.42); }
-    .drawer {
-      width: 350px;
-      background: white;
-      padding: 20px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
+    .drawer { width: 350px; background: white; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
     .drawer-head { display: flex; justify-content: space-between; align-items: center; }
     .drawer-title { font-family: 'Fredoka One'; font-size: 22px; color: #ff0000; }
     .drawer-actions { display: flex; gap: 7px; }
     .small-btn { padding: 6px 11px; font-size: 12px; }
     .back-btn { background: #fff0f0; color: #ff0000; }
     .close-btn { background: #f5f5f5; color: #555; padding: 6px 11px; font-size: 17px; }
-    .empty-cart {
-      text-align: center;
-      padding: 50px;
-      color: #ccc;
-      font-family: 'Fredoka One';
-      font-size: 17px;
-    }
+    .empty-cart { text-align: center; padding: 50px; color: #ccc; font-family: 'Fredoka One'; font-size: 17px; }
     .empty-cart span { font-size: 13px; font-family: Nunito; }
-    .cat-head {
-      background: #fff0f0;
-      border-radius: 10px;
-      padding: 6px 12px;
-      font-family: 'Fredoka One';
-      font-size: 14px;
-      margin-bottom: 7px;
-    }
-    .cart-item, .summary-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 9px 6px;
-      border-bottom: 1px solid #fff0f0;
-    }
-    .cart-image { width: 46px; height: 46px; border-radius: 9px; object-fit: contain; background: #fff5f5; }
-    .cart-name { font-family: 'Fredoka One'; font-size: 14px; color: #222; }
-    .cart-sub { font-size: 12px; color: #999; margin-top: 1px; }
-    .mini-qty { display: flex; align-items: center; gap: 6px; }
-    .mini-btn { background: #ffe0e0; color: #ff0000; width: 28px; height: 28px; font-size: 18px; padding: 0; }
-    .mini-val { font-family: 'Fredoka One'; font-size: 16px; min-width: 20px; text-align: center; color: #ff0000; }
-    .item-total { font-family: 'Fredoka One'; font-size: 15px; color: #ff0000; min-width: 46px; text-align: right; }
-    .grand-total {
-      background: linear-gradient(135deg,#16a34a,#4ade80);
-      border-radius: 12px;
-      padding: 9px 14px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .grand-total.multi-cat {
-      background: linear-gradient(135deg,#16a34a,#4ade80);
-    }
-    .grand-total span:first-child { color: white; font-family: 'Fredoka One'; font-size: 13px; }
-    .grand-total .value { color: white; font-family: 'Fredoka One'; font-size: 19px; }
-    .order-btn {
-      background: linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);
-      color: white;
-      padding: 16px 0;
-      font-size: 20px;
-      font-family: 'Nunito', sans-serif;
-      font-weight: 800;
-      letter-spacing: 0.3px;
-      width: 100%;
-    }
-
-    /* ── CUSTOM SELECT STYLING ── */
-    .custom-select { position: relative; width: 100%; user-select: none; }
-    .custom-select-trigger {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 12px 14px; background: white; border: 2px solid #ffd6d6;
-      border-radius: 10px; cursor: pointer; font-family: 'Nunito', sans-serif;
-      font-size: 13px; font-weight: 700; color: #444; transition: border-color 0.2s;
-    }
-    .custom-select-trigger:hover { border-color: #ffb3b3; }
-    .custom-options {
-      position: absolute; top: 100%; left: 0; right: 0; background: white;
-      border: 2px solid #ffd6d6; border-radius: 12px; margin-top: 6px;
-      box-shadow: 0 8px 25px rgba(255,0,0,0.15); z-index: 300;
-      max-height: 220px; overflow-y: auto; display: none; flex-direction: column;
-    }
-    .custom-options.open { display: flex; }
-    .custom-option {
-      padding: 12px 14px; cursor: pointer; transition: background 0.2s;
-      border-bottom: 1px solid #fff0f0; display: flex; flex-direction: column; gap: 3px;
-    }
-    .custom-option:last-child { border-bottom: none; }
-    .custom-option:hover:not(.locked) { background: #fff5f5; }
-    .custom-option.selected { background: #ffe0e0; border-bottom: 1px solid #ffd6d6; }
-    
-    /* Locked / Blurry Styling for unavailable options */
-    .custom-option.locked {
-      opacity: 0.45;
-      filter: grayscale(80%);
-      cursor: not-allowed;
-      background: #fdfdfd;
-    }
-    
-    .opt-name { font-family: 'Fredoka One'; font-size: 13px; color: #222; }
-    .opt-min { font-size: 11px; color: #777; font-weight: 700; }
-
-    /* ── SCROLL HIDE ── */
-    #searchSticky {
-      position: sticky;
-      top: 0;
-      z-index: 99;
-      background: #fff5f5;
-      overflow: hidden;
-      max-height: 70px;
-      transition: max-height 0.3s cubic-bezier(0.4,0,0.2,1);
-    }
-    #searchSticky.s-hide { max-height: 0; }
-
-    #catSticky {
-      position: sticky;
-      top: 0;
-      z-index: 98;
-      background: #fff5f5;
-      max-height: 60px;
-      overflow: hidden;
-      transition: max-height 0.3s cubic-bezier(0.4,0,0.2,1);
-    }
-    #catSticky.c-hide { max-height: 0; }
-
-    /* ── SEARCH BAR ── */
-    .search-bar {
-      padding: 10px 16px 6px;
-      background: #fff5f5;
-    }
-    .search-wrap {
-      position: relative;
-      display: flex;
-      align-items: center;
-    }
-    .search-icon {
-      position: absolute;
-      left: 12px;
-      font-size: 16px;
-      pointer-events: none;
-      opacity: 0.5;
-      z-index: 1;
-    }
-    .search-input {
-      width: 100%;
-      padding: 10px 40px 10px 36px !important;
-      border-radius: 14px !important;
-      border: 2px solid #ffd6d6 !important;
-      font-size: 14px !important;
-      background: white !important;
-      font-family: 'Nunito', sans-serif !important;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .search-input:focus {
-      border-color: #ff0000 !important;
-      box-shadow: 0 0 0 3px rgba(255,0,0,0.08);
-    }
-    .search-clear {
-      position: absolute;
-      right: 10px;
-      background: #e0e0e0;
-      border: none;
-      border-radius: 50%;
-      width: 20px;
-      height: 20px;
-      font-size: 11px;
-      cursor: pointer;
-      color: #555;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      font-weight: 900;
-      padding: 0;
-      line-height: 1;
-      z-index: 1;
-      transition: background 0.15s;
-    }
+    .cat-head { background: #fff0f0; border-radius: 10px; padding: 6px 12px; font-family: 'Fredoka One'; font-size: 14px; margin-bottom: 7px; }
+    .cart-item, .summary-item { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
+    .cart-item-img { width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: #f9f9f9; }
+    .cart-item-name { font-family: 'Fredoka One'; font-size: 14px; }
+    .cart-item-price { font-size: 12px; color: #999; font-weight: 700; }
+    .cart-item-total { font-family: 'Fredoka One'; color: #ff0000; font-size: 15px; margin-left: auto; }
+    .total-row { display: flex; justify-content: space-between; background: #fff0f0; border-radius: 12px; padding: 10px 14px; font-family: 'Fredoka One'; font-size: 17px; }
+    .total-row span:last-child { color: #ff0000; }
+    .step2 label { font-family: 'Fredoka One'; font-size: 14px; color: #555; }
+    .message-box { background: #fff8f8; border: 2px dashed #ffd6d6; border-radius: 14px; padding: 13px; font-size: 12.5px; line-height: 1.7; font-family: Nunito; font-weight: 700; white-space: pre-wrap; max-height: 200px; overflow-y: auto; }
+    .order-btn { width: 100%; padding: 14px; font-size: 16px; background: #ff0000; color: white; border-radius: 14px; }
+    .order-btn:disabled { background: #ffb3b3; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+    .search-wrap { padding: 10px 18px 0; position: relative; display: flex; align-items: center; }
+    .search-icon { position: absolute; left: 28px; color: #bbb; font-size: 15px; pointer-events: none; }
+    .search-input { padding-left: 32px !important; border: 2px solid #ffd6d6 !important; border-radius: 12px !important; background: white !important; font-family: 'Nunito', sans-serif !important; transition: border-color 0.2s, box-shadow 0.2s; }
+    .search-input:focus { border-color: #ff0000 !important; box-shadow: 0 0 0 3px rgba(255,0,0,0.08); }
+    .search-clear { position: absolute; right: 10px; background: #e0e0e0; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; cursor: pointer; color: #555; display: none; align-items: center; justify-content: center; font-weight: 900; padding: 0; line-height: 1; z-index: 1; transition: background 0.15s; }
     .search-clear:hover { background: #bbb; color: #222; }
     .search-clear.visible { display: flex; }
   </style>
@@ -598,114 +123,381 @@
 <body>
   <div id="app"></div>
 
+  <!-- STICKER POPUP -->
+  <div id="stickerPopup">
+    <div class="popup-card">
+      <button class="popup-close-btn" id="popupCloseBtn">✕</button>
+      <div class="popup-slider-wrap" id="popupSliderWrap">
+        <div class="popup-slider-track" id="popupSliderTrack"></div>
+        <div class="popup-dots" id="popupDots"></div>
+      </div>
+      <div class="popup-info">
+        <div class="popup-name" id="popupName"></div>
+        <div class="popup-meta">
+          <span class="chip" id="popupChip"></span>
+          <span class="popup-price" id="popupPrice"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     "use strict";
-    // ============================================================================
-    // ⚙️ APP SETTINGS & CONFIGURATION
-    // ============================================================================
 
     const INSTAGRAM_USERNAME = "stiickuu";
-
-    const CATEGORIES = ["All", "Cool", "Cartoon", "Anime", "SuperHero", "Vehicles", "Cricketers", "Cute"];
-    
+    const CATEGORIES = ["All","Cool","Cartoon","Anime","SuperHero","Vehicles","Cricketers","Cute","Hi"];
     const CAT_COLOR = {
-      Anime: "#ff6b6b", 
-      Cartoon: "#f5a623", 
-      Cricketers: "#4caf50",
-      Cool: "#481FFF",
-      SuperHero: "#1FF0FF",
-      Cute: "#F4C2C2",
-      Vehicles: "#000000"
-    };
-
+      "Anime": "#ff6b6b",
+      "Cartoon": "#f5a623",
+      "Cricketers": "#4caf50",
+      "Cool": "#481FFF",
+      "SuperHero": "#1FF0FF",
+      "Cute": "#F4C2C2",
+      "Vehicles": "#000000",
+      "Hi": "#ff6b6b"
+};
     const PICKUP_LOCATIONS = [
-      { name: "Front of - Morning Glory Higher Secondary School", min: 5 },
-      { name: "Front of - 14 Mile Tiniali", min: 5 },
-      { name: "Front of - Higher Secondary school", min: 5 },
-      { name: "Tiniali of - SANKARDEV SHISU VIDYA NIKETAN BOGINADI", min: 5 },
-      { name: "Near - Bogindi Market", min: 6 },
-      { name: "Near - Bogindi Police station", min: 6 },
-      { name: "Near - Rose Bud Academy", min: 6 },
-      { name: "Garam bazar tarioni", min: 10 },
-      { name: "Tadang", min: 5 },
-      { name: "Bosasuk tiniali", min: 5 },
-      { name: "Branchpur Bridge", min: 10 },
-      { name: "Ganesh Tiniali", min: 5 },
-      { name: "Sri Sri Padumoni Aai Than", min: 5 }
-    ];
-
+      {
+            "name": "Front of - Morning Glory Higher Secondary School",
+            "min": 5
+      },
+      {
+            "name": "Front of - 14 Mile Tiniali",
+            "min": 5
+      },
+      {
+            "name": "Front of - Higher Secondary school",
+            "min": 5
+      },
+      {
+            "name": "Tiniali of - SANKARDEV SHISU VIDYA NIKETAN BOGINADI",
+            "min": 5
+      },
+      {
+            "name": "Near - Bogindi Market",
+            "min": 6
+      },
+      {
+            "name": "Near - Bogindi Police station",
+            "min": 6
+      },
+      {
+            "name": "Near - Rose Bud Academy",
+            "min": 6
+      },
+      {
+            "name": "Tadang",
+            "min": 5
+      },
+      {
+            "name": "Bosasuk tiniali",
+            "min": 5
+      },
+      {
+            "name": "Branchpur Bridge",
+            "min": 10
+      },
+      {
+            "name": "Ganesh Tiniali",
+            "min": 5
+      },
+      {
+            "name": "Sri Sri Padumoni Aai Than",
+            "min": 5
+      }
+];
     const DEFAULT_STICKERS = [
-      { id: 1, name: "EyeRo", category: "Anime", price: 10, image: "https://drive.google.com/file/d/12OAd4ckdsedQGT1f0u58vIEskwSFRlqK/view?usp=sharing" },
-      { id: 2, name: "Doraemon", category: "Anime", price: 10, image: "https://drive.google.com/file/d/18y9i-kjBjcMTU6qeFVAs7zPU4NRVuHv8/view?usp=sharing" },
-      { id: 3, name: "One Piece", category: "Anime", price: 10, image: "https://drive.google.com/file/d/1HBcKbflMjQ8PufMJQNtvJXnj4OCFRRS1/view?usp=sharing" },
-      { id: 4, name: "Oggy", category: "Cartoon", price: 10, image: "https://drive.google.com/file/d/1nkdQb_yLWxTTrsEWyUPQigT40L4Znhu8/view?usp=sharing" },
-      { id: 5, name: "Panda", category: "Cartoon", price: 10, image: "https://drive.google.com/file/d/1QzYv7qAHWdQZnZW03uDvrcdjLMXdSDJC/view?usp=sharing" },
-      { id: 6, name: "Tom", category: "Cartoon", price: 10, image: "https://drive.google.com/file/d/1tfU0WfMPYTggSKnQ9vpZkWHIBExxzHKk/view?usp=sharing" },
-      { id: 7, name: "Virat Kohli", category: "Cricketers", price: 10, image: "https://drive.google.com/file/d/16n25y2A5vNJJ06Xoms5orhGyrBHZtCvu/view?usp=sharing" },
-      { id: 8, name: "BlackHat", category: "Cool", price: 10, image: "https://drive.google.com/file/d/1zAyg_MYJoLM6LI7KSU1by7GsSJnOl_I-/view?usp=sharing" },
-      { id: 9, name: "Red Eye", category: "Cool", price: 10, image: "https://drive.google.com/file/d/1a9YnKS7xRy0CTUnxkmwN9i4eeo9-GbNk/view?usp=sharing" },
-      { id: 10, name: "The Child", category: "Cool", price: 10, image: "https://drive.google.com/file/d/1msti_xgaufqIds5qQy9ATSUTE-WaPn2V/view?usp=drivesdk" },
-      { id: 11, name: "Pokemon", category: "Anime", price: 10, image: "https://drive.google.com/thumbnail?id=1ZKHl0-SnNbAcGWCHpm4uhtknUrJrs8HV&sz=w400" },
-      { id: 12, name: "Ninja", category: "Anime", price: 10, image: "https://drive.google.com/file/d/1K17cUmXOgwuByDvGBk1SeeKDqFS3qU3u/view?usp=sharing" },
-      { id: 13, name: "Bablis", category: "Cool", price: 10, image: "https://drive.google.com/file/d/1lDMUAS0LVbXj9XJeFRN4W-Kty5tvFejo/view?usp=sharing" },
-      { id: 14, name: "BatMan", category: "SuperHero", price: 10, image: "https://drive.google.com/file/d/1NDXzibUxm-H7ORXp7VQaBn1QfZryiCst/view?usp=sharing" },
-      { id: 15, name: "Direction", category: "Cool", price: 10, image: "https://drive.google.com/file/d/1r_jUyaV6Mt_19DYTk1kJQbji_zr5HJbD/view?usp=sharing" },
-      { id: 16, name: "Tiger", category: "Cool", price: 10, image: "https://drive.google.com/file/d/1JAR-szLYI9XZjYtjxazY5I2dpyvx7Myy/view?usp=sharing" },
-      { id: 17, name: "Shivji", category: "Cool", price: 10, image: "https://drive.google.com/file/d/19Dkl7lvK-JfoDMOd2pkrHVhtJQj7y9_j/view?usp=sharing" },
-      { id: 18, name: "SpiderMan", category: "SuperHero", price: 10, image: "https://drive.google.com/file/d/1wEfjtZzgexRDupjGuIKXS9ddQBKc7uGE/view?usp=sharing" },
-      { id: 19, name: "Rabo", category: "Cool", price: 10, image: "https://drive.google.com/file/d/1z0RcWDsk0tk8bfv5Y9h5558-LHthAatu/view?usp=sharing" },
-      { id: 20, name: "Hato", category: "Cool", price: 10, image: "https://drive.google.com/file/d/1Qmvtd673zJQtys3mQV2Eo7MnT7d53QB_/view?usp=sharing" },
-      { id: 21, name: "A1", category: "Cute", price: 10, image: "https://drive.google.com/file/d/1ilahl-xunoLktCxb7Za1IDju1NgoBNnp/view?usp=sharing" },
-      { id: 22, name: "A2", category: "Cute", price: 10, image: "https://drive.google.com/file/d/1Eq2_tuYOti1l0FWiI0HMjuqm2LgUsthp/view?usp=sharing" },
-      { id: 23, name: "A3", category: "Cute", price: 10, image: "https://drive.google.com/file/d/1UDpcQhRdmRjA49JL5HAsqKrIZ2ZKgwZx/view?usp=sharing" },
-      { id: 24, name: "A4", category: "Cute", price: 10, image: "https://drive.google.com/file/d/1IuSzWuk2dACspWyF4Z3__iwdnr9PNGhj/view?usp=sharing" },
-      { id: 25, name: "A5", category: "Cute", price: 10, image: "https://drive.google.com/file/d/1Ba6ABk9b-iK2u-9s_Z76TgadGXR3UMMV/view?usp=sharing" },
-      { id: 26, name: "A6", category: "Cute", price: 10, image: "https://drive.google.com/file/d/1A70zS4DZ_2YDvxbY8XU7Qk8ltyKh7BIx/view?usp=drive_link" },
-      { id: 27, name: "A7", category: "Cute", price: 10, image: "https://drive.google.com/file/d/1281UP96LDw_OwXuynswV2o57K5BDzHp9/view?usp=drive_link" },
-      { id: 28, name: "A8", category: "Cute", price: 10, image: "https://drive.google.com/file/d/1C4SOwjJfgv1u6GWX3emEe2K8pklY0Y3l/view?usp=drive_link" },
-      { id: 29, name: "A9", category: "Cute", price: 10, image: "https://drive.google.com/file/d/1c2QJSpmtktSQ8HPgdPOU7H9LazDEQpfA/view?usp=drive_link" },
-      { id: 30, name: "A10", category: "Cute", price: 10, image: "https://drive.google.com/file/d/1cliUE9gzWsU5QH95yeVRYeQdgDoy_At6/view?usp=drive_link" },
-      { id: 31, name: "B1", category: "Cute", price: 10, image: "https://drive.google.com/file/d/1Rkdvt-XfZt8q5UhBMkRMeyY5leSGntu-/view?usp=drive_link" },
-      { id: 32, name: "B2", category: "Cute", price: 10, image: "https://drive.google.com/file/d/1nK54UHo5OA5zSIe_Ve4aPGin0QCWQiHZ/view?usp=sharing" },
-      { id: 33, name: "B3", category: "Cute", price: 10, image: "https://drive.google.com/file/d/1INmn9zmUy-NLVaA-YOPYoJNJSDSUuIAp/view?usp=sharing" },
-      { id: 34, name: "B4", category: "Cute", price: 10, image: "https://drive.google.com/file/d/1h8oIgdYRF6ewskASxRUx3puUA4TxodEG/view?usp=sharing" },
-      { id: 35, name: "B5", category: "Cool", price: 10, image: "https://drive.google.com/file/d/1_-0n_RlUs5s8A_J1T8hQTi1SJ1uHWnpm/view?usp=sharing" },
-      { id: 36, name: "B6", category: "Vehicles", price: 15, image: "https://drive.google.com/file/d/1TVBf0XcTFYWGM2sdm8JGrom98X8YfdMo/view?usp=sharing" },
-      { id: 37, name: "B7", category: "Vehicles", price: 15, image: "https://drive.google.com/file/d/1ZdVmlz3cE6E0Gg6T6nT_gZUsvbxJ22Qq/view?usp=sharing" },
-      { id: 38, name: "B8", category: "Vehicles", price: 15, image: "https://drive.google.com/file/d/1q2N1dE67-HbtOQ-cCuJLPUmguAZAl7hO/view?usp=sharing" },
-      { id: 39, name: "B9", category: "Vehicles", price: 15, image: "https://drive.google.com/file/d/1mCENVpYiyHfLHR9s9V_y5yEwOifSypSc/view?usp=sharing" },
-      { id: 40, name: "B10", category: "Vehicles", price: 15, image: "https://drive.google.com/file/d/11zTLUni5d-YfKuDzq7aEjE-knG34sj6s/view?usp=sharing" },
-      { id: 41, name: "C1", category: "Vehicles", price: 15, image: "https://drive.google.com/file/d/1iP0_cc6-HSYM2uv5xxxthdP7wa2i4s4A/view?usp=sharing" },
+      {
+            "id": 1,
+            "name": "EyeRo",
+            "category": "Anime",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/12OAd4ckdsedQGT1f0u58vIEskwSFRlqK/view?usp=sharing"
+      },
+      {
+            "id": 2,
+            "name": "Doraemon",
+            "category": "Anime",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/18y9i-kjBjcMTU6qeFVAs7zPU4NRVuHv8/view?usp=sharing"
+      },
+      {
+            "id": 3,
+            "name": "One Piece",
+            "category": "Anime",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/1HBcKbflMjQ8PufMJQNtvJXnj4OCFRRS1/view?usp=sharing"
+      },
+      {
+            "id": 4,
+            "name": "Oggy",
+            "category": "Cartoon",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/1nkdQb_yLWxTTrsEWyUPQigT40L4Znhu8/view?usp=sharing"
+      },
+      {
+            "id": 5,
+            "name": "Panda",
+            "category": "Cartoon",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/1QzYv7qAHWdQZnZW03uDvrcdjLMXdSDJC/view?usp=sharing"
+      },
+      {
+            "id": 6,
+            "name": "Tom",
+            "category": "Cartoon",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/1tfU0WfMPYTggSKnQ9vpZkWHIBExxzHKk/view?usp=sharing"
+      },
+      {
+            "id": 7,
+            "name": "Virat Kohli",
+            "category": "Cricketers",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/16n25y2A5vNJJ06Xoms5orhGyrBHZtCvu/view?usp=sharing"
+      },
+      {
+            "id": 8,
+            "name": "BlackHat",
+            "category": "Cool",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/1zAyg_MYJoLM6LI7KSU1by7GsSJnOl_I-/view?usp=sharing"
+      },
+      {
+            "id": 9,
+            "name": "Red Eye",
+            "category": "Cool",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/1a9YnKS7xRy0CTUnxkmwN9i4eeo9-GbNk/view?usp=sharing"
+      },
+      {
+            "id": 10,
+            "name": "The Child",
+            "category": "Cool",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/1msti_xgaufqIds5qQy9ATSUTE-WaPn2V/view?usp=drivesdk"
+      },
+      {
+            "id": 11,
+            "name": "Pokemon",
+            "category": "Anime",
+            "price": 10,
+            "image": "https://drive.google.com/thumbnail?id=1ZKHl0-SnNbAcGWCHpm4uhtknUrJrs8HV&sz=w400"
+      },
+      {
+            "id": 12,
+            "name": "Ninja",
+            "category": "Anime",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/1K17cUmXOgwuByDvGBk1SeeKDqFS3qU3u/view?usp=sharing"
+      },
+      {
+            "id": 13,
+            "name": "Bablis",
+            "category": "Cool",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/1lDMUAS0LVbXj9XJeFRN4W-Kty5tvFejo/view?usp=sharing"
+      },
+      {
+            "id": 14,
+            "name": "BatMan",
+            "category": "SuperHero",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/1NDXzibUxm-H7ORXp7VQaBn1QfZryiCst/view?usp=sharing"
+      },
+      {
+            "id": 15,
+            "name": "Direction",
+            "category": "Cool",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/1r_jUyaV6Mt_19DYTk1kJQbji_zr5HJbD/view?usp=sharing"
+      },
+      {
+            "id": 16,
+            "name": "Tiger",
+            "category": "Cool",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/1JAR-szLYI9XZjYtjxazY5I2dpyvx7Myy/view?usp=sharing"
+      },
+      {
+            "id": 17,
+            "name": "Shivji",
+            "category": "Cool",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/19Dkl7lvK-JfoDMOd2pkrHVhtJQj7y9_j/view?usp=sharing"
+      },
+      {
+            "id": 18,
+            "name": "SpiderMan",
+            "category": "SuperHero",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/1wEfjtZzgexRDupjGuIKXS9ddQBKc7uGE/view?usp=sharing"
+      },
+      {
+            "id": 19,
+            "name": "Rabo",
+            "category": "Cool",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/1z0RcWDsk0tk8bfv5Y9h5558-LHthAatu/view?usp=sharing"
+      },
+      {
+            "id": 20,
+            "name": "Hato",
+            "category": "Cool",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/1Qmvtd673zJQtys3mQV2Eo7MnT7d53QB_/view?usp=sharing"
+      },
+      {
+            "id": 21,
+            "name": "A1",
+            "category": "Cute",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/1ilahl-xunoLktCxb7Za1IDju1NgoBNnp/view?usp=sharing"
+      },
+      {
+            "id": 22,
+            "name": "A2",
+            "category": "Cute",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/1Eq2_tuYOti1l0FWiI0HMjuqm2LgUsthp/view?usp=sharing"
+      },
+      {
+            "id": 23,
+            "name": "A3",
+            "category": "Cute",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/1UDpcQhRdmRjA49JL5HAsqKrIZ2ZKgwZx/view?usp=sharing"
+      },
+      {
+            "id": 24,
+            "name": "A4",
+            "category": "Cute",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/1IuSzWuk2dACspWyF4Z3__iwdnr9PNGhj/view?usp=sharing"
+      },
+      {
+            "id": 25,
+            "name": "A5",
+            "category": "Cute",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/1Ba6ABk9b-iK2u-9s_Z76TgadGXR3UMMV/view?usp=sharing"
+      },
+      {
+            "id": 26,
+            "name": "A6",
+            "category": "Cute",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/1A70zS4DZ_2YDvxbY8XU7Qk8ltyKh7BIx/view?usp=drive_link"
+      },
+      {
+            "id": 27,
+            "name": "A7",
+            "category": "Cute",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/1281UP96LDw_OwXuynswV2o57K5BDzHp9/view?usp=drive_link"
+      },
+      {
+            "id": 28,
+            "name": "A8",
+            "category": "Cute",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/1C4SOwjJfgv1u6GWX3emEe2K8pklY0Y3l/view?usp=drive_link"
+      },
+      {
+            "id": 29,
+            "name": "A9",
+            "category": "Cute",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/1c2QJSpmtktSQ8HPgdPOU7H9LazDEQpfA/view?usp=drive_link"
+      },
+      {
+            "id": 30,
+            "name": "A10",
+            "category": "Cute",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/1cliUE9gzWsU5QH95yeVRYeQdgDoy_At6/view?usp=drive_link"
+      },
+      {
+            "id": 31,
+            "name": "B1",
+            "category": "Cute",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/1Rkdvt-XfZt8q5UhBMkRMeyY5leSGntu-/view?usp=drive_link"
+      },
+      {
+            "id": 32,
+            "name": "B2",
+            "category": "Cute",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/1nK54UHo5OA5zSIe_Ve4aPGin0QCWQiHZ/view?usp=sharing"
+      },
+      {
+            "id": 33,
+            "name": "B3",
+            "category": "Cute",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/1INmn9zmUy-NLVaA-YOPYoJNJSDSUuIAp/view?usp=sharing"
+      },
+      {
+            "id": 34,
+            "name": "B4",
+            "category": "Cute",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/1h8oIgdYRF6ewskASxRUx3puUA4TxodEG/view?usp=sharing"
+      },
+      {
+            "id": 35,
+            "name": "B5",
+            "category": "Cool",
+            "price": 10,
+            "image": "https://drive.google.com/file/d/1_-0n_RlUs5s8A_J1T8hQTi1SJ1uHWnpm/view?usp=sharing"
+      },
+      {
+            "id": 36,
+            "name": "B6",
+            "category": "Vehicles",
+            "price": 15,
+            "image": "https://drive.google.com/file/d/1TVBf0XcTFYWGM2sdm8JGrom98X8YfdMo/view?usp=sharing"
+      },
+      {
+            "id": 37,
+            "name": "B7",
+            "category": "Vehicles",
+            "price": 15,
+            "image": "https://drive.google.com/file/d/1ZdVmlz3cE6E0Gg6T6nT_gZUsvbxJ22Qq/view?usp=sharing"
+      },
+      {
+            "id": 38,
+            "name": "B8",
+            "category": "Vehicles",
+            "price": 15,
+            "image": "https://drive.google.com/file/d/1q2N1dE67-HbtOQ-cCuJLPUmguAZAl7hO/view?usp=sharing"
+      },
+      {
+            "id": 39,
+            "name": "B9",
+            "category": "Vehicles",
+            "price": 15,
+            "image": "https://drive.google.com/file/d/1mCENVpYiyHfLHR9s9V_y5yEwOifSypSc/view?usp=sharing"
+      },
+      {
+            "id": 40,
+            "name": "B10",
+            "category": "Vehicles",
+            "price": 15,
+            "image": "https://drive.google.com/file/d/11zTLUni5d-YfKuDzq7aEjE-knG34sj6s/view?usp=sharing"
+      },
+      {
+            "id": 41,
+            "name": "C1",
+            "category": "Vehicles",
+            "price": 15,
+            "image": "https://drive.google.com/file/d/1iP0_cc6-HSYM2uv5xxxthdP7wa2i4s4A/view?usp=sharing"
+      }
+];
 
-
-
-            
-
-
-
-
-    ];
-
-    // ============================================================================
-    // END OF SETTINGS 
-    // ============================================================================
-
-    const state = {
-      stickers: DEFAULT_STICKERS.slice(),
-      cart: {},
-      activeCategory: "All",
-      cartOpen: false,
-      orderStep: 0,
-      copied: false,
-      igHandle: INSTAGRAM_USERNAME,
-      pickupPlace: "",
-      ordering: false,
-      searchQuery: ""
-    };
-
+    const state = { stickers: DEFAULT_STICKERS.slice(), cart: {}, activeCategory: "All", cartOpen: false, orderStep: 0, copied: false, igHandle: INSTAGRAM_USERNAME, pickupPlace: "", ordering: false, searchQuery: "" };
     const app = document.getElementById('app');
-
-    // expose for popup
     window._state = state;
     window.fixDriveUrl = fixDriveUrl;
     window.CAT_COLOR = CAT_COLOR;
@@ -719,139 +511,53 @@
       return url;
     }
 
-    try {
-      const saved = localStorage.getItem('customStickers');
-      if (saved) JSON.parse(saved).forEach(s => state.stickers.push(s));
-    } catch(e) {}
-
-    function saveStickers() {
-      try { localStorage.setItem('customStickers', JSON.stringify(state.stickers.filter(s => s.isCustom))); } catch(e) {}
-    }
-
-    function deleteSticker(id) {
-      state.stickers = state.stickers.filter(s => s.id !== id);
-      delete state.cart[id];
-      saveStickers();
-      render();
-    }
-
+    try { const saved = localStorage.getItem('customStickers'); if (saved) JSON.parse(saved).forEach(s => state.stickers.push(s)); } catch(e) {}
+    function saveStickers() { try { localStorage.setItem('customStickers', JSON.stringify(state.stickers.filter(s => s.isCustom))); } catch(e) {} }
+    function deleteSticker(id) { state.stickers = state.stickers.filter(s => s.id !== id); delete state.cart[id]; saveStickers(); render(); }
     function getQty(id) { return state.cart[id] || 0; }
-
-    function changeQty(id, delta) {
-      const next = { ...state.cart };
-      const val = (next[id] || 0) + delta;
-      if (val <= 0) delete next[id];
-      else next[id] = val;
-      state.cart = next;
-      render();
-    }
-
-    function filteredStickers() {
-      return state.activeCategory === "All"
-        ? state.stickers
-        : state.stickers.filter(s => s.category === state.activeCategory);
-    }
-
+    function changeQty(id, delta) { const next = { ...state.cart }; const val = (next[id] || 0) + delta; if (val <= 0) delete next[id]; else next[id] = val; state.cart = next; render(); }
+    function filteredStickers() { return state.activeCategory === "All" ? state.stickers : state.stickers.filter(s => s.category === state.activeCategory); }
     function cartStickers() { return state.stickers.filter(s => state.cart[s.id] > 0); }
-
     function totalQty() { return cartStickers().reduce((a, s) => a + state.cart[s.id], 0); }
-
     function grandTotal() { return cartStickers().reduce((a, s) => a + state.cart[s.id] * s.price, 0); }
-
-    function grouped() {
-      return cartStickers().reduce((acc, s) => {
-        if (!acc[s.category]) acc[s.category] = [];
-        acc[s.category].push(s);
-        return acc;
-      }, {});
-    }
+    function grouped() { return cartStickers().reduce((acc, s) => { if (!acc[s.category]) acc[s.category] = []; acc[s.category].push(s); return acc; }, {}); }
 
     function buildMsg() {
       const today = new Date();
       const dateString = today.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-      
       const lines = [];
-      Object.entries(grouped()).forEach(([cat, items], index) => {
-        if (index > 0) lines.push("");
-        
-        lines.push(`[ ${cat} ]`);
-        items.forEach(s => {
-          lines.push(`  • ${s.name}  x${state.cart[s.id]}  = Rs.${state.cart[s.id] * s.price}`);
-        });
-      });
+      Object.entries(grouped()).forEach(([cat, items], index) => { if (index > 0) lines.push(""); lines.push(`[ ${cat} ]`); items.forEach(s => { lines.push(`  • ${s.name}  x${state.cart[s.id]}  = Rs.${state.cart[s.id] * s.price}`); }); });
       return `Hi @${state.igHandle}! 👋\nI want to order these stickers:\n\n${lines.join("\n")}\n\nPickup Place: ${state.pickupPlace}\n\nTotal: Rs.${grandTotal()}\n\nOrder Date: ${dateString}\n\nPlease confirm! 🙏`;
     }
 
     async function orderViaInstagram() {
       const selectedLoc = PICKUP_LOCATIONS.find(l => l.name === state.pickupPlace);
       if (!selectedLoc || totalQty() < selectedLoc.min) return;
-
       const text = buildMsg();
-      try {
-        await navigator.clipboard.writeText(text);
-      } catch {
-        try {
-          const ta = document.createElement("textarea");
-          ta.value = text; ta.style.cssText = "position:fixed;top:-9999px;left:-9999px;opacity:0;";
-          document.body.appendChild(ta); ta.focus(); ta.select();
-          document.execCommand("copy"); document.body.removeChild(ta);
-        } catch {}
-      }
-
-      state.ordering = true;
-      render();
-
-      setTimeout(() => {
-        const ua = navigator.userAgent || navigator.vendor || window.opera || "";
-        const isIgApp = /instagram/i.test(ua);
-        const isAndroid = /android/i.test(ua);
-        if (isIgApp) {
-          if (isAndroid) {
-            window.location.href =
-              `intent://user?username=${state.igHandle}#Intent;` +
-              `package=com.instagram.android;scheme=instagram;` +
-              `S.browser_fallback_url=https%3A%2F%2Fig.me%2Fm%2F${state.igHandle};end`;
-          } else {
-            window.location.href = `instagram://user?username=${state.igHandle}`;
-            setTimeout(() => { window.location.href = `https://ig.me/m/${state.igHandle}`; }, 1000);
-          }
-        } else {
-          window.location.href = `https://ig.me/m/${state.igHandle}`;
-        }
-      }, 500);
+      try { await navigator.clipboard.writeText(text); } catch { try { const ta = document.createElement("textarea"); ta.value = text; ta.style.cssText = "position:fixed;top:-9999px;left:-9999px;opacity:0;"; document.body.appendChild(ta); ta.focus(); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); } catch {} }
+      state.ordering = true; render();
+      setTimeout(() => { const ua = navigator.userAgent || navigator.vendor || window.opera || ""; const isIgApp = /instagram/i.test(ua); const isAndroid = /android/i.test(ua); if (isIgApp) { if (isAndroid) { window.location.href = `intent://user?username=${state.igHandle}#Intent;package=com.instagram.android;scheme=instagram;S.browser_fallback_url=https%3A%2F%2Fig.me%2Fm%2F${state.igHandle};end`; } else { window.location.href = `instagram://user?username=${state.igHandle}`; setTimeout(() => { window.location.href = `https://ig.me/m/${state.igHandle}`; }, 1000); } } else { window.location.href = `https://ig.me/m/${state.igHandle}`; } }, 500);
     }
 
-    function resetOrdering() {
-      if (state.ordering) { state.ordering = false; render(); }
-    }
+    function resetOrdering() { if (state.ordering) { state.ordering = false; render(); } }
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") resetOrdering(); });
     window.addEventListener("focus", resetOrdering);
     window.addEventListener("pageshow", resetOrdering);
     setInterval(() => { if (state.ordering && document.visibilityState === "visible") resetOrdering(); }, 300);
-
-    function closeCart() {
-      state.cartOpen = false;
-      state.orderStep = 0;
-      state.copied = false;
-      render();
-    }
+    function closeCart() { state.cartOpen = false; state.orderStep = 0; state.copied = false; render(); }
 
     function buildGridHTML() {
       const q = state.searchQuery.trim().toLowerCase();
-      let filtered = state.activeCategory === "All"
-        ? state.stickers
-        : state.stickers.filter(s => s.category === state.activeCategory);
+      let filtered = state.activeCategory === "All" ? state.stickers : state.stickers.filter(s => s.category === state.activeCategory);
       if (q) filtered = filtered.filter(s => s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q));
-      if (filtered.length === 0) {
-        return `<div class="empty-grid">No stickers here yet 😅</div>`;
-      }
+      if (filtered.length === 0) return `<div class="empty-grid">No stickers here yet 😅</div>`;
       return filtered.map(s => {
-        const q = state.cart[s.id] || 0;
+        const qty = state.cart[s.id] || 0;
         const color = CAT_COLOR[s.category] || "#ff0000";
         return `<div class="card" data-sticker-id="${s.id}">
           <div class="product-top" style="background:${color}18;position:relative;">
             <img src="${fixDriveUrl(s.image)}" alt="${s.name}" class="product-image" loading="lazy" decoding="async" onerror="this.src='https://api.dicebear.com/7.x/fun-emoji/svg?seed=${s.id}'"/>
-            ${q>0?`<div class="qty-badge">${q}</div>`:""}
+            ${qty>0?`<div class="qty-badge">${qty}</div>`:""}
             ${s.isCustom?`<button class="btn" data-delete="${s.id}" style="position:absolute;top:6px;left:8px;background:rgba(255,0,0,0.15);color:#ff0000;padding:2px 7px;font-size:14px;border-radius:8px;">✕</button>`:""}
           </div>
           <div class="product-body">
@@ -860,826 +566,193 @@
             <div class="price">₹${s.price}</div>
             <div class="dbl-hint">👆 Double-tap to preview</div>
             <div class="qty-control">
-              <button class="btn qty-btn" data-minus="${s.id}" ${q===0?"disabled":""} style="background:${q===0?"#fff5f5":"#ffe0e0"};color:${q===0?"#ccc":"#ff0000"};">−</button>
-              <span class="qty-val ${q>0?"active":""}">${q}</span>
+              <button class="btn qty-btn" data-minus="${s.id}" ${qty===0?"disabled":""} style="background:${qty===0?"#fff5f5":"#ffe0e0"};color:${qty===0?"#ccc":"#ff0000"};">−</button>
+              <span class="qty-val ${qty>0?"active":""}">${qty}</span>
               <button class="btn qty-btn" data-plus="${s.id}">+</button>
             </div>
-            ${q>0?`<div class="in-cart">✅ In Cart — ₹${q*s.price}</div>`:`<div class="add-hint">Press + to add</div>`}
+            ${qty>0?`<div class="in-cart">✅ In Cart — ₹${qty*s.price}</div>`:`<div class="add-hint">Press + to add</div>`}
           </div>
         </div>`;
-      }).join("") + `
-        <div class="card" style="opacity:0.75;">
-          <div class="product-top" style="background:#f5f5f5;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;">
-            <span style="font-size:32px;">🎨</span>
-            <span style="font-family:'Fredoka One';font-size:11px;color:#bbb;letter-spacing:1px;">MORE COMING</span>
-          </div>
-          <div class="product-body" style="text-align:center;">
-            <div class="product-name" style="color:#aaa;font-size:13px;">More Stickers</div>
-            <span class="chip" style="background:#f0f0f0;color:#bbb;margin-top:4px;">Soon ✨</span>
-            <div style="margin-top:10px;padding:7px 0;background:#f9f9f9;border-radius:10px;font-family:'Fredoka One';font-size:12px;color:#ccc;">Stay tuned! 🚀</div>
-          </div>
-        </div>`;
+      }).join("") + `<div class="card" style="opacity:0.75;"><div class="product-top" style="background:#f5f5f5;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;"><span style="font-size:32px;">🎨</span><span style="font-family:'Fredoka One';font-size:11px;color:#bbb;letter-spacing:1px;">MORE COMING</span></div><div class="product-body" style="text-align:center;"><div class="product-name" style="color:#aaa;font-size:13px;">More Stickers</div><span class="chip" style="background:#f0f0f0;color:#bbb;margin-top:4px;">Soon ✨</span><div style="margin-top:10px;padding:7px 0;background:#f9f9f9;border-radius:10px;font-family:'Fredoka One';font-size:12px;color:#ccc;">Stay tuned! 🚀</div></div></div>`;
     }
 
     function render() {
-      const filtered = filteredStickers();
-      const groupedCart = grouped();
-      const qty = totalQty();
-      const total = grandTotal();
-
-      if (state.pickupPlace) {
-        const checkLoc = PICKUP_LOCATIONS.find(l => l.name === state.pickupPlace);
-        if (checkLoc && qty < checkLoc.min) {
-          state.pickupPlace = ""; 
-        }
-      }
-
-      let btnDisabled = true;
-      let btnText = "Order via Instagram";
-      
+      const qty = totalQty(); const total = grandTotal();
+      if (state.pickupPlace) { const checkLoc = PICKUP_LOCATIONS.find(l => l.name === state.pickupPlace); if (checkLoc && qty < checkLoc.min) { state.pickupPlace = ""; } }
+      let btnDisabled = true; let btnText = "Order via Instagram";
       const selectedLoc = PICKUP_LOCATIONS.find(l => l.name === state.pickupPlace);
-
-      if (!state.pickupPlace) {
-        btnText = "⚠️ Select a pickup place";
-      } else if (qty < selectedLoc.min) {
-        btnText = `⚠️ Minimum ${selectedLoc.min} items required`;
-      } else if (state.ordering) {
-        btnDisabled = true;
-      } else {
-        btnDisabled = false;
-      }
-
-      const sortedLocations = [...PICKUP_LOCATIONS].sort((a, b) => {
-        const aLocked = qty < a.min;
-        const bLocked = qty < b.min;
-        if (!aLocked && bLocked) return -1;
-        if (aLocked && !bLocked) return 1;
-        return a.min - b.min;
-      });
-
-      const _drawerScrollTop = (document.querySelector(".drawer") || {}).scrollTop || 0;
-      const _prevBelt = document.getElementById("catDrumBelt");
-      const _prevBeltHTML = _prevBelt ? _prevBelt.innerHTML : "";
-      const _prevBeltLeft = _prevBelt ? _prevBelt.style.left : "";
-      const _prevBg = document.getElementById("catDrumBg");
-      const _prevBgColor = _prevBg ? _prevBg.style.background : "";
-
+      if (state.ordering) { btnText = "Opening Instagram…"; btnDisabled = true; }
+      else if (qty > 0 && state.pickupPlace && selectedLoc && qty >= selectedLoc.min) { btnText = "Order via Instagram 📩"; btnDisabled = false; }
+      else if (qty > 0 && state.pickupPlace && selectedLoc && qty < selectedLoc.min) { btnText = `Need ${selectedLoc.min - qty} more for this location`; btnDisabled = true; }
+      else if (qty > 0 && !state.pickupPlace) { btnText = "Select a pickup place"; btnDisabled = true; }
+      const groupedCart = grouped();
       app.innerHTML = `
-        <div style="font-family: Nunito, sans-serif; background: #fff5f5; min-height: 100vh;">
-          <header class="header">
-            <div class="header-left">
-              <span style="font-size: 28px">🎨</span>
-              <div>
-                <div class="brand">@${state.igHandle}</div>
-                <div class="subtitle">PAIOTORR</div>
+        <div class="header">
+          <div class="header-left">
+            <div>
+              <div class="brand">Sticker Shop 🎨</div>
+              <div class="subtitle">Double-tap any sticker to preview</div>
+            </div>
+          </div>
+          <div class="header-actions">
+            <button class="btn" onclick="state.cartOpen=true;render();" style="background:white;color:#ff0000;padding:9px 14px;font-size:14px;position:relative;">
+              🛒 Cart${qty>0?`<span style="position:absolute;top:-6px;right:-6px;background:#ff0000;color:white;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;">${qty}</span>`:""}
+            </button>
+          </div>
+        </div>
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input class="search-input" type="text" placeholder="Search stickers…" value="${state.searchQuery}" id="searchInput" autocomplete="off" />
+          <button class="search-clear${state.searchQuery ? " visible" : ""}" id="searchClear">✕</button>
+        </div>
+        <div id="catDrumWrap" style="padding:10px 0 2px;"></div>
+        <div class="grid" id="grid">${buildGridHTML()}</div>
+        <div class="overlay${state.cartOpen?" open":""}">
+          <div class="backdrop" onclick="closeCart()"></div>
+          <div class="drawer">
+            ${state.orderStep===0?`
+              <div class="drawer-head">
+                <div class="drawer-title">🛒 Cart (${qty})</div>
+                <button class="btn close-btn" onclick="closeCart()">✕</button>
               </div>
-            </div>
-            <div class="header-actions">
-              <button class="btn" id="cartBtn" style="background: white; color: #ff0000; padding: 8px 16px; font-family: 'Fredoka One'; font-size: 14px; display: flex; align-items: center; gap: 5px;">
-                🛒 Cart
-                ${qty > 0 ? `<span style="background:#ff0000;color:white;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;">${qty}</span>` : ""}
-              </button>
-            </div>
-          </header>
-
-          <div id="searchSticky">
-            <div class="search-bar">
-              <div class="search-wrap">
-                <span class="search-icon">🔍</span>
-                <input
-                  id="searchInput"
-                  class="search-input"
-                  type="text"
-                  placeholder="Search stickers…"
-                  value="${state.searchQuery.replace(/"/g, '&quot;')}"
-                  autocomplete="off"
-                  spellcheck="false"
-                />
-                <button class="search-clear ${state.searchQuery ? 'visible' : ''}" id="searchClear" title="Clear">✕</button>
-              </div>
-            </div>
-          </div>
-
-          <div id="catSticky">
-            <div class="cat-drum" id="catDrum">
-              <div class="cat-drum-bg" id="catDrumBg"></div>
-              <div class="cat-drum-belt" id="catDrumBelt"></div>
-            </div>
-          </div>
-
-          <div class="grid" id="productGrid">
-            ${buildGridHTML()}
-          </div>
-
-          ${state.cartOpen ? `
-            <div class="overlay open" id="drawerOverlay">
-              <div class="backdrop" id="backdrop"></div>
-              <div class="drawer">
-                <div class="drawer-head" style="display:flex;align-items:center;justify-content:space-between;">
-                  <span class="drawer-title">🛒 Cart</span>
-                  <span style="background:#16a34a;color:white;border-radius:20px;padding:7px 16px;font-size:15px;font-weight:800;font-family:'Fredoka One';white-space:nowrap;box-shadow:0 2px 8px rgba(22,163,74,0.35);letter-spacing:0.3px;">💵 Cash on Delivery</span>
-                  <div class="drawer-actions">
-                    <button class="btn close-btn" id="closeBtn">✕</button>
-                  </div>
+              ${qty===0?`<div class="empty-cart">Your cart is empty 🥲<br><span>Add some stickers first!</span></div>`:`
+                ${Object.entries(groupedCart).map(([cat,items])=>`
+                  <div class="cat-head">${cat}</div>
+                  ${items.map(s=>`<div class="cart-item">
+                    <img class="cart-item-img" src="${fixDriveUrl(s.image)}" onerror="this.src='https://api.dicebear.com/7.x/fun-emoji/svg?seed=${s.id}'" />
+                    <div><div class="cart-item-name">${s.name}</div><div class="cart-item-price">₹${s.price} × ${state.cart[s.id]}</div></div>
+                    <div class="cart-item-total">₹${s.price*state.cart[s.id]}</div>
+                  </div>`).join("")}
+                `).join("")}
+                <div class="total-row"><span>Grand Total</span><span>₹${total}</span></div>
+                <button class="btn btn-primary" style="width:100%;padding:12px;font-size:15px;" onclick="state.orderStep=1;render();">Proceed to Order →</button>
+              `}
+            `:`
+              <div class="drawer-head">
+                <div class="drawer-title">📦 Order</div>
+                <div class="drawer-actions">
+                  <button class="btn back-btn small-btn" onclick="state.orderStep=0;render();">← Back</button>
+                  <button class="btn close-btn" onclick="closeCart()">✕</button>
                 </div>
-
-                ${qty === 0 ? `
-                  <div class="empty-cart">
-                    Cart is empty 😅<br />
-                    <span>Press + on any sticker!</span>
-                  </div>
-                ` : `
-                  ${Object.entries(groupedCart).map(([cat, items]) => `
-                    <div>
-                      <div class="cat-head" style="background:${(CAT_COLOR[cat] || "#ff0000")}18;color:${CAT_COLOR[cat] || "#ff0000"};">${cat}</div>
-                      ${items.map(s => `
-                        <div class="cart-item">
-                          <img src="${fixDriveUrl(s.image)}" alt="${s.name}" class="cart-image" loading="lazy" decoding="async" onerror="this.src='https://api.dicebear.com/7.x/fun-emoji/svg?seed=${s.id}'" />
-                          <div style="flex:1;">
-                            <div class="cart-name">${s.name}</div>
-                            <div class="cart-sub">₹${s.price} each</div>
-                          </div>
-                          <div class="mini-qty">
-                            <button class="btn mini-btn" data-minus="${s.id}">−</button>
-                            <span class="mini-val">${state.cart[s.id]}</span>
-                            <button class="btn mini-btn" data-plus="${s.id}">+</button>
-                          </div>
-                          <div class="item-total">₹${state.cart[s.id] * s.price}</div>
-                        </div>
-                      `).join("")}
-                    </div>
-                  `).join("")}
-
-                  <div style="margin-top: 10px; padding: 12px; background: #fff8f8; border: 1px solid #ffd6d6; border-radius: 12px;">
-                    <div style="font-family:'Fredoka One';font-size:14px;color:#ff0000;margin-bottom:8px;">📍 Pickup Details</div>
-                    
-                    <div class="custom-select" id="customPickupSelect">
-                      <div class="custom-select-trigger" id="pickupTrigger">
-                        <span>${state.pickupPlace ? state.pickupPlace : '-- Choose Pickup Location --'}</span>
-                        <span style="color: #ff0000; font-size: 11px;">▼</span>
-                      </div>
-                      <div class="custom-options" id="pickupOptions">
-                        ${sortedLocations.map(loc => {
-                          const isLocked = qty < loc.min;
-                          return `
-                          <div class="custom-option ${state.pickupPlace === loc.name ? 'selected' : ''} ${isLocked ? 'locked' : ''}" data-value="${loc.name}">
-                            <div class="opt-name">${loc.name}</div>
-                            <div class="opt-min" style="${isLocked ? 'color: #ff4444;' : ''}">
-                              ${isLocked ? `🔒 Locked — Add ${loc.min - qty} more to unlock` : `✅ Unlocked — Min order: ${loc.min}`}
-                            </div>
-                          </div>
-                        `}).join("")}
-                      </div>
-                    </div>
-
-                  </div>
-
-                  <div class="grand-total${Object.keys(groupedCart).length > 1 ? ' multi-cat' : ''}" style="margin-top: 4px;">
-                    <span>Grand Total</span>
-                    <span class="value">₹${total}</span>
-                  </div>
-
-                  <button class="btn order-btn" id="orderBtn" ${btnDisabled ? 'disabled style="background: #e5e7eb; color: #9ca3af; box-shadow: none; font-size: 16px;"' : ''}>
-                    ${btnText}
-                  </button>
-                `}
               </div>
-            </div>
-          ` : ""}
+              <div class="step2">
+                <label>Select Pickup Location:</label>
+                <select onchange="state.pickupPlace=this.value;render();">
+                  <option value="">— Choose a place —</option>
+                  ${PICKUP_LOCATIONS.map(l=>`<option value="${l.name}" ${state.pickupPlace===l.name?"selected":""}>${l.name} (min ${l.min})</option>`).join("")}
+                </select>
+              </div>
+              <div class="message-box">${buildMsg().replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}</div>
+              <div class="total-row"><span>Total (${qty} stickers)</span><span>₹${total}</span></div>
+              <button class="btn order-btn" onclick="orderViaInstagram()" ${btnDisabled?"disabled":""}>${btnText}</button>
+            `}
+          </div>
         </div>
       `;
-
-      // Lock / unlock background scroll based on cart state
-      document.body.style.overflow = state.cartOpen ? "hidden" : "";
-
-      document.getElementById("cartBtn").addEventListener("click", () => {
-        state.cartOpen = true;
-        state.orderStep = 0;
-        render();
+      // re-attach events
+      const si = document.getElementById("searchInput");
+      if (si) { si.addEventListener("input", function() { state.searchQuery = this.value; render(); }); si.focus && si.blur(); }
+      const sc = document.getElementById("searchClear");
+      if (sc) sc.addEventListener("click", () => { state.searchQuery = ""; render(); });
+      document.getElementById("grid").addEventListener("click", e => {
+        const del = e.target.closest("[data-delete]"); if (del) { deleteSticker(parseInt(del.dataset.delete)); return; }
+        const plus = e.target.closest("[data-plus]"); if (plus) { changeQty(parseInt(plus.dataset.plus), 1); return; }
+        const minus = e.target.closest("[data-minus]"); if (minus) { changeQty(parseInt(minus.dataset.minus), -1); return; }
       });
-
-      // restore drum belt immediately so there is no blank frame before _initDial runs
-      if (_prevBeltHTML) {
-        const _newBelt = document.getElementById("catDrumBelt");
-        const _newBg   = document.getElementById("catDrumBg");
-        if (_newBelt) { _newBelt.innerHTML = _prevBeltHTML; _newBelt.style.left = _prevBeltLeft; }
-        if (_newBg)   { _newBg.style.background = _prevBgColor; }
-      }
-
-      // Re-apply scroll hide state after every DOM rebuild
-      if (window.reapplyScrollState) reapplyScrollState();
-
-      if (_drawerScrollTop > 0) {
-        const _d = document.querySelector(".drawer");
-        if (_d) _d.scrollTop = _drawerScrollTop;
-      }
-
-      // attach events for the inline-rendered grid
-      document.querySelectorAll("#productGrid [data-plus]").forEach(b =>
-        b.addEventListener("click", () => changeQty(Number(b.dataset.plus), 1)));
-      document.querySelectorAll("#productGrid [data-minus]").forEach(b =>
-        b.addEventListener("click", () => changeQty(Number(b.dataset.minus), -1)));
-
-      document.querySelectorAll("[data-delete]").forEach(btn => {
-        btn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          deleteSticker(Number(btn.dataset.delete));
-        });
-      });
-
-      // dial items handle their own clicks — no separate data-cat listeners needed
-      // ── DIAL: re-init on every render since DOM is rebuilt ───────────────
-      if (!window._dialAudio) {
-        // AudioContext — created once, persisted across renders
-        window._dialAudio = { ctx: null };
-      }
-
-      window._tick = function() {
-        try {
-          if (!window._dialAudio.ctx)
-            window._dialAudio.ctx = new (window.AudioContext || window.webkitAudioContext)();
-          const ctx = window._dialAudio.ctx;
-          if (ctx.state === "suspended") ctx.resume();
-          const len = Math.floor(ctx.sampleRate * 0.035);
-          const buf = ctx.createBuffer(1, len, ctx.sampleRate);
-          const d = buf.getChannelData(0);
-          for (let i = 0; i < len; i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/len, 7);
-          const src = ctx.createBufferSource();
-          src.buffer = buf;
-          const bp = ctx.createBiquadFilter();
-          bp.type = "bandpass"; bp.frequency.value = 2400; bp.Q.value = 1.2;
-          const g = ctx.createGain(); g.gain.value = 0.6;
-          src.connect(bp); bp.connect(g); g.connect(ctx.destination);
-          src.start();
-        } catch(e) {}
-      };
-
-      window._renderGrid = function() {
-        const gridEl = document.getElementById("productGrid");
-        if (!gridEl) return;
-        gridEl.innerHTML = buildGridHTML();
-        gridEl.querySelectorAll("[data-plus]").forEach(b =>
-          b.addEventListener("click", () => changeQty(Number(b.dataset.plus), 1)));
-        gridEl.querySelectorAll("[data-minus]").forEach(b =>
-          b.addEventListener("click", () => changeQty(Number(b.dataset.minus), -1)));
-        gridEl.querySelectorAll("[data-delete]").forEach(b =>
-          b.addEventListener("click", e => { e.stopPropagation(); deleteSticker(Number(b.dataset.delete)); }));
-      };
-
-      window._initDial = function() {
-        const drum  = document.getElementById("catDrum");
-        const belt  = document.getElementById("catDrumBelt");
-        const bg    = document.getElementById("catDrumBg");
-        if (!drum || !belt || !bg) return;
-
-        const N   = CATEGORIES.length;
-        let cur   = Math.max(0, CATEGORIES.indexOf(state.activeCategory));
-
-        let slotW, slots;
-
-        if (belt.children.length === 5 && window._drumSlotW) {
-          // belt already populated (restored after render) — skip DOM rebuild to prevent blink
-          slotW = window._drumSlotW;
-          slots = Array.from(belt.children).map(slot => ({ slot, pill: slot.querySelector(".cat-drum-pill") }));
-        } else {
-          // first load — build slots and measure
-          belt.innerHTML = "";
-          slots = [];
-          for (let s = 0; s < 5; s++) {
-            const slot = document.createElement("div");
-            slot.className = "cat-drum-slot" + (s === 2 ? " active" : "");
-            const pill = document.createElement("div");
-            pill.className = "cat-drum-pill";
-            pill.textContent = CATEGORIES[s % N];
-            slot.appendChild(pill);
-            belt.appendChild(slot);
-            slots.push({ slot, pill });
-          }
-          const tempPill = document.createElement("div");
-          tempPill.className = "cat-drum-pill";
-          tempPill.style.cssText = "position:absolute;visibility:hidden;white-space:nowrap;";
-          document.body.appendChild(tempPill);
-          let maxW = 0;
-          CATEGORIES.forEach(cat => { tempPill.textContent = cat; maxW = Math.max(maxW, tempPill.offsetWidth); });
-          document.body.removeChild(tempPill);
-          slotW = maxW + 8;
-          window._drumSlotW = slotW;
-          slots.forEach(({ slot }) => { slot.style.width = slotW + "px"; });
-          const beltBase = drum.offsetWidth / 2 - 2.5 * slotW;
-          belt.style.left = beltBase + "px";
-        }
-
-        // ── paint ─────────────────────────────────────────────
-        function colorOf(idx) { return CAT_COLOR[CATEGORIES[idx]] || "#ff0000"; }
-
-        function doSelect(targetIdx, fromLeft) {
-          if (targetIdx === cur) return;
-          cur = targetIdx;
-          window._tick();
-          paint(cur);
-          // fromLeft → belt starts shifted left, slides RIGHT into center
-          // fromRight → belt starts shifted right, slides LEFT into center
-          const shift = fromLeft ? -slotW : slotW;
-          belt.classList.add("no-transition");
-          belt.style.transform = `translateX(${shift}px)`;
-          requestAnimationFrame(() => requestAnimationFrame(() => {
-            belt.classList.remove("no-transition");
-            belt.style.transform = "translateX(0)";
-          }));
-          setTimeout(() => { state.activeCategory = CATEGORIES[cur]; window._renderGrid(); }, 340);
-        }
-
-        function paint(activeIdx) {
-          const color = colorOf(activeIdx);
-          bg.style.background = color;
-          const offsets = [-2, -1, 0, 1, 2];
-          offsets.forEach((off, s) => {
-            const ri  = ((activeIdx + off) % N + N) % N;
-            const { slot, pill } = slots[s];
-            const isActive = off === 0;
-            slot.classList.toggle("active", isActive);
-            pill.textContent = CATEGORIES[ri];
-            // Give every non-active pill a direct onclick — ri and s are captured per-iteration
-            if (!isActive) {
-              const capturedRi = ri;
-              const isLeft = s < 2; // slots 0,1 are left of centre; 3,4 are right
-              pill.onclick = () => doSelect(capturedRi, isLeft);
-              pill.style.cursor = "pointer";
-            } else {
-              pill.onclick = null;
-              pill.style.cursor = "default";
-            }
-            if (isActive) {
-              pill.style.background  = color;
-              pill.style.color       = "white";
-              pill.style.borderColor = "transparent";
-            } else {
-              pill.style.background  = "white";
-              pill.style.color       = Math.abs(off) === 1 ? "#777" : "#bbb";
-              pill.style.borderColor = Math.abs(off) === 1 ? "#ffd6d6" : "#eee";
-            }
-          });
-        }
-
-        paint(cur);
-
-        // ── drag (clicks handled directly on each pill inside paint()) ──
-        let dragging = false, startX = 0, stepped = 0;
-        const STEP = slotW * 0.42;
-
-        function getX(e) { return e.touches ? e.touches[0].clientX : e.clientX; }
-
-        function advanceDrag(dir) {
-          cur = ((cur - dir) % N + N) % N;
-          window._tick();
-          paint(cur);
-          const shift = dir * slotW * 0.6;
-          belt.classList.add("no-transition");
-          belt.style.transform = `translateX(${shift}px)`;
-          requestAnimationFrame(() => requestAnimationFrame(() => {
-            belt.classList.remove("no-transition");
-            belt.style.transform = "translateX(0)";
-          }));
-        }
-
-        function onStart(e) {
-          dragging = true; startX = getX(e); stepped = 0;
-          belt.classList.add("no-transition");
-        }
-        function onMove(e) {
-          if (!dragging) return;
-          const delta = getX(e) - startX;
-          const stepsNow = Math.round(delta / STEP);
-          const diff = stepsNow - stepped;
-          if (diff !== 0) { stepped = stepsNow; advanceDrag(diff > 0 ? 1 : -1); }
-          belt.style.transform = `translateX(${(delta - stepped * STEP) * 0.3}px)`;
-        }
-        function onEnd() {
-          if (!dragging) return;
-          dragging = false;
-          belt.classList.remove("no-transition");
-          belt.style.transform = "translateX(0)";
-          state.activeCategory = CATEGORIES[cur];
-          window._renderGrid();
-        }
-
-        drum.addEventListener("touchstart",  onStart, { passive: true });
-        drum.addEventListener("touchmove",   onMove,  { passive: true });
-        drum.addEventListener("touchend",    onEnd);
-        drum.addEventListener("touchcancel", onEnd);
-        drum.addEventListener("mousedown",   onStart);
-        window.addEventListener("mousemove", onMove);
-        window.addEventListener("mouseup",   onEnd);
-      };
-
-      // ── Search input listeners ──
-      const searchInput = document.getElementById("searchInput");
-      const searchClear = document.getElementById("searchClear");
-      if (searchInput) {
-        searchInput.addEventListener("input", () => {
-          state.searchQuery = searchInput.value;
-          searchClear && searchClear.classList.toggle("visible", !!searchInput.value);
-          if (searchInput.value) {
-            // Save current category before switching to All (only save once)
-            if (!state._categoryBeforeSearch) {
-              state._categoryBeforeSearch = state.activeCategory;
-            }
-            // Switch to All without full render so input keeps focus
-            if (state.activeCategory !== "All") {
-              state.activeCategory = "All";
-              window._drumSlotW = null;
-              window._initDial && window._initDial();
-            }
-            window._renderGrid && window._renderGrid();
-          } else {
-            // Input emptied via backspace — restore previous category
-            if (state._categoryBeforeSearch) {
-              state.activeCategory = state._categoryBeforeSearch;
-              state._categoryBeforeSearch = null;
-              window._drumSlotW = null;
-              window._initDial && window._initDial();
-            }
-            window._renderGrid && window._renderGrid();
-          }
-        });
-      }
-      if (searchClear) {
-        searchClear.addEventListener("click", () => {
-          state.searchQuery = "";
-          if (searchInput) { searchInput.value = ""; searchInput.focus(); }
-          searchClear.classList.remove("visible");
-          // Restore the category the user was on before searching
-          if (state._categoryBeforeSearch) {
-            state.activeCategory = state._categoryBeforeSearch;
-            state._categoryBeforeSearch = null;
-            window._drumSlotW = null;
-            window._initDial && window._initDial();
-          }
-          window._renderGrid && window._renderGrid();
-        });
-      }
-
-      // call initDial every render (safe — IDs are stable, re-attaches cleanly)
-      requestAnimationFrame(() => {
-        if (window._initDial) window._initDial();
-        // populate grid after dial is ready
-        if (window._renderGrid) window._renderGrid();
-        // attach double-click popup listeners
-        if (window._attachPopupListeners) window._attachPopupListeners();
-        // keep global state ref in sync
-        window._state = state;
-      });
-
-      if (state.cartOpen) {
-        document.getElementById("backdrop").addEventListener("click", closeCart);
-        document.getElementById("closeBtn").addEventListener("click", closeCart);
-
-        document.querySelectorAll(".mini-btn[data-plus]").forEach(b =>
-          b.addEventListener("click", () => changeQty(Number(b.dataset.plus), 1)));
-        document.querySelectorAll(".mini-btn[data-minus]").forEach(b =>
-          b.addEventListener("click", () => changeQty(Number(b.dataset.minus), -1)));
-        
-        const pickupTrigger = document.getElementById("pickupTrigger");
-        const pickupOptions = document.getElementById("pickupOptions");
-        
-        if (pickupTrigger && pickupOptions) {
-          pickupTrigger.addEventListener("click", (e) => {
-            e.stopPropagation();
-            pickupOptions.classList.toggle("open");
-          });
-
-          document.querySelectorAll(".custom-option").forEach(opt => {
-            opt.addEventListener("click", (e) => {
-              e.stopPropagation();
-              if (opt.classList.contains("locked")) return; 
-              
-              state.pickupPlace = opt.dataset.value;
-              render(); 
-            });
-          });
-
-          const drawer = document.querySelector(".drawer");
-          if (drawer) {
-            drawer.addEventListener("click", (e) => {
-              if (pickupOptions.classList.contains("open") && !pickupTrigger.contains(e.target)) {
-                pickupOptions.classList.remove("open");
-              }
-            });
-          }
-        }
-
-        const orderBtn = document.getElementById("orderBtn");
-        if (orderBtn) orderBtn.addEventListener("click", orderViaInstagram);
-      }
+      initDrum();
     }
 
-    // ── Set correct sticky top values based on REAL rendered heights ──
-    function applyTops() {
-      const header = document.querySelector('.header');
-      const ss = document.getElementById('searchSticky');
-      const cs = document.getElementById('catSticky');
-      if (!header || !ss || !cs) return;
-
-      const hH = header.offsetHeight;          // real header height (e.g. 66px)
-      const sH = ss.scrollHeight;              // real search bar height
-
-      window._hH = hH;
-      window._sH = sH;
-
-      ss.style.top = hH + 'px';
-      // cat sticks right below search if visible, or right below header if search hidden
-      cs.style.top = (window._sHide ? hH : hH + sH) + 'px';
+    function initDrum() {
+      const wrap = document.getElementById("catDrumWrap"); if (!wrap) return;
+      const W = wrap.offsetWidth || 360; const slotW = W / 3;
+      const cats = CATEGORIES;
+      const activeIdx = cats.indexOf(state.activeCategory) >= 0 ? cats.indexOf(state.activeCategory) : 0;
+      const extended = [...cats, ...cats, ...cats];
+      const offset = cats.length;
+      wrap.innerHTML = `<div class="cat-drum"><div class="cat-drum-bg" id="drumBg"></div><div class="cat-drum-belt no-transition" id="drumBelt">${extended.map((c,i)=>`<div class="cat-drum-slot${i===activeIdx+offset?" active":""}" style="width:${slotW}px;"><div class="cat-drum-pill">${c}</div></div>`).join("")}</div></div>`;
+      const belt = document.getElementById("drumBelt");
+      const bg = document.getElementById("drumBg");
+      let curIdx = activeIdx + offset;
+      function setActive(idx) {
+        const realIdx = ((idx - offset) % cats.length + cats.length) % cats.length;
+        state.activeCategory = cats[realIdx];
+        const color = CAT_COLOR[cats[realIdx]] || "#ff0000";
+        document.querySelectorAll(".cat-drum-slot").forEach((sl, i) => sl.classList.toggle("active", i === idx));
+        if (bg) bg.style.background = color;
+        const pill = document.querySelectorAll(".cat-drum-pill")[idx];
+        if (pill) { pill.style.background = color + "22"; pill.style.color = color; pill.style.borderColor = color + "88"; }
+        document.querySelectorAll(".cat-drum-pill").forEach((p, i) => { if (i !== idx) { p.style.background = ""; p.style.color = ""; p.style.borderColor = ""; } });
+        const gridEl = document.getElementById("grid"); if (gridEl) gridEl.innerHTML = buildGridHTML();
+        document.querySelectorAll("[data-plus],[data-minus],[data-delete]").forEach(b => {});
+        document.getElementById("grid") && document.getElementById("grid").addEventListener("click", e => {
+          const del = e.target.closest("[data-delete]"); if (del) { deleteSticker(parseInt(del.dataset.delete)); return; }
+          const plus = e.target.closest("[data-plus]"); if (plus) { changeQty(parseInt(plus.dataset.plus), 1); return; }
+          const minus = e.target.closest("[data-minus]"); if (minus) { changeQty(parseInt(minus.dataset.minus), -1); return; }
+        });
+      }
+      function snapTo(idx) { belt.classList.remove("no-transition"); belt.style.transform = `translateX(${(W/3 - idx*slotW - slotW/2)}px)`; }
+      function jumpTo(idx) { belt.classList.add("no-transition"); belt.style.transform = `translateX(${(W/3 - idx*slotW - slotW/2)}px)`; void belt.offsetWidth; }
+      jumpTo(curIdx); setActive(curIdx);
+      document.querySelectorAll(".cat-drum-slot").forEach((slot, i) => { slot.addEventListener("click", () => { curIdx = i; snapTo(curIdx); setActive(curIdx); }); });
+      let ts = 0, tx = 0, dragging = false;
+      function onTouchStart(e) { ts = e.touches[0].clientX; tx = 0; dragging = true; }
+      function onTouchMove(e) { if (!dragging) return; tx = e.touches[0].clientX - ts; }
+      function onTouchEnd() { if (!dragging) return; dragging = false; if (Math.abs(tx) > 30) { curIdx = tx < 0 ? curIdx + 1 : curIdx - 1; if (curIdx < 1) curIdx += cats.length; if (curIdx >= extended.length - 1) curIdx -= cats.length; } snapTo(curIdx); setActive(curIdx); }
+      wrap.addEventListener("touchstart", onTouchStart, {passive:true});
+      wrap.addEventListener("touchmove", onTouchMove, {passive:true});
+      wrap.addEventListener("touchend", onTouchEnd);
     }
-
-    // ── Re-apply classes after every render() ──
-    function reapplyScrollState() {
-      const ss = document.getElementById('searchSticky');
-      const cs = document.getElementById('catSticky');
-      if (ss && window._sHide) ss.classList.add('s-hide');
-      if (cs && window._cHide) cs.classList.add('c-hide');
-      applyTops();
-    }
-
-    // ── YouTube-style scroll hide ──
-    (function initScrollHide() {
-      window._sHide = false;
-      window._cHide = false;
-      window._hH    = 66; // fallback until measured
-      window._sH    = 56; // fallback until measured
-      let lastY = 0;
-
-      window.addEventListener('scroll', function () {
-        const curY = window.scrollY;
-        const ss   = document.getElementById('searchSticky');
-        const cs   = document.getElementById('catSticky');
-        if (!ss || !cs) { lastY = curY; return; }
-
-        const hH = window._hH || 66;
-        const sH = window._sH || 56;
-
-        if (curY <= 5) {
-          // AT TOP → show both
-          ss.classList.remove('s-hide');
-          cs.classList.remove('c-hide');
-          ss.style.top = hH + 'px';
-          cs.style.top = (hH + sH) + 'px';
-          window._sHide = false;
-          window._cHide = false;
-
-        } else if (curY > lastY) {
-          // SCROLLING DOWN → hide both
-          ss.classList.add('s-hide');
-          cs.classList.add('c-hide');
-          ss.style.top = hH + 'px';
-          cs.style.top = hH + 'px';
-          window._sHide = true;
-          window._cHide = true;
-
-        } else {
-          // SCROLLING UP → show category only, search stays hidden
-          ss.classList.add('s-hide');
-          cs.classList.remove('c-hide');
-          ss.style.top = hH + 'px';
-          cs.style.top = hH + 'px';   // sits right below header — fully visible
-          window._sHide = true;
-          window._cHide = false;
-        }
-
-        lastY = curY;
-      }, { passive: true });
-    })();
 
     render();
-    // Measure real heights after first paint and correct the tops
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      applyTops();
-      reapplyScrollState();
-    }));
-  </script>
-
-  <!-- ── STICKER PREVIEW POPUP ── -->
-  <div id="stickerPopup">
-    <div class="popup-card" id="popupCard">
-      <button class="popup-close-btn" id="popupCloseBtn" title="Close">✕</button>
-
-      <!-- Slider: color bg + image(s) + dots -->
-      <div class="popup-slider-wrap" id="popupSliderWrap">
-        <div class="popup-slider-track" id="popupSliderTrack">
-          <!-- slides injected by JS -->
-        </div>
-        <div class="popup-dots" id="popupDots"></div>
-      </div>
-
-      <div class="popup-info">
-        <div class="popup-name" id="popupName"></div>
-        <div class="popup-meta">
-          <span class="chip" id="popupChip"></span>
-          <span class="popup-price" id="popupPrice"></span>
-        </div>
-      </div>
-    </div>
-  </div>
+  <\/script>
 
   <script>
-    // ══════════════════════════════════════════════
-    //  STICKER POPUP — clean image carousel
-    // ══════════════════════════════════════════════
     (function() {
-      let curSlide = 0;
-      let totalSlides = 1;
-
-      // Per-sticker extra images (owner can add URLs here)
-      // Format: { stickerId: ["url1", "url2", ...] }
-      // The main sticker image is always slide 0 automatically.
-      const EXTRA_IMAGES = {
-        1: ["https://drive.google.com/file/d/13oN7ztYD9vnjezBl74vndqopScBcBMia/view?usp=sharing"],
-        32:["https://drive.google.com/file/d/1RrI8Y2ODBPJDFOMUQuXhuBE9Xk_If5c_/view?usp=drive_link"],
-        // Example — add extra review/product photos per sticker id:
-        // 21: ["https://...", "https://..."],
-      };
-
-      function goToSlide(n) {
-        curSlide = Math.max(0, Math.min(n, totalSlides - 1));
-        const track = document.getElementById("popupSliderTrack");
-        if (track) track.style.transform = `translateX(-${curSlide * 100}%)`;
-        // update dots
-        document.querySelectorAll(".popup-dot").forEach((d, i) => {
-          d.classList.toggle("active", i === curSlide);
-        });
-      }
-
+      let curSlide = 0, totalSlides = 1;
+      const EXTRA_IMAGES = { 1: ["https://drive.google.com/file/d/13oN7ztYD9vnjezBl74vndqopScBcBMia/view?usp=sharing"], 32:["https://drive.google.com/file/d/1RrI8Y2ODBPJDFOMUQuXhuBE9Xk_If5c_/view?usp=drive_link"] };
+      function goToSlide(n) { curSlide = Math.max(0, Math.min(n, totalSlides - 1)); const track = document.getElementById("popupSliderTrack"); if (track) track.style.transform = `translateX(-${curSlide * 100}%)`; document.querySelectorAll(".popup-dot").forEach((d, i) => { d.classList.toggle("active", i === curSlide); }); }
       function openPopup(stickerId) {
-        const sticker = window._state && window._state.stickers.find(s => s.id === stickerId);
-        if (!sticker) return;
-
-        curSlide = 0;
-        const color = (window.CAT_COLOR && window.CAT_COLOR[sticker.category]) || "#ff0000";
-
-        // Build slides: main image + any extra images
+        const sticker = window._state && window._state.stickers.find(s => s.id === stickerId); if (!sticker) return;
+        curSlide = 0; const color = (window.CAT_COLOR && window.CAT_COLOR[sticker.category]) || "#ff0000";
         const mainSrc = window.fixDriveUrl ? window.fixDriveUrl(sticker.image) : sticker.image;
-        const extras  = (EXTRA_IMAGES[stickerId] || []).map(u => window.fixDriveUrl ? window.fixDriveUrl(u) : u);
-        const allImgs = [mainSrc, ...extras];
-        totalSlides   = allImgs.length;
-
-        // Preload all slide images into browser cache BEFORE building HTML,
-        // so the <img> tags render immediately without a blank-then-load flash.
-        allImgs.forEach((src, i) => {
-          const preloader = new Image();
-          preloader.src = src;
-        });
-
-        // Build slider HTML
+        const extras = (EXTRA_IMAGES[stickerId] || []).map(u => window.fixDriveUrl ? window.fixDriveUrl(u) : u);
+        const allImgs = [mainSrc, ...extras]; totalSlides = allImgs.length;
+        allImgs.forEach(src => { const p = new Image(); p.src = src; });
         const track = document.getElementById("popupSliderTrack");
-        track.innerHTML = allImgs.map((src, i) => `
-          <div class="popup-slide" style="background:${color}28;">
-            <img src="${src}" alt="${sticker.name}" loading="eager" decoding="sync"
-                 onerror="this.src='https://api.dicebear.com/7.x/fun-emoji/svg?seed=${stickerId}'" />
-          </div>
-        `).join("");
+        track.innerHTML = allImgs.map(src => `<div class="popup-slide" style="background:${color}28;"><img src="${src}" alt="${sticker.name}" loading="eager" decoding="sync" onerror="this.src='https://api.dicebear.com/7.x/fun-emoji/svg?seed=${stickerId}'" /></div>`).join("");
         track.style.transform = "translateX(0)";
-
-        // Build dots (only show if >1 slide)
-        const dotsEl = document.getElementById("popupDots");
-        dotsEl.style.display = totalSlides > 1 ? "flex" : "none";
-        dotsEl.innerHTML = allImgs.map((_, i) =>
-          `<div class="popup-dot${i === 0 ? " active" : ""}" data-idx="${i}"></div>`
-        ).join("");
-        dotsEl.querySelectorAll(".popup-dot").forEach(d => {
-          d.addEventListener("click", () => goToSlide(parseInt(d.dataset.idx)));
-        });
-
-        // Info
-        document.getElementById("popupName").textContent  = sticker.name;
+        const dotsEl = document.getElementById("popupDots"); dotsEl.style.display = totalSlides > 1 ? "flex" : "none";
+        dotsEl.innerHTML = allImgs.map((_, i) => `<div class="popup-dot${i === 0 ? " active" : ""}" data-idx="${i}"></div>`).join("");
+        dotsEl.querySelectorAll(".popup-dot").forEach(d => { d.addEventListener("click", () => goToSlide(parseInt(d.dataset.idx))); });
+        document.getElementById("popupName").textContent = sticker.name;
         document.getElementById("popupPrice").textContent = "₹" + sticker.price;
-        const chip = document.getElementById("popupChip");
-        chip.textContent        = sticker.category;
-        chip.style.background   = color + "22";
-        chip.style.color        = color;
-
-        // Swipe support
+        const chip = document.getElementById("popupChip"); chip.textContent = sticker.category; chip.style.background = color + "22"; chip.style.color = color;
         attachSwipe(document.getElementById("popupSliderWrap"));
-
-        document.getElementById("stickerPopup").classList.add("open");
-        document.body.style.overflow = "hidden";
+        document.getElementById("stickerPopup").classList.add("open"); document.body.style.overflow = "hidden";
       }
-
-      function closePopup() {
-        document.getElementById("stickerPopup").classList.remove("open");
-        document.body.style.overflow = "";
-      }
-
-      // Touch/mouse swipe on slider
+      function closePopup() { document.getElementById("stickerPopup").classList.remove("open"); document.body.style.overflow = ""; }
       let _swipeAbort = null;
-      function attachSwipe(el) {
-        // Cancel previous listeners cleanly — no DOM cloning that would detach images
-        if (_swipeAbort) _swipeAbort.abort();
-        _swipeAbort = new AbortController();
-        const signal = _swipeAbort.signal;
-
-        let sx = 0, dragging = false;
-        function onStart(e) { sx = (e.touches ? e.touches[0].clientX : e.clientX); dragging = true; }
-        function onEnd(e) {
-          if (!dragging) return; dragging = false;
-          const ex = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
-          const diff = sx - ex;
-          if (Math.abs(diff) > 40) goToSlide(curSlide + (diff > 0 ? 1 : -1));
-        }
-        el.addEventListener("touchstart", onStart, { passive: true, signal });
-        el.addEventListener("touchend",   onEnd,   { signal });
-        el.addEventListener("mousedown",  onStart, { signal });
-        el.addEventListener("mouseup",    onEnd,   { signal });
-      }
-
-      // Close button & backdrop
+      function attachSwipe(el) { if (_swipeAbort) _swipeAbort.abort(); _swipeAbort = new AbortController(); const signal = _swipeAbort.signal; let sx = 0, dragging = false; function onStart(e) { sx = (e.touches ? e.touches[0].clientX : e.clientX); dragging = true; } function onEnd(e) { if (!dragging) return; dragging = false; const ex = e.changedTouches ? e.changedTouches[0].clientX : e.clientX; const diff = sx - ex; if (Math.abs(diff) > 40) goToSlide(curSlide + (diff > 0 ? 1 : -1)); } el.addEventListener("touchstart", onStart, { passive: true, signal }); el.addEventListener("touchend", onEnd, { signal }); el.addEventListener("mousedown", onStart, { signal }); el.addEventListener("mouseup", onEnd, { signal }); }
       document.getElementById("popupCloseBtn").addEventListener("click", closePopup);
-      document.getElementById("stickerPopup").addEventListener("click", function(e) {
-        if (e.target === this) closePopup();
-      });
-
-      // Keyboard arrow support
-      document.addEventListener("keydown", function(e) {
-        if (!document.getElementById("stickerPopup").classList.contains("open")) return;
-        if (e.key === "ArrowRight") goToSlide(curSlide + 1);
-        if (e.key === "ArrowLeft")  goToSlide(curSlide - 1);
-        if (e.key === "Escape")     closePopup();
-      });
-
+      document.getElementById("stickerPopup").addEventListener("click", function(e) { if (e.target === this) closePopup(); });
+      document.addEventListener("keydown", function(e) { if (!document.getElementById("stickerPopup").classList.contains("open")) return; if (e.key === "ArrowRight") goToSlide(curSlide + 1); if (e.key === "ArrowLeft") goToSlide(curSlide - 1); if (e.key === "Escape") closePopup(); });
       window._openStickerPopup = openPopup;
-
-      // ── Double-click / double-tap listener ──────────────────────────────
-      // Attached ONCE on `document` — never on the grid which gets rebuilt.
-      // This survives every render(), _renderGrid(), category change, search,
-      // bfcache restore, and tab-switch. No re-attachment ever needed.
       (function attachGlobalDblClick() {
-        // Also handle touch double-tap (mobile browsers don't fire dblclick reliably)
         let _lastTap = 0, _lastTarget = null;
-
-        document.addEventListener("dblclick", function(e) {
-          if (e.target.closest("button")) return;
-          const card = e.target.closest(".card[data-sticker-id]");
-          if (card) window._openStickerPopup(parseInt(card.dataset.stickerId));
-        }, { passive: true });
-
-        document.addEventListener("touchend", function(e) {
-          const now = Date.now();
-          const target = e.target;
-          if (_lastTarget === target && now - _lastTap < 320) {
-            // Double-tap detected
-            if (target.closest("button")) { _lastTap = 0; _lastTarget = null; return; }
-            const card = target.closest(".card[data-sticker-id]");
-            if (card) {
-              e.preventDefault(); // prevent zoom
-              window._openStickerPopup(parseInt(card.dataset.stickerId));
-            }
-            _lastTap = 0;
-            _lastTarget = null;
-          } else {
-            _lastTap = now;
-            _lastTarget = target;
-          }
-        }, { passive: false });
+        document.addEventListener("dblclick", function(e) { if (e.target.closest("button")) return; const card = e.target.closest(".card[data-sticker-id]"); if (card) window._openStickerPopup(parseInt(card.dataset.stickerId)); }, { passive: true });
+        document.addEventListener("touchend", function(e) { const now = Date.now(); const target = e.target; if (_lastTarget === target && now - _lastTap < 320) { if (target.closest("button")) { _lastTap = 0; _lastTarget = null; return; } const card = target.closest(".card[data-sticker-id]"); if (card) { e.preventDefault(); window._openStickerPopup(parseInt(card.dataset.stickerId)); } _lastTap = 0; _lastTarget = null; } else { _lastTap = now; _lastTarget = target; } }, { passive: false });
       })();
-
-      // _attachPopupListeners kept as a no-op for backward compatibility
       window._attachPopupListeners = function() {};
     })();
-  </script>
+  <\/script>
 
   <script>
-    // ══════════════════════════════════════════════
-    //  SECURITY LAYER — Maximum Protection
-    // ══════════════════════════════════════════════
     document.addEventListener("contextmenu", function(e) { e.preventDefault(); e.stopPropagation(); return false; }, true);
-    document.addEventListener("keydown", function(e) {
-      const key = e.key ? e.key.toLowerCase() : "";
-      const ctrl = e.ctrlKey || e.metaKey;
-      const shift = e.shiftKey;
-      if (e.keyCode === 123) { e.preventDefault(); return false; }
-      if (ctrl && shift && (key === "i" || key === "j" || key === "c" || key === "k")) { e.preventDefault(); return false; }
-      if (ctrl && !shift && (key === "u" || key === "s" || key === "p" || key === "a")) { e.preventDefault(); return false; }
-    }, true);
+    document.addEventListener("keydown", function(e) { const key = e.key ? e.key.toLowerCase() : ""; const ctrl = e.ctrlKey || e.metaKey; const shift = e.shiftKey; if (e.keyCode === 123) { e.preventDefault(); return false; } if (ctrl && shift && (key === "i" || key === "j" || key === "c" || key === "k")) { e.preventDefault(); return false; } if (ctrl && !shift && (key === "u" || key === "s" || key === "p" || key === "a")) { e.preventDefault(); return false; } }, true);
     document.addEventListener("dragstart", function(e) { e.preventDefault(); return false; }, true);
     document.addEventListener("copy", function(e) { if (!window._allowCopy) { e.preventDefault(); return false; } }, true);
     document.addEventListener("cut", function(e) { e.preventDefault(); return false; }, true);
-    document.addEventListener("selectstart", function(e) {
-      const box = document.getElementById("messageBox");
-      if (box && (e.target === box || box.contains(e.target))) { e.preventDefault(); return false; }
-    }, true);
-
-    (function devToolsGuard() {
-      const threshold = 160;
-      function check() {
-        if (window.outerWidth - window.innerWidth > threshold || window.outerHeight - window.innerHeight > threshold) {
-          document.body.style.filter = "blur(8px)";
-          document.body.style.pointerEvents = "none";
-        } else {
-          document.body.style.filter = "";
-          document.body.style.pointerEvents = "";
-        }
-      }
-      window.addEventListener("resize", check);
-      setInterval(check, 1000);
-    })();
-  </script>
+    (function devToolsGuard() { const threshold = 160; function check() { if (window.outerWidth - window.innerWidth > threshold || window.outerHeight - window.innerHeight > threshold) { document.body.style.filter = "blur(8px)"; document.body.style.pointerEvents = "none"; } else { document.body.style.filter = ""; document.body.style.pointerEvents = ""; } } window.addEventListener("resize", check); setInterval(check, 1000); })();
+  <\/script>
 </body>
 </html>
