@@ -605,10 +605,14 @@
     // ============================================================================
 
     const INSTAGRAM_USERNAME = "stiickuu";
-    const CATEGORIES = ["All","Cool","Cartoon","Anime","SuperHero","Vehicles","Cricketers","Cute"];
+    const CATEGORIES = ["Cool","All","Cartoon","Anime","SuperHero","Vehicles","Cricketers","Cute"];
     const CAT_COLOR = {"Anime":"#ff6b6b","Cartoon":"#f5a623","Cricketers":"#4caf50","Cool":"#481FFF","SuperHero":"#1FF0FF","Vehicles":"#000000","Cute":"#ff00f7"};
     const PICKUP_LOCATIONS = [{"name":"Front of - Morning Glory Higher Secondary School","min":5},{"name":"Front of - 14 Mile Tiniali","min":5},{"name":"Front of - Higher Secondary school","min":5},{"name":"Tiniali of - SANKARDEV SHISU VIDYA NIKETAN BOGINADI","min":5},{"name":"Near - Bogindi Market","min":6},{"name":"Near - Bogindi Police station","min":6},{"name":"Near - Rose Bud Academy","min":6},{"name":"Tadang","min":5},{"name":"Branchpur Bridge","min":10},{"name":"Sri Sri Padumoni Aai Than","min":5}];
-    const DEFAULT_STICKERS = [{"id":1,"name":"EyeRo","category":"Anime","price":10,"image":"https://drive.google.com/file/d/12OAd4ckdsedQGT1f0u58vIEskwSFRlqK/view?usp=sharing"},{"id":2,"name":"Doraemon","category":"Anime","price":10,"image":"https://drive.google.com/file/d/18y9i-kjBjcMTU6qeFVAs7zPU4NRVuHv8/view?usp=sharing"},{"id":3,"name":"One Piece","category":"Anime","price":10,"image":"https://drive.google.com/file/d/1HBcKbflMjQ8PufMJQNtvJXnj4OCFRRS1/view?usp=sharing"},{"id":4,"name":"Oggy","category":"Cartoon","price":10,"image":"https://drive.google.com/file/d/1nkdQb_yLWxTTrsEWyUPQigT40L4Znhu8/view?usp=sharing"},{"id":5,"name":"Panda","category":"Cartoon","price":10,"image":"https://drive.google.com/file/d/1QzYv7qAHWdQZnZW03uDvrcdjLMXdSDJC/view?usp=sharing"},{"id":6,"name":"Tom","category":"Cartoon","price":10,"image":"https://drive.google.com/file/d/1tfU0WfMPYTggSKnQ9vpZkWHIBExxzHKk/view?usp=sharing"},{"id":7,"name":"Virat Kohli","category":"Cricketers","price":10,"image":"https://drive.google.com/file/d/16n25y2A5vNJJ06Xoms5orhGyrBHZtCvu/view?usp=sharing"},{"id":8,"name":"BlackHat","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1zAyg_MYJoLM6LI7KSU1by7GsSJnOl_I-/view?usp=sharing"},{"id":9,"name":"Red Eye","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1a9YnKS7xRy0CTUnxkmwN9i4eeo9-GbNk/view?usp=sharing"},{"id":10,"name":"The Child","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1msti_xgaufqIds5qQy9ATSUTE-WaPn2V/view?usp=drivesdk"},{"id":11,"name":"Pokemon","category":"Anime","price":10,"image":"https://drive.google.com/thumbnail?id=1ZKHl0-SnNbAcGWCHpm4uhtknUrJrs8HV&sz=w400"},{"id":12,"name":"Ninja","category":"Anime","price":10,"image":"https://drive.google.com/file/d/1K17cUmXOgwuByDvGBk1SeeKDqFS3qU3u/view?usp=sharing"},{"id":13,"name":"Bablis","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1lDMUAS0LVbXj9XJeFRN4W-Kty5tvFejo/view?usp=sharing"},{"id":14,"name":"BatMan","category":"SuperHero","price":10,"image":"https://drive.google.com/file/d/1NDXzibUxm-H7ORXp7VQaBn1QfZryiCst/view?usp=sharing"},{"id":15,"name":"Direction","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1r_jUyaV6Mt_19DYTk1kJQbji_zr5HJbD/view?usp=sharing"},{"id":16,"name":"Tiger","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1JAR-szLYI9XZjYtjxazY5I2dpyvx7Myy/view?usp=sharing"},{"id":17,"name":"Shivji","category":"Cool","price":10,"image":"https://drive.google.com/file/d/19Dkl7lvK-JfoDMOd2pkrHVhtJQj7y9_j/view?usp=sharing"},{"id":18,"name":"SpiderMan","category":"SuperHero","price":10,"image":"https://drive.google.com/file/d/1wEfjtZzgexRDupjGuIKXS9ddQBKc7uGE/view?usp=sharing"},{"id":19,"name":"Rabo","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1z0RcWDsk0tk8bfv5Y9h5558-LHthAatu/view?usp=sharing"},{"id":20,"name":"Hato","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1Qmvtd673zJQtys3mQV2Eo7MnT7d53QB_/view?usp=sharing"},{"id":21,"name":"A1","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1ilahl-xunoLktCxb7Za1IDju1NgoBNnp/view?usp=sharing"},{"id":22,"name":"A2","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1Eq2_tuYOti1l0FWiI0HMjuqm2LgUsthp/view?usp=sharing"},{"id":23,"name":"A3","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1UDpcQhRdmRjA49JL5HAsqKrIZ2ZKgwZx/view?usp=sharing"},{"id":24,"name":"A4","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1IuSzWuk2dACspWyF4Z3__iwdnr9PNGhj/view?usp=sharing"},{"id":25,"name":"A5","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1Ba6ABk9b-iK2u-9s_Z76TgadGXR3UMMV/view?usp=sharing"},{"id":26,"name":"A6","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1A70zS4DZ_2YDvxbY8XU7Qk8ltyKh7BIx/view?usp=drive_link"},{"id":27,"name":"A7","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1281UP96LDw_OwXuynswV2o57K5BDzHp9/view?usp=drive_link"},{"id":28,"name":"A8","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1C4SOwjJfgv1u6GWX3emEe2K8pklY0Y3l/view?usp=drive_link"},{"id":29,"name":"A9","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1c2QJSpmtktSQ8HPgdPOU7H9LazDEQpfA/view?usp=drive_link"},{"id":30,"name":"A10","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1cliUE9gzWsU5QH95yeVRYeQdgDoy_At6/view?usp=drive_link"},{"id":31,"name":"B1","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1Rkdvt-XfZt8q5UhBMkRMeyY5leSGntu-/view?usp=drive_link"},{"id":32,"name":"B2","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1nK54UHo5OA5zSIe_Ve4aPGin0QCWQiHZ/view?usp=sharing"},{"id":33,"name":"B3","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1INmn9zmUy-NLVaA-YOPYoJNJSDSUuIAp/view?usp=sharing"},{"id":34,"name":"B4","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1h8oIgdYRF6ewskASxRUx3puUA4TxodEG/view?usp=sharing"},{"id":35,"name":"B5","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1_-0n_RlUs5s8A_J1T8hQTi1SJ1uHWnpm/view?usp=sharing"},{"id":36,"name":"B6","category":"Vehicles","price":15,"image":"https://drive.google.com/file/d/1TVBf0XcTFYWGM2sdm8JGrom98X8YfdMo/view?usp=sharing"},{"id":37,"name":"B7","category":"Vehicles","price":15,"image":"https://drive.google.com/file/d/1ZdVmlz3cE6E0Gg6T6nT_gZUsvbxJ22Qq/view?usp=sharing"},{"id":38,"name":"B8","category":"Vehicles","price":15,"image":"https://drive.google.com/file/d/1q2N1dE67-HbtOQ-cCuJLPUmguAZAl7hO/view?usp=sharing"},{"id":39,"name":"B9","category":"Vehicles","price":15,"image":"https://drive.google.com/file/d/1mCENVpYiyHfLHR9s9V_y5yEwOifSypSc/view?usp=sharing"},{"id":40,"name":"B10","category":"Vehicles","price":15,"image":"https://drive.google.com/file/d/11zTLUni5d-YfKuDzq7aEjE-knG34sj6s/view?usp=sharing"},{"id":41,"name":"C1","category":"Vehicles","price":15,"image":"https://drive.google.com/file/d/1iP0_cc6-HSYM2uv5xxxthdP7wa2i4s4A/view?usp=sharing"}];
+    const PINNED_PICKUPS = ["Front of - Higher Secondary school","Front of - 14 Mile Tiniali","Front of - Morning Glory Higher Secondary School"];
+    const DEFAULT_STICKERS = [{"id":2,"name":"Doraemon","category":"Anime","price":10,"image":"https://drive.google.com/file/d/18y9i-kjBjcMTU6qeFVAs7zPU4NRVuHv8/view?usp=sharing"},{"id":4,"name":"Oggy","category":"Cartoon","price":10,"image":"https://drive.google.com/file/d/1nkdQb_yLWxTTrsEWyUPQigT40L4Znhu8/view?usp=sharing"},{"id":7,"name":"Virat Kohli","category":"Cricketers","price":10,"image":"https://drive.google.com/file/d/16n25y2A5vNJJ06Xoms5orhGyrBHZtCvu/view?usp=sharing"},{"id":1,"name":"EyeRo","category":"Anime","price":10,"image":"https://drive.google.com/file/d/12OAd4ckdsedQGT1f0u58vIEskwSFRlqK/view?usp=sharing"},{"id":3,"name":"One Piece","category":"Anime","price":10,"image":"https://drive.google.com/file/d/1HBcKbflMjQ8PufMJQNtvJXnj4OCFRRS1/view?usp=sharing"},{"id":5,"name":"Panda","category":"Cartoon","price":10,"image":"https://drive.google.com/file/d/1QzYv7qAHWdQZnZW03uDvrcdjLMXdSDJC/view?usp=sharing"},{"id":6,"name":"Tom","category":"Cartoon","price":10,"image":"https://drive.google.com/file/d/1tfU0WfMPYTggSKnQ9vpZkWHIBExxzHKk/view?usp=sharing"},{"id":8,"name":"BlackHat","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1zAyg_MYJoLM6LI7KSU1by7GsSJnOl_I-/view?usp=sharing"},{"id":9,"name":"Red Eye","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1a9YnKS7xRy0CTUnxkmwN9i4eeo9-GbNk/view?usp=sharing"},{"id":10,"name":"The Child","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1msti_xgaufqIds5qQy9ATSUTE-WaPn2V/view?usp=drivesdk"},{"id":11,"name":"Pokemon","category":"Anime","price":10,"image":"https://drive.google.com/thumbnail?id=1ZKHl0-SnNbAcGWCHpm4uhtknUrJrs8HV&sz=w400"},{"id":12,"name":"Ninja","category":"Anime","price":10,"image":"https://drive.google.com/file/d/1K17cUmXOgwuByDvGBk1SeeKDqFS3qU3u/view?usp=sharing"},{"id":13,"name":"Bablis","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1lDMUAS0LVbXj9XJeFRN4W-Kty5tvFejo/view?usp=sharing"},{"id":14,"name":"BatMan","category":"SuperHero","price":10,"image":"https://drive.google.com/file/d/1NDXzibUxm-H7ORXp7VQaBn1QfZryiCst/view?usp=sharing"},{"id":15,"name":"Direction","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1r_jUyaV6Mt_19DYTk1kJQbji_zr5HJbD/view?usp=sharing"},{"id":16,"name":"Tiger","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1JAR-szLYI9XZjYtjxazY5I2dpyvx7Myy/view?usp=sharing"},{"id":17,"name":"Shivji","category":"Cool","price":10,"image":"https://drive.google.com/file/d/19Dkl7lvK-JfoDMOd2pkrHVhtJQj7y9_j/view?usp=sharing"},{"id":18,"name":"SpiderMan","category":"SuperHero","price":10,"image":"https://drive.google.com/file/d/1wEfjtZzgexRDupjGuIKXS9ddQBKc7uGE/view?usp=sharing"},{"id":19,"name":"Rabo","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1z0RcWDsk0tk8bfv5Y9h5558-LHthAatu/view?usp=sharing"},{"id":20,"name":"Hato","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1Qmvtd673zJQtys3mQV2Eo7MnT7d53QB_/view?usp=sharing"},{"id":21,"name":"A1","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1ilahl-xunoLktCxb7Za1IDju1NgoBNnp/view?usp=sharing"},{"id":22,"name":"A2","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1Eq2_tuYOti1l0FWiI0HMjuqm2LgUsthp/view?usp=sharing"},{"id":23,"name":"A3","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1UDpcQhRdmRjA49JL5HAsqKrIZ2ZKgwZx/view?usp=sharing"},{"id":24,"name":"A4","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1IuSzWuk2dACspWyF4Z3__iwdnr9PNGhj/view?usp=sharing"},{"id":25,"name":"A5","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1Ba6ABk9b-iK2u-9s_Z76TgadGXR3UMMV/view?usp=sharing"},{"id":26,"name":"A6","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1A70zS4DZ_2YDvxbY8XU7Qk8ltyKh7BIx/view?usp=drive_link"},{"id":27,"name":"A7","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1281UP96LDw_OwXuynswV2o57K5BDzHp9/view?usp=drive_link"},{"id":28,"name":"A8","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1C4SOwjJfgv1u6GWX3emEe2K8pklY0Y3l/view?usp=drive_link"},{"id":29,"name":"A9","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1c2QJSpmtktSQ8HPgdPOU7H9LazDEQpfA/view?usp=drive_link"},{"id":30,"name":"A10","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1cliUE9gzWsU5QH95yeVRYeQdgDoy_At6/view?usp=drive_link"},{"id":31,"name":"B1","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1Rkdvt-XfZt8q5UhBMkRMeyY5leSGntu-/view?usp=drive_link"},{"id":32,"name":"B2","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1nK54UHo5OA5zSIe_Ve4aPGin0QCWQiHZ/view?usp=sharing"},{"id":33,"name":"B3","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1INmn9zmUy-NLVaA-YOPYoJNJSDSUuIAp/view?usp=sharing"},{"id":34,"name":"B4","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1h8oIgdYRF6ewskASxRUx3puUA4TxodEG/view?usp=sharing"},{"id":35,"name":"B5","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1_-0n_RlUs5s8A_J1T8hQTi1SJ1uHWnpm/view?usp=sharing"},{"id":36,"name":"B6","category":"Vehicles","price":15,"image":"https://drive.google.com/file/d/1TVBf0XcTFYWGM2sdm8JGrom98X8YfdMo/view?usp=sharing"},{"id":37,"name":"B7","category":"Vehicles","price":15,"image":"https://drive.google.com/file/d/1ZdVmlz3cE6E0Gg6T6nT_gZUsvbxJ22Qq/view?usp=sharing"},{"id":38,"name":"B8","category":"Vehicles","price":15,"image":"https://drive.google.com/file/d/1q2N1dE67-HbtOQ-cCuJLPUmguAZAl7hO/view?usp=sharing"},{"id":39,"name":"B9","category":"Vehicles","price":15,"image":"https://drive.google.com/file/d/1mCENVpYiyHfLHR9s9V_y5yEwOifSypSc/view?usp=sharing"},{"id":40,"name":"B10","category":"Vehicles","price":15,"image":"https://drive.google.com/file/d/11zTLUni5d-YfKuDzq7aEjE-knG34sj6s/view?usp=sharing"},{"id":41,"name":"C1","category":"Vehicles","price":15,"image":"https://drive.google.com/file/d/1iP0_cc6-HSYM2uv5xxxthdP7wa2i4s4A/view?usp=sharing"}];
+    const COUPON_CODES = [{"type":"pct","minOrder":0,"code":"HI","pct":10}];
+    const ITEM_DISCOUNTS = {"1":10};
+    const CAT_DISCOUNTS = {};
 ;
 
     // ============================================================================
@@ -1611,3 +1615,333 @@
   </script>
 </body>
 </html>
+
+<script>
+// ══ STIICKUU DISCOUNT ENGINE ══
+(function(){
+  // ── helpers ──
+  function effectivePct(sticker){
+    const id = sticker.id, cat = sticker.category;
+    const ip = ITEM_DISCOUNTS[id];
+    if(ip && ip > 0) return ip;
+    const cd = CAT_DISCOUNTS[cat];
+    if(cd && cd.pct > 0) return cd.pct;
+    return 0;
+  }
+  function discountedPrice(sticker){
+    const pct = effectivePct(sticker);
+    if(!pct) return sticker.price;
+    return Math.round(sticker.price * (1 - pct/100) * 10) / 10;
+  }
+  window._effectivePct    = effectivePct;
+  window._discountedPrice = discountedPrice;
+  window._appliedCoupon   = null;
+  window._couponCodes     = COUPON_CODES;
+
+  // ── Grand total: item/cat discounts + coupon ──
+  function patchedGrandTotal(cartStickers, cart){
+    let sub = 0;
+    cartStickers.forEach(s => { sub += (cart[s.id]||0) * discountedPrice(s); });
+    if(window._appliedCoupon){
+      const cp = window._appliedCoupon;
+      sub = cp.type === 'flat' ? Math.max(0, sub - cp.pct) : sub * (1 - cp.pct/100);
+      sub = Math.round(sub * 10) / 10;
+    }
+    return sub;
+  }
+  window._patchedGrandTotal = patchedGrandTotal;
+
+  function couponSavings(subtotalBeforeCoupon){
+    if(!window._appliedCoupon) return 0;
+    const cp = window._appliedCoupon;
+    const s  = cp.type === 'flat'
+      ? Math.min(cp.pct, subtotalBeforeCoupon)
+      : Math.round(subtotalBeforeCoupon * (cp.pct/100) * 10)/10;
+    return Math.round(s * 10)/10;
+  }
+
+  // ── Re-entry guard + debounce for observer ──
+  let _obsTimer   = null;
+  let _uiBusy     = false;
+
+  // ── MutationObserver with debounce ──
+  const observer = new MutationObserver(function(){
+    clearTimeout(_obsTimer);
+    _obsTimer = setTimeout(function(){
+      patchPricesInGrid();
+      if(document.querySelector('.drawer')) _safeRefreshCouponUI();
+    }, 40);
+  });
+  observer.observe(document.getElementById('app') || document.body, {childList:true, subtree:true});
+
+  // ── Patch grid: show strike-through + sale price + badge ──
+  function patchPricesInGrid(){
+    const grid = document.getElementById('productGrid');
+    if(!grid) return;
+    const state = window._state;
+    if(!state) return;
+    grid.querySelectorAll('.card[data-sticker-id]').forEach(card => {
+      const id = parseInt(card.dataset.stickerId);
+      const sticker = state.stickers.find(s => s.id === id);
+      if(!sticker) return;
+      const pct = effectivePct(sticker);
+      if(!pct) return;
+      const salePrice = discountedPrice(sticker);
+      const priceEl = card.querySelector('.price');
+      if(priceEl && !priceEl.dataset.patched){
+        priceEl.dataset.patched = '1';
+        priceEl.innerHTML =
+          '<span style="font-size:13px;color:#aaa;text-decoration:line-through;margin-right:4px;">₹' + sticker.price + '</span>' +
+          '<span style="color:#ff0000;">₹' + salePrice + '</span>';
+      }
+      const top = card.querySelector('.product-top');
+      if(top && !top.querySelector('.disc-badge')){
+        const badge = document.createElement('div');
+        badge.className = 'disc-badge';
+        badge.style.cssText = 'position:absolute;top:6px;left:6px;background:#ff0000;color:white;font-family:Fredoka One,cursive;font-size:11px;padding:2px 7px;border-radius:20px;z-index:2;';
+        badge.textContent = pct + '% OFF';
+        top.appendChild(badge);
+      }
+    });
+  }
+
+  // ── Patch grand total display ──
+  function patchCartTotal(){
+    const state = window._state;
+    if(!state) return;
+    const cartS = state.stickers.filter(s => (state.cart[s.id]||0) > 0);
+    if(!cartS.length) return;
+    const origTotal  = cartS.reduce((a,s) => a + (state.cart[s.id]||0) * s.price, 0);
+    const afterItems = cartS.reduce((a,s) => a + (state.cart[s.id]||0) * discountedPrice(s), 0);
+    const finalTotal = patchedGrandTotal(cartS, state.cart);
+    const saved      = couponSavings(afterItems);
+    const el = document.querySelector('.grand-total .value');
+    if(!el) return;
+    if(Math.abs(origTotal - finalTotal) > 0.01){
+      let html = '';
+      if(origTotal > afterItems){
+        html += '<div style="font-size:11px;color:rgba(255,255,255,0.65);text-align:right;text-decoration:line-through;margin-bottom:1px;">₹' + origTotal + '</div>';
+      }
+      if(saved > 0){
+        const cp = window._appliedCoupon;
+        const lbl = cp.type === 'flat' ? cp.code + ' -₹' + cp.pct : cp.code + ' -' + cp.pct + '%';
+        html += '<div style="font-size:11px;color:#bbf7d0;text-align:right;margin-bottom:2px;">🏷️ ' + lbl + ' (saves ₹' + saved + ')</div>';
+      }
+      html += '<span style="font-size:19px;">₹' + finalTotal + '</span>';
+      el.innerHTML = html;
+    } else {
+      el.textContent = '₹' + finalTotal;
+    }
+  }
+
+  // ── Coupon UI refresh (guarded against re-entry) ──
+  function _safeRefreshCouponUI(){
+    if(_uiBusy) return;
+    _uiBusy = true;
+    try{ refreshCouponUI(); } finally{ _uiBusy = false; }
+  }
+
+  function refreshCouponUI(){
+    const drawer = document.querySelector('.drawer');
+    if(!drawer) return;
+
+    patchCartTotal();
+
+    if(!COUPON_CODES || !COUPON_CODES.length) return;
+    const orderBtn = document.getElementById('orderBtn');
+    if(!orderBtn) return;
+
+    // Create wrap once; update its contents every time
+    let wrap = document.getElementById('discCouponWrap');
+    if(!wrap){
+      wrap = document.createElement('div');
+      wrap.id = 'discCouponWrap';
+      orderBtn.parentNode.insertBefore(wrap, orderBtn);
+    }
+    wrap.style.cssText = 'margin-top:8px;padding:12px;background:#fff8f8;border:2px solid #ffd6d6;border-radius:12px;display:flex;flex-direction:column;gap:8px;';
+
+    if(window._appliedCoupon){
+      const cp    = window._appliedCoupon;
+      const state = window._state;
+      const cartS = state ? state.stickers.filter(s => (state.cart[s.id]||0) > 0) : [];
+      const sub   = cartS.reduce((a,s) => a + (state.cart[s.id]||0) * discountedPrice(s), 0);
+      const saved = couponSavings(sub);
+      const discLabel = cp.type === 'flat' ? '₹' + cp.pct + ' Flat OFF' : cp.pct + '% OFF';
+      // Only re-render if not already showing applied state (check for stable key)
+      if(wrap.dataset.couponState === cp.code) return; // already showing this coupon
+      wrap.dataset.couponState = cp.code;
+      wrap.innerHTML =
+        '<div style="font-family:Fredoka One,cursive;font-size:14px;color:#ff0000;">🏷️ Coupon Applied!</div>' +
+        '<div style="display:flex;align-items:center;gap:8px;background:#f0fff4;border:1.5px solid #86efac;border-radius:10px;padding:8px 12px;">' +
+          '<div style="flex:1;">' +
+            '<div style="font-family:Fredoka One,cursive;color:#16a34a;font-size:15px;">✅ ' + cp.code + ' — ' + discLabel + '</div>' +
+            '<div style="font-size:12px;color:#16a34a;font-weight:800;margin-top:3px;">💰 You save ₹' + saved + '!</div>' +
+          '</div>' +
+          '<button onclick="window._removeCoupon()" style="background:#fee2e2;border:none;color:#dc2626;border-radius:8px;padding:4px 10px;cursor:pointer;font-family:Fredoka One,cursive;font-size:12px;">Remove</button>' +
+        '</div>';
+    } else {
+      if(wrap.dataset.couponState === 'none') return; // already showing input
+      wrap.dataset.couponState = 'none';
+      wrap.innerHTML =
+        '<div style="font-family:Fredoka One,cursive;font-size:14px;color:#ff0000;">🏷️ Have a Coupon?</div>' +
+        '<div style="display:flex;gap:8px;">' +
+          '<input id="discCouponInput" type="text" placeholder="Enter coupon code" autocomplete="off"' +
+          ' style="flex:1;border:2px solid #ffd6d6;border-radius:10px;padding:8px 12px;font-size:14px;font-family:Nunito,sans-serif;font-weight:700;text-transform:uppercase;outline:none;"' +
+          ' oninput="this.value=this.value.toUpperCase();" />' +
+          '<button onclick="window._applyCoupon()" style="background:#ff0000;color:white;border:none;border-radius:10px;padding:8px 16px;cursor:pointer;font-family:Fredoka One,cursive;font-size:14px;">Apply</button>' +
+        '</div>' +
+        '<div id="discCouponMsg" style="font-size:12px;font-weight:800;display:none;"></div>';
+    }
+  }
+
+  window._applyCoupon = function(){
+    const input = document.getElementById('discCouponInput');
+    const msg   = document.getElementById('discCouponMsg');
+    if(!input) return;
+    const code = input.value.trim().toUpperCase();
+    if(!code){
+      if(msg){ msg.style.display='block'; msg.style.color='#dc2626'; msg.textContent='❌ Please enter a coupon code'; }
+      return;
+    }
+    const found = (COUPON_CODES||[]).find(c => c.code === code);
+    if(!found){
+      if(msg){ msg.style.display='block'; msg.style.color='#dc2626'; msg.textContent='❌ Invalid coupon code'; }
+      return;
+    }
+    const state = window._state;
+    if(found.minOrder > 0 && state){
+      const cartS  = state.stickers.filter(s => (state.cart[s.id]||0) > 0);
+      const subtot = cartS.reduce((a,s) => a + (state.cart[s.id]||0) * discountedPrice(s), 0);
+      if(subtot < found.minOrder){
+        if(msg){ msg.style.display='block'; msg.style.color='#dc2626';
+          msg.textContent='❌ Min order ₹' + found.minOrder + ' required (your cart: ₹' + subtot + ')'; }
+        return;
+      }
+    }
+    window._appliedCoupon = found;
+    const wrap = document.getElementById('discCouponWrap');
+    if(wrap) delete wrap.dataset.couponState; // force re-render
+    _safeRefreshCouponUI();
+    patchCartTotal();
+  };
+
+  window._removeCoupon = function(){
+    window._appliedCoupon = null;
+    const wrap = document.getElementById('discCouponWrap');
+    if(wrap) delete wrap.dataset.couponState; // force re-render
+    _safeRefreshCouponUI();
+    patchCartTotal();
+  };
+
+  // ── Override clipboard.writeText so discount/coupon info is baked in BEFORE writing ──
+  // This replaces the old read-then-rewrite approach (which required clipboard-read permission
+  // and had timing issues). Now we intercept the write call directly.
+  (function(){
+    if(!navigator.clipboard || !navigator.clipboard.writeText) return;
+    var _orig = navigator.clipboard.writeText.bind(navigator.clipboard);
+    navigator.clipboard.writeText = function(txt){
+      // Skip our own re-writes and non-order text
+      if(window._allowCopy) return _orig(txt);
+      if(!txt || txt.indexOf('Total: Rs.') === -1) return _orig(txt);
+
+      var state = window._state;
+      if(!state) return _orig(txt);
+
+      var cartS      = state.stickers.filter(function(s){ return (state.cart[s.id]||0)>0; });
+      var origTotal  = cartS.reduce(function(a,s){ return a+(state.cart[s.id]||0)*s.price; },0);
+      var afterItems = cartS.reduce(function(a,s){ return a+(state.cart[s.id]||0)*discountedPrice(s); },0);
+      var finalTotal = patchedGrandTotal(cartS, state.cart);
+
+      // Nothing changed — pass through unchanged
+      if(Math.abs(origTotal - finalTotal) < 0.01) return _orig(txt);
+
+      var patched = txt;
+
+      // ── Patch each item line that has a discount ──
+      // Line format: "  • Name  xN  = Rs.TOTAL"
+      cartS.forEach(function(s){
+        var pct = effectivePct(s);
+        if(!pct) return;
+        var qty     = state.cart[s.id]||0;
+        var origAmt = qty * s.price;
+        var discAmt = qty * discountedPrice(s);
+        // Replace "= Rs.ORIG_AMT" in the item line only (leave Total: line untouched for now)
+        var marker  = ' = Rs.' + origAmt;
+        var replacement = ' = Rs.' + origAmt + ' [orig] → Rs.' + discAmt + ' (' + pct + '% OFF)';
+        // Use split/join to replace all occurrences of this specific item amount
+        patched = patched.split(marker).join(replacement);
+      });
+
+      // ── Build the total section replacement ──
+      var saved = couponSavings(afterItems);
+      var totalBlock = '';
+
+      // Show original total if item discounts changed it
+      if(Math.abs(origTotal - afterItems) > 0.01){
+        totalBlock += 'Original Total: Rs.' + origTotal + '\n';
+      }
+      // Show coupon line if applied
+      if(saved > 0 && window._appliedCoupon){
+        var cp  = window._appliedCoupon;
+        var lbl = cp.type === 'flat' ? '₹' + cp.pct + ' Flat OFF' : cp.pct + '% OFF';
+        totalBlock += 'Coupon: ' + cp.code + ' (' + lbl + ')  →  saves ₹' + saved + '\n';
+      }
+      totalBlock += 'Total: Rs.' + finalTotal;
+
+      // Replace "Total: Rs.ORIGINAL_TOTAL" with the full breakdown
+      patched = patched.replace(/Total: Rs\.\d+(\.\d+)?/, totalBlock);
+
+      window._allowCopy = true;
+      var result = _orig(patched);
+      // Use promise chaining to clear the flag whether it succeeds or fails
+      if(result && typeof result.then === 'function'){
+        return result.then(
+          function(v){ window._allowCopy = false; return v; },
+          function(e){ window._allowCopy = false; throw e; }
+        );
+      } else {
+        window._allowCopy = false;
+        return result;
+      }
+    };
+  })();
+
+  // ── Re-sort pickup options: pinned+unlocked first ──
+  // Runs after every render via MutationObserver so pinned places float to top
+  // only when the customer actually has enough quantity to unlock them.
+  (function(){
+    function resortPickup(){
+      var opts = document.getElementById('pickupOptions');
+      if(!opts) return;
+      var state = window._state;
+      var qty   = state ? Object.values(state.cart||{}).reduce(function(a,b){return a+b;},0) : 0;
+      var pinned = (typeof PINNED_PICKUPS !== 'undefined') ? PINNED_PICKUPS : [];
+      if(!pinned.length) return;
+      var items = Array.from(opts.querySelectorAll('.custom-option'));
+      if(!items.length) return;
+      items.sort(function(a, b){
+        var aName   = (a.querySelector('.opt-name')||{}).textContent||'';
+        var bName   = (b.querySelector('.opt-name')||{}).textContent||'';
+        var aLocked = a.classList.contains('locked');
+        var bLocked = b.classList.contains('locked');
+        var aPinned = pinned.indexOf(aName) >= 0;
+        var bPinned = pinned.indexOf(bName) >= 0;
+        // Pinned+unlocked → top; locked always last regardless of pin
+        if(!aLocked && aPinned && (bLocked || !bPinned)) return -1;
+        if(!bLocked && bPinned && (aLocked || !aPinned)) return 1;
+        if(!aLocked && bLocked) return -1;
+        if(aLocked && !bLocked) return 1;
+        return 0;
+      });
+      items.forEach(function(el){ opts.appendChild(el); });
+    }
+    var _pickupObsTimer = null;
+    var pickupObserver = new MutationObserver(function(){
+      clearTimeout(_pickupObsTimer);
+      _pickupObsTimer = setTimeout(resortPickup, 60);
+    });
+    pickupObserver.observe(document.getElementById('app') || document.body, {childList:true, subtree:true});
+  })();
+
+})();
+</script>
