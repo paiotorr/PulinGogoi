@@ -1420,9 +1420,6 @@
           function _openPickupDropdown() {
             pickupOptions.classList.add("open");
             _setTriggerOpen(true);
-            // Auto-focus search input for instant typing
-            const si = document.getElementById("pickupSearchInput");
-            if (si) setTimeout(() => { try { si.focus(); } catch(e){} }, 80);
           }
 
           function _closePickupDropdown() {
