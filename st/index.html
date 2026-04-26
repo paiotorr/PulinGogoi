@@ -587,6 +587,86 @@
     }
     .search-clear:hover { background: #bbb; color: #222; }
     .search-clear.visible { display: flex; }
+  
+    /* ── PICKUP LOCATION SEARCH ── */
+    /* Trigger label & arrow — dynamic text when open/closed */
+    .custom-select-trigger.list-open { border-color: #ff0000; background: #fff5f5; }
+    .pickup-trigger-arrow { transition: transform 0.22s cubic-bezier(0.4,0,0.2,1); display: inline-block; }
+    .list-open .pickup-trigger-arrow { transform: rotate(180deg); }
+
+    /* Always-visible search bar at top of dropdown */
+    .pickup-search-bar {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 12px;
+      border-bottom: 1.5px solid #ffd6d6;
+      background: #fff5f5;
+      border-radius: 10px 10px 0 0;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    .pickup-search-emoji {
+      font-size: 15px;
+      flex-shrink: 0;
+      opacity: 0.55;
+      pointer-events: none;
+      user-select: none;
+    }
+    .pickup-search-input {
+      flex: 1;
+      border: 1.5px solid #ffd6d6 !important;
+      border-radius: 9px !important;
+      padding: 6px 10px !important;
+      font-size: 13px !important;
+      min-width: 0;
+      background: white !important;
+      font-family: 'Nunito', sans-serif !important;
+      font-weight: 700 !important;
+      color: #333 !important;
+      outline: none;
+      transition: border-color 0.18s, box-shadow 0.18s;
+    }
+    .pickup-search-input:focus {
+      border-color: #ff0000 !important;
+      box-shadow: 0 0 0 3px rgba(255,0,0,0.07);
+    }
+    .pickup-search-clear-btn {
+      background: #e0e0e0;
+      border: none;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      font-size: 10px;
+      cursor: pointer;
+      color: #555;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      flex-shrink: 0;
+      line-height: 1;
+      font-weight: 900;
+      transition: background 0.15s;
+    }
+    .pickup-search-clear-btn.visible { display: flex; }
+    .pickup-search-clear-btn:hover { background: #bbb; color: #222; }
+
+    /* No-results message */
+    .pickup-no-results {
+      padding: 16px;
+      text-align: center;
+      color: #ccc;
+      font-family: 'Fredoka One', cursive;
+      font-size: 13px;
+      display: none;
+    }
+    .pickup-no-results.visible { display: block; }
+
+    /* Hidden option when filtered out */
+    .custom-option.pickup-hidden { display: none !important; }
+
   </style>
   <link rel="preload" as="image" href="https://drive.google.com/thumbnail?id=12OAd4ckdsedQGT1f0u58vIEskwSFRlqK&sz=w400" />
   <link rel="preload" as="image" href="https://drive.google.com/thumbnail?id=18y9i-kjBjcMTU6qeFVAs7zPU4NRVuHv8&sz=w400" />
@@ -607,8 +687,8 @@
     const INSTAGRAM_USERNAME = "stiickuu";
     const CATEGORIES = ["Cool","All","Cartoon","Anime","SuperHero","Vehicles","Cricketers","Cute","Bouquets"];
     const CAT_COLOR = {"Anime":"#ff6b6b","Cartoon":"#f5a623","Cricketers":"#4caf50","Cool":"#481FFF","SuperHero":"#1FF0FF","Vehicles":"#000000","Cute":"#ff00f7","Bouquets":"#73ff00"};
-    const PICKUP_LOCATIONS = [{"name":"Tiniali of - SANKARDEV SHISU VIDYA NIKETAN BOGINADI","min":5,"minPrice":500,"minPriceScope":"items","minPriceScopeIds":[42],"minPriceScopeCats":[]},{"name":"Front of - Higher Secondary school","min":5,"minPrice":500,"minPriceScope":"items","minPriceScopeIds":[42],"minPriceScopeCats":[]},{"name":"Front of - Morning Glory Higher Secondary School","min":5,"minPrice":500,"minPriceScope":"items","minPriceScopeIds":[42],"minPriceScopeCats":[]},{"name":"Near - Rose Bud Academy","min":6},{"name":"Near - Bogindi Market","min":6},{"name":"Front of - 14 Mile Tiniali","min":5,"minPrice":500,"minPriceScope":"items","minPriceScopeIds":[42],"minPriceScopeCats":[]},{"name":"Sri Sri Padumoni Aai Than","min":5},{"name":"Near - Bogindi Police station","min":6},{"name":"Tadang","min":5},{"name":"Branchpur Bridge","min":10}];
-    const PINNED_PICKUPS = ["Tiniali of - SANKARDEV SHISU VIDYA NIKETAN BOGINADI","Front of - Higher Secondary school","Front of - Morning Glory Higher Secondary School","Near - Rose Bud Academy","Near - Bogindi Market","Front of - 14 Mile Tiniali","Sri Sri Padumoni Aai Than"];
+    const PICKUP_LOCATIONS = [{"name":"Tiniali of - SANKARDEV SHISU VIDYA NIKETAN BOGINADI","min":5,"minPrice":500,"minPriceScope":"items","minPriceScopeIds":[42],"minPriceScopeCats":[]},{"name":"Front of - Higher Secondary school","min":5,"minPrice":500,"minPriceScope":"items","minPriceScopeIds":[42],"minPriceScopeCats":[]},{"name":"Front of - Morning Glory Higher Secondary School","min":5,"minPrice":500,"minPriceScope":"items","minPriceScopeIds":[42],"minPriceScopeCats":[]},{"name":"(Lakhimpur) Infront of - NEW GEETANJALI SWEETS","min":10,"minPrice":500,"minPriceScope":"items","minPriceScopeIds":[42],"minPriceScopeCats":[]},{"name":"Near - Rose Bud Academy","min":6},{"name":"Front of - 14 Mile Tiniali","min":5,"minPrice":500,"minPriceScope":"items","minPriceScopeIds":[42],"minPriceScopeCats":[]},{"name":"Sri Sri Padumoni Aai Than","min":5},{"name":"Balijan Tiniali","min":5,"minPrice":0,"minPriceScope":"items","minPriceScopeIds":[],"minPriceScopeCats":[]}];
+    const PINNED_PICKUPS = ["Tiniali of - SANKARDEV SHISU VIDYA NIKETAN BOGINADI","Front of - Higher Secondary school","Front of - Morning Glory Higher Secondary School","(Lakhimpur) Infront of - NEW GEETANJALI SWEETS","Near - Rose Bud Academy","Front of - 14 Mile Tiniali","Sri Sri Padumoni Aai Than","Balijan Tiniali"];
     const DEFAULT_STICKERS = [{"id":42,"name":"RED 1","category":"Bouquets","price":500,"image":"https://drive.google.com/file/d/1CBJgbosuyKCRtLztHKeRXtdb5d3LEcZT/view?usp=drive_link"},{"id":19,"name":"Rabo","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1z0RcWDsk0tk8bfv5Y9h5558-LHthAatu/view?usp=sharing"},{"id":25,"name":"A5","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1Ba6ABk9b-iK2u-9s_Z76TgadGXR3UMMV/view?usp=sharing"},{"id":20,"name":"Hato","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1Qmvtd673zJQtys3mQV2Eo7MnT7d53QB_/view?usp=sharing"},{"id":26,"name":"A6","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1A70zS4DZ_2YDvxbY8XU7Qk8ltyKh7BIx/view?usp=drive_link"},{"id":3,"name":"One Piece","category":"Anime","price":10,"image":"https://drive.google.com/file/d/1HBcKbflMjQ8PufMJQNtvJXnj4OCFRRS1/view?usp=sharing"},{"id":31,"name":"B1","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1Rkdvt-XfZt8q5UhBMkRMeyY5leSGntu-/view?usp=drive_link"},{"id":18,"name":"SpiderMan","category":"SuperHero","price":10,"image":"https://drive.google.com/file/d/1wEfjtZzgexRDupjGuIKXS9ddQBKc7uGE/view?usp=sharing"},{"id":12,"name":"Ninja","category":"Anime","price":10,"image":"https://drive.google.com/file/d/1K17cUmXOgwuByDvGBk1SeeKDqFS3qU3u/view?usp=sharing"},{"id":17,"name":"Shivji","category":"Cool","price":10,"image":"https://drive.google.com/file/d/19Dkl7lvK-JfoDMOd2pkrHVhtJQj7y9_j/view?usp=sharing"},{"id":1,"name":"EyeRo","category":"Anime","price":10,"image":"https://drive.google.com/file/d/12OAd4ckdsedQGT1f0u58vIEskwSFRlqK/view?usp=sharing"},{"id":2,"name":"Doraemon","category":"Anime","price":10,"image":"https://drive.google.com/file/d/18y9i-kjBjcMTU6qeFVAs7zPU4NRVuHv8/view?usp=sharing"},{"id":4,"name":"Oggy","category":"Cartoon","price":10,"image":"https://drive.google.com/file/d/1nkdQb_yLWxTTrsEWyUPQigT40L4Znhu8/view?usp=sharing"},{"id":5,"name":"Panda","category":"Cartoon","price":10,"image":"https://drive.google.com/file/d/1QzYv7qAHWdQZnZW03uDvrcdjLMXdSDJC/view?usp=sharing"},{"id":6,"name":"Tom","category":"Cartoon","price":10,"image":"https://drive.google.com/file/d/1tfU0WfMPYTggSKnQ9vpZkWHIBExxzHKk/view?usp=sharing"},{"id":7,"name":"Virat Kohli","category":"Cricketers","price":10,"image":"https://drive.google.com/file/d/16n25y2A5vNJJ06Xoms5orhGyrBHZtCvu/view?usp=sharing"},{"id":8,"name":"BlackHat","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1zAyg_MYJoLM6LI7KSU1by7GsSJnOl_I-/view?usp=sharing"},{"id":9,"name":"Red Eye","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1a9YnKS7xRy0CTUnxkmwN9i4eeo9-GbNk/view?usp=sharing"},{"id":10,"name":"The Child","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1msti_xgaufqIds5qQy9ATSUTE-WaPn2V/view?usp=drivesdk"},{"id":11,"name":"Pokemon","category":"Anime","price":10,"image":"https://drive.google.com/thumbnail?id=1ZKHl0-SnNbAcGWCHpm4uhtknUrJrs8HV&sz=w400"},{"id":13,"name":"Bablis","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1lDMUAS0LVbXj9XJeFRN4W-Kty5tvFejo/view?usp=sharing"},{"id":14,"name":"BatMan","category":"SuperHero","price":10,"image":"https://drive.google.com/file/d/1NDXzibUxm-H7ORXp7VQaBn1QfZryiCst/view?usp=sharing"},{"id":15,"name":"Direction","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1r_jUyaV6Mt_19DYTk1kJQbji_zr5HJbD/view?usp=sharing"},{"id":16,"name":"Tiger","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1JAR-szLYI9XZjYtjxazY5I2dpyvx7Myy/view?usp=sharing"},{"id":21,"name":"A1","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1ilahl-xunoLktCxb7Za1IDju1NgoBNnp/view?usp=sharing"},{"id":22,"name":"A2","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1Eq2_tuYOti1l0FWiI0HMjuqm2LgUsthp/view?usp=sharing"},{"id":23,"name":"A3","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1UDpcQhRdmRjA49JL5HAsqKrIZ2ZKgwZx/view?usp=sharing"},{"id":24,"name":"A4","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1IuSzWuk2dACspWyF4Z3__iwdnr9PNGhj/view?usp=sharing"},{"id":27,"name":"A7","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1281UP96LDw_OwXuynswV2o57K5BDzHp9/view?usp=drive_link"},{"id":28,"name":"A8","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1C4SOwjJfgv1u6GWX3emEe2K8pklY0Y3l/view?usp=drive_link"},{"id":29,"name":"A9","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1c2QJSpmtktSQ8HPgdPOU7H9LazDEQpfA/view?usp=drive_link"},{"id":30,"name":"A10","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1cliUE9gzWsU5QH95yeVRYeQdgDoy_At6/view?usp=drive_link"},{"id":32,"name":"B2","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1nK54UHo5OA5zSIe_Ve4aPGin0QCWQiHZ/view?usp=sharing"},{"id":33,"name":"B3","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1INmn9zmUy-NLVaA-YOPYoJNJSDSUuIAp/view?usp=sharing"},{"id":34,"name":"B4","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1h8oIgdYRF6ewskASxRUx3puUA4TxodEG/view?usp=sharing"},{"id":35,"name":"B5","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1_-0n_RlUs5s8A_J1T8hQTi1SJ1uHWnpm/view?usp=sharing"},{"id":36,"name":"B6","category":"Vehicles","price":15,"image":"https://drive.google.com/file/d/1TVBf0XcTFYWGM2sdm8JGrom98X8YfdMo/view?usp=sharing"},{"id":37,"name":"B7","category":"Vehicles","price":15,"image":"https://drive.google.com/file/d/1ZdVmlz3cE6E0Gg6T6nT_gZUsvbxJ22Qq/view?usp=sharing"},{"id":38,"name":"B8","category":"Vehicles","price":15,"image":"https://drive.google.com/file/d/1q2N1dE67-HbtOQ-cCuJLPUmguAZAl7hO/view?usp=sharing"},{"id":39,"name":"B9","category":"Vehicles","price":15,"image":"https://drive.google.com/file/d/1mCENVpYiyHfLHR9s9V_y5yEwOifSypSc/view?usp=sharing"},{"id":40,"name":"B10","category":"Vehicles","price":15,"image":"https://drive.google.com/file/d/11zTLUni5d-YfKuDzq7aEjE-knG34sj6s/view?usp=sharing"},{"id":41,"name":"C1","category":"Vehicles","price":15,"image":"https://drive.google.com/file/d/1iP0_cc6-HSYM2uv5xxxthdP7wa2i4s4A/view?usp=sharing"}];
     const COUPON_CODES = [];
     const ITEM_DISCOUNTS = {};
@@ -965,10 +1045,16 @@
                     
                     <div class="custom-select" id="customPickupSelect">
                       <div class="custom-select-trigger" id="pickupTrigger">
-                        <span>${state.pickupPlace ? state.pickupPlace : '-- Choose Pickup Location --'}</span>
-                        <span style="color: #ff0000; font-size: 11px;">▼</span>
+                        <span id="pickupTriggerLabel">${state.pickupPlace ? state.pickupPlace : '📍 Choose Pickup Location'}</span>
+                        <span id="pickupTriggerArrow" class="pickup-trigger-arrow" style="color:#ff0000;font-size:11px;">▼</span>
                       </div>
                       <div class="custom-options" id="pickupOptions">
+                        <div class="pickup-search-bar" id="pickupSearchBar">
+                          <span class="pickup-search-emoji">🔍</span>
+                          <input type="text" class="pickup-search-input" id="pickupSearchInput" placeholder="Search pickup location…" autocomplete="off" spellcheck="false" />
+                          <button class="pickup-search-clear-btn" id="pickupSearchClear" title="Clear">✕</button>
+                        </div>
+                        <div class="pickup-no-results" id="pickupNoResults">No locations found 📍</div>
                         ${sortedLocations.map(loc => {
                           const _locPrice = loc.minPrice || 0;
                            const isLocked = qty < loc.min && (!(_locPrice > 0) || scopedTotal(loc) < _locPrice);
@@ -1312,28 +1398,112 @@
         
         const pickupTrigger = document.getElementById("pickupTrigger");
         const pickupOptions = document.getElementById("pickupOptions");
-        
+
         if (pickupTrigger && pickupOptions) {
+
+          // ── Dynamic trigger label & arrow ──
+          const _pLabel = document.getElementById("pickupTriggerLabel");
+          const _pArrow = document.getElementById("pickupTriggerArrow");
+
+          function _setTriggerOpen(isOpen) {
+            pickupTrigger.classList.toggle("list-open", isOpen);
+            if (_pArrow) _pArrow.style.transform = isOpen ? "rotate(180deg)" : "";
+            if (_pLabel) {
+              if (isOpen) {
+                _pLabel.textContent = state.pickupPlace ? state.pickupPlace : "✕ Close location list";
+              } else {
+                _pLabel.textContent = state.pickupPlace ? state.pickupPlace : "📍 Choose Pickup Location";
+              }
+            }
+          }
+
+          function _openPickupDropdown() {
+            pickupOptions.classList.add("open");
+            _setTriggerOpen(true);
+            // Auto-focus search input for instant typing
+            const si = document.getElementById("pickupSearchInput");
+            if (si) setTimeout(() => { try { si.focus(); } catch(e){} }, 80);
+          }
+
+          function _closePickupDropdown() {
+            pickupOptions.classList.remove("open");
+            _setTriggerOpen(false);
+            _resetPickupSearch();
+          }
+
+          function _resetPickupSearch() {
+            const inp   = document.getElementById("pickupSearchInput");
+            const clear = document.getElementById("pickupSearchClear");
+            const noRes = document.getElementById("pickupNoResults");
+            if (inp)   { inp.value = ""; }
+            if (clear) { clear.classList.remove("visible"); }
+            if (noRes) { noRes.classList.remove("visible"); }
+            document.querySelectorAll(".custom-option").forEach(o => o.classList.remove("pickup-hidden"));
+          }
+
+          // ── Trigger click: toggle open / close ──
           pickupTrigger.addEventListener("click", (e) => {
             e.stopPropagation();
-            pickupOptions.classList.toggle("open");
+            if (pickupOptions.classList.contains("open")) {
+              _closePickupDropdown();
+            } else {
+              _openPickupDropdown();
+            }
           });
 
+          // ── Search input: live filter ──
+          const pickupSearchInput = document.getElementById("pickupSearchInput");
+          const pickupSearchClear = document.getElementById("pickupSearchClear");
+          const pickupNoResults   = document.getElementById("pickupNoResults");
+
+          if (pickupSearchInput) {
+            pickupSearchInput.addEventListener("input", (e) => {
+              e.stopPropagation();
+              const q = pickupSearchInput.value.trim().toLowerCase();
+              if (pickupSearchClear) pickupSearchClear.classList.toggle("visible", q.length > 0);
+              let visible = 0;
+              document.querySelectorAll(".custom-option").forEach(opt => {
+                const name = (opt.querySelector(".opt-name") || {}).textContent || "";
+                const show = name.toLowerCase().includes(q);
+                opt.classList.toggle("pickup-hidden", !show);
+                if (show) visible++;
+              });
+              if (pickupNoResults) pickupNoResults.classList.toggle("visible", visible === 0 && q.length > 0);
+            });
+            pickupSearchInput.addEventListener("click", e => e.stopPropagation());
+          }
+
+          // ── Clear button: wipe search text ──
+          if (pickupSearchClear) {
+            pickupSearchClear.addEventListener("click", (e) => {
+              e.stopPropagation();
+              if (pickupSearchInput) { pickupSearchInput.value = ""; pickupSearchInput.focus(); }
+              pickupSearchClear.classList.remove("visible");
+              if (pickupNoResults) pickupNoResults.classList.remove("visible");
+              document.querySelectorAll(".custom-option").forEach(o => o.classList.remove("pickup-hidden"));
+            });
+          }
+
+          // ── Option click: select location ──
           document.querySelectorAll(".custom-option").forEach(opt => {
             opt.addEventListener("click", (e) => {
               e.stopPropagation();
-              if (opt.classList.contains("locked")) return; 
-              
+              if (opt.classList.contains("locked")) return;
               state.pickupPlace = opt.dataset.value;
-              render(); 
+              render();
             });
           });
 
+          // ── Outside click: close dropdown ──
           const drawer = document.querySelector(".drawer");
           if (drawer) {
             drawer.addEventListener("click", (e) => {
-              if (pickupOptions.classList.contains("open") && !pickupTrigger.contains(e.target)) {
-                pickupOptions.classList.remove("open");
+              if (
+                pickupOptions.classList.contains("open") &&
+                !pickupTrigger.contains(e.target) &&
+                !pickupOptions.contains(e.target)
+              ) {
+                _closePickupDropdown();
               }
             });
           }
