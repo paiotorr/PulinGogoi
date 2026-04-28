@@ -1,2177 +1,299 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="robots" content="noindex, nofollow" />
-  <title>stiickuu</title>
-  <!-- Preconnect to font servers so TCP+TLS is ready before CSS requests them -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <!-- Non-blocking font load -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" media="print" onload="this.media='all'" />
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" /></noscript>
-  <!-- DNS prefetch for Google Drive (all product images) -->
-  <link rel="dns-prefetch" href="https://drive.google.com" />
-  <link rel="preconnect" href="https://drive.google.com" crossorigin />
-  <style>
-    /* font-display:swap so text shows instantly in fallback font */
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    /* ── SECURITY: block all text selection & image drag ── */
-    body, body * {
-      -webkit-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-      user-select: none;
-      -webkit-touch-callout: none;
-    }
-    img { pointer-events: none; -webkit-user-drag: none; user-drag: none; }
-
-    /* Allow selection only inside inputs/selects */
-    input, select, textarea {
-      -webkit-user-select: text;
-      -moz-user-select: text;
-      -ms-user-select: text;
-      user-select: text;
-    }
-    /* Message box: block selection & copy specifically */
-    .message-box {
-      -webkit-user-select: none !important;
-      -moz-user-select: none !important;
-      -ms-user-select: none !important;
-      user-select: none !important;
-      pointer-events: none;
-      cursor: default;
-    }
-    body {
-      font-family: Nunito, sans-serif;
-      background: #fff5f5;
-      min-height: 100vh;
-      font-display: swap;
-    }
-    .btn {
-      border: none;
-      cursor: pointer;
-      border-radius: 12px;
-      font-family: 'Fredoka One', cursive;
-      transition: transform .12s, box-shadow .12s;
-    }
-    .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 14px rgba(0,0,0,.13); }
-    .btn:active:not(:disabled) { transform: translateY(0); }
-    .card {
-      background: white;
-      border-radius: 20px;
-      box-shadow: 0 3px 16px rgba(0,0,0,.07);
-      overflow: hidden;
-      transition: transform .2s, box-shadow .2s;
-    }
-    /* Shimmer skeleton while images load */
-    .product-image[src=""] , .product-image:not([src]) {
-      background: linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.2s infinite;
-    }
-    @keyframes shimmer {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
-    .card:hover { transform: translateY(-4px); box-shadow: 0 8px 26px rgba(0,0,0,.11); }
-    .card { will-change: transform; }
-    input, select {
-      font-family: Nunito, sans-serif;
-      border: 2px solid #ffd6d6;
-      border-radius: 10px;
-      padding: 9px 12px;
-      outline: none;
-      font-size: 14px;
-      width: 100%;
-      background: white;
-      appearance: auto;
-    }
-    input:focus, select:focus { border-color: #ff0000; }
-    ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: #ff9999; border-radius: 4px; }
-
-    /* ── STICKER PREVIEW POPUP ── */
-    #stickerPopup {
-      position: fixed;
-      inset: 0;
-      z-index: 500;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0,0,0,0.65);
-      backdrop-filter: blur(4px);
-      padding: 16px;
-    }
-    #stickerPopup.open { display: flex; }
-
-    .popup-card {
-      background: white;
-      border-radius: 28px;
-      width: min(92vw, 380px);
-      max-height: 90vh;
-      overflow: hidden;
-      box-shadow: 0 24px 70px rgba(0,0,0,0.4);
-      animation: popIn 0.28s cubic-bezier(0.34,1.56,0.64,1);
-      position: relative;
-      display: flex;
-      flex-direction: column;
-    }
-    @keyframes popIn {
-      from { transform: scale(0.72); opacity: 0; }
-      to   { transform: scale(1);   opacity: 1; }
-    }
-
-    /* ── Close button ── */
-    .popup-close-btn {
-      position: absolute;
-      top: 14px;
-      right: 14px;
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.85);
-      border: none;
-      font-size: 16px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #444;
-      z-index: 20;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      transition: background 0.15s, transform 0.15s;
-    }
-    .popup-close-btn:hover { background: white; transform: scale(1.1); }
-
-    /* ── Image slider area ── */
-    .popup-slider-wrap {
-      position: relative;
-      width: 100%;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-    .popup-slider-track {
-      display: flex;
-      transition: transform 0.38s cubic-bezier(0.4,0,0.2,1);
-      will-change: transform;
-    }
-    .popup-slide {
-      flex-shrink: 0;
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 32px 24px 24px;
-      min-height: 260px;
-    }
-    .popup-slide img {
-      width: 210px;
-      height: 210px;
-      object-fit: contain;
-      border-radius: 18px;
-      pointer-events: none;
-      -webkit-user-drag: none;
-    }
-
-    /* ── Dot indicators ── */
-    .popup-dots {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 7px;
-      padding: 0 0 14px;
-      background: transparent;
-      /* dots sit inside slider wrap so they're on the color bg */
-    }
-    .popup-dot {
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: rgba(0,0,0,0.18);
-      transition: background 0.2s, transform 0.2s;
-      cursor: pointer;
-    }
-    .popup-dot.active {
-      background: rgba(0,0,0,0.55);
-      transform: scale(1.25);
-    }
-
-    /* ── Info section below slider ── */
-    .popup-info {
-      padding: 16px 20px 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .popup-name { font-family: 'Fredoka One'; font-size: 23px; color: #222; }
-    .popup-meta { display: flex; align-items: center; gap: 10px; }
-    .popup-price { font-family: 'Fredoka One'; font-size: 21px; color: #ff0000; }
-
-    /* double-click hint on cards */
-    .dbl-hint {
-      font-size: 10px;
-      color: #bbb;
-      font-family: Nunito;
-      font-weight: 700;
-      text-align: center;
-      margin-top: 4px;
-      letter-spacing: 0.3px;
-    }
-
-    .header {
-      background: #ff0000; /* pure red */
-      padding: 14px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: 0 4px 20px rgba(255,0,0,.3);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    .header-left { display: flex; align-items: center; gap: 10px; }
-    .brand { font-family: 'Fredoka One'; font-size: 22px; color: white; line-height: 1; }
-    .subtitle { font-size: 11px; color: rgba(255,255,255,.8); font-weight: 700; margin-top: 1px; }
-    .header-actions { display: flex; gap: 8px; }
-
-    /* ── CATEGORY DRUM PICKER ── */
-    .cat-drum {
-      position: relative;
-      height: 54px;
-      overflow: hidden;
-      touch-action: pan-x;
-      user-select: none;
-    }
-    /* colour glow behind active slot */
-    .cat-drum-bg {
-      position: absolute;
-      inset: 0;
-      transition: background 0.3s;
-      opacity: 0.12;
-      pointer-events: none;
-    }
-    /* left/right edge fade so only 3 pills show */
-    .cat-drum::before,
-    .cat-drum::after {
-      content: '';
-      position: absolute;
-      top: 0; bottom: 0;
-      width: 22%;
-      z-index: 3;
-      pointer-events: none;
-    }
-    .cat-drum::before { left: 0;  background: linear-gradient(to right, #fff5f5 30%, transparent); }
-    .cat-drum::after  { right: 0; background: linear-gradient(to left,  #fff5f5 30%, transparent); }
-    /* the sliding belt — positioned absolutely, moved by JS transform */
-    .cat-drum-belt {
-      position: absolute;
-      top: 0; bottom: 0;
-      display: flex;
-      align-items: center;
-      gap: 0;
-      will-change: transform;
-      transition: transform 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    }
-    .cat-drum-belt.no-transition { transition: none !important; }
-    /* each slot is exactly 1/3 of the drum width — set by JS */
-    .cat-drum-slot {
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .cat-drum-pill {
-      padding: 7px 16px;
-      border-radius: 20px;
-      font-family: 'Fredoka One';
-      font-size: 13px;
-      white-space: nowrap;
-      border: 2px solid #ffd6d6;
-      background: white;
-      color: #999;
-      transition: background 0.25s, color 0.25s, border-color 0.25s,
-                  transform 0.25s, box-shadow 0.25s, opacity 0.25s;
-      transform: scale(0.88);
-      opacity: 0.55;
-      cursor: pointer;
-    }
-    .cat-drum-slot.active .cat-drum-pill {
-      transform: scale(1.12);
-      opacity: 1;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-    }
-
-    .grid {
-      padding: 18px;
-      display: grid;
-      grid-template-columns: repeat(auto-fill,minmax(158px,1fr));
-      gap: 16px;
-    }
-    @media (max-width: 400px) {
-      .grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-        padding: 12px;
-      }
-    }
-    .empty-grid {
-      grid-column: 1 / -1;
-      text-align: center;
-      padding: 50px;
-      color: #ccc;
-      font-family: 'Fredoka One';
-      font-size: 18px;
-    }
-    .product-top {
-      padding: 14px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 120px;
-      position: relative;
-    }
-    .product-image { width: 88px; height: 88px; object-fit: contain; border-radius: 10px; }
-    .product-body { padding: 11px 13px; }
-    .product-name { font-family: 'Fredoka One'; font-size: 15px; color: #222; }
-    .chip {
-      border-radius: 20px;
-      padding: 2px 9px;
-      font-size: 11px;
-      font-weight: 800;
-      display: inline-block;
-      margin-top: 3px;
-    }
-    .price { font-family: 'Fredoka One'; color: #ff0000; font-size: 20px; margin-top: 7px; }
-    .qty-control {
-      display: flex;
-      align-items: center;
-      margin-top: 10px;
-      border: 2px solid #ffd6d6;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-    .qty-btn {
-      flex: 1;
-      background: #ffe0e0;
-      color: #ff0000;
-      height: 36px;
-      font-size: 22px;
-      border-radius: 0;
-      padding: 0;
-    }
-    .qty-btn:disabled { background: #fff5f5; color: #ccc; cursor: not-allowed; }
-    .qty-val {
-      flex: 1;
-      text-align: center;
-      font-family: 'Fredoka One';
-      font-size: 18px;
-      color: #bbb;
-    }
-    .qty-val.active { color: #ff0000; }
-    .in-cart, .add-hint {
-      margin-top: 9px;
-      border-radius: 10px;
-      padding: 7px 0;
-      text-align: center;
-      font-family: 'Fredoka One';
-      font-size: 13px;
-    }
-    .in-cart { background: #ff0000; color: white; }
-    .add-hint { background: #fff5f5; color: #bbb; }
-    .qty-badge {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      background: #ff0000;
-      color: white;
-      border-radius: 50%;
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      font-family: 'Fredoka One';
-    }
-
-    .overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 200;
-      display: none;
-    }
-    .overlay.open { display: flex; }
-    .backdrop { flex: 1; background: rgba(0,0,0,.42); }
-    .drawer {
-      width: 350px;
-      background: white;
-      padding: 20px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-    .drawer-head { display: flex; justify-content: space-between; align-items: center; }
-    .drawer-title { font-family: 'Fredoka One'; font-size: 22px; color: #ff0000; }
-    .drawer-actions { display: flex; gap: 7px; }
-    .small-btn { padding: 6px 11px; font-size: 12px; }
-    .back-btn { background: #fff0f0; color: #ff0000; }
-    .close-btn { background: #f5f5f5; color: #555; padding: 6px 11px; font-size: 17px; }
-    .empty-cart {
-      text-align: center;
-      padding: 50px;
-      color: #ccc;
-      font-family: 'Fredoka One';
-      font-size: 17px;
-    }
-    .empty-cart span { font-size: 13px; font-family: Nunito; }
-    .cat-head {
-      background: #fff0f0;
-      border-radius: 10px;
-      padding: 6px 12px;
-      font-family: 'Fredoka One';
-      font-size: 14px;
-      margin-bottom: 7px;
-    }
-    .cart-item, .summary-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 9px 6px;
-      border-bottom: 1px solid #fff0f0;
-    }
-    .cart-image { width: 46px; height: 46px; border-radius: 9px; object-fit: contain; background: #fff5f5; }
-    .cart-name { font-family: 'Fredoka One'; font-size: 14px; color: #222; }
-    .cart-sub { font-size: 12px; color: #999; margin-top: 1px; }
-    .mini-qty { display: flex; align-items: center; gap: 6px; }
-    .mini-btn { background: #ffe0e0; color: #ff0000; width: 28px; height: 28px; font-size: 18px; padding: 0; }
-    .mini-val { font-family: 'Fredoka One'; font-size: 16px; min-width: 20px; text-align: center; color: #ff0000; }
-    .item-total { font-family: 'Fredoka One'; font-size: 15px; color: #ff0000; min-width: 46px; text-align: right; }
-    .grand-total {
-      background: linear-gradient(135deg,#16a34a,#4ade80);
-      border-radius: 12px;
-      padding: 9px 14px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .grand-total.multi-cat {
-      background: linear-gradient(135deg,#16a34a,#4ade80);
-    }
-    .grand-total span:first-child { color: white; font-family: 'Fredoka One'; font-size: 13px; }
-    .grand-total .value { color: white; font-family: 'Fredoka One'; font-size: 19px; }
-    .order-btn {
-      background: linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);
-      color: white;
-      padding: 16px 0;
-      font-size: 20px;
-      font-family: 'Nunito', sans-serif;
-      font-weight: 800;
-      letter-spacing: 0.3px;
-      width: 100%;
-    }
-
-    /* ── CUSTOM SELECT STYLING ── */
-    .custom-select { position: relative; width: 100%; user-select: none; }
-    .custom-select-trigger {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 12px 14px; background: white; border: 2px solid #ffd6d6;
-      border-radius: 10px; cursor: pointer; font-family: 'Nunito', sans-serif;
-      font-size: 13px; font-weight: 700; color: #444; transition: border-color 0.2s;
-    }
-    .custom-select-trigger:hover { border-color: #ffb3b3; }
-    .custom-options {
-      position: absolute; top: 100%; left: 0; right: 0; background: white;
-      border: 2px solid #ffd6d6; border-radius: 12px; margin-top: 6px;
-      box-shadow: 0 8px 25px rgba(255,0,0,0.15); z-index: 300;
-      max-height: 220px; overflow-y: auto; display: none; flex-direction: column;
-    }
-    .custom-options.open { display: flex; }
-    .custom-option {
-      padding: 12px 14px; cursor: pointer; transition: background 0.2s;
-      border-bottom: 1px solid #fff0f0; display: flex; flex-direction: column; gap: 3px;
-    }
-    .custom-option:last-child { border-bottom: none; }
-    .custom-option:hover:not(.locked) { background: #fff5f5; }
-    .custom-option.selected { background: #ffe0e0; border-bottom: 1px solid #ffd6d6; }
+<!-- saved from url=(0066)file:///C:/Users/Pulin/OneDrive/Documents/New%20project/index.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     
-    /* Locked / Blurry Styling for unavailable options */
-    .custom-option.locked {
-      opacity: 0.45;
-      filter: grayscale(80%);
-      cursor: not-allowed;
-      background: #fdfdfd;
-    }
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>pkitaap</title>
+    <link rel="stylesheet" href="./pkitaap_files/styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="logo">PKITAAP</div>
+      </div>
+      <div class="topbar-right">
+        <button class="menu-btn" id="menuBtn" type="button" aria-label="Open menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+      <div class="menu-panel" id="menuPanel">
+        <div class="menu-title">Menu</div>
+        <button type="button" id="loginBtn">Login</button>
+        <button data-page="sell">Sell</button>
+        <button data-page="admin">Admin portal</button>
+        <button type="button">Account details</button>
+      </div>
+    </header>
+
+    <div class="shell">
+      <main class="main">
+        <section class="page active" id="buyPage">
+          <div class="page-head">
+            <div class="search-wrap">
+              <input id="searchInput" placeholder="Search books">
+              <button id="clearSearch" type="button" aria-label="Clear search" style="display: none;">x</button>
+            </div>
+          </div>
+
+          <div class="location-lock">
+            <div>
+              <span>Country</span>
+              <strong>India</strong>
+            </div>
+            <div>
+              <span>State</span>
+              <strong>Assam</strong>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <h2 id="catalogTitle">Classes</h2>
+              <button class="btn btn-ghost" id="backBtn" type="button" style="display: none;">Back</button>
+            </div>
+            <div class="card-body">
+              <div class="class-grid" id="classGrid" style="display: grid;">
+      <button class="class-card " data-class="Class 9">
+        <img src="data:image/svg+xml;charset=UTF-8,%0A%20%20%20%20%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22500%22%20height%3D%22360%22%20viewBox%3D%220%200%20500%20360%22%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%22500%22%20height%3D%22360%22%20rx%3D%2226%22%20fill%3D%22%2316a34a%22%2F%3E%0A%20%20%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%0A%20%20%20%20%20%20%20%20fill%3D%22%23ffffff%22%20font-family%3D%22Arial%22%20font-size%3D%2242%22%20font-weight%3D%22800%22%3EClass%209%3C%2Ftext%3E%0A%20%20%20%20%3C%2Fsvg%3E" alt="Class 9">
+        <div class="card-info">
+          <strong>Class 9</strong>
+          <span>3 books</span>
+        </div>
+      </button>
     
-    .opt-name { font-family: 'Fredoka One'; font-size: 13px; color: #222; }
-    .opt-min { font-size: 11px; color: #777; font-weight: 700; }
-
-    /* ── SCROLL HIDE ── */
-    #searchSticky {
-      position: sticky;
-      top: 0;
-      z-index: 99;
-      background: #fff5f5;
-      overflow: hidden;
-      max-height: 70px;
-      transition: max-height 0.3s cubic-bezier(0.4,0,0.2,1);
-    }
-    #searchSticky.s-hide { max-height: 0; }
-
-    #catSticky {
-      position: sticky;
-      top: 0;
-      z-index: 98;
-      background: #fff5f5;
-      max-height: 60px;
-      overflow: hidden;
-      transition: max-height 0.3s cubic-bezier(0.4,0,0.2,1);
-    }
-    #catSticky.c-hide { max-height: 0; }
-
-    /* ── SEARCH BAR ── */
-    .search-bar {
-      padding: 10px 16px 6px;
-      background: #fff5f5;
-    }
-    .search-wrap {
-      position: relative;
-      display: flex;
-      align-items: center;
-    }
-    .search-icon {
-      position: absolute;
-      left: 12px;
-      font-size: 16px;
-      pointer-events: none;
-      opacity: 0.5;
-      z-index: 1;
-    }
-    .search-input {
-      width: 100%;
-      padding: 10px 40px 10px 36px !important;
-      border-radius: 14px !important;
-      border: 2px solid #ffd6d6 !important;
-      font-size: 14px !important;
-      background: white !important;
-      font-family: 'Nunito', sans-serif !important;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .search-input:focus {
-      border-color: #ff0000 !important;
-      box-shadow: 0 0 0 3px rgba(255,0,0,0.08);
-    }
-    .search-clear {
-      position: absolute;
-      right: 10px;
-      background: #e0e0e0;
-      border: none;
-      border-radius: 50%;
-      width: 20px;
-      height: 20px;
-      font-size: 11px;
-      cursor: pointer;
-      color: #555;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      font-weight: 900;
-      padding: 0;
-      line-height: 1;
-      z-index: 1;
-      transition: background 0.15s;
-    }
-    .search-clear:hover { background: #bbb; color: #222; }
-    .search-clear.visible { display: flex; }
-  
-    /* ── PICKUP LOCATION SEARCH ── */
-    /* Trigger label & arrow — dynamic text when open/closed */
-    .custom-select-trigger.list-open { border-color: #ff0000; background: #fff5f5; }
-    .pickup-trigger-arrow { transition: transform 0.22s cubic-bezier(0.4,0,0.2,1); display: inline-block; }
-    .list-open .pickup-trigger-arrow { transform: rotate(180deg); }
-
-    /* Always-visible search bar at top of dropdown */
-    .pickup-search-bar {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      padding: 9px 12px;
-      border-bottom: 1.5px solid #ffd6d6;
-      background: #fff5f5;
-      border-radius: 10px 10px 0 0;
-      position: sticky;
-      top: 0;
-      z-index: 2;
-    }
-    .pickup-search-emoji {
-      font-size: 15px;
-      flex-shrink: 0;
-      opacity: 0.55;
-      pointer-events: none;
-      user-select: none;
-    }
-    .pickup-search-input {
-      flex: 1;
-      border: 1.5px solid #ffd6d6 !important;
-      border-radius: 9px !important;
-      padding: 6px 10px !important;
-      font-size: 13px !important;
-      min-width: 0;
-      background: white !important;
-      font-family: 'Nunito', sans-serif !important;
-      font-weight: 700 !important;
-      color: #333 !important;
-      outline: none;
-      transition: border-color 0.18s, box-shadow 0.18s;
-    }
-    .pickup-search-input:focus {
-      border-color: #ff0000 !important;
-      box-shadow: 0 0 0 3px rgba(255,0,0,0.07);
-    }
-    .pickup-search-clear-btn {
-      background: #e0e0e0;
-      border: none;
-      border-radius: 50%;
-      width: 20px;
-      height: 20px;
-      font-size: 10px;
-      cursor: pointer;
-      color: #555;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 0;
-      flex-shrink: 0;
-      line-height: 1;
-      font-weight: 900;
-      transition: background 0.15s;
-    }
-    .pickup-search-clear-btn.visible { display: flex; }
-    .pickup-search-clear-btn:hover { background: #bbb; color: #222; }
-
-    /* No-results message */
-    .pickup-no-results {
-      padding: 16px;
-      text-align: center;
-      color: #ccc;
-      font-family: 'Fredoka One', cursive;
-      font-size: 13px;
-      display: none;
-    }
-    .pickup-no-results.visible { display: block; }
-
-    /* Hidden option when filtered out */
-    .custom-option.pickup-hidden { display: none !important; }
-
-  </style>
-  <link rel="preload" as="image" href="https://drive.google.com/thumbnail?id=12OAd4ckdsedQGT1f0u58vIEskwSFRlqK&sz=w400" />
-  <link rel="preload" as="image" href="https://drive.google.com/thumbnail?id=18y9i-kjBjcMTU6qeFVAs7zPU4NRVuHv8&sz=w400" />
-  <link rel="preload" as="image" href="https://drive.google.com/thumbnail?id=1HBcKbflMjQ8PufMJQNtvJXnj4OCFRRS1&sz=w400" />
-  <link rel="preload" as="image" href="https://drive.google.com/thumbnail?id=1nkdQb_yLWxTTrsEWyUPQigT40L4Znhu8&sz=w400" />
-  <link rel="preload" as="image" href="https://drive.google.com/thumbnail?id=1QzYv7qAHWdQZnZW03uDvrcdjLMXdSDJC&sz=w400" />
-  <link rel="preload" as="image" href="https://drive.google.com/thumbnail?id=1tfU0WfMPYTggSKnQ9vpZkWHIBExxzHKk&sz=w400" />
-</head>
-<body>
-  <div id="app"></div>
-
-  <script>
-    "use strict";
-    // ============================================================================
-    // ⚙️ APP SETTINGS & CONFIGURATION
-    // ============================================================================
-
-    const INSTAGRAM_USERNAME = "stiickuu";
-    const CATEGORIES = ["Cool","All","Cartoon","Anime","SuperHero","Vehicles","Cricketers","Cute","Bouquets"];
-    const CAT_COLOR = {"Anime":"#ff6b6b","Cartoon":"#f5a623","Cricketers":"#4caf50","Cool":"#481FFF","SuperHero":"#1FF0FF","Vehicles":"#000000","Cute":"#ff00f7","Bouquets":"#73ff00"};
-    const PICKUP_LOCATIONS = [{"name":"Tiniali of - SANKARDEV SHISU VIDYA NIKETAN BOGINADI","min":5,"minPrice":500,"minPriceScope":"items","minPriceScopeIds":[42],"minPriceScopeCats":[]},{"name":"Front of - Higher Secondary school","min":5,"minPrice":500,"minPriceScope":"items","minPriceScopeIds":[42],"minPriceScopeCats":[]},{"name":"Front of - Morning Glory Higher Secondary School","min":5,"minPrice":500,"minPriceScope":"items","minPriceScopeIds":[42],"minPriceScopeCats":[]},{"name":"(Lakhimpur) Infront of - NEW GEETANJALI SWEETS","min":10,"minPrice":500,"minPriceScope":"items","minPriceScopeIds":[42],"minPriceScopeCats":[]},{"name":"Near - Rose Bud Academy","min":6},{"name":"Front of - 14 Mile Tiniali","min":5,"minPrice":500,"minPriceScope":"items","minPriceScopeIds":[42],"minPriceScopeCats":[]},{"name":"Sri Sri Padumoni Aai Than","min":5},{"name":"Balijan Tiniali","min":5,"minPrice":0,"minPriceScope":"items","minPriceScopeIds":[],"minPriceScopeCats":[]}];
-    const PINNED_PICKUPS = ["Tiniali of - SANKARDEV SHISU VIDYA NIKETAN BOGINADI","Front of - Higher Secondary school","Front of - Morning Glory Higher Secondary School","(Lakhimpur) Infront of - NEW GEETANJALI SWEETS","Near - Rose Bud Academy","Front of - 14 Mile Tiniali","Sri Sri Padumoni Aai Than","Balijan Tiniali"];
-    const DEFAULT_STICKERS = [{"id":42,"name":"RED 1","category":"Bouquets","price":500,"image":"https://drive.google.com/file/d/1CBJgbosuyKCRtLztHKeRXtdb5d3LEcZT/view?usp=drive_link"},{"id":19,"name":"Rabo","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1z0RcWDsk0tk8bfv5Y9h5558-LHthAatu/view?usp=sharing"},{"id":25,"name":"A5","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1Ba6ABk9b-iK2u-9s_Z76TgadGXR3UMMV/view?usp=sharing"},{"id":20,"name":"Hato","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1Qmvtd673zJQtys3mQV2Eo7MnT7d53QB_/view?usp=sharing"},{"id":26,"name":"A6","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1A70zS4DZ_2YDvxbY8XU7Qk8ltyKh7BIx/view?usp=drive_link"},{"id":3,"name":"One Piece","category":"Anime","price":10,"image":"https://drive.google.com/file/d/1HBcKbflMjQ8PufMJQNtvJXnj4OCFRRS1/view?usp=sharing"},{"id":31,"name":"B1","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1Rkdvt-XfZt8q5UhBMkRMeyY5leSGntu-/view?usp=drive_link"},{"id":18,"name":"SpiderMan","category":"SuperHero","price":10,"image":"https://drive.google.com/file/d/1wEfjtZzgexRDupjGuIKXS9ddQBKc7uGE/view?usp=sharing"},{"id":12,"name":"Ninja","category":"Anime","price":10,"image":"https://drive.google.com/file/d/1K17cUmXOgwuByDvGBk1SeeKDqFS3qU3u/view?usp=sharing"},{"id":17,"name":"Shivji","category":"Cool","price":10,"image":"https://drive.google.com/file/d/19Dkl7lvK-JfoDMOd2pkrHVhtJQj7y9_j/view?usp=sharing"},{"id":1,"name":"EyeRo","category":"Anime","price":10,"image":"https://drive.google.com/file/d/12OAd4ckdsedQGT1f0u58vIEskwSFRlqK/view?usp=sharing"},{"id":2,"name":"Doraemon","category":"Anime","price":10,"image":"https://drive.google.com/file/d/18y9i-kjBjcMTU6qeFVAs7zPU4NRVuHv8/view?usp=sharing"},{"id":4,"name":"Oggy","category":"Cartoon","price":10,"image":"https://drive.google.com/file/d/1nkdQb_yLWxTTrsEWyUPQigT40L4Znhu8/view?usp=sharing"},{"id":5,"name":"Panda","category":"Cartoon","price":10,"image":"https://drive.google.com/file/d/1QzYv7qAHWdQZnZW03uDvrcdjLMXdSDJC/view?usp=sharing"},{"id":6,"name":"Tom","category":"Cartoon","price":10,"image":"https://drive.google.com/file/d/1tfU0WfMPYTggSKnQ9vpZkWHIBExxzHKk/view?usp=sharing"},{"id":7,"name":"Virat Kohli","category":"Cricketers","price":10,"image":"https://drive.google.com/file/d/16n25y2A5vNJJ06Xoms5orhGyrBHZtCvu/view?usp=sharing"},{"id":8,"name":"BlackHat","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1zAyg_MYJoLM6LI7KSU1by7GsSJnOl_I-/view?usp=sharing"},{"id":9,"name":"Red Eye","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1a9YnKS7xRy0CTUnxkmwN9i4eeo9-GbNk/view?usp=sharing"},{"id":10,"name":"The Child","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1msti_xgaufqIds5qQy9ATSUTE-WaPn2V/view?usp=drivesdk"},{"id":11,"name":"Pokemon","category":"Anime","price":10,"image":"https://drive.google.com/thumbnail?id=1ZKHl0-SnNbAcGWCHpm4uhtknUrJrs8HV&sz=w400"},{"id":13,"name":"Bablis","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1lDMUAS0LVbXj9XJeFRN4W-Kty5tvFejo/view?usp=sharing"},{"id":14,"name":"BatMan","category":"SuperHero","price":10,"image":"https://drive.google.com/file/d/1NDXzibUxm-H7ORXp7VQaBn1QfZryiCst/view?usp=sharing"},{"id":15,"name":"Direction","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1r_jUyaV6Mt_19DYTk1kJQbji_zr5HJbD/view?usp=sharing"},{"id":16,"name":"Tiger","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1JAR-szLYI9XZjYtjxazY5I2dpyvx7Myy/view?usp=sharing"},{"id":21,"name":"A1","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1ilahl-xunoLktCxb7Za1IDju1NgoBNnp/view?usp=sharing"},{"id":22,"name":"A2","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1Eq2_tuYOti1l0FWiI0HMjuqm2LgUsthp/view?usp=sharing"},{"id":23,"name":"A3","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1UDpcQhRdmRjA49JL5HAsqKrIZ2ZKgwZx/view?usp=sharing"},{"id":24,"name":"A4","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1IuSzWuk2dACspWyF4Z3__iwdnr9PNGhj/view?usp=sharing"},{"id":27,"name":"A7","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1281UP96LDw_OwXuynswV2o57K5BDzHp9/view?usp=drive_link"},{"id":28,"name":"A8","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1C4SOwjJfgv1u6GWX3emEe2K8pklY0Y3l/view?usp=drive_link"},{"id":29,"name":"A9","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1c2QJSpmtktSQ8HPgdPOU7H9LazDEQpfA/view?usp=drive_link"},{"id":30,"name":"A10","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1cliUE9gzWsU5QH95yeVRYeQdgDoy_At6/view?usp=drive_link"},{"id":32,"name":"B2","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1nK54UHo5OA5zSIe_Ve4aPGin0QCWQiHZ/view?usp=sharing"},{"id":33,"name":"B3","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1INmn9zmUy-NLVaA-YOPYoJNJSDSUuIAp/view?usp=sharing"},{"id":34,"name":"B4","category":"Cute","price":10,"image":"https://drive.google.com/file/d/1h8oIgdYRF6ewskASxRUx3puUA4TxodEG/view?usp=sharing"},{"id":35,"name":"B5","category":"Cool","price":10,"image":"https://drive.google.com/file/d/1_-0n_RlUs5s8A_J1T8hQTi1SJ1uHWnpm/view?usp=sharing"},{"id":36,"name":"B6","category":"Vehicles","price":15,"image":"https://drive.google.com/file/d/1TVBf0XcTFYWGM2sdm8JGrom98X8YfdMo/view?usp=sharing"},{"id":37,"name":"B7","category":"Vehicles","price":15,"image":"https://drive.google.com/file/d/1ZdVmlz3cE6E0Gg6T6nT_gZUsvbxJ22Qq/view?usp=sharing"},{"id":38,"name":"B8","category":"Vehicles","price":15,"image":"https://drive.google.com/file/d/1q2N1dE67-HbtOQ-cCuJLPUmguAZAl7hO/view?usp=sharing"},{"id":39,"name":"B9","category":"Vehicles","price":15,"image":"https://drive.google.com/file/d/1mCENVpYiyHfLHR9s9V_y5yEwOifSypSc/view?usp=sharing"},{"id":40,"name":"B10","category":"Vehicles","price":15,"image":"https://drive.google.com/file/d/11zTLUni5d-YfKuDzq7aEjE-knG34sj6s/view?usp=sharing"},{"id":41,"name":"C1","category":"Vehicles","price":15,"image":"https://drive.google.com/file/d/1iP0_cc6-HSYM2uv5xxxthdP7wa2i4s4A/view?usp=sharing"}];
-    const COUPON_CODES = [];
-    const ITEM_DISCOUNTS = {};
-    const CAT_DISCOUNTS = {};
-;
-
-    // ============================================================================
-    // END OF SETTINGS 
-    // ============================================================================
-
-    const state = {
-      stickers: DEFAULT_STICKERS.slice(),
-      cart: {},
-      activeCategory: "All",
-      cartOpen: false,
-      orderStep: 0,
-      copied: false,
-      igHandle: INSTAGRAM_USERNAME,
-      pickupPlace: "",
-      ordering: false,
-      searchQuery: ""
-    };
-
-    const app = document.getElementById('app');
-
-    // expose for popup
-    window._state = state;
-    window.fixDriveUrl = fixDriveUrl;
-    window.CAT_COLOR = CAT_COLOR;
-
-    function fixDriveUrl(url) {
-      if (!url) return url;
-      const m1 = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-      if (m1) return `https://drive.google.com/thumbnail?id=${m1[1]}&sz=w400`;
-      const m2 = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-      if (url.includes('drive.google.com') && m2) return `https://drive.google.com/thumbnail?id=${m2[1]}&sz=w400`;
-      return url;
-    }
-
-    try {
-      const saved = localStorage.getItem('customStickers');
-      if (saved) JSON.parse(saved).forEach(s => state.stickers.push(s));
-    } catch(e) {}
-
-    function saveStickers() {
-      try { localStorage.setItem('customStickers', JSON.stringify(state.stickers.filter(s => s.isCustom))); } catch(e) {}
-    }
-
-    function deleteSticker(id) {
-      state.stickers = state.stickers.filter(s => s.id !== id);
-      delete state.cart[id];
-      saveStickers();
-      render();
-    }
-
-    function getQty(id) { return state.cart[id] || 0; }
-
-    function changeQty(id, delta) {
-      const next = { ...state.cart };
-      const val = (next[id] || 0) + delta;
-      if (val <= 0) delete next[id];
-      else next[id] = val;
-      state.cart = next;
-      render();
-    }
-
-    function filteredStickers() {
-      return state.activeCategory === "All"
-        ? state.stickers
-        : state.stickers.filter(s => s.category === state.activeCategory);
-    }
-
-    function cartStickers() { return state.stickers.filter(s => state.cart[s.id] > 0); }
-
-    function totalQty() { return cartStickers().reduce((a, s) => a + state.cart[s.id], 0); }
-
-    function grandTotal() { return cartStickers().reduce((a, s) => a + state.cart[s.id] * s.price, 0); }
-
-    // Returns cart total filtered to items matching a pickup location's minPrice scope
-    function scopedTotal(loc) {
-      if (!loc || !(loc.minPrice > 0)) return 0;
-      const scope = loc.minPriceScope || 'all';
-      if (scope === 'all') return grandTotal();
-      return state.stickers
-        .filter(s => (state.cart[s.id] || 0) > 0 && (
-          scope === 'items' ? (loc.minPriceScopeIds || []).includes(s.id) :
-          scope === 'cats'  ? (loc.minPriceScopeCats || []).includes(s.category) : true
-        ))
-        .reduce((sum, s) => sum + (state.cart[s.id] || 0) * s.price, 0);
-    }
-
-    function grouped() {
-      return cartStickers().reduce((acc, s) => {
-        if (!acc[s.category]) acc[s.category] = [];
-        acc[s.category].push(s);
-        return acc;
-      }, {});
-    }
-
-    function buildMsg() {
-      const today = new Date();
-      const dateString = today.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-      
-      const lines = [];
-      Object.entries(grouped()).forEach(([cat, items], index) => {
-        if (index > 0) lines.push("");
-        
-        lines.push(`[ ${cat} ]`);
-        items.forEach(s => {
-          lines.push(`  • ${s.name}  x${state.cart[s.id]}  = Rs.${state.cart[s.id] * s.price}`);
-        });
-      });
-      return `Hi @${state.igHandle}! 👋\nI want to order these stickers:\n\n${lines.join("\n")}\n\nPickup Place: ${state.pickupPlace}\n\nTotal: Rs.${grandTotal()}\n\nOrder Date: ${dateString}\n\nPlease confirm! 🙏`;
-    }
-
-    async function orderViaInstagram() {
-      const selectedLoc = PICKUP_LOCATIONS.find(l => l.name === state.pickupPlace);
-      if (!selectedLoc) return;
-      const _oPrice = selectedLoc.minPrice || 0;
-      const _oUnlocked = totalQty() >= selectedLoc.min || (_oPrice > 0 && scopedTotal(selectedLoc) >= _oPrice);
-      if (!_oUnlocked) return;
-
-      const text = buildMsg();
-      try {
-        await navigator.clipboard.writeText(text);
-      } catch {
-        try {
-          const ta = document.createElement("textarea");
-          ta.value = text; ta.style.cssText = "position:fixed;top:-9999px;left:-9999px;opacity:0;";
-          document.body.appendChild(ta); ta.focus(); ta.select();
-          document.execCommand("copy"); document.body.removeChild(ta);
-        } catch {}
-      }
-
-      state.ordering = true;
-      render();
-
-      setTimeout(() => {
-        const ua = navigator.userAgent || navigator.vendor || window.opera || "";
-        const isIgApp = /instagram/i.test(ua);
-        const isAndroid = /android/i.test(ua);
-        if (isIgApp) {
-          if (isAndroid) {
-            window.location.href =
-              `intent://user?username=${state.igHandle}#Intent;` +
-              `package=com.instagram.android;scheme=instagram;` +
-              `S.browser_fallback_url=https%3A%2F%2Fig.me%2Fm%2F${state.igHandle};end`;
-          } else {
-            window.location.href = `instagram://user?username=${state.igHandle}`;
-            setTimeout(() => { window.location.href = `https://ig.me/m/${state.igHandle}`; }, 1000);
-          }
-        } else {
-          window.location.href = `https://ig.me/m/${state.igHandle}`;
-        }
-      }, 500);
-    }
-
-    function resetOrdering() {
-      if (state.ordering) { state.ordering = false; render(); }
-    }
-    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") resetOrdering(); });
-    window.addEventListener("focus", resetOrdering);
-    window.addEventListener("pageshow", resetOrdering);
-    setInterval(() => { if (state.ordering && document.visibilityState === "visible") resetOrdering(); }, 300);
-
-    function closeCart() {
-      state.cartOpen = false;
-      state.orderStep = 0;
-      state.copied = false;
-      render();
-    }
-
-    function buildGridHTML() {
-      const q = state.searchQuery.trim().toLowerCase();
-      let filtered = state.activeCategory === "All"
-        ? state.stickers
-        : state.stickers.filter(s => s.category === state.activeCategory);
-      if (q) filtered = filtered.filter(s => s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q));
-      if (filtered.length === 0) {
-        return `<div class="empty-grid">No stickers here yet 😅</div>`;
-      }
-      return filtered.map(s => {
-        const q = state.cart[s.id] || 0;
-        const color = CAT_COLOR[s.category] || "#ff0000";
-        return `<div class="card" data-sticker-id="${s.id}">
-          <div class="product-top" style="background:${color}18;position:relative;">
-            <img src="${fixDriveUrl(s.image)}" alt="${s.name}" class="product-image" loading="lazy" decoding="async" onerror="this.src='https://api.dicebear.com/7.x/fun-emoji/svg?seed=${s.id}'"/>
-            ${q>0?`<div class="qty-badge">${q}</div>`:""}
-            ${s.isCustom?`<button class="btn" data-delete="${s.id}" style="position:absolute;top:6px;left:8px;background:rgba(255,0,0,0.15);color:#ff0000;padding:2px 7px;font-size:14px;border-radius:8px;">✕</button>`:""}
-          </div>
-          <div class="product-body">
-            <div class="product-name">${s.name}</div>
-            <span class="chip" style="background:${color}22;color:${color};">${s.category}</span>
-            <div class="price">₹${s.price}</div>
-            <div class="dbl-hint">👆 Double-tap to preview</div>
-            <div class="qty-control">
-              <button class="btn qty-btn" data-minus="${s.id}" ${q===0?"disabled":""} style="background:${q===0?"#fff5f5":"#ffe0e0"};color:${q===0?"#ccc":"#ff0000"};">−</button>
-              <span class="qty-val ${q>0?"active":""}">${q}</span>
-              <button class="btn qty-btn" data-plus="${s.id}">+</button>
-            </div>
-            ${q>0?`<div class="in-cart">✅ In Cart — ₹${q*s.price}</div>`:`<div class="add-hint">Press + to add</div>`}
-          </div>
-        </div>`;
-      }).join("") + `
-        <div class="card" style="opacity:0.75;">
-          <div class="product-top" style="background:#f5f5f5;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;">
-            <span style="font-size:32px;">🎨</span>
-            <span style="font-family:'Fredoka One';font-size:11px;color:#bbb;letter-spacing:1px;">MORE COMING</span>
-          </div>
-          <div class="product-body" style="text-align:center;">
-            <div class="product-name" style="color:#aaa;font-size:13px;">More Stickers</div>
-            <span class="chip" style="background:#f0f0f0;color:#bbb;margin-top:4px;">Soon ✨</span>
-            <div style="margin-top:10px;padding:7px 0;background:#f9f9f9;border-radius:10px;font-family:'Fredoka One';font-size:12px;color:#ccc;">Stay tuned! 🚀</div>
-          </div>
-        </div>`;
-    }
-
-    function render() {
-      const filtered = filteredStickers();
-      const groupedCart = grouped();
-      const qty = totalQty();
-      const total = grandTotal();
-
-      if (state.pickupPlace) {
-        const checkLoc = PICKUP_LOCATIONS.find(l => l.name === state.pickupPlace);
-        if (checkLoc) {
-          const _p2Price = checkLoc.minPrice || 0;
-          const _p2Unlocked = qty >= checkLoc.min || (_p2Price > 0 && scopedTotal(checkLoc) >= _p2Price);
-          if (!_p2Unlocked) state.pickupPlace = "";
-        }
-      }
-
-      let btnDisabled = true;
-      let btnText = "Order via Instagram";
-      
-      const selectedLoc = PICKUP_LOCATIONS.find(l => l.name === state.pickupPlace);
-
-      if (!state.pickupPlace) {
-        btnText = "⚠️ Select a pickup place";
-      } else if (qty < selectedLoc.min && (!(selectedLoc.minPrice > 0) || scopedTotal(selectedLoc) < selectedLoc.minPrice)) {
-        const _mp = selectedLoc.minPrice || 0;
-        btnText = _mp > 0
-          ? `⚠️ Min ${selectedLoc.min} items or ₹${_mp} required`
-          : `⚠️ Minimum ${selectedLoc.min} items required`;
-      } else if (state.ordering) {
-        btnDisabled = true;
-      } else {
-        btnDisabled = false;
-      }
-
-      const sortedLocations = [...PICKUP_LOCATIONS].sort((a, b) => {
-        const aLocked = qty < a.min && (!(a.minPrice > 0) || scopedTotal(a) < a.minPrice);
-        const bLocked = qty < b.min && (!(b.minPrice > 0) || scopedTotal(b) < b.minPrice);
-        if (!aLocked && bLocked) return -1;
-        if (aLocked && !bLocked) return 1;
-        return a.min - b.min;
-      });
-
-      const _drawerScrollTop = (document.querySelector(".drawer") || {}).scrollTop || 0;
-      const _prevBelt = document.getElementById("catDrumBelt");
-      const _prevBeltHTML = _prevBelt ? _prevBelt.innerHTML : "";
-      const _prevBeltLeft = _prevBelt ? _prevBelt.style.left : "";
-      const _prevBg = document.getElementById("catDrumBg");
-      const _prevBgColor = _prevBg ? _prevBg.style.background : "";
-
-      app.innerHTML = `
-        <div style="font-family: Nunito, sans-serif; background: #fff5f5; min-height: 100vh;">
-          <header class="header">
-            <div class="header-left">
-              <span style="font-size: 28px">🎨</span>
-              <div>
-                <div class="brand">@${state.igHandle}</div>
-                <div class="subtitle">PAIOTORR</div>
-              </div>
-            </div>
-            <div class="header-actions">
-              <button class="btn" id="cartBtn" style="background: white; color: #ff0000; padding: 8px 16px; font-family: 'Fredoka One'; font-size: 14px; display: flex; align-items: center; gap: 5px;">
-                🛒 Cart
-                ${qty > 0 ? `<span style="background:#ff0000;color:white;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;">${qty}</span>` : ""}
-              </button>
-            </div>
-          </header>
-
-          <div id="searchSticky">
-            <div class="search-bar">
-              <div class="search-wrap">
-                <span class="search-icon">🔍</span>
-                <input
-                  id="searchInput"
-                  class="search-input"
-                  type="text"
-                  placeholder="Search stickers…"
-                  value="${state.searchQuery.replace(/"/g, '&quot;')}"
-                  autocomplete="off"
-                  spellcheck="false"
-                />
-                <button class="search-clear ${state.searchQuery ? 'visible' : ''}" id="searchClear" title="Clear">✕</button>
-              </div>
-            </div>
-          </div>
-
-          <div id="catSticky">
-            <div class="cat-drum" id="catDrum">
-              <div class="cat-drum-bg" id="catDrumBg"></div>
-              <div class="cat-drum-belt" id="catDrumBelt"></div>
-            </div>
-          </div>
-
-          <div class="grid" id="productGrid">
-            ${buildGridHTML()}
-          </div>
-
-          ${state.cartOpen ? `
-            <div class="overlay open" id="drawerOverlay">
-              <div class="backdrop" id="backdrop"></div>
-              <div class="drawer">
-                <div class="drawer-head" style="display:flex;align-items:center;justify-content:space-between;">
-                  <span class="drawer-title">🛒 Cart</span>
-                  <span style="background:#16a34a;color:white;border-radius:20px;padding:7px 16px;font-size:15px;font-weight:800;font-family:'Fredoka One';white-space:nowrap;box-shadow:0 2px 8px rgba(22,163,74,0.35);letter-spacing:0.3px;">💵 Cash on Delivery</span>
-                  <div class="drawer-actions">
-                    <button class="btn close-btn" id="closeBtn">✕</button>
-                  </div>
-                </div>
-
-                ${qty === 0 ? `
-                  <div class="empty-cart">
-                    Cart is empty 😅<br />
-                    <span>Press + on any sticker!</span>
-                  </div>
-                ` : `
-                  ${Object.entries(groupedCart).map(([cat, items]) => `
-                    <div>
-                      <div class="cat-head" style="background:${(CAT_COLOR[cat] || "#ff0000")}18;color:${CAT_COLOR[cat] || "#ff0000"};">${cat}</div>
-                      ${items.map(s => `
-                        <div class="cart-item">
-                          <img src="${fixDriveUrl(s.image)}" alt="${s.name}" class="cart-image" loading="lazy" decoding="async" onerror="this.src='https://api.dicebear.com/7.x/fun-emoji/svg?seed=${s.id}'" />
-                          <div style="flex:1;">
-                            <div class="cart-name">${s.name}</div>
-                            <div class="cart-sub">₹${s.price} each</div>
-                          </div>
-                          <div class="mini-qty">
-                            <button class="btn mini-btn" data-minus="${s.id}">−</button>
-                            <span class="mini-val">${state.cart[s.id]}</span>
-                            <button class="btn mini-btn" data-plus="${s.id}">+</button>
-                          </div>
-                          <div class="item-total">₹${state.cart[s.id] * s.price}</div>
-                        </div>
-                      `).join("")}
-                    </div>
-                  `).join("")}
-
-                  <div style="margin-top: 10px; padding: 12px; background: #fff8f8; border: 1px solid #ffd6d6; border-radius: 12px;">
-                    <div style="font-family:'Fredoka One';font-size:14px;color:#ff0000;margin-bottom:8px;">📍 Pickup Details</div>
-                    
-                    <div class="custom-select" id="customPickupSelect">
-                      <div class="custom-select-trigger" id="pickupTrigger">
-                        <span id="pickupTriggerLabel">${state.pickupPlace ? state.pickupPlace : '📍 Choose Pickup Location'}</span>
-                        <span id="pickupTriggerArrow" class="pickup-trigger-arrow" style="color:#ff0000;font-size:11px;">▼</span>
-                      </div>
-                      <div class="custom-options" id="pickupOptions">
-                        <div class="pickup-search-bar" id="pickupSearchBar">
-                          <span class="pickup-search-emoji">🔍</span>
-                          <input type="text" class="pickup-search-input" id="pickupSearchInput" placeholder="Search pickup location…" autocomplete="off" spellcheck="false" />
-                          <button class="pickup-search-clear-btn" id="pickupSearchClear" title="Clear">✕</button>
-                        </div>
-                        <div class="pickup-no-results" id="pickupNoResults">No locations found 📍</div>
-                        ${sortedLocations.map(loc => {
-                          const _locPrice = loc.minPrice || 0;
-                           const isLocked = qty < loc.min && (!(_locPrice > 0) || scopedTotal(loc) < _locPrice);
-                          return `
-                          <div class="custom-option ${state.pickupPlace === loc.name ? 'selected' : ''} ${isLocked ? 'locked' : ''}" data-value="${loc.name}">
-                            <div class="opt-name">${loc.name}</div>
-                            <div class="opt-min" style="${isLocked ? 'color: #ff4444;' : ''}">
-                              ${isLocked
-                                ? (() => {
-                                    const _lp = loc.minPrice || 0;
-                                    const _qMsg = qty < loc.min ? `Add ${loc.min - qty} more` : '';
-                                    const _sTotal = scopedTotal(loc);
-                                    const _sc = loc.minPriceScope || 'all';
-                                    const _scLabel = _sc === 'cats' ? ` in [${(loc.minPriceScopeCats||[]).join(', ')}]` : _sc === 'items' ? ' (selected stickers)' : '';
-                                    const _pMsg = _lp > 0 && _sTotal < _lp ? `or reach ₹${_lp}${_scLabel}` : '';
-                                    return `🔒 Locked — ${[_qMsg, _pMsg].filter(Boolean).join(' ')}`;
-                                  })()
-                                : (() => {
-                                    const _lp = loc.minPrice || 0;
-                                    const _sc2 = loc.minPriceScope || 'all';
-                                    const _scLabel2 = _sc2 === 'cats' ? ` [${(loc.minPriceScopeCats||[]).join(', ')}]` : _sc2 === 'items' ? ' (selected)' : '';
-                                    return `✅ Unlocked — Min: ${loc.min} items${_lp > 0 ? ` or ₹${_lp}${_scLabel2}` : ''}`;
-                                  })()}
-                            </div>
-                          </div>
-                        `}).join("")}
-                      </div>
-                    </div>
-
-                  </div>
-
-                  <div class="grand-total${Object.keys(groupedCart).length > 1 ? ' multi-cat' : ''}" style="margin-top: 4px;">
-                    <span>Grand Total</span>
-                    <span class="value">₹${total}</span>
-                  </div>
-
-                  <button class="btn order-btn" id="orderBtn" ${btnDisabled ? 'disabled style="background: #e5e7eb; color: #9ca3af; box-shadow: none; font-size: 16px;"' : ''}>
-                    ${btnText}
-                  </button>
-                `}
-              </div>
-            </div>
-          ` : ""}
+      <button class="class-card " data-class="Class 10">
+        <img src="data:image/svg+xml;charset=UTF-8,%0A%20%20%20%20%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22500%22%20height%3D%22360%22%20viewBox%3D%220%200%20500%20360%22%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%22500%22%20height%3D%22360%22%20rx%3D%2226%22%20fill%3D%22%2316a34a%22%2F%3E%0A%20%20%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%0A%20%20%20%20%20%20%20%20fill%3D%22%23ffffff%22%20font-family%3D%22Arial%22%20font-size%3D%2242%22%20font-weight%3D%22800%22%3EClass%2010%3C%2Ftext%3E%0A%20%20%20%20%3C%2Fsvg%3E" alt="Class 10">
+        <div class="card-info">
+          <strong>Class 10</strong>
+          <span>2 books</span>
         </div>
-      `;
-
-      // Lock / unlock background scroll based on cart state
-      document.body.style.overflow = state.cartOpen ? "hidden" : "";
-
-      document.getElementById("cartBtn").addEventListener("click", () => {
-        state.cartOpen = true;
-        state.orderStep = 0;
-        render();
-      });
-
-      // restore drum belt immediately so there is no blank frame before _initDial runs
-      if (_prevBeltHTML) {
-        const _newBelt = document.getElementById("catDrumBelt");
-        const _newBg   = document.getElementById("catDrumBg");
-        if (_newBelt) { _newBelt.innerHTML = _prevBeltHTML; _newBelt.style.left = _prevBeltLeft; }
-        if (_newBg)   { _newBg.style.background = _prevBgColor; }
-      }
-
-      // Re-apply scroll hide state after every DOM rebuild
-      if (window.reapplyScrollState) reapplyScrollState();
-
-      if (_drawerScrollTop > 0) {
-        const _d = document.querySelector(".drawer");
-        if (_d) _d.scrollTop = _drawerScrollTop;
-      }
-
-      // attach events for the inline-rendered grid
-      document.querySelectorAll("#productGrid [data-plus]").forEach(b =>
-        b.addEventListener("click", () => changeQty(Number(b.dataset.plus), 1)));
-      document.querySelectorAll("#productGrid [data-minus]").forEach(b =>
-        b.addEventListener("click", () => changeQty(Number(b.dataset.minus), -1)));
-
-      document.querySelectorAll("[data-delete]").forEach(btn => {
-        btn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          deleteSticker(Number(btn.dataset.delete));
-        });
-      });
-
-      // dial items handle their own clicks — no separate data-cat listeners needed
-      // ── DIAL: re-init on every render since DOM is rebuilt ───────────────
-      if (!window._dialAudio) {
-        // AudioContext — created once, persisted across renders
-        window._dialAudio = { ctx: null };
-      }
-
-      window._tick = function() {
-        try {
-          if (!window._dialAudio.ctx)
-            window._dialAudio.ctx = new (window.AudioContext || window.webkitAudioContext)();
-          const ctx = window._dialAudio.ctx;
-          function _play() {
-            try {
-              const len = Math.floor(ctx.sampleRate * 0.035);
-              const buf = ctx.createBuffer(1, len, ctx.sampleRate);
-              const d = buf.getChannelData(0);
-              for (let i = 0; i < len; i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/len, 7);
-              const src = ctx.createBufferSource();
-              src.buffer = buf;
-              const bp = ctx.createBiquadFilter();
-              bp.type = "bandpass"; bp.frequency.value = 2400; bp.Q.value = 1.2;
-              const g = ctx.createGain(); g.gain.value = 0.6;
-              src.connect(bp); bp.connect(g); g.connect(ctx.destination);
-              src.start();
-            } catch(e2) {}
-          }
-          if (ctx.state === "suspended") { ctx.resume().then(_play).catch(function(){}); }
-          else { _play(); }
-        } catch(e) {}
-      };
-
-      window._renderGrid = function() {
-        const gridEl = document.getElementById("productGrid");
-        if (!gridEl) return;
-        gridEl.innerHTML = buildGridHTML();
-        gridEl.querySelectorAll("[data-plus]").forEach(b =>
-          b.addEventListener("click", () => changeQty(Number(b.dataset.plus), 1)));
-        gridEl.querySelectorAll("[data-minus]").forEach(b =>
-          b.addEventListener("click", () => changeQty(Number(b.dataset.minus), -1)));
-        gridEl.querySelectorAll("[data-delete]").forEach(b =>
-          b.addEventListener("click", e => { e.stopPropagation(); deleteSticker(Number(b.dataset.delete)); }));
-      };
-
-      window._initDial = function() {
-        const drum  = document.getElementById("catDrum");
-        const belt  = document.getElementById("catDrumBelt");
-        const bg    = document.getElementById("catDrumBg");
-        if (!drum || !belt || !bg) return;
-
-        const N   = CATEGORIES.length;
-        let cur   = Math.max(0, CATEGORIES.indexOf(state.activeCategory));
-
-        let slotW, slots;
-
-        if (belt.children.length === 5 && window._drumSlotW) {
-          // belt already populated (restored after render) — skip DOM rebuild to prevent blink
-          slotW = window._drumSlotW;
-          slots = Array.from(belt.children).map(slot => ({ slot, pill: slot.querySelector(".cat-drum-pill") }));
-        } else {
-          // first load — build slots and measure
-          belt.innerHTML = "";
-          slots = [];
-          for (let s = 0; s < 5; s++) {
-            const slot = document.createElement("div");
-            slot.className = "cat-drum-slot" + (s === 2 ? " active" : "");
-            const pill = document.createElement("div");
-            pill.className = "cat-drum-pill";
-            pill.textContent = CATEGORIES[s % N];
-            slot.appendChild(pill);
-            belt.appendChild(slot);
-            slots.push({ slot, pill });
-          }
-          const tempPill = document.createElement("div");
-          tempPill.className = "cat-drum-pill";
-          tempPill.style.cssText = "position:absolute;visibility:hidden;white-space:nowrap;";
-          document.body.appendChild(tempPill);
-          let maxW = 0;
-          CATEGORIES.forEach(cat => { tempPill.textContent = cat; maxW = Math.max(maxW, tempPill.offsetWidth); });
-          document.body.removeChild(tempPill);
-          slotW = maxW + 8;
-          window._drumSlotW = slotW;
-          slots.forEach(({ slot }) => { slot.style.width = slotW + "px"; });
-          const beltBase = drum.offsetWidth / 2 - 2.5 * slotW;
-          belt.style.left = beltBase + "px";
-        }
-
-        // ── paint ─────────────────────────────────────────────
-        function colorOf(idx) { return CAT_COLOR[CATEGORIES[idx]] || "#ff0000"; }
-
-        function doSelect(targetIdx, fromLeft) {
-          if (targetIdx === cur) return;
-          cur = targetIdx;
-          window._tick();
-          paint(cur);
-          // fromLeft → belt starts shifted left, slides RIGHT into center
-          // fromRight → belt starts shifted right, slides LEFT into center
-          const shift = fromLeft ? -slotW : slotW;
-          belt.classList.add("no-transition");
-          belt.style.transform = `translateX(${shift}px)`;
-          requestAnimationFrame(() => requestAnimationFrame(() => {
-            belt.classList.remove("no-transition");
-            belt.style.transform = "translateX(0)";
-          }));
-          setTimeout(() => { state.activeCategory = CATEGORIES[cur]; window._renderGrid(); }, 340);
-        }
-
-        function paint(activeIdx) {
-          const color = colorOf(activeIdx);
-          bg.style.background = color;
-          const offsets = [-2, -1, 0, 1, 2];
-          offsets.forEach((off, s) => {
-            const ri  = ((activeIdx + off) % N + N) % N;
-            const { slot, pill } = slots[s];
-            const isActive = off === 0;
-            slot.classList.toggle("active", isActive);
-            pill.textContent = CATEGORIES[ri];
-            // Give every non-active pill a direct onclick — ri and s are captured per-iteration
-            if (!isActive) {
-              const capturedRi = ri;
-              const isLeft = s < 2; // slots 0,1 are left of centre; 3,4 are right
-              pill.onclick = () => doSelect(capturedRi, isLeft);
-              pill.style.cursor = "pointer";
-            } else {
-              pill.onclick = null;
-              pill.style.cursor = "default";
-            }
-            if (isActive) {
-              pill.style.background  = color;
-              pill.style.color       = "white";
-              pill.style.borderColor = "transparent";
-            } else {
-              pill.style.background  = "white";
-              pill.style.color       = Math.abs(off) === 1 ? "#777" : "#bbb";
-              pill.style.borderColor = Math.abs(off) === 1 ? "#ffd6d6" : "#eee";
-            }
-          });
-        }
-
-        paint(cur);
-
-        // ── drag (clicks handled directly on each pill inside paint()) ──
-        let dragging = false, startX = 0, stepped = 0;
-        const STEP = slotW * 0.42;
-
-        function getX(e) { return e.touches ? e.touches[0].clientX : e.clientX; }
-
-        function advanceDrag(dir) {
-          cur = ((cur - dir) % N + N) % N;
-          window._tick();
-          paint(cur);
-          const shift = dir * slotW * 0.6;
-          belt.classList.add("no-transition");
-          belt.style.transform = `translateX(${shift}px)`;
-          requestAnimationFrame(() => requestAnimationFrame(() => {
-            belt.classList.remove("no-transition");
-            belt.style.transform = "translateX(0)";
-          }));
-        }
-
-        function onStart(e) {
-          dragging = true; startX = getX(e); stepped = 0;
-          belt.classList.add("no-transition");
-        }
-        function onMove(e) {
-          if (!dragging) return;
-          const delta = getX(e) - startX;
-          const stepsNow = Math.round(delta / STEP);
-          const diff = stepsNow - stepped;
-          if (diff !== 0) { stepped = stepsNow; advanceDrag(diff > 0 ? 1 : -1); }
-          belt.style.transform = `translateX(${(delta - stepped * STEP) * 0.3}px)`;
-        }
-        function onEnd() {
-          if (!dragging) return;
-          dragging = false;
-          belt.classList.remove("no-transition");
-          belt.style.transform = "translateX(0)";
-          state.activeCategory = CATEGORIES[cur];
-          window._renderGrid();
-        }
-
-        drum.addEventListener("touchstart",  onStart, { passive: true });
-        drum.addEventListener("touchmove",   onMove,  { passive: true });
-        drum.addEventListener("touchend",    onEnd);
-        drum.addEventListener("touchcancel", onEnd);
-        drum.addEventListener("mousedown",   onStart);
-        window.addEventListener("mousemove", onMove);
-        window.addEventListener("mouseup",   onEnd);
-      };
-
-      // ── Search input listeners ──
-      const searchInput = document.getElementById("searchInput");
-      const searchClear = document.getElementById("searchClear");
-      if (searchInput) {
-        searchInput.addEventListener("input", () => {
-          state.searchQuery = searchInput.value;
-          searchClear && searchClear.classList.toggle("visible", !!searchInput.value);
-          if (searchInput.value) {
-            // Save current category before switching to All (only save once)
-            if (!state._categoryBeforeSearch) {
-              state._categoryBeforeSearch = state.activeCategory;
-            }
-            // Switch to All without full render so input keeps focus
-            if (state.activeCategory !== "All") {
-              state.activeCategory = "All";
-              window._drumSlotW = null;
-              window._initDial && window._initDial();
-            }
-            window._renderGrid && window._renderGrid();
-          } else {
-            // Input emptied via backspace — restore previous category
-            if (state._categoryBeforeSearch) {
-              state.activeCategory = state._categoryBeforeSearch;
-              state._categoryBeforeSearch = null;
-              window._drumSlotW = null;
-              window._initDial && window._initDial();
-            }
-            window._renderGrid && window._renderGrid();
-          }
-        });
-      }
-      if (searchClear) {
-        searchClear.addEventListener("click", () => {
-          state.searchQuery = "";
-          if (searchInput) { searchInput.value = ""; searchInput.focus(); }
-          searchClear.classList.remove("visible");
-          // Restore the category the user was on before searching
-          if (state._categoryBeforeSearch) {
-            state.activeCategory = state._categoryBeforeSearch;
-            state._categoryBeforeSearch = null;
-            window._drumSlotW = null;
-            window._initDial && window._initDial();
-          }
-          window._renderGrid && window._renderGrid();
-        });
-      }
-
-      // call initDial every render (safe — IDs are stable, re-attaches cleanly)
-      requestAnimationFrame(() => {
-        if (window._initDial) window._initDial();
-        // populate grid after dial is ready
-        if (window._renderGrid) window._renderGrid();
-        // attach double-click popup listeners
-        if (window._attachPopupListeners) window._attachPopupListeners();
-        // keep global state ref in sync
-        window._state = state;
-      });
-
-      if (state.cartOpen) {
-        document.getElementById("backdrop").addEventListener("click", closeCart);
-        document.getElementById("closeBtn").addEventListener("click", closeCart);
-
-        document.querySelectorAll(".mini-btn[data-plus]").forEach(b =>
-          b.addEventListener("click", () => changeQty(Number(b.dataset.plus), 1)));
-        document.querySelectorAll(".mini-btn[data-minus]").forEach(b =>
-          b.addEventListener("click", () => changeQty(Number(b.dataset.minus), -1)));
-        
-        const pickupTrigger = document.getElementById("pickupTrigger");
-        const pickupOptions = document.getElementById("pickupOptions");
-
-        if (pickupTrigger && pickupOptions) {
-
-          // ── Dynamic trigger label & arrow ──
-          const _pLabel = document.getElementById("pickupTriggerLabel");
-          const _pArrow = document.getElementById("pickupTriggerArrow");
-
-          function _setTriggerOpen(isOpen) {
-            pickupTrigger.classList.toggle("list-open", isOpen);
-            if (_pArrow) _pArrow.style.transform = isOpen ? "rotate(180deg)" : "";
-            if (_pLabel) {
-              if (isOpen) {
-                _pLabel.textContent = state.pickupPlace ? state.pickupPlace : "✕ Close location list";
-              } else {
-                _pLabel.textContent = state.pickupPlace ? state.pickupPlace : "📍 Choose Pickup Location";
-              }
-            }
-          }
-
-          function _openPickupDropdown() {
-            pickupOptions.classList.add("open");
-            _setTriggerOpen(true);
-          }
-
-          function _closePickupDropdown() {
-            pickupOptions.classList.remove("open");
-            _setTriggerOpen(false);
-            _resetPickupSearch();
-          }
-
-          function _resetPickupSearch() {
-            const inp   = document.getElementById("pickupSearchInput");
-            const clear = document.getElementById("pickupSearchClear");
-            const noRes = document.getElementById("pickupNoResults");
-            if (inp)   { inp.value = ""; }
-            if (clear) { clear.classList.remove("visible"); }
-            if (noRes) { noRes.classList.remove("visible"); }
-            document.querySelectorAll(".custom-option").forEach(o => o.classList.remove("pickup-hidden"));
-          }
-
-          // ── Trigger click: toggle open / close ──
-          pickupTrigger.addEventListener("click", (e) => {
-            e.stopPropagation();
-            if (pickupOptions.classList.contains("open")) {
-              _closePickupDropdown();
-            } else {
-              _openPickupDropdown();
-            }
-          });
-
-          // ── Search input: live filter ──
-          const pickupSearchInput = document.getElementById("pickupSearchInput");
-          const pickupSearchClear = document.getElementById("pickupSearchClear");
-          const pickupNoResults   = document.getElementById("pickupNoResults");
-
-          if (pickupSearchInput) {
-            pickupSearchInput.addEventListener("input", (e) => {
-              e.stopPropagation();
-              const q = pickupSearchInput.value.trim().toLowerCase();
-              if (pickupSearchClear) pickupSearchClear.classList.toggle("visible", q.length > 0);
-              let visible = 0;
-              document.querySelectorAll(".custom-option").forEach(opt => {
-                const name = (opt.querySelector(".opt-name") || {}).textContent || "";
-                const show = name.toLowerCase().includes(q);
-                opt.classList.toggle("pickup-hidden", !show);
-                if (show) visible++;
-              });
-              if (pickupNoResults) pickupNoResults.classList.toggle("visible", visible === 0 && q.length > 0);
-            });
-            pickupSearchInput.addEventListener("click", e => e.stopPropagation());
-          }
-
-          // ── Clear button: wipe search text ──
-          if (pickupSearchClear) {
-            pickupSearchClear.addEventListener("click", (e) => {
-              e.stopPropagation();
-              if (pickupSearchInput) { pickupSearchInput.value = ""; pickupSearchInput.focus(); }
-              pickupSearchClear.classList.remove("visible");
-              if (pickupNoResults) pickupNoResults.classList.remove("visible");
-              document.querySelectorAll(".custom-option").forEach(o => o.classList.remove("pickup-hidden"));
-            });
-          }
-
-          // ── Option click: select location ──
-          document.querySelectorAll(".custom-option").forEach(opt => {
-            opt.addEventListener("click", (e) => {
-              e.stopPropagation();
-              if (opt.classList.contains("locked")) return;
-              state.pickupPlace = opt.dataset.value;
-              render();
-            });
-          });
-
-          // ── Outside click: close dropdown ──
-          const drawer = document.querySelector(".drawer");
-          if (drawer) {
-            drawer.addEventListener("click", (e) => {
-              if (
-                pickupOptions.classList.contains("open") &&
-                !pickupTrigger.contains(e.target) &&
-                !pickupOptions.contains(e.target)
-              ) {
-                _closePickupDropdown();
-              }
-            });
-          }
-        }
-
-        const orderBtn = document.getElementById("orderBtn");
-        if (orderBtn) orderBtn.addEventListener("click", orderViaInstagram);
-      }
-    }
-
-    // ── Set correct sticky top values based on REAL rendered heights ──
-    function applyTops() {
-      const header = document.querySelector('.header');
-      const ss = document.getElementById('searchSticky');
-      const cs = document.getElementById('catSticky');
-      if (!header || !ss || !cs) return;
-
-      const hH = header.offsetHeight;          // real header height (e.g. 66px)
-      const sH = ss.scrollHeight;              // real search bar height
-
-      window._hH = hH;
-      window._sH = sH;
-
-      ss.style.top = hH + 'px';
-      // cat sticks right below search if visible, or right below header if search hidden
-      cs.style.top = (window._sHide ? hH : hH + sH) + 'px';
-    }
-
-    // ── Re-apply classes after every render() ──
-    function reapplyScrollState() {
-      const ss = document.getElementById('searchSticky');
-      const cs = document.getElementById('catSticky');
-      if (ss && window._sHide) ss.classList.add('s-hide');
-      if (cs && window._cHide) cs.classList.add('c-hide');
-      applyTops();
-    }
-
-    // ── YouTube-style scroll hide ──
-    (function initScrollHide() {
-      window._sHide = false;
-      window._cHide = false;
-      window._hH    = 66; // fallback until measured
-      window._sH    = 56; // fallback until measured
-      let lastY = 0;
-
-      window.addEventListener('scroll', function () {
-        const curY = window.scrollY;
-        const ss   = document.getElementById('searchSticky');
-        const cs   = document.getElementById('catSticky');
-        if (!ss || !cs) { lastY = curY; return; }
-
-        const hH = window._hH || 66;
-        const sH = window._sH || 56;
-
-        if (curY <= 5) {
-          // AT TOP → show both
-          ss.classList.remove('s-hide');
-          cs.classList.remove('c-hide');
-          ss.style.top = hH + 'px';
-          cs.style.top = (hH + sH) + 'px';
-          window._sHide = false;
-          window._cHide = false;
-
-        } else if (curY > lastY) {
-          // SCROLLING DOWN → hide both
-          ss.classList.add('s-hide');
-          cs.classList.add('c-hide');
-          ss.style.top = hH + 'px';
-          cs.style.top = hH + 'px';
-          window._sHide = true;
-          window._cHide = true;
-
-        } else {
-          // SCROLLING UP → show category only, search stays hidden
-          ss.classList.add('s-hide');
-          cs.classList.remove('c-hide');
-          ss.style.top = hH + 'px';
-          cs.style.top = hH + 'px';   // sits right below header — fully visible
-          window._sHide = true;
-          window._cHide = false;
-        }
-
-        lastY = curY;
-      }, { passive: true });
-    })();
-
-    render();
-    // Measure real heights after first paint and correct the tops
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      applyTops();
-      reapplyScrollState();
-    }));
-  </script>
-
-  <!-- ── STICKER PREVIEW POPUP ── -->
-  <div id="stickerPopup">
-    <div class="popup-card" id="popupCard">
-      <button class="popup-close-btn" id="popupCloseBtn" title="Close">✕</button>
-
-      <!-- Slider: color bg + image(s) + dots -->
-      <div class="popup-slider-wrap" id="popupSliderWrap">
-        <div class="popup-slider-track" id="popupSliderTrack">
-          <!-- slides injected by JS -->
+      </button>
+    
+      <button class="class-card " data-class="Class 11">
+        <img src="data:image/svg+xml;charset=UTF-8,%0A%20%20%20%20%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22500%22%20height%3D%22360%22%20viewBox%3D%220%200%20500%20360%22%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%22500%22%20height%3D%22360%22%20rx%3D%2226%22%20fill%3D%22%2316a34a%22%2F%3E%0A%20%20%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%0A%20%20%20%20%20%20%20%20fill%3D%22%23ffffff%22%20font-family%3D%22Arial%22%20font-size%3D%2242%22%20font-weight%3D%22800%22%3EClass%2011%3C%2Ftext%3E%0A%20%20%20%20%3C%2Fsvg%3E" alt="Class 11">
+        <div class="card-info">
+          <strong>Class 11</strong>
+          <span>3 books</span>
         </div>
-        <div class="popup-dots" id="popupDots"></div>
-      </div>
-
-      <div class="popup-info">
-        <div class="popup-name" id="popupName"></div>
-        <div class="popup-meta">
-          <span class="chip" id="popupChip"></span>
-          <span class="popup-price" id="popupPrice"></span>
+      </button>
+    
+      <button class="class-card " data-class="Class 12">
+        <img src="data:image/svg+xml;charset=UTF-8,%0A%20%20%20%20%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22500%22%20height%3D%22360%22%20viewBox%3D%220%200%20500%20360%22%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%22500%22%20height%3D%22360%22%20rx%3D%2226%22%20fill%3D%22%2316a34a%22%2F%3E%0A%20%20%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%0A%20%20%20%20%20%20%20%20fill%3D%22%23ffffff%22%20font-family%3D%22Arial%22%20font-size%3D%2242%22%20font-weight%3D%22800%22%3EClass%2012%3C%2Ftext%3E%0A%20%20%20%20%3C%2Fsvg%3E" alt="Class 12">
+        <div class="card-info">
+          <strong>Class 12</strong>
+          <span>3 books</span>
         </div>
-      </div>
+      </button>
     </div>
-  </div>
-
-  <script>
-    // ══════════════════════════════════════════════
-    //  STICKER POPUP — clean image carousel
-    // ══════════════════════════════════════════════
-    (function() {
-      let curSlide = 0;
-      let totalSlides = 1;
-
-      // Per-sticker extra images (owner can add URLs here)
-      // Format: { stickerId: ["url1", "url2", ...] }
-      // The main sticker image is always slide 0 automatically.
-      const EXTRA_IMAGES = {
-        1: ["https://drive.google.com/file/d/1L0e6_RAPgu_4-hkh85k4uCKZQMEbqCHZ/view?usp=drive_link"],
-        32: ["https://drive.google.com/file/d/1RrI8Y2ODBPJDFOMUQuXhuBE9Xk_If5c_/view?usp=drive_link"],
-        42: ["https://drive.google.com/file/d/11vxiO0NogkNlH62mXnY8zG-s7pCh5gku/view?usp=sharing"]
-      };
-
-      function goToSlide(n) {
-        curSlide = Math.max(0, Math.min(n, totalSlides - 1));
-        const track = document.getElementById("popupSliderTrack");
-        if (track) track.style.transform = `translateX(-${curSlide * 100}%)`;
-        // update dots
-        document.querySelectorAll(".popup-dot").forEach((d, i) => {
-          d.classList.toggle("active", i === curSlide);
-        });
-      }
-
-      function openPopup(stickerId) {
-        const sticker = window._state && window._state.stickers.find(s => s.id === stickerId);
-        if (!sticker) return;
-
-        curSlide = 0;
-        const color = (window.CAT_COLOR && window.CAT_COLOR[sticker.category]) || "#ff0000";
-
-        // Build slides: main image + any extra images
-        const mainSrc = window.fixDriveUrl ? window.fixDriveUrl(sticker.image) : sticker.image;
-        const extras  = (EXTRA_IMAGES[stickerId] || []).map(u => window.fixDriveUrl ? window.fixDriveUrl(u) : u);
-        const allImgs = [mainSrc, ...extras];
-        totalSlides   = allImgs.length;
-
-        // Preload all slide images into browser cache BEFORE building HTML,
-        // so the <img> tags render immediately without a blank-then-load flash.
-        allImgs.forEach((src, i) => {
-          const preloader = new Image();
-          preloader.src = src;
-        });
-
-        // Build slider HTML
-        const track = document.getElementById("popupSliderTrack");
-        track.innerHTML = allImgs.map((src, i) => `
-          <div class="popup-slide" style="background:${color}28;">
-            <img src="${src}" alt="${sticker.name}" loading="eager" decoding="sync"
-                 onerror="this.src='https://api.dicebear.com/7.x/fun-emoji/svg?seed=${stickerId}'" />
+              <div class="stream-grid" id="boardGrid" style="display: none;"></div>
+              <div class="stream-grid" id="streamGrid" style="display: none;"></div>
+              <div class="book-grid" id="bookGrid" style="display: none;"><div>No books</div></div>
+            </div>
           </div>
-        `).join("");
-        track.style.transform = "translateX(0)";
 
-        // Build dots (only show if >1 slide)
-        const dotsEl = document.getElementById("popupDots");
-        dotsEl.style.display = totalSlides > 1 ? "flex" : "none";
-        dotsEl.innerHTML = allImgs.map((_, i) =>
-          `<div class="popup-dot${i === 0 ? " active" : ""}" data-idx="${i}"></div>`
-        ).join("");
-        dotsEl.querySelectorAll(".popup-dot").forEach(d => {
-          d.addEventListener("click", () => goToSlide(parseInt(d.dataset.idx)));
-        });
+          <div class="card" id="categoryCard" style="display: none;">
+            <div class="card-head">
+              <h2>More Categories</h2>
+            </div>
+            <div class="card-body">
+              <div class="class-grid" id="categoryGrid"></div>
+            </div>
+          </div>
 
-        // Info
-        document.getElementById("popupName").textContent  = sticker.name;
-        document.getElementById("popupPrice").textContent = "₹" + sticker.price;
-        const chip = document.getElementById("popupChip");
-        chip.textContent        = sticker.category;
-        chip.style.background   = color + "22";
-        chip.style.color        = color;
+          <div class="card" id="matchCard" style="display: none;">
+            <div class="card-head">
+              <h2>Match</h2>
+            </div>
+            <div class="card-body">
+              <form id="buyForm" class="form-grid">
+                <label>
+                  District
+                  <select id="buyDistrict"><option>Lakhimpur</option><option>Majuli</option></select>
+                </label>
+                <label>
+                  Place
+                  <select id="buyPlace"><option>North Lakhimpur</option><option>Boginadi</option></select>
+                </label>
+                <label class="wide">
+                  School
+                  <select id="buySchool"><option>North Lakhimpur H.S. School</option><option>Brookfield School</option></select>
+                </label>
+                <button class="btn btn-primary wide" type="submit">Find sellers</button>
+              </form>
+              <div class="result-list" id="matchList"></div>
+            </div>
+          </div>
+        </section>
 
-        // Swipe support
-        attachSwipe(document.getElementById("popupSliderWrap"));
+        <section class="page" id="sellPage">
+          <div class="page-head">
+            <h1>Sell Books</h1>
+            <button class="btn btn-ghost" data-go-buy="">Select book</button>
+          </div>
 
-        document.getElementById("stickerPopup").classList.add("open");
-        document.body.style.overflow = "hidden";
-      }
+          <div class="location-lock">
+            <div>
+              <span>Country</span>
+              <strong>India</strong>
+            </div>
+            <div>
+              <span>State</span>
+              <strong>Assam</strong>
+            </div>
+          </div>
 
-      function closePopup() {
-        document.getElementById("stickerPopup").classList.remove("open");
-        document.body.style.overflow = "";
-      }
+          <div class="card">
+            <div class="card-head">
+              <h2>Selected Book</h2>
+            </div>
+            <div class="card-body">
+              <div id="selectedBox" class="selected-box">
+      <strong>No subject selected</strong>
+      <span>Select class, board, stream, and subject first.</span>
+    </div>
+            </div>
+          </div>
 
-      // Touch/mouse swipe on slider
-      let _swipeAbort = null;
-      function attachSwipe(el) {
-        // Cancel previous listeners cleanly — no DOM cloning that would detach images
-        if (_swipeAbort) _swipeAbort.abort();
-        _swipeAbort = new AbortController();
-        const signal = _swipeAbort.signal;
+          <div class="card">
+            <div class="card-head">
+              <h2>Seller Details</h2>
+            </div>
+            <div class="card-body">
+              <form id="sellForm" class="form-grid">
+                <label>
+                  District
+                  <select id="sellDistrict"><option>Lakhimpur</option><option>Majuli</option></select>
+                </label>
+                <label>
+                  Place
+                  <select id="sellPlace"><option>North Lakhimpur</option><option>Boginadi</option></select>
+                </label>
+                <label class="wide">
+                  School
+                  <select id="sellSchool"><option>North Lakhimpur H.S. School</option><option>Brookfield School</option></select>
+                </label>
+                <label>
+                  Condition
+                  <select id="condition">
+                    <option>Good</option>
+                    <option>Usable</option>
+                    <option>Like new</option>
+                  </select>
+                </label>
+                <label>
+                  Photos
+                  <input id="photos" placeholder="Upload later">
+                </label>
+                <button class="btn btn-primary wide" type="submit">Submit</button>
+              </form>
+            </div>
+          </div>
+        </section>
 
-        let sx = 0, dragging = false;
-        function onStart(e) { sx = (e.touches ? e.touches[0].clientX : e.clientX); dragging = true; }
-        function onEnd(e) {
-          if (!dragging) return; dragging = false;
-          const ex = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
-          const diff = sx - ex;
-          if (Math.abs(diff) > 40) goToSlide(curSlide + (diff > 0 ? 1 : -1));
-        }
-        el.addEventListener("touchstart", onStart, { passive: true, signal });
-        el.addEventListener("touchend",   onEnd,   { signal });
-        el.addEventListener("mousedown",  onStart, { signal });
-        el.addEventListener("mouseup",    onEnd,   { signal });
-      }
+        <section class="page" id="adminPage">
+          <div class="page-head">
+            <h1>Admin</h1>
+            <button class="btn btn-ghost" id="resetBtn">Reset</button>
+          </div>
 
-      // Close button & backdrop
-      document.getElementById("popupCloseBtn").addEventListener("click", closePopup);
-      document.getElementById("stickerPopup").addEventListener("click", function(e) {
-        if (e.target === this) closePopup();
-      });
+          <div class="admin-grid">
+            <div class="card">
+              <div class="card-head">
+                <h2>Settings</h2>
+              </div>
+              <div class="card-body">
+                <label class="toggle"><span>General books</span><input id="generalToggle" type="checkbox"></label>
+                <label class="toggle"><span>Instagram</span><input id="instagramToggle" type="checkbox"></label>
+                <label class="toggle"><span>WhatsApp</span><input id="whatsappToggle" type="checkbox"></label>
+              </div>
+            </div>
 
-      // Keyboard arrow support
-      document.addEventListener("keydown", function(e) {
-        if (!document.getElementById("stickerPopup").classList.contains("open")) return;
-        if (e.key === "ArrowRight") goToSlide(curSlide + 1);
-        if (e.key === "ArrowLeft")  goToSlide(curSlide - 1);
-        if (e.key === "Escape")     closePopup();
-      });
+            <div class="card">
+              <div class="card-head">
+                <h2>Add Book</h2>
+              </div>
+              <div class="card-body">
+                <form id="bookForm" class="stack-form">
+                  <select id="bookType">
+                    <option value="school">School book</option>
+                    <option value="general">General book</option>
+                  </select>
+                  <input id="bookClass" placeholder="Class 9 / General" required="">
+                  <input id="bookBoard" placeholder="SEBA / AHSEC / CBSE">
+                  <input id="bookStream" placeholder="Science / Commerce / Arts">
+                  <input id="bookTitle" placeholder="Subject or book name" required="">
+                  <input id="bookAuthor" placeholder="Author">
+                  <input id="bookImage" placeholder="Book image URL">
+                  <input id="bookPrice" type="number" placeholder="Price" required="">
+                  <button class="btn btn-primary" type="submit">Add</button>
+                </form>
+              </div>
+            </div>
 
-      window._openStickerPopup = openPopup;
+            <div class="card">
+              <div class="card-head">
+                <h2>Add Location</h2>
+              </div>
+              <div class="card-body">
+                <form id="locationForm" class="stack-form">
+                  <input id="newDistrict" placeholder="District" required="">
+                  <input id="newPlace" placeholder="Place" required="">
+                  <input id="newSchool" placeholder="School" required="">
+                  <button class="btn btn-primary" type="submit">Add</button>
+                </form>
+              </div>
+            </div>
 
-      // ── Double-click / double-tap listener ──────────────────────────────
-      // Attached ONCE on `document` — never on the grid which gets rebuilt.
-      // This survives every render(), _renderGrid(), category change, search,
-      // bfcache restore, and tab-switch. No re-attachment ever needed.
-      (function attachGlobalDblClick() {
-        // Also handle touch double-tap (mobile browsers don't fire dblclick reliably)
-        let _lastTap = 0, _lastTarget = null;
+            <div class="card">
+              <div class="card-head">
+                <h2>Class Thumbnail</h2>
+              </div>
+              <div class="card-body">
+                <form id="classThumbForm" class="stack-form">
+                  <input id="thumbClass" placeholder="Class 9 / Class 10 / General" required="">
+                  <input id="thumbImage" placeholder="Thumbnail image URL" required="">
+                  <button class="btn btn-primary" type="submit">Save</button>
+                </form>
+              </div>
+            </div>
 
-        document.addEventListener("dblclick", function(e) {
-          if (e.target.closest("button")) return;
-          const card = e.target.closest(".card[data-sticker-id]");
-          if (card) window._openStickerPopup(parseInt(card.dataset.stickerId));
-        }, { passive: true });
+            <div class="card">
+              <div class="card-head">
+                <h2>Add Category</h2>
+              </div>
+              <div class="card-body">
+                <form id="categoryForm" class="stack-form">
+                  <input id="categoryName" placeholder="Novels / Author Books" required="">
+                  <input id="categoryImage" placeholder="Category image URL">
+                  <button class="btn btn-primary" type="submit">Add</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
 
-        document.addEventListener("touchend", function(e) {
-          const now = Date.now();
-          const target = e.target;
-          if (_lastTarget === target && now - _lastTap < 320) {
-            // Double-tap detected
-            if (target.closest("button")) { _lastTap = 0; _lastTarget = null; return; }
-            const card = target.closest(".card[data-sticker-id]");
-            if (card) {
-              e.preventDefault(); // prevent zoom
-              window._openStickerPopup(parseInt(card.dataset.stickerId));
-            }
-            _lastTap = 0;
-            _lastTarget = null;
-          } else {
-            _lastTap = now;
-            _lastTarget = target;
-          }
-        }, { passive: false });
-      })();
+    <dialog id="loginDialog">
+      <form method="dialog" class="modal">
+        <div class="card-head">
+          <h2>Login</h2>
+          <button class="btn btn-ghost" value="close">Close</button>
+        </div>
+        <div class="card-body stack-form">
+          <input type="tel" placeholder="Mobile number">
+          <input inputmode="numeric" placeholder="OTP">
+          <input type="password" placeholder="PIN or password">
+          <input type="date">
+          <button class="btn btn-primary" value="close">Continue</button>
+        </div>
+      </form>
+    </dialog>
 
-      // _attachPopupListeners kept as a no-op for backward compatibility
-      window._attachPopupListeners = function() {};
-    })();
-  </script>
+    <div id="toast"></div>
+    <script src="./pkitaap_files/app.js"></script>
+  
 
-  <script>
-    // ══════════════════════════════════════════════
-    //  SECURITY LAYER — Maximum Protection
-    // ══════════════════════════════════════════════
-    document.addEventListener("contextmenu", function(e) { e.preventDefault(); e.stopPropagation(); return false; }, true);
-    document.addEventListener("keydown", function(e) {
-      const key = e.key ? e.key.toLowerCase() : "";
-      const ctrl = e.ctrlKey || e.metaKey;
-      const shift = e.shiftKey;
-      if (e.keyCode === 123) { e.preventDefault(); return false; }
-      if (ctrl && shift && (key === "i" || key === "j" || key === "c" || key === "k")) { e.preventDefault(); return false; }
-      if (ctrl && !shift && (key === "u" || key === "s" || key === "p" || key === "a")) { e.preventDefault(); return false; }
-    }, true);
-    document.addEventListener("dragstart", function(e) { e.preventDefault(); return false; }, true);
-    document.addEventListener("copy", function(e) { if (!window._allowCopy) { e.preventDefault(); return false; } }, true);
-    document.addEventListener("cut", function(e) { e.preventDefault(); return false; }, true);
-    document.addEventListener("selectstart", function(e) {
-      const box = document.getElementById("messageBox");
-      if (box && (e.target === box || box.contains(e.target))) { e.preventDefault(); return false; }
-    }, true);
-
-    (function devToolsGuard() {
-      const threshold = 160;
-      function check() {
-        if (window.outerWidth - window.innerWidth > threshold || window.outerHeight - window.innerHeight > threshold) {
-          document.body.style.filter = "blur(8px)";
-          document.body.style.pointerEvents = "none";
-        } else {
-          document.body.style.filter = "";
-          document.body.style.pointerEvents = "";
-        }
-      }
-      window.addEventListener("resize", check);
-      setInterval(check, 1000);
-    })();
-  </script>
-</body>
-</html>
-
-<script>
-// ══ STIICKUU DISCOUNT ENGINE ══
-(function(){
-  // ── helpers ──
-  function effectivePct(sticker){
-    const id = sticker.id, cat = sticker.category;
-    const ip = ITEM_DISCOUNTS[id];
-    if(ip && ip > 0) return ip;
-    const cd = CAT_DISCOUNTS[cat];
-    if(cd && cd.pct > 0) return cd.pct;
-    return 0;
-  }
-  function discountedPrice(sticker){
-    const pct = effectivePct(sticker);
-    if(!pct) return sticker.price;
-    return Math.round(sticker.price * (1 - pct/100) * 10) / 10;
-  }
-  window._effectivePct    = effectivePct;
-  window._discountedPrice = discountedPrice;
-  window._appliedCoupon   = null;
-  window._couponCodes     = COUPON_CODES;
-
-  // ── Grand total: item/cat discounts + coupon ──
-  function patchedGrandTotal(cartStickers, cart){
-    let sub = 0;
-    cartStickers.forEach(s => { sub += (cart[s.id]||0) * discountedPrice(s); });
-    if(window._appliedCoupon){
-      const cp = window._appliedCoupon;
-      sub = cp.type === 'flat' ? Math.max(0, sub - cp.pct) : sub * (1 - cp.pct/100);
-      sub = Math.round(sub * 10) / 10;
-    }
-    return sub;
-  }
-  window._patchedGrandTotal = patchedGrandTotal;
-
-  function couponSavings(subtotalBeforeCoupon){
-    if(!window._appliedCoupon) return 0;
-    const cp = window._appliedCoupon;
-    const s  = cp.type === 'flat'
-      ? Math.min(cp.pct, subtotalBeforeCoupon)
-      : Math.round(subtotalBeforeCoupon * (cp.pct/100) * 10)/10;
-    return Math.round(s * 10)/10;
-  }
-
-  // ── Re-entry guard + debounce for observer ──
-  let _obsTimer   = null;
-  let _uiBusy     = false;
-
-  // ── MutationObserver with debounce ──
-  const observer = new MutationObserver(function(){
-    clearTimeout(_obsTimer);
-    _obsTimer = setTimeout(function(){
-      patchPricesInGrid();
-      if(document.querySelector('.drawer')) _safeRefreshCouponUI();
-    }, 40);
-  });
-  observer.observe(document.getElementById('app') || document.body, {childList:true, subtree:true});
-
-  // ── Patch grid: show strike-through + sale price + badge ──
-  function patchPricesInGrid(){
-    const grid = document.getElementById('productGrid');
-    if(!grid) return;
-    const state = window._state;
-    if(!state) return;
-    grid.querySelectorAll('.card[data-sticker-id]').forEach(card => {
-      const id = parseInt(card.dataset.stickerId);
-      const sticker = state.stickers.find(s => s.id === id);
-      if(!sticker) return;
-      const pct = effectivePct(sticker);
-      if(!pct) return;
-      const salePrice = discountedPrice(sticker);
-      const priceEl = card.querySelector('.price');
-      if(priceEl && !priceEl.dataset.patched){
-        priceEl.dataset.patched = '1';
-        priceEl.innerHTML =
-          '<span style="font-size:13px;color:#aaa;text-decoration:line-through;margin-right:4px;">₹' + sticker.price + '</span>' +
-          '<span style="color:#ff0000;">₹' + salePrice + '</span>';
-      }
-      const top = card.querySelector('.product-top');
-      if(top && !top.querySelector('.disc-badge')){
-        const badge = document.createElement('div');
-        badge.className = 'disc-badge';
-        badge.style.cssText = 'position:absolute;top:6px;left:6px;background:#ff0000;color:white;font-family:Fredoka One,cursive;font-size:11px;padding:2px 7px;border-radius:20px;z-index:2;';
-        badge.textContent = pct + '% OFF';
-        top.appendChild(badge);
-      }
-      // ── Patch "In Cart" label to show discounted total ──
-      const inCartEl = card.querySelector('.in-cart');
-      if(inCartEl){
-        const qty = state && state.cart ? (state.cart[id]||0) : 0;
-        if(qty > 0){
-          inCartEl.innerHTML = '✅ In Cart — ₹' + (Math.round(qty * salePrice * 10) / 10);
-        }
-      }
-    });
-  }
-
-  // ── Patch grand total display ──
-  function patchCartTotal(){
-    const state = window._state;
-    if(!state) return;
-    const cartS = state.stickers.filter(s => (state.cart[s.id]||0) > 0);
-    if(!cartS.length) return;
-    const origTotal  = cartS.reduce((a,s) => a + (state.cart[s.id]||0) * s.price, 0);
-    const afterItems = cartS.reduce((a,s) => a + (state.cart[s.id]||0) * discountedPrice(s), 0);
-    const finalTotal = patchedGrandTotal(cartS, state.cart);
-    const saved      = couponSavings(afterItems);
-    const el = document.querySelector('.grand-total .value');
-    if(!el) return;
-    if(Math.abs(origTotal - finalTotal) > 0.01){
-      let html = '';
-      if(origTotal > afterItems){
-        html += '<div style="font-size:11px;color:rgba(255,255,255,0.65);text-align:right;text-decoration:line-through;margin-bottom:1px;">₹' + origTotal + '</div>';
-      }
-      if(saved > 0){
-        const cp = window._appliedCoupon;
-        const lbl = cp.type === 'flat' ? cp.code + ' -₹' + cp.pct : cp.code + ' -' + cp.pct + '%';
-        html += '<div style="font-size:11px;color:#bbf7d0;text-align:right;margin-bottom:2px;">🏷️ ' + lbl + ' (saves ₹' + saved + ')</div>';
-      }
-      html += '<span style="font-size:19px;">₹' + finalTotal + '</span>';
-      el.innerHTML = html;
-    } else {
-      el.textContent = '₹' + finalTotal;
-    }
-    // ── Patch individual item totals & subtitles in cart drawer ──
-    cartS.forEach(function(s){
-      const dp = discountedPrice(s);
-      if(dp >= s.price) return;
-      const qty = state.cart[s.id]||0;
-      document.querySelectorAll('.cart-item').forEach(function(row){
-        const nameEl = row.querySelector('.cart-name');
-        if(!nameEl || nameEl.textContent.trim() !== s.name) return;
-        const totalEl = row.querySelector('.item-total');
-        if(totalEl) totalEl.textContent = '₹' + (Math.round(qty * dp * 10) / 10);
-        const subEl = row.querySelector('.cart-sub');
-        if(subEl && !subEl.dataset.discPatched){
-          subEl.dataset.discPatched = '1';
-          subEl.innerHTML = '<s style="color:#bbb;">₹' + s.price + '</s> ₹' + dp + ' each';
-        }
-      });
-    });
-  }
-
-  // ── Coupon UI refresh (guarded against re-entry) ──
-  function _safeRefreshCouponUI(){
-    if(_uiBusy) return;
-    _uiBusy = true;
-    try{ refreshCouponUI(); } finally{ _uiBusy = false; }
-  }
-
-  function refreshCouponUI(){
-    const drawer = document.querySelector('.drawer');
-    if(!drawer) return;
-
-    patchCartTotal();
-
-    if(!COUPON_CODES || !COUPON_CODES.length) return;
-    const orderBtn = document.getElementById('orderBtn');
-    if(!orderBtn) return;
-
-    // Create wrap once; update its contents every time
-    let wrap = document.getElementById('discCouponWrap');
-    if(!wrap){
-      wrap = document.createElement('div');
-      wrap.id = 'discCouponWrap';
-      orderBtn.parentNode.insertBefore(wrap, orderBtn);
-    }
-    wrap.style.cssText = 'margin-top:8px;padding:12px;background:#fff8f8;border:2px solid #ffd6d6;border-radius:12px;display:flex;flex-direction:column;gap:8px;';
-
-    if(window._appliedCoupon){
-      const cp    = window._appliedCoupon;
-      const state = window._state;
-      const cartS = state ? state.stickers.filter(s => (state.cart[s.id]||0) > 0) : [];
-      const sub   = cartS.reduce((a,s) => a + (state.cart[s.id]||0) * discountedPrice(s), 0);
-      const saved = couponSavings(sub);
-      const discLabel = cp.type === 'flat' ? '₹' + cp.pct + ' Flat OFF' : cp.pct + '% OFF';
-      // Only re-render if not already showing applied state (check for stable key)
-      if(wrap.dataset.couponState === cp.code) return; // already showing this coupon
-      wrap.dataset.couponState = cp.code;
-      wrap.innerHTML =
-        '<div style="font-family:Fredoka One,cursive;font-size:14px;color:#ff0000;">🏷️ Coupon Applied!</div>' +
-        '<div style="display:flex;align-items:center;gap:8px;background:#f0fff4;border:1.5px solid #86efac;border-radius:10px;padding:8px 12px;">' +
-          '<div style="flex:1;">' +
-            '<div style="font-family:Fredoka One,cursive;color:#16a34a;font-size:15px;">✅ ' + cp.code + ' — ' + discLabel + '</div>' +
-            '<div style="font-size:12px;color:#16a34a;font-weight:800;margin-top:3px;">💰 You save ₹' + saved + '!</div>' +
-          '</div>' +
-          '<button onclick="window._removeCoupon()" style="background:#fee2e2;border:none;color:#dc2626;border-radius:8px;padding:4px 10px;cursor:pointer;font-family:Fredoka One,cursive;font-size:12px;">Remove</button>' +
-        '</div>';
-    } else {
-      if(wrap.dataset.couponState === 'none') return; // already showing input
-      wrap.dataset.couponState = 'none';
-      wrap.innerHTML =
-        '<div style="font-family:Fredoka One,cursive;font-size:14px;color:#ff0000;">🏷️ Have a Coupon?</div>' +
-        '<div style="display:flex;gap:8px;">' +
-          '<input id="discCouponInput" type="text" placeholder="Enter coupon code" autocomplete="off"' +
-          ' style="flex:1;border:2px solid #ffd6d6;border-radius:10px;padding:8px 12px;font-size:14px;font-family:Nunito,sans-serif;font-weight:700;text-transform:uppercase;outline:none;"' +
-          ' oninput="this.value=this.value.toUpperCase();" />' +
-          '<button onclick="window._applyCoupon()" style="background:#ff0000;color:white;border:none;border-radius:10px;padding:8px 16px;cursor:pointer;font-family:Fredoka One,cursive;font-size:14px;">Apply</button>' +
-        '</div>' +
-        '<div id="discCouponMsg" style="font-size:12px;font-weight:800;display:none;"></div>';
-    }
-  }
-
-  window._applyCoupon = function(){
-    const input = document.getElementById('discCouponInput');
-    const msg   = document.getElementById('discCouponMsg');
-    if(!input) return;
-    const code = input.value.trim().toUpperCase();
-    if(!code){
-      if(msg){ msg.style.display='block'; msg.style.color='#dc2626'; msg.textContent='❌ Please enter a coupon code'; }
-      return;
-    }
-    const found = (COUPON_CODES||[]).find(c => c.code === code);
-    if(!found){
-      if(msg){ msg.style.display='block'; msg.style.color='#dc2626'; msg.textContent='❌ Invalid coupon code'; }
-      return;
-    }
-    const state = window._state;
-    if(found.minOrder > 0 && state){
-      const cartS  = state.stickers.filter(s => (state.cart[s.id]||0) > 0);
-      const subtot = cartS.reduce((a,s) => a + (state.cart[s.id]||0) * discountedPrice(s), 0);
-      if(subtot < found.minOrder){
-        if(msg){ msg.style.display='block'; msg.style.color='#dc2626';
-          msg.textContent='❌ Min order ₹' + found.minOrder + ' required (your cart: ₹' + subtot + ')'; }
-        return;
-      }
-    }
-    window._appliedCoupon = found;
-    const wrap = document.getElementById('discCouponWrap');
-    if(wrap) delete wrap.dataset.couponState; // force re-render
-    _safeRefreshCouponUI();
-    patchCartTotal();
-  };
-
-  window._removeCoupon = function(){
-    window._appliedCoupon = null;
-    const wrap = document.getElementById('discCouponWrap');
-    if(wrap) delete wrap.dataset.couponState; // force re-render
-    _safeRefreshCouponUI();
-    patchCartTotal();
-  };
-
-  // ── Override clipboard.writeText so discount/coupon info is baked in BEFORE writing ──
-  // This replaces the old read-then-rewrite approach (which required clipboard-read permission
-  // and had timing issues). Now we intercept the write call directly.
-  (function(){
-    if(!navigator.clipboard || !navigator.clipboard.writeText) return;
-    var _orig = navigator.clipboard.writeText.bind(navigator.clipboard);
-    navigator.clipboard.writeText = function(txt){
-      // Skip our own re-writes and non-order text
-      if(window._allowCopy) return _orig(txt);
-      if(!txt || txt.indexOf('Total: Rs.') === -1) return _orig(txt);
-
-      var state = window._state;
-      if(!state) return _orig(txt);
-
-      var cartS      = state.stickers.filter(function(s){ return (state.cart[s.id]||0)>0; });
-      var origTotal  = cartS.reduce(function(a,s){ return a+(state.cart[s.id]||0)*s.price; },0);
-      var afterItems = cartS.reduce(function(a,s){ return a+(state.cart[s.id]||0)*discountedPrice(s); },0);
-      var finalTotal = patchedGrandTotal(cartS, state.cart);
-
-      // Nothing changed — pass through unchanged
-      if(Math.abs(origTotal - finalTotal) < 0.01) return _orig(txt);
-
-      var patched = txt;
-
-      // ── Patch each item line that has a discount ──
-      // Line format: "  • Name  xN  = Rs.TOTAL"
-      cartS.forEach(function(s){
-        var pct = effectivePct(s);
-        if(!pct) return;
-        var qty     = state.cart[s.id]||0;
-        var origAmt = qty * s.price;
-        var discAmt = qty * discountedPrice(s);
-        // Replace "= Rs.ORIG_AMT" in the item line only (leave Total: line untouched for now)
-        var marker  = ' = Rs.' + origAmt;
-        var replacement = ' = Rs.' + origAmt + ' [orig] → Rs.' + discAmt + ' (' + pct + '% OFF)';
-        // Use split/join to replace all occurrences of this specific item amount
-        patched = patched.split(marker).join(replacement);
-      });
-
-      // ── Build the total section replacement ──
-      var saved = couponSavings(afterItems);
-      var totalBlock = '';
-
-      // Show original total if item discounts changed it
-      if(Math.abs(origTotal - afterItems) > 0.01){
-        totalBlock += 'Original Total: Rs.' + origTotal + '\n';
-      }
-      // Show coupon line if applied
-      if(saved > 0 && window._appliedCoupon){
-        var cp  = window._appliedCoupon;
-        var lbl = cp.type === 'flat' ? '₹' + cp.pct + ' Flat OFF' : cp.pct + '% OFF';
-        totalBlock += 'Coupon: ' + cp.code + ' (' + lbl + ')  →  saves ₹' + saved + '\n';
-      }
-      totalBlock += 'Total: Rs.' + finalTotal;
-
-      // Replace "Total: Rs.ORIGINAL_TOTAL" with the full breakdown
-      patched = patched.replace(/Total: Rs\.\d+(\.\d+)?/, totalBlock);
-
-      window._allowCopy = true;
-      var result = _orig(patched);
-      // Use promise chaining to clear the flag whether it succeeds or fails
-      if(result && typeof result.then === 'function'){
-        return result.then(
-          function(v){ window._allowCopy = false; return v; },
-          function(e){ window._allowCopy = false; throw e; }
-        );
-      } else {
-        window._allowCopy = false;
-        return result;
-      }
-    };
-  })();
-
-  // ── Re-sort pickup options: pinned+unlocked first ──
-  // Runs after every render via MutationObserver so pinned places float to top
-  // only when the customer actually has enough quantity to unlock them.
-  (function(){
-    function resortPickup(){
-      var opts = document.getElementById('pickupOptions');
-      if(!opts) return;
-      var state = window._state;
-      var qty   = state ? Object.values(state.cart||{}).reduce(function(a,b){return a+b;},0) : 0;
-      var pinned = (typeof PINNED_PICKUPS !== 'undefined') ? PINNED_PICKUPS : [];
-      if(!pinned.length) return;
-      var items = Array.from(opts.querySelectorAll('.custom-option'));
-      if(!items.length) return;
-      items.sort(function(a, b){
-        var aName   = (a.querySelector('.opt-name')||{}).textContent||'';
-        var bName   = (b.querySelector('.opt-name')||{}).textContent||'';
-        var aLocked = a.classList.contains('locked');
-        var bLocked = b.classList.contains('locked');
-        var aPinned = pinned.indexOf(aName) >= 0;
-        var bPinned = pinned.indexOf(bName) >= 0;
-        // Pinned+unlocked → top; locked always last regardless of pin
-        if(!aLocked && aPinned && (bLocked || !bPinned)) return -1;
-        if(!bLocked && bPinned && (aLocked || !aPinned)) return 1;
-        if(!aLocked && bLocked) return -1;
-        if(aLocked && !bLocked) return 1;
-        return 0;
-      });
-      items.forEach(function(el){ opts.appendChild(el); });
-    }
-    var _pickupObsTimer = null;
-    var pickupObserver = new MutationObserver(function(){
-      clearTimeout(_pickupObsTimer);
-      _pickupObsTimer = setTimeout(resortPickup, 60);
-    });
-    pickupObserver.observe(document.getElementById('app') || document.body, {childList:true, subtree:true});
-  })();
-
-})();
-</script>
+</body></html>
