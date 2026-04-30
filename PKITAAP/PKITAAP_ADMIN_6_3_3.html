@@ -1,0 +1,2513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="description" content="PKITAAP Admin Panel — Manage classes, subjects, categories, locations"/>
+<meta name="theme-color" content="#16a34a"/>
+<meta name="robots" content="noindex, nofollow"/>
+<title>PKITAAP — Admin Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+:root{
+  --g:#16a34a;
+  --gl:#f0fdf4;
+  --gm:#dcfce7;
+  --gd:#15803d;
+  --bg:#f1f8f3;
+  --card:#ffffff;
+  --border:#bbf7d0;
+  --text:#222;
+  --muted:#888;
+  --sidebar:260px;
+}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;}
+
+/* TOPBAR */
+.topbar{background:var(--g);color:white;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:58px;box-shadow:0 4px 20px rgba(22,163,74,.3);position:sticky;top:0;z-index:200;flex-shrink:0;}
+.topbar-left{display:flex;align-items:center;gap:12px;}
+.topbar-logo{font-family:'Fredoka One';font-size:22px;}
+.topbar-badge{background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.35);border-radius:20px;font-size:11px;font-weight:800;padding:2px 10px;letter-spacing:1px;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+
+/* LAYOUT */
+.shell{display:flex;flex:1;min-height:0;}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar);background:white;border-right:2px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;position:sticky;top:58px;height:calc(100vh - 58px);}
+.sidebar-section{padding:18px 16px 8px;}
+.sidebar-label{font-size:10px;font-weight:800;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;cursor:pointer;font-weight:700;font-size:14px;color:#555;transition:background .15s,color .15s;margin-bottom:2px;user-select:none;}
+.nav-item:hover{background:var(--gl);color:var(--g);}
+.nav-item.active{background:var(--g);color:white;}
+.nav-item .icon{font-size:18px;flex-shrink:0;width:22px;text-align:center;}
+.nav-count{margin-left:auto;background:rgba(22,163,74,.12);color:var(--g);border-radius:20px;font-size:11px;font-weight:800;padding:1px 8px;}
+.nav-item.active .nav-count{background:rgba(255,255,255,.25);color:white;}
+.sidebar-divider{border:none;border-top:1.5px solid var(--border);margin:8px 16px;}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;padding:28px;display:flex;flex-direction:column;gap:24px;}
+
+/* PANELS */
+.panel{display:none;flex-direction:column;gap:20px;}
+.panel.active{display:flex;}
+
+/* CARDS */
+.card{background:var(--card);border-radius:20px;box-shadow:0 2px 16px rgba(0,0,0,.06);overflow:hidden;}
+.card-head{padding:16px 20px;border-bottom:2px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.card-title{font-family:'Fredoka One';font-size:18px;color:var(--g);}
+.card-body{padding:20px;}
+
+/* FORMS */
+input,select,textarea{font-family:'Nunito',sans-serif;border:2px solid var(--border);border-radius:10px;padding:9px 12px;outline:none;font-size:14px;width:100%;background:white;font-weight:600;transition:border-color .15s;}
+input:focus,select:focus,textarea:focus{border-color:var(--g);}
+label{font-size:13px;font-weight:800;color:#444;display:block;margin-bottom:5px;}
+.form-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;}
+.form-row>*{flex:1;min-width:140px;}
+.form-group{display:flex;flex-direction:column;gap:4px;}
+
+/* BUTTONS */
+.btn{border:none;border-radius:10px;font-family:'Fredoka One';cursor:pointer;transition:transform .12s,box-shadow .12s;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:6px;will-change:transform;}
+.btn:hover{transform:translateY(-2px);box-shadow:0 5px 14px rgba(0,0,0,.13);}
+.btn:active{transform:translateY(0);}
+.btn-primary{background:var(--g);color:white;padding:10px 18px;font-size:14px;}
+.btn-ghost{background:var(--gl);color:var(--g);padding:10px 16px;font-size:14px;}
+.btn-danger{background:#fff0f0;color:#dc2626;padding:8px 12px;font-size:13px;}
+.btn-sm{padding:6px 12px;font-size:12px;}
+.btn-warn{background:#fef3c7;color:#d97706;padding:8px 12px;font-size:13px;}
+
+/* TABLE */
+.data-table{width:100%;border-collapse:collapse;}
+.data-table th{text-align:left;padding:10px 14px;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);border-bottom:2px solid var(--border);background:#f9fdfb;}
+.data-table td{padding:11px 14px;border-bottom:1.5px solid var(--gm);font-size:14px;vertical-align:middle;}
+.data-table tr:last-child td{border-bottom:none;}
+.data-table tr:hover td{background:var(--gl);}
+.data-table .actions{display:flex;gap:6px;}
+
+/* STAT CARDS */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;}
+.stat-card{background:white;border-radius:16px;padding:18px;border:2px solid var(--border);display:flex;flex-direction:column;gap:6px;}
+.stat-num{font-family:'Fredoka One';font-size:32px;color:var(--g);}
+.stat-label{font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.5px;}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:500;display:none;align-items:center;justify-content:center;padding:16px;}
+.modal-bg.open{display:flex;}
+.modal{background:white;border-radius:22px;width:min(96vw,520px);box-shadow:0 24px 60px rgba(0,0,0,.25);animation:popIn .25s cubic-bezier(0.34,1.56,0.64,1);overflow:hidden;}
+@keyframes popIn{from{transform:scale(.85);opacity:0;}to{transform:scale(1);opacity:1;}}
+.modal-head{padding:18px 20px;border-bottom:2px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-title{font-family:'Fredoka One';font-size:19px;color:var(--g);}
+.modal-body{padding:20px;display:flex;flex-direction:column;gap:14px;}
+.modal-footer{padding:14px 20px;border-top:2px solid var(--border);display:flex;gap:10px;justify-content:flex-end;}
+
+/* TOAST */
+#toast{position:fixed;bottom:28px;right:28px;background:#222;color:white;padding:12px 20px;border-radius:12px;font-family:'Fredoka One';font-size:15px;opacity:0;transform:translateY(12px);transition:opacity .25s,transform .25s;z-index:9999;pointer-events:none;max-width:300px;}
+#toast.show{opacity:1;transform:translateY(0);}
+
+/* TREE LIST (locations) */
+.tree-node{border:2px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;}
+.tree-node-head{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--gl);cursor:pointer;user-select:none;}
+.tree-node-head strong{flex:1;font-size:15px;}
+.tree-child{padding:10px 14px;display:flex;flex-direction:column;gap:6px;}
+.tree-place{display:flex;align-items:center;gap:8px;padding:8px 10px;background:white;border:1.5px solid var(--border);border-radius:10px;}
+.tree-place span{flex:1;font-size:13px;font-weight:700;}
+.tree-school-list{padding:6px 10px 10px 24px;display:flex;flex-direction:column;gap:5px;}
+.tree-school{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#444;}
+.tree-school span{flex:1;}
+
+/* BADGE TAGS */
+.tag{display:inline-flex;align-items:center;background:var(--gm);color:var(--gd);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:800;gap:5px;margin:2px;}
+.tag button{background:none;border:none;cursor:pointer;color:var(--gd);font-size:12px;padding:0;line-height:1;}
+
+/* EXPORT CARD */
+.export-option{border:2px solid var(--border);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:12px;background:white;}
+.export-option h3{font-family:'Fredoka One';font-size:17px;color:var(--g);}
+.export-option p{font-size:13px;color:var(--muted);font-weight:700;line-height:1.6;}
+.export-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;}
+
+/* PAGE TITLE */
+.page-title{font-family:'Fredoka One';font-size:26px;color:var(--text);}
+.page-sub{font-size:13px;color:var(--muted);font-weight:700;margin-top:2px;}
+
+/* PILL */
+#autoSavePill{display:inline-flex;align-items:center;border-radius:20px;font-size:11px;font-weight:800;padding:3px 12px;letter-spacing:.5px;transition:background .3s,color .3s;}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:40px;color:var(--muted);}
+.empty .ei{font-size:36px;margin-bottom:10px;}
+.empty p{font-family:'Fredoka One';font-size:15px;}
+
+/* TOGGLE */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1.5px solid var(--border);}
+.toggle-row:last-child{border-bottom:none;}
+.toggle-info strong{display:block;font-size:14px;font-weight:800;}
+.toggle-info span{display:block;font-size:12px;color:var(--muted);font-weight:700;margin-top:2px;}
+.toggle-sw{position:relative;width:46px;height:26px;flex-shrink:0;}
+.toggle-sw input{opacity:0;width:0;height:0;position:absolute;}
+.toggle-sw .sl{position:absolute;cursor:pointer;inset:0;background:#ddd;border-radius:26px;transition:.3s;}
+.toggle-sw input:checked+.sl{background:var(--g);}
+.toggle-sw .sl::before{content:"";position:absolute;width:20px;height:20px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.3s;box-shadow:0 1px 4px rgba(0,0,0,.2);}
+.toggle-sw input:checked+.sl::before{transform:translateX(20px);}
+
+/* THUMBNAIL PREVIEW */
+.thumb-preview{width:80px;height:60px;border-radius:10px;border:2px solid var(--border);object-fit:cover;background:var(--gl);}
+
+/* BOARD CHIPS WRAP */
+.board-chips-wrap{display:flex;flex-wrap:wrap;gap:6px;min-height:36px;padding:6px;background:var(--gl);border-radius:10px;border:2px solid var(--border);}
+
+/* BULK IMPORT */
+.import-zone{border:2.5px dashed var(--border);border-radius:14px;padding:28px 20px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;background:var(--gl);display:flex;flex-direction:column;align-items:center;gap:8px;}
+.import-zone:hover,.import-zone.drag{border-color:var(--g);background:#e6faf0;}
+.import-zone .iz-icon{font-size:36px;}
+.import-zone strong{font-family:'Fredoka One';font-size:16px;color:var(--g);}
+.import-zone span{font-size:12px;color:var(--muted);font-weight:700;}
+.import-preview{margin-top:14px;}
+.import-tabs{display:flex;gap:6px;margin-bottom:12px;}
+.import-tab{background:var(--gl);border:2px solid var(--border);border-radius:10px;padding:5px 12px;font-size:12px;font-weight:800;color:var(--g);cursor:pointer;}
+.import-tab.active{background:var(--g);color:white;border-color:var(--g);}
+.import-section{padding:14px 20px;border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.import-section:last-child{border-bottom:none;}
+.import-label strong{display:block;font-size:14px;font-weight:800;}
+.import-label span{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-top:2px;}
+
+@media(max-width:700px){.sidebar{display:none;}.main{padding:16px;}}
+@media(max-width:500px){.form-row{flex-direction:column;}}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="topbar-logo">📚 PKITAAP</div>
+    <div class="topbar-badge">ADMIN</div>
+  </div>
+  <div class="topbar-right">
+    <div id="autoSavePill">⏳ Loading…</div>
+    <button class="btn btn-ghost btn-sm" id="copyCodeBtn" onclick="copyCode()" title="Copy full HTML with all current data embedded">📋 Copy Code</button>
+    <button class="btn btn-ghost btn-sm" onclick="backupDownload()">💾 Backup</button>
+  </div>
+</div>
+
+<div class="shell">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-section">
+    <div class="sidebar-label">Main</div>
+    <div class="nav-item active" onclick="nav('dash')"><span class="icon">📊</span>Dashboard</div>
+    <div class="nav-item" onclick="nav('classes')"><span class="icon">🏫</span>Classes<span class="nav-count" id="nc-classes">0</span></div>
+    <div class="nav-item" onclick="nav('subjects')"><span class="icon">📖</span>Subjects<span class="nav-count" id="nc-subjects">0</span></div>
+    <div class="nav-item" onclick="nav('categories')"><span class="icon">🏷️</span>Categories<span class="nav-count" id="nc-categories">0</span></div>
+    <div class="nav-item" onclick="nav('locations')"><span class="icon">📍</span>Locations<span class="nav-count" id="nc-locations">0</span></div>
+  </div>
+  <hr class="sidebar-divider"/>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Config</div>
+    <div class="nav-item" onclick="nav('settings')"><span class="icon">⚙️</span>Settings</div>
+    <div class="nav-item" onclick="nav('export')"><span class="icon">📤</span>Export &amp; Publish</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<!-- ═══ DASHBOARD ═══ -->
+<div class="panel active" id="panel-dash">
+  <div>
+    <div class="page-title">Dashboard</div>
+    <div class="page-sub">Overview of your PKITAAP app data</div>
+  </div>
+  <div class="stats-row" id="dashStats"></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;">
+    <div class="card">
+      <div class="card-head"><div class="card-title">📝 Quick Add Subject</div></div>
+      <div class="card-body">
+        <div class="form-group" style="margin-bottom:10px;">
+          <label>Class</label>
+          <select id="qs-class" onchange="updateQsBoards()"></select>
+        </div>
+        <div class="form-group" style="margin-bottom:10px;">
+          <label>Board</label>
+          <select id="qs-board" onchange="updateQsStreams()"></select>
+        </div>
+        <div class="form-group" id="qs-stream-wrap" style="margin-bottom:10px;display:none;">
+          <label>Stream</label>
+          <select id="qs-stream"></select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Subject Title</label>
+            <input id="qs-title" placeholder="e.g. Physics"/>
+          </div>
+          <div class="form-group">
+            <label>Price (₹)</label>
+            <input id="qs-price" type="number" placeholder="150"/>
+          </div>
+        </div>
+        <br/>
+        <button class="btn btn-primary" style="width:100%;" onclick="quickAddSubject()">➕ Add Subject</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title">🗺️ Quick Add Location</div></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+        <div class="form-group">
+          <label>District</label>
+          <input id="ql-district" placeholder="e.g. Kamrup"/>
+        </div>
+        <div class="form-group">
+          <label>Place / Town</label>
+          <input id="ql-place" placeholder="e.g. Guwahati"/>
+        </div>
+        <div class="form-group">
+          <label>School (optional)</label>
+          <input id="ql-school" placeholder="e.g. Cotton College H.S."/>
+        </div>
+        <button class="btn btn-primary" onclick="quickAddLocation()">➕ Add Location</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CLASSES ═══ -->
+<div class="panel" id="panel-classes">
+  <div>
+    <div class="page-title">Classes &amp; Boards</div>
+    <div class="page-sub">Manage class names, thumbnail images, and board assignments</div>
+  </div>
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">➕ Add New Class</div>
+    </div>
+    <div class="card-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Class Name</label>
+          <input id="new-class-name" placeholder="e.g. Class 8 / Pre-Primary / General"/>
+        </div>
+        <div class="form-group">
+          <label>Thumbnail Image URL</label>
+          <input id="new-class-thumb" placeholder="https://... (optional)"/>
+        </div>
+        <button class="btn btn-primary" style="align-self:flex-end;" onclick="addClass()">Add Class</button>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><div class="card-title">📋 All Classes</div></div>
+    <div class="card-body" style="padding:0;">
+      <table class="data-table" id="classTable">
+        <thead><tr><th>Class</th><th>Thumb</th><th>Boards Assigned</th><th>Subjects</th><th>Actions</th></tr></thead>
+        <tbody id="classTbody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><div class="card-title">🌊 Streams</div></div>
+    <div class="card-body">
+      <div class="form-row" style="margin-bottom:14px;">
+        <input id="new-stream" placeholder="e.g. Arts / Vocational"/>
+        <button class="btn btn-primary" onclick="addStream()">Add Stream</button>
+      </div>
+      <div id="streamTags"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SUBJECTS ═══ -->
+<div class="panel" id="panel-subjects">
+  <div>
+    <div class="page-title">Subjects / Books</div>
+    <div class="page-sub">Add, edit, and remove subjects for each class</div>
+  </div>
+  <div class="card">
+    <div class="card-head"><div class="card-title">➕ Add Subject</div></div>
+    <div class="card-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Class</label>
+          <select id="sub-class" onchange="updateSubBoards()"></select>
+        </div>
+        <div class="form-group">
+          <label>Board</label>
+          <select id="sub-board" onchange="updateSubStreams()"></select>
+        </div>
+        <div class="form-group" id="sub-stream-wrap">
+          <label>Stream</label>
+          <select id="sub-stream"></select>
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:12px;">
+        <div class="form-group">
+          <label>Subject Title</label>
+          <input id="sub-title" placeholder="e.g. Mathematics"/>
+        </div>
+        <div class="form-group">
+          <label>Price (₹)</label>
+          <input id="sub-price" type="number" placeholder="150"/>
+        </div>
+        <div class="form-group">
+          <label>Author (if general book)</label>
+          <input id="sub-author" placeholder="e.g. R.D. Sharma"/>
+        </div>
+        <div class="form-group">
+          <label>Image URL</label>
+          <input id="sub-image" placeholder="https://… (optional)"/>
+        </div>
+      </div>
+      <div style="margin-top:12px;">
+        <button class="btn btn-primary" onclick="addSubject()">➕ Add Subject</button>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">📋 All Subjects</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <select id="filter-class" onchange="renderSubjects()"><option value="">All Classes</option></select>
+        <select id="filter-board" onchange="renderSubjects()"><option value="">All Boards</option></select>
+        <input id="filter-search" placeholder="Search…" style="width:140px;" oninput="renderSubjects()"/>
+      </div>
+    </div>
+    <div class="card-body" style="padding:0;">
+      <table class="data-table">
+        <thead><tr><th>Subject</th><th>Class</th><th>Board</th><th>Stream</th><th>Price</th><th>Author</th><th>Actions</th></tr></thead>
+        <tbody id="subjectTbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CATEGORIES ═══ -->
+<div class="panel" id="panel-categories">
+  <div>
+    <div class="page-title">Categories</div>
+    <div class="page-sub">General book categories shown on the home screen — add books to each category</div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;">
+    <div class="card">
+      <div class="card-head"><div class="card-title">🏷️ Add Category</div></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+        <div class="form-group">
+          <label>Category Name</label>
+          <input id="cat-name" placeholder="e.g. Novels / Reference Books"/>
+        </div>
+        <div class="form-group">
+          <label>Image URL</label>
+          <input id="cat-image" placeholder="https://… (optional)"/>
+        </div>
+        <button class="btn btn-primary" onclick="addCategory()">➕ Add Category</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title">📚 Add Book to Category</div></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+        <div class="form-group">
+          <label>Category</label>
+          <select id="catbook-cat"></select>
+        </div>
+        <div class="form-group">
+          <label>Book Title</label>
+          <input id="catbook-title" placeholder="e.g. The Alchemist"/>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Author</label>
+            <input id="catbook-author" placeholder="e.g. Paulo Coelho"/>
+          </div>
+          <div class="form-group">
+            <label>Price (₹)</label>
+            <input id="catbook-price" type="number" placeholder="150"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Image URL (optional)</label>
+          <input id="catbook-image" placeholder="https://…"/>
+        </div>
+        <button class="btn btn-primary" onclick="addCategoryBook()">➕ Add Book</button>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">📋 All Categories</div>
+    </div>
+    <div class="card-body" style="padding:0;">
+      <table class="data-table">
+        <thead><tr><th>Category</th><th>Books</th><th>Image Preview</th><th>Actions</th></tr></thead>
+        <tbody id="categoryTbody"></tbody>
+      </table>
+    </div>
+  </div>
+  <!-- BULK IMPORT CARD (categories) -->
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">📥 Bulk Import Books to Category</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" onclick="downloadCatTemplate()">⬇️ Download Template</button>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('catImportFile').click()">📂 Browse File</button>
+      </div>
+    </div>
+    <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
+      <input type="file" id="catImportFile" accept=".csv,.xlsx,.xls,.tsv" style="display:none;" onchange="handleCatImportFile(this)"/>
+      <!-- Drop zone -->
+      <div class="import-zone" id="catDropZone"
+           ondragover="event.preventDefault();this.classList.add('drag')"
+           ondragleave="this.classList.remove('drag')"
+           ondrop="event.preventDefault();this.classList.remove('drag');handleCatImportFile({files:event.dataTransfer.files})"
+           onclick="document.getElementById('catImportFile').click()">
+        <div class="iz-icon">📊</div>
+        <strong>Drop your file here or click to browse</strong>
+        <span>Supports .CSV, .XLSX, .XLS, .TSV</span>
+        <span>Columns: <code>category, title, author, price, image</code></span>
+      </div>
+      <!-- Preview -->
+      <div id="catImportPreview" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+          <div style="font-weight:800;font-size:14px;" id="catImportSummary"></div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost btn-sm" onclick="clearCatImport()">✕ Clear</button>
+            <button class="btn btn-primary btn-sm" onclick="commitCatImport()">✅ Import All</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;border-radius:10px;border:2px solid var(--border);">
+          <table class="data-table" id="catImportTable">
+            <thead><tr><th>#</th><th>Category</th><th>Title</th><th>Author</th><th>Price</th><th>Status</th></tr></thead>
+            <tbody id="catImportTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="catBooksCard" style="display:none;">
+    <div class="card-head">
+      <div class="card-title" id="catBooksTitle">📖 Books</div>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('catBooksCard').style.display='none'">✕ Close</button>
+    </div>
+    <div class="card-body" style="padding:0;">
+      <table class="data-table">
+        <thead><tr><th>Title</th><th>Author</th><th>Price</th><th>Image</th><th>Actions</th></tr></thead>
+        <tbody id="catBooksTbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ LOCATIONS ═══ -->
+<div class="panel" id="panel-locations">
+  <div>
+    <div class="page-title">Locations</div>
+    <div class="page-sub">Manage districts, places, and schools</div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;">
+    <div class="card">
+      <div class="card-head"><div class="card-title">🏙️ Add District</div></div>
+      <div class="card-body" style="display:flex;gap:10px;">
+        <input id="new-district" placeholder="District name" style="flex:1;"/>
+        <button class="btn btn-primary" onclick="addDistrict()">Add</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title">🏘️ Add Place</div></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+        <select id="place-district-sel"></select>
+        <div style="display:flex;gap:10px;">
+          <input id="new-place" placeholder="Place / Town name" style="flex:1;"/>
+          <button class="btn btn-primary" onclick="addPlace()">Add</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title">🏫 Add School</div></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+        <select id="school-district-sel" onchange="updateSchoolPlaces()"></select>
+        <select id="school-place-sel"></select>
+        <div style="display:flex;gap:10px;">
+          <input id="new-school" placeholder="School name" style="flex:1;"/>
+          <button class="btn btn-primary" onclick="addSchool()">Add</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- BULK IMPORT CARD (locations) -->
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">📥 Bulk Import Locations</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" onclick="downloadLocTemplate()">⬇️ Download Template</button>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('locImportFile').click()">📂 Browse File</button>
+      </div>
+    </div>
+    <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
+      <input type="file" id="locImportFile" accept=".csv,.xlsx,.xls,.tsv" style="display:none;" onchange="handleLocImportFile(this)"/>
+      <!-- Drop zone -->
+      <div class="import-zone" id="locDropZone"
+           ondragover="event.preventDefault();this.classList.add('drag')"
+           ondragleave="this.classList.remove('drag')"
+           ondrop="event.preventDefault();this.classList.remove('drag');handleLocImportFile({files:event.dataTransfer.files})"
+           onclick="document.getElementById('locImportFile').click()">
+        <div class="iz-icon">📍</div>
+        <strong>Drop your file here or click to browse</strong>
+        <span>Supports .CSV, .XLSX, .XLS, .TSV</span>
+        <span>Columns: <code>district, place, school</code></span>
+      </div>
+      <!-- Preview -->
+      <div id="locImportPreview" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+          <div style="font-weight:800;font-size:14px;" id="locImportSummary"></div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost btn-sm" onclick="clearLocImport()">✕ Clear</button>
+            <button class="btn btn-primary btn-sm" onclick="commitLocImport()">✅ Import All</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;border-radius:10px;border:2px solid var(--border);">
+          <table class="data-table" id="locImportTable">
+            <thead><tr><th>#</th><th>District</th><th>Place</th><th>School</th><th>Status</th></tr></thead>
+            <tbody id="locImportTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="card-title">🗺️ Location Tree</div></div>
+    <div class="card-body" id="locationTree"></div>
+  </div>
+</div>
+
+<!-- ═══ SETTINGS ═══ -->
+<div class="panel" id="panel-settings">
+  <div>
+    <div class="page-title">Settings</div>
+    <div class="page-sub">Configure app-level options</div>
+  </div>
+  <div class="card">
+    <div class="card-head"><div class="card-title">🌏 States</div></div>
+    <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+      <div class="form-group">
+        <label>State Names <span style="font-weight:400;color:var(--muted);">(comma-separated, e.g. Assam, Meghalaya, Nagaland)</span></label>
+        <input id="s-states" placeholder="Assam, Meghalaya, Nagaland"/>
+      </div>
+      <div style="font-size:12px;color:var(--muted);font-weight:700;">States appear A→Z as a dropdown in the exported app and signup page.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="saveStates()">💾 Save States</button>
+        <button class="btn btn-danger" onclick="resetStates()">🔄 Reset to Default</button>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><div class="card-title">📱 App Info</div></div>
+    <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+      <div class="form-group"><label>App Name</label><input id="s-appname" placeholder="PKITAAP"/></div>
+      <div class="form-group"><label>Tagline</label><input id="s-tagline" placeholder="Find &amp; sell used books near you"/></div>
+      <div class="form-group"><label>Medium Options (comma-separated)</label><input id="s-mediums" placeholder="English Medium, Assamese Medium"/></div>
+      <button class="btn btn-primary" style="align-self:flex-start;" onclick="saveSettings()">Save App Info</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><div class="card-title">🔧 Feature Toggles</div></div>
+    <div class="card-body">
+      <div class="toggle-row">
+        <div class="toggle-info"><strong>General / Non-school Books</strong><span>Show "General" class with categories like Novels, Author books</span></div>
+        <label class="toggle-sw"><input type="checkbox" id="t-general"/><span class="sl"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-info"><strong>Instagram Contact</strong><span>Allow buyers to contact sellers via Instagram</span></div>
+        <label class="toggle-sw"><input type="checkbox" id="t-instagram"/><span class="sl"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-info"><strong>WhatsApp Contact</strong><span>Allow buyers to contact sellers via WhatsApp</span></div>
+        <label class="toggle-sw"><input type="checkbox" id="t-whatsapp"/><span class="sl"></span></label>
+      </div>
+      <div style="margin-top:14px;">
+        <button class="btn btn-primary" onclick="saveToggles()">Save Toggles</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ EXPORT ═══ -->
+<div class="panel" id="panel-export">
+  <div>
+    <div class="page-title">Export &amp; Publish</div>
+    <div class="page-sub">Generate your updated pkitaap app file</div>
+  </div>
+  <div class="export-grid">
+    <div class="export-option">
+      <div style="font-size:36px;">🌐</div>
+      <h3>Export as Web App (HTML)</h3>
+      <p>Downloads a fully working <b>pkitaap.html</b> with all your updated data embedded. Open it in any browser. Share it on WhatsApp, Telegram, or host on any website.</p>
+      <button class="btn btn-primary" onclick="exportHTML(false)">⬇️ Export pkitaap.html</button>
+    </div>
+
+    <div class="export-option">
+      <div style="font-size:36px;">🔗</div>
+      <h3>Auto-Save to this Admin File</h3>
+      <p>Link this admin HTML file so all changes auto-save directly into it — no backup downloads needed. Works in Chrome/Edge on desktop.</p>
+      <button class="btn btn-ghost" id="linkFileBtn" onclick="_promptSetup()">📂 Link Admin File for Auto-Save</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- end main -->
+</div><!-- end shell -->
+
+<!-- EDIT CLASS MODAL -->
+<div class="modal-bg" id="editClassModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Edit Class</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('editClassModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="ec-idx"/>
+      <div class="form-group"><label>Class Name</label><input id="ec-name"/></div>
+      <div class="form-group"><label>Thumbnail URL</label><input id="ec-thumb" oninput="updateThumbPreview()"/></div>
+      <img id="ec-thumb-preview" class="thumb-preview" src="" alt="" onerror="this.style.display='none'" style="display:none;"/>
+      <div class="form-group">
+        <label>Boards (comma-separated)</label>
+        <input id="ec-boards" placeholder="SEBA, CBSE"/>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('editClassModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveClass()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT SUBJECT MODAL -->
+<div class="modal-bg" id="editSubModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Edit Subject</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('editSubModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="es-id"/>
+      <div class="form-row">
+        <div class="form-group"><label>Class</label><select id="es-class"></select></div>
+        <div class="form-group"><label>Board</label><select id="es-board"></select></div>
+        <div class="form-group" id="es-stream-wrap"><label>Stream</label><select id="es-stream"></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Title</label><input id="es-title"/></div>
+        <div class="form-group"><label>Price (₹)</label><input id="es-price" type="number"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Author</label><input id="es-author"/></div>
+        <div class="form-group"><label>Image URL</label><input id="es-image"/></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('editSubModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSubject()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT CATEGORY BOOK MODAL -->
+<div class="modal-bg" id="editCatBookModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Edit Category Book</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('editCatBookModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="ecb-id"/>
+      <div class="form-group"><label>Category</label><select id="ecb-cat"></select></div>
+      <div class="form-group"><label>Title</label><input id="ecb-title"/></div>
+      <div class="form-row">
+        <div class="form-group"><label>Author</label><input id="ecb-author"/></div>
+        <div class="form-group"><label>Price (₹)</label><input id="ecb-price" type="number"/></div>
+      </div>
+      <div class="form-group"><label>Image URL</label><input id="ecb-image"/></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('editCatBookModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCategoryBook()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-bg" id="confirmModal">
+  <div class="modal">
+    <div class="modal-head"><div class="modal-title" id="confirmTitle">Confirm</div></div>
+    <div class="modal-body"><p id="confirmMsg" style="font-size:14px;font-weight:700;color:#444;"></p></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('confirmModal')">Cancel</button>
+      <button class="btn btn-danger" id="confirmOkBtn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════
+//  DEFAULT STATE
+// ══════════════════════════════════════════════════
+const DEFAULT = {
+  appName: "PKITAAP",
+  appTagline: "Find & sell used school books near you",
+  mediums: ["English Medium","Assamese Medium"],
+  classes: ["Class 9","Class 10","Class 11","Class 12"],
+  classThumbs: {"Class 9":"","Class 10":"","Class 11":"","Class 12":"","General":""},
+  streams: ["Science","Commerce","Arts"],
+  boardsByClass: {
+    "Class 9":["SEBA","CBSE"],
+    "Class 10":["SEBA","CBSE"],
+    "Class 11":["AHSEC","CBSE"],
+    "Class 12":["AHSEC","CBSE"],
+    "General":["General"]
+  },
+  categories: [
+    {id:"c1",name:"Novels",image:""},
+    {id:"c2",name:"Author Books",image:""}
+  ],
+  books: [
+    {id:"b1",type:"school",className:"Class 9",board:"SEBA",stream:"",title:"Mathematics",price:90,image:"",author:""},
+    {id:"b2",type:"school",className:"Class 9",board:"SEBA",stream:"",title:"Science",price:100,image:"",author:""},
+    {id:"b3",type:"school",className:"Class 9",board:"CBSE",stream:"",title:"Mathematics",price:110,image:"",author:""},
+    {id:"b4",type:"school",className:"Class 10",board:"SEBA",stream:"",title:"General Science",price:120,image:"",author:""},
+    {id:"b5",type:"school",className:"Class 10",board:"CBSE",stream:"",title:"Science",price:130,image:"",author:""},
+    {id:"b6",type:"school",className:"Class 11",board:"AHSEC",stream:"Science",title:"Physics",price:160,image:"",author:""},
+    {id:"b7",type:"school",className:"Class 11",board:"AHSEC",stream:"Commerce",title:"Accountancy",price:150,image:"",author:""},
+    {id:"b8",type:"school",className:"Class 11",board:"CBSE",stream:"Arts",title:"Political Science",price:150,image:"",author:""},
+    {id:"b9",type:"school",className:"Class 12",board:"AHSEC",stream:"Science",title:"Physics",price:180,image:"",author:""},
+    {id:"b10",type:"school",className:"Class 12",board:"CBSE",stream:"Commerce",title:"Business Studies",price:180,image:"",author:""},
+    {id:"b11",type:"school",className:"Class 12",board:"AHSEC",stream:"Arts",title:"History",price:140,image:"",author:""},
+    {id:"g1",type:"general",className:"General",board:"",stream:"",title:"Think and Grow Rich",author:"Napoleon Hill",price:120,image:""}
+  ],
+  locations: [
+    {district:"Lakhimpur",places:[
+      {name:"North Lakhimpur",schools:["North Lakhimpur H.S. School","Brookfield School"]},
+      {name:"Boginadi",schools:["Boginadi H.S. School","Sankardev Vidya Niketan"]}
+    ]},
+    {district:"Majuli",places:[
+      {name:"Garamur",schools:["Garamur H.S. School"]},
+      {name:"Kamalabari",schools:["Kamalabari H.S. School"]}
+    ]}
+  ],
+  states:["Assam"],
+  settings:{general:false,instagram:true,whatsapp:false},
+  listings:[]
+};
+
+// ══════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════
+let S = loadState();
+
+// Fix states: could be objects from old broken version, or undefined — always make plain string array
+function sanitizeStates(s){
+  if(!s.states || !Array.isArray(s.states) || !s.states.length){
+    s.states = ['Assam'];
+    return;
+  }
+  // If items are objects (e.g. {state:"Assam",...}), extract the string
+  s.states = s.states
+    .map(x => (typeof x === 'string' ? x : (x && x.state ? x.state : null)))
+    .filter(x => typeof x === 'string' && x.trim().length > 0);
+  if(!s.states.length) s.states = ['Assam'];
+}
+
+function loadState(){
+  // 1. Try embedded marker in own script tag (set by _embedStateInSelf / backup download)
+  try{
+    const scripts = document.querySelectorAll('script');
+    const marker = '// ◆PKITAAP_ADMIN_STATE◆';
+    for(const sc of scripts){
+      if(sc.textContent.includes(marker)){
+        const line = sc.textContent.split('\n').find(l=>l.includes(marker));
+        if(line){
+          const json = line.slice(line.indexOf(marker)+marker.length).trim();
+          if(json && json !== 'null'){
+            const parsed = JSON.parse(json);
+            sanitizeStates(parsed);
+            localStorage.setItem("pkitaap_admin", JSON.stringify(parsed));
+            return parsed;
+          }
+        }
+      }
+    }
+  } catch(e){}
+  // 2. Fall back to localStorage
+  try{
+    const raw = localStorage.getItem("pkitaap_admin");
+    if(raw){ const parsed = JSON.parse(raw); sanitizeStates(parsed); return parsed; }
+    return structuredClone(DEFAULT);
+  } catch(e){ return structuredClone(DEFAULT); }
+}
+function save(){
+  localStorage.setItem("pkitaap_admin", JSON.stringify(S));
+  _embedStateInSelf();
+  scheduleSaveToFile();
+  updateCounts();
+}
+function uid(){return 'x'+Math.random().toString(36).slice(2,9);}
+
+// ══════════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════════
+function nav(id){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    if(n.getAttribute('onclick')==="nav('"+id+"')") n.classList.add('active');
+  });
+  renderPanel(id);
+}
+
+function renderPanel(id){
+  if(id==='dash') renderDash();
+  else if(id==='classes') renderClasses();
+  else if(id==='subjects') renderSubjects();
+  else if(id==='categories') renderCategories();
+  else if(id==='locations') renderLocations();
+  else if(id==='settings') renderSettings();
+}
+
+// ══════════════════════════════════════════════════
+//  COUNTS / BADGES
+// ══════════════════════════════════════════════════
+function updateCounts(){
+  document.getElementById('nc-classes').textContent = S.classes.length + (S.settings.general?'+General':'');
+  document.getElementById('nc-subjects').textContent = S.books.length;
+  document.getElementById('nc-categories').textContent = S.categories.length;
+  document.getElementById('nc-locations').textContent = S.locations.length;
+}
+
+// ══════════════════════════════════════════════════
+//  DASHBOARD
+// ══════════════════════════════════════════════════
+function renderDash(){
+  const totalDistricts = S.locations.length;
+  const totalPlaces = S.locations.reduce((a,d)=>a+d.places.length,0);
+  document.getElementById('dashStats').innerHTML = [
+    {n:S.classes.length+(S.settings.general?1:0), l:'Classes'},
+    {n:S.books.length, l:'Subjects'},
+    {n:S.categories.length, l:'Categories'},
+    {n:totalDistricts, l:'Districts'},
+    {n:totalPlaces, l:'Places'},
+    {n:S.books.filter(b=>b.type==='category').length, l:'Cat. Books'},
+    {n:S.streams.length, l:'Streams'},
+  ].map(s=>`<div class="stat-card"><div class="stat-num">${s.n}</div><div class="stat-label">${s.l}</div></div>`).join('');
+  // Quick add selects
+  populateClassSel('qs-class'); updateQsBoards();
+  populateClassSel('qs-class');
+}
+
+// ══════════════════════════════════════════════════
+//  CLASSES
+// ══════════════════════════════════════════════════
+function renderClasses(){
+  const tbody = document.getElementById('classTbody');
+  const allClasses = [...S.classes, ...(S.settings.general?['General']:[])];
+  tbody.innerHTML = allClasses.map((cls,i)=>{
+    const boards = (S.boardsByClass[cls]||[]).join(', ');
+    const count = S.books.filter(b=>b.className===cls).length;
+    const thumb = S.classThumbs[cls]||'';
+    const isGen = cls==='General';
+    return `<tr>
+      <td><strong>${cls}</strong></td>
+      <td>${thumb?`<img src="${thumb}" class="thumb-preview"/>`:
+        `<span style="color:var(--muted);font-size:12px;font-weight:700;">No image</span>`}</td>
+      <td>${boards||'<span style="color:var(--muted)">None</span>'}</td>
+      <td><span style="font-weight:800;color:var(--g);">${count}</span></td>
+      <td><div class="actions">
+        <button class="btn btn-ghost btn-sm" onclick='openEditClass("${cls}")'>✏️ Edit</button>
+        ${!isGen&&S.classes.length>1?`<button class="btn btn-danger btn-sm" onclick='confirmDeleteClass("${cls}")'>🗑️</button>`:''}
+      </div></td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="5"><div class="empty"><div class="ei">🏫</div><p>No classes yet</p></div></td></tr>`;
+  renderStreamTags();
+}
+
+function addClass(){
+  const name = document.getElementById('new-class-name').value.trim();
+  const thumb = document.getElementById('new-class-thumb').value.trim();
+  if(!name) return toast('Enter a class name');
+  if(S.classes.includes(name)||name==='General') return toast('Class already exists');
+  S.classes.push(name);
+  S.classThumbs[name] = thumb;
+  S.boardsByClass[name] = ['SEBA','CBSE'];
+  save(); renderClasses();
+  document.getElementById('new-class-name').value='';
+  document.getElementById('new-class-thumb').value='';
+  toast('Class added ✅');
+}
+
+function openEditClass(cls){
+  document.getElementById('ec-idx').value = cls;
+  document.getElementById('ec-name').value = cls;
+  document.getElementById('ec-thumb').value = S.classThumbs[cls]||'';
+  document.getElementById('ec-boards').value = (S.boardsByClass[cls]||[]).join(', ');
+  updateThumbPreview();
+  openModal('editClassModal');
+}
+function updateThumbPreview(){
+  const url = document.getElementById('ec-thumb').value.trim();
+  const img = document.getElementById('ec-thumb-preview');
+  if(url){ img.src=url; img.style.display='block'; } else img.style.display='none';
+}
+function saveClass(){
+  const oldName = document.getElementById('ec-idx').value;
+  const newName = document.getElementById('ec-name').value.trim();
+  const thumb = document.getElementById('ec-thumb').value.trim();
+  const boards = document.getElementById('ec-boards').value.split(',').map(b=>b.trim()).filter(Boolean);
+  if(!newName) return toast('Class name required');
+  if(newName!==oldName && (S.classes.includes(newName)||newName==='General')) return toast('Name already exists');
+  // Rename in classes array
+  const idx = S.classes.indexOf(oldName);
+  if(idx>=0) S.classes[idx] = newName;
+  // Rename in books
+  S.books.forEach(b=>{ if(b.className===oldName) b.className=newName; });
+  // Update thumbs and boards
+  if(oldName!==newName){ delete S.classThumbs[oldName]; delete S.boardsByClass[oldName]; }
+  S.classThumbs[newName] = thumb;
+  S.boardsByClass[newName] = boards.length ? boards : ['SEBA','CBSE'];
+  save(); closeModal('editClassModal'); renderClasses();
+  toast('Class saved ✅');
+}
+function confirmDeleteClass(cls){
+  showConfirm(`Delete class "${cls}"? All its subjects will also be deleted.`, ()=>{
+    S.classes = S.classes.filter(c=>c!==cls);
+    S.books = S.books.filter(b=>b.className!==cls);
+    delete S.classThumbs[cls]; delete S.boardsByClass[cls];
+    save(); renderClasses(); toast('Deleted');
+  });
+}
+
+function renderStreamTags(){
+  document.getElementById('streamTags').innerHTML = S.streams.map(s=>
+    `<span class="tag">${s}<button onclick="deleteStream('${s}')">×</button></span>`
+  ).join('');
+}
+function addStream(){
+  const v = document.getElementById('new-stream').value.trim();
+  if(!v) return toast('Enter stream name');
+  if(S.streams.includes(v)) return toast('Stream exists');
+  S.streams.push(v); save(); renderStreamTags();
+  document.getElementById('new-stream').value='';
+}
+function deleteStream(s){
+  if(S.streams.length<=1) return toast('Need at least one stream');
+  S.streams = S.streams.filter(x=>x!==s); save(); renderStreamTags();
+}
+
+// ══════════════════════════════════════════════════
+//  SUBJECTS
+// ══════════════════════════════════════════════════
+function populateClassSel(id){
+  const sel = document.getElementById(id);
+  const all = [...S.classes,...(S.settings.general?['General']:[])];
+  sel.innerHTML = all.map(c=>`<option value="${c}">${c}</option>`).join('');
+}
+function getBoardsForClass(cls){ return S.boardsByClass[cls]||[cls]; }
+function needsStream(cls,board){
+  return (cls==='Class 11'||cls==='Class 12')&&board!=='CBSE';
+}
+function updateSubBoards(){
+  const cls = document.getElementById('sub-class').value;
+  const sel = document.getElementById('sub-board');
+  sel.innerHTML = getBoardsForClass(cls).map(b=>`<option>${b}</option>`).join('');
+  updateSubStreams();
+}
+function updateSubStreams(){
+  const cls = document.getElementById('sub-class').value;
+  const board = document.getElementById('sub-board').value;
+  const wrap = document.getElementById('sub-stream-wrap');
+  const sel = document.getElementById('sub-stream');
+  const show = needsStream(cls,board);
+  wrap.style.display = show ? '' : 'none';
+  sel.innerHTML = S.streams.map(s=>`<option>${s}</option>`).join('');
+}
+function renderSubjects(){
+  populateClassSel('sub-class'); updateSubBoards();
+  // Filters
+  const filterClass = document.getElementById('filter-class');
+  const filterBoard = document.getElementById('filter-board');
+  const allClasses = [...S.classes,...(S.settings.general?['General']:[])];
+  filterClass.innerHTML = '<option value="">All Classes</option>'+allClasses.map(c=>`<option>${c}</option>`).join('');
+  const fc = filterClass.value;
+  const boards = fc ? getBoardsForClass(fc) : [...new Set(S.books.map(b=>b.board).filter(Boolean))];
+  filterBoard.innerHTML = '<option value="">All Boards</option>'+boards.map(b=>`<option>${b}</option>`).join('');
+  const fb = filterBoard.value;
+  const fs = (document.getElementById('filter-search').value||'').toLowerCase();
+  let books = S.books.filter(b=>{
+    if(fc && b.className!==fc) return false;
+    if(fb && b.board!==fb) return false;
+    if(fs && !(b.title+' '+b.author).toLowerCase().includes(fs)) return false;
+    return true;
+  });
+  const tbody = document.getElementById('subjectTbody');
+  tbody.innerHTML = books.map(b=>`<tr>
+    <td><strong>${b.title}</strong></td>
+    <td>${b.className}</td>
+    <td>${b.board||'—'}</td>
+    <td>${b.stream||'—'}</td>
+    <td>₹${b.price}</td>
+    <td style="color:var(--muted);font-size:12px;">${b.author||'—'}</td>
+    <td><div class="actions">
+      <button class="btn btn-ghost btn-sm" onclick='openEditSub("${b.id}")'>✏️</button>
+      <button class="btn btn-danger btn-sm" onclick='confirmDeleteSubject("${b.id}")'>🗑️</button>
+    </div></td>
+  </tr>`).join('') || `<tr><td colspan="7"><div class="empty"><div class="ei">📖</div><p>No subjects found</p></div></td></tr>`;
+}
+function addSubject(){
+  const cls = document.getElementById('sub-class').value;
+  const board = document.getElementById('sub-board').value;
+  const stream = needsStream(cls,board) ? document.getElementById('sub-stream').value : '';
+  const title = document.getElementById('sub-title').value.trim();
+  const price = parseInt(document.getElementById('sub-price').value)||0;
+  const author = document.getElementById('sub-author').value.trim();
+  const image = document.getElementById('sub-image').value.trim();
+  if(!title) return toast('Subject title required');
+  if(!price) return toast('Price required');
+  const type = cls==='General' ? 'general' : 'school';
+  S.books.push({id:uid(),type,className:cls,board,stream,title,price,author,image});
+  save(); renderSubjects(); toast('Subject added ✅');
+  document.getElementById('sub-title').value='';
+  document.getElementById('sub-price').value='';
+  document.getElementById('sub-author').value='';
+  document.getElementById('sub-image').value='';
+}
+function openEditSub(id){
+  const b = S.books.find(x=>x.id===id);
+  if(!b) return;
+  // Populate class/board/stream selects in modal
+  const esCls = document.getElementById('es-class');
+  const allClasses = [...S.classes,...(S.settings.general?['General']:[])];
+  esCls.innerHTML = allClasses.map(c=>`<option${c===b.className?' selected':''}>${c}</option>`).join('');
+  const esBoard = document.getElementById('es-board');
+  esBoard.innerHTML = getBoardsForClass(b.className).map(x=>`<option${x===b.board?' selected':''}>${x}</option>`).join('');
+  const esStream = document.getElementById('es-stream');
+  const wrap = document.getElementById('es-stream-wrap');
+  const showS = needsStream(b.className,b.board);
+  wrap.style.display = showS ? '' : 'none';
+  esStream.innerHTML = S.streams.map(s=>`<option${s===b.stream?' selected':''}>${s}</option>`).join('');
+  document.getElementById('es-id').value=id;
+  document.getElementById('es-title').value=b.title;
+  document.getElementById('es-price').value=b.price;
+  document.getElementById('es-author').value=b.author||'';
+  document.getElementById('es-image').value=b.image||'';
+  openModal('editSubModal');
+}
+function saveSubject(){
+  const id = document.getElementById('es-id').value;
+  const b = S.books.find(x=>x.id===id);
+  if(!b) return;
+  b.className = document.getElementById('es-class').value;
+  b.board = document.getElementById('es-board').value;
+  b.stream = document.getElementById('es-stream').value;
+  b.title = document.getElementById('es-title').value.trim()||b.title;
+  b.price = parseInt(document.getElementById('es-price').value)||b.price;
+  b.author = document.getElementById('es-author').value.trim();
+  b.image = document.getElementById('es-image').value.trim();
+  b.type = b.className==='General' ? 'general' : 'school';
+  save(); closeModal('editSubModal'); renderSubjects(); toast('Saved ✅');
+}
+function confirmDeleteSubject(id){
+  const b = S.books.find(x=>x.id===id);
+  showConfirm(`Delete subject "${b?.title}"?`, ()=>{
+    S.books = S.books.filter(x=>x.id!==id);
+    save(); renderSubjects(); toast('Deleted');
+  });
+}
+
+// Quick add (dashboard)
+function updateQsBoards(){
+  const cls = document.getElementById('qs-class').value;
+  const sel = document.getElementById('qs-board');
+  sel.innerHTML = getBoardsForClass(cls).map(b=>`<option>${b}</option>`).join('');
+  updateQsStreams();
+}
+function updateQsStreams(){
+  const cls = document.getElementById('qs-class').value;
+  const board = document.getElementById('qs-board').value;
+  const wrap = document.getElementById('qs-stream-wrap');
+  const sel = document.getElementById('qs-stream');
+  const show = needsStream(cls,board);
+  wrap.style.display = show ? '' : 'none';
+  sel.innerHTML = S.streams.map(s=>`<option>${s}</option>`).join('');
+}
+function quickAddSubject(){
+  const cls = document.getElementById('qs-class').value;
+  const board = document.getElementById('qs-board').value;
+  const stream = needsStream(cls,board) ? document.getElementById('qs-stream').value : '';
+  const title = document.getElementById('qs-title').value.trim();
+  const price = parseInt(document.getElementById('qs-price').value)||0;
+  if(!title||!price) return toast('Title and price required');
+  S.books.push({id:uid(),type:cls==='General'?'general':'school',className:cls,board,stream,title,price,author:'',image:''});
+  save(); toast('Subject added ✅');
+  document.getElementById('qs-title').value='';
+  document.getElementById('qs-price').value='';
+  renderDash();
+}
+
+// ══════════════════════════════════════════════════
+//  CATEGORIES
+// ══════════════════════════════════════════════════
+function renderCategories(){
+  // Populate the "Add Book to Category" select
+  const catSel = document.getElementById('catbook-cat');
+  catSel.innerHTML = S.categories.map(c=>`<option value="${c.id}">${c.name}</option>`).join('') || '<option value="">No categories yet</option>';
+
+  const tbody = document.getElementById('categoryTbody');
+  tbody.innerHTML = S.categories.map(c=>{
+    const bookCount = S.books.filter(b=>b.categoryId===c.id).length;
+    return `<tr>
+      <td><strong>${c.name}</strong></td>
+      <td>
+        ${bookCount>0
+          ? `<button class="btn btn-ghost btn-sm" onclick='viewCategoryBooks("${c.id}")'><span style="font-weight:800;color:var(--g);">${bookCount}</span> book${bookCount!==1?'s':''} 👁️</button>`
+          : `<span style="color:var(--muted);font-size:12px;font-weight:700;">0 books</span>`}
+      </td>
+      <td>${c.image?`<img src="${c.image}" class="thumb-preview"/>`:
+        `<span style="color:var(--muted);font-size:12px;">No image</span>`}</td>
+      <td><div class="actions">
+        <button class="btn btn-danger btn-sm" onclick='deleteCategory("${c.id}")'>🗑️</button>
+      </div></td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="4"><div class="empty"><div class="ei">🏷️</div><p>No categories yet</p></div></td></tr>`;
+}
+function addCategory(){
+  const name = document.getElementById('cat-name').value.trim();
+  const image = document.getElementById('cat-image').value.trim();
+  if(!name) return toast('Category name required');
+  if(S.categories.find(c=>c.name===name)) return toast('Category exists');
+  S.categories.push({id:uid(),name,image});
+  save(); renderCategories(); toast('Category added ✅');
+  document.getElementById('cat-name').value='';
+  document.getElementById('cat-image').value='';
+}
+function deleteCategory(id){
+  const cat = S.categories.find(c=>c.id===id);
+  const bookCount = S.books.filter(b=>b.categoryId===id).length;
+  const msg = bookCount>0
+    ? `Delete category "${cat?.name}"? This will also delete ${bookCount} book(s) in it.`
+    : `Delete category "${cat?.name}"?`;
+  showConfirm(msg, ()=>{
+    S.categories = S.categories.filter(c=>c.id!==id);
+    S.books = S.books.filter(b=>b.categoryId!==id);
+    document.getElementById('catBooksCard').style.display='none';
+    save(); renderCategories(); toast('Deleted');
+  });
+}
+
+// ── Add Book to Category ──
+function addCategoryBook(){
+  const catId = document.getElementById('catbook-cat').value;
+  const title = document.getElementById('catbook-title').value.trim();
+  const author = document.getElementById('catbook-author').value.trim();
+  const price = parseInt(document.getElementById('catbook-price').value)||0;
+  const image = document.getElementById('catbook-image').value.trim();
+  if(!catId) return toast('Please add a category first');
+  if(!title) return toast('Book title required');
+  if(!price) return toast('Price required');
+  S.books.push({id:uid(), type:'category', categoryId:catId, className:'General', board:'', stream:'', title, author, price, image});
+  save(); renderCategories();
+  document.getElementById('catbook-title').value='';
+  document.getElementById('catbook-author').value='';
+  document.getElementById('catbook-price').value='';
+  document.getElementById('catbook-image').value='';
+  toast('Book added ✅');
+  // Refresh the books panel if it's open
+  const cat = S.categories.find(c=>c.id===catId);
+  if(cat) viewCategoryBooks(catId);
+}
+
+// ── View books in a category ──
+function viewCategoryBooks(catId){
+  const cat = S.categories.find(c=>c.id===catId);
+  if(!cat) return;
+  const books = S.books.filter(b=>b.categoryId===catId);
+  document.getElementById('catBooksTitle').textContent = `📖 Books in "${cat.name}"`;
+  const tbody = document.getElementById('catBooksTbody');
+  tbody.innerHTML = books.map(b=>`<tr>
+    <td><strong>${b.title}</strong></td>
+    <td style="color:var(--muted);font-size:13px;">${b.author||'—'}</td>
+    <td>₹${b.price}</td>
+    <td>${b.image?`<img src="${b.image}" class="thumb-preview"/>`:
+      `<span style="color:var(--muted);font-size:12px;">No image</span>`}</td>
+    <td><div class="actions">
+      <button class="btn btn-ghost btn-sm" onclick='openEditCatBook("${b.id}")'>✏️</button>
+      <button class="btn btn-danger btn-sm" onclick='confirmDeleteCatBook("${b.id}")'>🗑️</button>
+    </div></td>
+  </tr>`).join('') || `<tr><td colspan="5"><div class="empty"><div class="ei">📚</div><p>No books in this category yet</p></div></td></tr>`;
+  document.getElementById('catBooksCard').style.display='';
+  document.getElementById('catBooksCard').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function openEditCatBook(id){
+  const b = S.books.find(x=>x.id===id);
+  if(!b) return;
+  const sel = document.getElementById('ecb-cat');
+  sel.innerHTML = S.categories.map(c=>`<option value="${c.id}"${c.id===b.categoryId?' selected':''}>${c.name}</option>`).join('');
+  document.getElementById('ecb-id').value = id;
+  document.getElementById('ecb-title').value = b.title;
+  document.getElementById('ecb-author').value = b.author||'';
+  document.getElementById('ecb-price').value = b.price;
+  document.getElementById('ecb-image').value = b.image||'';
+  openModal('editCatBookModal');
+}
+function saveCategoryBook(){
+  const id = document.getElementById('ecb-id').value;
+  const b = S.books.find(x=>x.id===id);
+  if(!b) return;
+  b.categoryId = document.getElementById('ecb-cat').value;
+  b.title = document.getElementById('ecb-title').value.trim()||b.title;
+  b.author = document.getElementById('ecb-author').value.trim();
+  b.price = parseInt(document.getElementById('ecb-price').value)||b.price;
+  b.image = document.getElementById('ecb-image').value.trim();
+  save(); closeModal('editCatBookModal'); renderCategories();
+  viewCategoryBooks(b.categoryId); toast('Saved ✅');
+}
+function confirmDeleteCatBook(id){
+  const b = S.books.find(x=>x.id===id);
+  showConfirm(`Delete book "${b?.title}"?`, ()=>{
+    const catId = b?.categoryId;
+    S.books = S.books.filter(x=>x.id!==id);
+    save(); renderCategories();
+    if(catId) viewCategoryBooks(catId);
+    toast('Deleted');
+  });
+}
+
+// ══════════════════════════════════════════════════
+//  BULK IMPORT — SHARED PARSER
+// ══════════════════════════════════════════════════
+let _catImportRows = [];
+let _locImportRows = [];
+
+function parseImportFile(file, callback) {
+  const name = file.name.toLowerCase();
+  const reader = new FileReader();
+  if (name.endsWith('.csv') || name.endsWith('.tsv')) {
+    reader.onload = e => {
+      const sep = name.endsWith('.tsv') ? '\t' : detectSep(e.target.result);
+      const rows = parseCSV(e.target.result, sep);
+      callback(rows);
+    };
+    reader.readAsText(file);
+  } else if (name.endsWith('.xlsx') || name.endsWith('.xls')) {
+    reader.onload = e => {
+      const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {defval:''});
+      callback(rows);
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    toast('❌ Unsupported file type. Use .csv, .xlsx, .xls or .tsv');
+  }
+}
+
+function detectSep(text) {
+  const first = text.split('\n')[0] || '';
+  return first.includes('\t') ? '\t' : ',';
+}
+
+function parseCSV(text, sep=',') {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(sep).map(h => h.trim().toLowerCase().replace(/[^a-z0-9]/g,''));
+  return lines.slice(1).filter(l => l.trim()).map(line => {
+    const vals = splitCSVLine(line, sep);
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = (vals[i]||'').trim());
+    return obj;
+  });
+}
+
+function splitCSVLine(line, sep) {
+  const result = [], re = sep === ',' ? /,(?=(?:[^"]*"[^"]*")*[^"]*$)/ : /\t/;
+  return line.split(re).map(v => v.replace(/^"|"$/g,'').trim());
+}
+
+function normalizeKey(obj, ...keys) {
+  for (const k of keys) {
+    const found = Object.keys(obj).find(ok => ok.toLowerCase().replace(/[^a-z0-9]/g,'') === k.replace(/[^a-z0-9]/g,''));
+    if (found !== undefined) return (obj[found]||'').toString().trim();
+  }
+  return '';
+}
+
+// ── CATEGORY BOOKS IMPORT ──────────────────────────
+function handleCatImportFile(input) {
+  const file = (input.files||[])[0];
+  if (!file) return;
+  parseImportFile(file, rows => {
+    _catImportRows = rows.map((r, i) => {
+      const category = normalizeKey(r, 'category','categoryname','cat','catname');
+      const title    = normalizeKey(r, 'title','booktitle','name','bookname');
+      const author   = normalizeKey(r, 'author','authorname','by');
+      const price    = parseInt(normalizeKey(r, 'price','cost','mrp','rate')) || 0;
+      const image    = normalizeKey(r, 'image','imageurl','img','cover','thumbnail');
+      let status = '✅ Ready';
+      if (!category) status = '⚠️ No category';
+      else if (!title) status = '⚠️ No title';
+      return { _row: i+1, category, title, author, price, image, _status: status };
+    });
+    renderCatImportPreview();
+    document.getElementById('catImportFile').value = '';
+  });
+}
+
+function renderCatImportPreview() {
+  const valid   = _catImportRows.filter(r => r._status === '✅ Ready').length;
+  const invalid = _catImportRows.length - valid;
+  document.getElementById('catImportSummary').innerHTML =
+    `<span style="color:var(--g);">✅ ${valid} ready</span>${invalid ? `&nbsp;&nbsp;<span style="color:#dc2626;">⚠️ ${invalid} skipped</span>` : ''}`;
+  document.getElementById('catImportTbody').innerHTML = _catImportRows.map(r => `
+    <tr style="${r._status!=='✅ Ready'?'opacity:.55':''}">
+      <td style="color:var(--muted);font-size:12px;">${r._row}</td>
+      <td><strong>${r.category||'—'}</strong></td>
+      <td>${r.title||'—'}</td>
+      <td style="color:var(--muted);font-size:13px;">${r.author||'—'}</td>
+      <td>${r.price ? '₹'+r.price : '—'}</td>
+      <td style="font-size:12px;font-weight:800;">${r._status}</td>
+    </tr>`).join('');
+  document.getElementById('catImportPreview').style.display = '';
+}
+
+function clearCatImport() {
+  _catImportRows = [];
+  document.getElementById('catImportPreview').style.display = 'none';
+}
+
+function commitCatImport() {
+  const ready = _catImportRows.filter(r => r._status === '✅ Ready');
+  if (!ready.length) return toast('No valid rows to import');
+  let added = 0, catCreated = 0;
+  ready.forEach(r => {
+    const catName = r.category;
+    let cat = S.categories.find(c => c.name.toLowerCase() === catName.toLowerCase());
+    if (!cat) {
+      cat = { id: 'cat_' + Date.now() + '_' + Math.random().toString(36).slice(2,6), name: catName, image: '' };
+      S.categories.push(cat);
+      catCreated++;
+    }
+    S.books.push({
+      id: 'book_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+      type: 'general',
+      categoryId: cat.id,
+      title: r.title,
+      author: r.author,
+      price: r.price || 0,
+      image: r.image,
+    });
+    added++;
+  });
+  save(); renderCategories();
+  clearCatImport();
+  toast(`✅ Imported ${added} books${catCreated ? ` · ${catCreated} new categories created` : ''}`);
+}
+
+function downloadCatTemplate() {
+  const csv = `category,title,author,price,image\nNovels,The Alchemist,Paulo Coelho,250,\nReference,Wings of Fire,APJ Abdul Kalam,180,\nNovels,Animal Farm,George Orwell,120,`;
+  triggerCSVDownload(csv, 'category_books_template.csv');
+}
+
+// ── LOCATIONS IMPORT ──────────────────────────────
+function handleLocImportFile(input) {
+  const file = (input.files||[])[0];
+  if (!file) return;
+  parseImportFile(file, rows => {
+    _locImportRows = rows.map((r, i) => {
+      const district = normalizeKey(r, 'district','districtname','dist','state');
+      const place    = normalizeKey(r, 'place','placename','town','city','area','village');
+      const school   = normalizeKey(r, 'school','schoolname','institution','college','institute');
+      let status = '✅ Ready';
+      if (!district) status = '⚠️ No district';
+      else if (!place) status = '⚠️ No place';
+      return { _row: i+1, district, place, school, _status: status };
+    });
+    renderLocImportPreview();
+    document.getElementById('locImportFile').value = '';
+  });
+}
+
+function renderLocImportPreview() {
+  const valid   = _locImportRows.filter(r => r._status === '✅ Ready').length;
+  const invalid = _locImportRows.length - valid;
+  document.getElementById('locImportSummary').innerHTML =
+    `<span style="color:var(--g);">✅ ${valid} ready</span>${invalid ? `&nbsp;&nbsp;<span style="color:#dc2626;">⚠️ ${invalid} skipped</span>` : ''}`;
+  document.getElementById('locImportTbody').innerHTML = _locImportRows.map(r => `
+    <tr style="${r._status!=='✅ Ready'?'opacity:.55':''}">
+      <td style="color:var(--muted);font-size:12px;">${r._row}</td>
+      <td><strong>${r.district||'—'}</strong></td>
+      <td>${r.place||'—'}</td>
+      <td>${r.school||'—'}</td>
+      <td style="font-size:12px;font-weight:800;">${r._status}</td>
+    </tr>`).join('');
+  document.getElementById('locImportPreview').style.display = '';
+}
+
+function clearLocImport() {
+  _locImportRows = [];
+  document.getElementById('locImportPreview').style.display = 'none';
+}
+
+function commitLocImport() {
+  const ready = _locImportRows.filter(r => r._status === '✅ Ready');
+  if (!ready.length) return toast('No valid rows to import');
+  let distCreated=0, placeCreated=0, schoolAdded=0;
+  ready.forEach(r => {
+    let d = S.locations.find(x => x.district.toLowerCase() === r.district.toLowerCase());
+    if (!d) { d = { district: r.district, places: [] }; S.locations.push(d); distCreated++; }
+    let p = d.places.find(x => x.name.toLowerCase() === r.place.toLowerCase());
+    if (!p) { p = { name: r.place, schools: [] }; d.places.push(p); placeCreated++; }
+    if (r.school && !p.schools.some(s => s.toLowerCase() === r.school.toLowerCase())) {
+      p.schools.push(r.school); schoolAdded++;
+    }
+  });
+  save(); renderLocations();
+  clearLocImport();
+  toast(`✅ Done — ${distCreated} districts · ${placeCreated} places · ${schoolAdded} schools added`);
+}
+
+function downloadLocTemplate() {
+  const csv = `district,place,school\nKamrup,Guwahati,Don Bosco School\nKamrup,Guwahati,Cotton University\nDibrugarh,Dibrugarh,Dibrugarh Hanumanbax Surajmull Kanoi College\nNagaon,Nagaon,Nagaon College`;
+  triggerCSVDownload(csv, 'locations_template.csv');
+}
+
+// ── SHARED DOWNLOAD HELPER ─────────────────────────
+function triggerCSVDownload(csv, filename) {
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = Object.assign(document.createElement('a'), {href:URL.createObjectURL(blob), download:filename});
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+// ══════════════════════════════════════════════════
+//  LOCATIONS
+// ══════════════════════════════════════════════════
+function renderLocations(){
+  updateDistrictSelects();
+  const tree = document.getElementById('locationTree');
+  tree.innerHTML = S.locations.map(d=>`
+    <div class="tree-node">
+      <div class="tree-node-head">
+        <strong>🏙️ ${d.district}</strong>
+        <span style="color:var(--muted);font-size:12px;font-weight:700;">${d.places.length} places</span>
+        <button class="btn btn-danger btn-sm" onclick='confirmDeleteDistrict("${d.district}")'>🗑️</button>
+      </div>
+      <div class="tree-child">
+        ${d.places.map(p=>`
+          <div>
+            <div class="tree-place">
+              <span>🏘️ ${p.name}</span>
+              <span style="color:var(--muted);font-size:12px;">${p.schools.length} schools</span>
+              <button class="btn btn-danger btn-sm" onclick='confirmDeletePlace("${d.district}","${p.name}")'>🗑️</button>
+            </div>
+            <div class="tree-school-list">
+              ${p.schools.map(sc=>`
+                <div class="tree-school">
+                  <span>🏫 ${sc}</span>
+                  <button class="btn btn-danger btn-sm" onclick='confirmDeleteSchool("${d.district}","${p.name}","${sc}")'>×</button>
+                </div>`).join('')}
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`).join('') || `<div class="empty"><div class="ei">📍</div><p>No locations yet. Add a district to start.</p></div>`;
+}
+function updateDistrictSelects(){
+  ['place-district-sel','school-district-sel'].forEach(id=>{
+    const sel = document.getElementById(id);
+    sel.innerHTML = S.locations.map(d=>`<option>${d.district}</option>`).join('');
+  });
+  updateSchoolPlaces();
+}
+function updateSchoolPlaces(){
+  const district = document.getElementById('school-district-sel').value;
+  const d = S.locations.find(x=>x.district===district);
+  const sel = document.getElementById('school-place-sel');
+  sel.innerHTML = (d?.places||[]).map(p=>`<option>${p.name}</option>`).join('');
+}
+function addDistrict(){
+  const name = document.getElementById('new-district').value.trim();
+  if(!name) return toast('District name required');
+  if(S.locations.find(d=>d.district===name)) return toast('District exists');
+  S.locations.push({district:name,places:[]});
+  save(); renderLocations(); document.getElementById('new-district').value='';
+  toast('District added ✅');
+}
+function addPlace(){
+  const district = document.getElementById('place-district-sel').value;
+  const name = document.getElementById('new-place').value.trim();
+  if(!district) return toast('Select a district first');
+  if(!name) return toast('Place name required');
+  const d = S.locations.find(x=>x.district===district);
+  if(!d) return;
+  if(d.places.find(p=>p.name===name)) return toast('Place exists');
+  d.places.push({name,schools:[]});
+  save(); renderLocations(); document.getElementById('new-place').value='';
+  toast('Place added ✅');
+}
+function addSchool(){
+  const district = document.getElementById('school-district-sel').value;
+  const place = document.getElementById('school-place-sel').value;
+  const name = document.getElementById('new-school').value.trim();
+  if(!district||!place) return toast('Select district and place');
+  if(!name) return toast('School name required');
+  const d = S.locations.find(x=>x.district===district);
+  const p = d?.places.find(x=>x.name===place);
+  if(!p) return;
+  if(p.schools.includes(name)) return toast('School exists');
+  p.schools.push(name);
+  save(); renderLocations(); document.getElementById('new-school').value='';
+  toast('School added ✅');
+}
+function confirmDeleteDistrict(district){
+  showConfirm(`Delete district "${district}" and all its places/schools?`, ()=>{
+    S.locations = S.locations.filter(d=>d.district!==district);
+    save(); renderLocations(); toast('Deleted');
+  });
+}
+function confirmDeletePlace(district, place){
+  showConfirm(`Delete place "${place}"?`, ()=>{
+    const d = S.locations.find(x=>x.district===district);
+    if(d) d.places = d.places.filter(p=>p.name!==place);
+    save(); renderLocations(); toast('Deleted');
+  });
+}
+function confirmDeleteSchool(district, place, school){
+  const d = S.locations.find(x=>x.district===district);
+  const p = d?.places.find(x=>x.name===place);
+  if(p) p.schools = p.schools.filter(s=>s!==school);
+  save(); renderLocations(); toast('Deleted');
+}
+function quickAddLocation(){
+  const district = document.getElementById('ql-district').value.trim();
+  const place = document.getElementById('ql-place').value.trim();
+  const school = document.getElementById('ql-school').value.trim();
+  if(!district||!place) return toast('District and place required');
+  let d = S.locations.find(x=>x.district===district);
+  if(!d){ d={district,places:[]}; S.locations.push(d); }
+  let p = d.places.find(x=>x.name===place);
+  if(!p){ p={name:place,schools:[]}; d.places.push(p); }
+  if(school && !p.schools.includes(school)) p.schools.push(school);
+  save(); toast('Location added ✅');
+  ['ql-district','ql-place','ql-school'].forEach(id=>document.getElementById(id).value='');
+}
+
+// ══════════════════════════════════════════════════
+//  SETTINGS
+// ══════════════════════════════════════════════════
+function renderSettings(){
+  document.getElementById('s-states').value = (S.states||['Assam']).join(', ');
+  document.getElementById('s-appname').value = S.appName||'PKITAAP';
+  document.getElementById('s-tagline').value = S.appTagline||'';
+  document.getElementById('s-mediums').value = (S.mediums||[]).join(', ');
+  document.getElementById('t-general').checked = S.settings.general;
+  document.getElementById('t-instagram').checked = S.settings.instagram;
+  document.getElementById('t-whatsapp').checked = S.settings.whatsapp;
+}
+function saveStates(){
+  const raw = document.getElementById('s-states').value;
+  S.states = raw.split(',').map(s=>s.trim()).filter(Boolean);
+  if(!S.states.length) S.states = ['Assam'];
+  save();
+  toast('States saved ✅ (' + S.states.length + ' state' + (S.states.length>1?'s':'') + ')');
+}
+function resetStates(){
+  S.states = ['Assam'];
+  save();
+  document.getElementById('s-states').value = 'Assam';
+  toast('States reset to default ✅');
+}
+function saveSettings(){
+  S.appName = document.getElementById('s-appname').value.trim()||'PKITAAP';
+  S.appTagline = document.getElementById('s-tagline').value.trim();
+  S.mediums = document.getElementById('s-mediums').value.split(',').map(m=>m.trim()).filter(Boolean);
+  save(); toast('Settings saved ✅');
+}
+function saveToggles(){
+  S.settings.general = document.getElementById('t-general').checked;
+  S.settings.instagram = document.getElementById('t-instagram').checked;
+  S.settings.whatsapp = document.getElementById('t-whatsapp').checked;
+  save(); toast('Toggles saved ✅');
+}
+
+// ══════════════════════════════════════════════════
+//  MODALS
+// ══════════════════════════════════════════════════
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function showConfirm(msg, cb, btnLabel='Delete'){
+  document.getElementById('confirmMsg').textContent = msg;
+  document.getElementById('confirmOkBtn').textContent = btnLabel;
+  document.getElementById('confirmOkBtn').onclick = ()=>{ cb(); closeModal('confirmModal'); };
+  openModal('confirmModal');
+}
+
+// ══════════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════════
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),2200);
+}
+
+// ══════════════════════════════════════════════════
+//  EXPORT — Build pkitaap HTML
+// ══════════════════════════════════════════════════
+function buildPkitaapHTML(){
+  const appName = S.appName||'PKITAAP';
+  const appTagline = S.appTagline||'Find & sell used school books near you';
+  const themeColor = '#16a34a';
+  const seedJson = JSON.stringify({
+    appName,
+    appTagline,
+    classes: S.classes,
+    classThumbs: S.classThumbs||{},
+    streams: S.streams,
+    boardsByClass: S.boardsByClass,
+    settings: S.settings,
+    categories: S.categories,
+    books: S.books,
+    locations: S.locations,
+    states: S.states||['Assam'],
+    listings: S.listings||[]
+  }, null, 2);
+  const mediumOptions = (S.mediums||['English Medium','Assamese Medium']).map(m=>`<option value="${m}">${m}</option>`).join('');
+  const classOptions = [...S.classes,...(S.settings.general?['General']:[])].map(c=>`<option value="${c}">${c}</option>`).join('');
+  const signupDistrictOptions = S.locations.map(d=>`<option value="${d.district}">${d.district}</option>`).join('');
+  const signupLocationsJson = JSON.stringify(S.locations.map(d=>({district:d.district,places:d.places.map(p=>({name:p.name,schools:p.schools}))})));
+  const stateOptions = [...(S.states||['Assam'])].sort((a,b)=>a.localeCompare(b)).map(st=>`<option value="${st}">${st}</option>`).join('');
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="${themeColor}"/>
+<title>${appName}</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --red: #16a34a;
+  --red-dark: #15803d;
+  --red-light: #f0fdf4;
+  --bg: #f1f8f3;
+  --card: #ffffff;
+  --border: #bbf7d0;
+  --line: #d1fae5;
+  --line-dark: #111111;
+  --text: #222222;
+  --muted: #888888;
+  --sidebar: 230px;
+}
+body { background: var(--bg); color: var(--text); font-family: Nunito, Arial, sans-serif; min-height: 100vh; }
+a { text-decoration: none; }
+button, input, select { font: inherit; }
+.topbar {
+  align-items: center; background: var(--red);
+  box-shadow: 0 4px 20px rgba(22,163,74,0.25); color: white;
+  display: flex; height: 58px; justify-content: space-between;
+  padding: 0 20px; position: sticky; top: 0; z-index: 20;
+  border-bottom: 2px solid var(--line-dark);
+}
+.topbar-left, .topbar-right { align-items: center; display: flex; gap: 10px; }
+.logo { font-size: clamp(28px,7vw,38px); font-weight: 900; letter-spacing: 0; }
+.menu-btn {
+  background: rgba(255,255,255,0.2); border: 0; border-radius: 10px;
+  cursor: pointer; display: grid; gap: 4px; height: 40px; padding: 10px;
+  position: relative; width: 44px;
+}
+.menu-btn span { background: white; border-radius: 99px; display: block; height: 3px; transition: transform 0.2s ease, opacity 0.2s ease; transform-origin: center; }
+.menu-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.menu-btn.open span:nth-child(2) { opacity: 0; }
+.menu-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+.menu-panel {
+  background: white; border: 2px solid var(--line);
+  border-radius: 20px 0 0 20px; box-shadow: 0 14px 34px rgba(0,0,0,0.12);
+  display: none; min-height: 52vh; width: min(78vw,310px);
+  padding: 16px; position: fixed; right: 0; top: 58px; z-index: 40;
+}
+.menu-panel.open { display: flex; flex-direction: column; }
+.menu-panel > button { background: transparent; border: 0; border-radius: 10px; color: var(--text); cursor: pointer; font-weight: 900; padding: 14px 12px; text-align: left; }
+.menu-title { color: var(--muted); font-size: 12px; font-weight: 900; margin: 4px 4px 12px; text-transform: uppercase; }
+.menu-panel > button:hover { background: var(--red-light); color: var(--red); }
+.menu-login-card {
+  background: linear-gradient(135deg, var(--red-light) 0%, #dcfce7 100%);
+  border: 2px solid var(--border); border-radius: 18px;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 10px; margin: auto 0; padding: 28px 20px 24px; text-align: center;
+}
+.menu-login-icon { align-items: center; background: var(--red); border-radius: 50%; display: flex; height: 52px; justify-content: center; width: 52px; }
+.menu-login-title { color: var(--text); font-size: 17px; font-weight: 900; margin-top: 2px; }
+.menu-login-sub { color: var(--muted); font-size: 12px; font-weight: 700; line-height: 1.4; }
+.menu-login-btn { background: var(--red) !important; border: none !important; border-radius: 12px !important; color: white !important; cursor: pointer; font-size: 15px !important; font-weight: 900 !important; margin-top: 4px; min-height: 46px !important; padding: 0 !important; width: 100%; transition: background 0.15s, transform 0.1s; }
+.menu-login-btn:hover { background: var(--red-dark) !important; }
+.menu-login-btn:active { transform: scale(0.97); }
+.menu-create-btn { background: white !important; border: 2px solid var(--red) !important; border-radius: 12px !important; color: var(--red) !important; cursor: pointer; font-size: 15px !important; font-weight: 900 !important; min-height: 46px !important; padding: 0 !important; width: 100%; transition: background 0.15s, transform 0.1s; }
+.menu-create-btn:hover { background: var(--red-light) !important; }
+.menu-create-btn:active { transform: scale(0.97); }
+.shell { display: block; }
+.sidebar { display: none; }
+.nav-item, .bottom-item { background: transparent; border: 0; border-radius: 12px; color: #555; cursor: pointer; font-weight: 900; padding: 12px; text-align: left; }
+.nav-item.active, .bottom-item.active { background: var(--red); color: white; }
+.main { margin: 0 auto; max-width: 980px; padding: 18px 14px 32px; }
+.page { display: none; flex-direction: column; gap: 18px; }
+.page.active { display: flex; }
+.page-head { display: block; }
+.location-lock { display: grid; gap: 12px; grid-template-columns: repeat(2,minmax(0,1fr)); }
+.location-lock div { background: white; border: 2px solid var(--line); border-radius: 16px; padding: 12px 14px; }
+.location-lock span { color: var(--muted); display: block; font-size: 12px; font-weight: 900; }
+.location-lock strong { display: block; font-size: 18px; margin-top: 2px; }
+h1 { font-size: 28px; font-weight: 900; }
+h2 { color: var(--red); font-size: 18px; font-weight: 900; }
+.card { background: var(--card); border: 2px solid var(--line); border-radius: 20px; box-shadow: 0 2px 16px rgba(0,0,0,0.06); overflow: hidden; }
+.card-head { align-items: center; border-bottom: 2px solid var(--line); display: flex; justify-content: space-between; padding: 14px 16px; }
+.card-body { padding: 16px; }
+input, select { background: white; border: 2px solid var(--line); border-radius: 10px; font-weight: 700; min-height: 42px; outline: none; padding: 8px 11px; width: 100%; }
+input:focus, select:focus { border-color: var(--red); }
+.search-wrap { position: relative; width: 100%; }
+.search-wrap input { padding-right: 44px; }
+#clearSearch { align-items: center; background: var(--red-light); border: 0; border-radius: 8px; color: var(--red); cursor: pointer; display: none; font-weight: 900; height: 30px; justify-content: center; position: absolute; right: 6px; top: 6px; width: 30px; }
+label { color: #444; display: grid; font-size: 13px; font-weight: 900; gap: 5px; }
+.btn { border: 0; border-radius: 10px; cursor: pointer; font-weight: 900; min-height: 40px; padding: 8px 14px; }
+.btn-primary { background: var(--red); color: white; }
+.btn-ghost { background: var(--red-light); color: var(--red); }
+.btn-light { background: rgba(255,255,255,0.2); color: white; }
+.class-grid, .stream-grid, .book-grid, .admin-grid { display: grid; gap: 12px; grid-template-columns: repeat(2,minmax(0,1fr)); }
+.stream-grid { margin-top: 12px; }
+.class-card, .stream-card, .book-card { background: white; border: 2px solid var(--line); border-radius: 16px; cursor: pointer; min-height: 84px; padding: 0; text-align: left; overflow: hidden; }
+.stream-card { align-items: center; display: flex; justify-content: center; min-height: 120px; padding: 18px; text-align: center; }
+.stream-card strong { font-size: clamp(24px,5vw,34px); line-height: 1.05; overflow-wrap: anywhere; }
+.class-card img, .book-card img { aspect-ratio: 1.25; background: var(--red-light); border-radius: 12px 12px 0 0; display: block; object-fit: cover; width: 100%; }
+.class-card.active, .stream-card.active { border-color: var(--red); color: var(--text); }
+.book-card.active { border-color: var(--red); }
+.card-info { background: white; display: grid; gap: 7px; min-height: 82px; padding: 12px; align-content: center; }
+.book-card .card-info { place-items: center; text-align: center; }
+.class-card strong, .book-card strong { display: block; font-size: 18px; line-height: 1.1; overflow-wrap: anywhere; }
+.book-card strong { color: var(--text); }
+.book-card span, .class-card span { color: var(--muted); display: block; font-size: 12px; font-weight: 900; margin-top: 6px; }
+.book-card small { color: var(--muted); display: block; font-size: 11px; font-weight: 900; line-height: 1.25; }
+.book-card.active span { color: var(--red); }
+.book-card .price, .book-card.active .price { color: #000000; font-size: 15px; font-weight: 900; }
+.form-grid { display: grid; gap: 12px; grid-template-columns: repeat(2,minmax(0,1fr)); }
+.wide { grid-column: 1 / -1; }
+.stack-form { display: grid; gap: 12px; }
+.selected-box { background: var(--red-light); border: 2px solid var(--line); border-radius: 16px; padding: 16px; }
+.selected-box img { aspect-ratio: 1.4; border-radius: 14px; display: block; margin-bottom: 12px; object-fit: cover; width: 100%; }
+.selected-box strong { display: block; font-size: 22px; }
+.selected-box span { color: var(--muted); display: block; font-weight: 900; margin-top: 4px; }
+.result-list { display: grid; gap: 10px; margin-top: 14px; }
+.result-card { border: 2px solid var(--line); border-radius: 14px; padding: 12px; }
+.result-card strong { display: block; }
+.result-card span { color: var(--muted); display: block; font-size: 12px; font-weight: 900; margin-top: 4px; }
+.contact-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.toggle { align-items: center; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; padding: 12px 0; }
+.bottom-nav { display: none; }
+.bottom-item { text-align: center; }
+dialog { border: 0; border-radius: 20px; box-shadow: 0 24px 60px rgba(0,0,0,0.25); margin: auto; max-width: 420px; width: calc(100% - 32px); }
+dialog::backdrop { background: rgba(0,0,0,0.45); }
+.modal { background: white; }
+dialog { border: none; border-radius: 24px; box-shadow: 0 32px 80px rgba(0,0,0,0.22); margin: auto; max-width: 420px; width: calc(100% - 32px); padding: 0; background: transparent; }
+dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
+.auth-modal { background: white; border-radius: 24px; overflow-y: auto; max-height: 90vh; position: relative; }
+.auth-close { background: #f3f4f6; border: none; border-radius: 50%; color: #555; cursor: pointer; font-size: 14px; height: 34px; line-height: 1; position: absolute; right: 16px; top: 16px; width: 34px; display: flex; align-items: center; justify-content: center; z-index: 2; transition: background 0.15s; }
+.auth-close:hover { background: #e5e7eb; color: #111; }
+.auth-brand { background: var(--red); padding: 32px 28px 24px; text-align: center; }
+.auth-logo { color: white; font-size: 36px; font-weight: 900; letter-spacing: -1px; }
+.auth-tagline { color: rgba(255,255,255,0.8); font-size: 13px; font-weight: 700; margin-top: 6px; }
+.auth-form { padding: 24px 28px 28px; display: flex; flex-direction: column; gap: 14px; }
+.auth-field { display: flex; flex-direction: column; gap: 6px; }
+.auth-field label { color: #374151; font-size: 13px; font-weight: 900; }
+.auth-field input, .auth-field select { background: #f9fafb; border: 2px solid var(--line); border-radius: 12px; font-size: 15px; font-weight: 600; min-height: 48px; outline: none; padding: 10px 14px; width: 100%; transition: border-color 0.15s, background 0.15s; }
+.auth-field input:focus, .auth-field select:focus { border-color: var(--red); background: white; }
+.auth-btn { background: var(--red); border: none; border-radius: 12px; color: white; cursor: pointer; font-size: 16px; font-weight: 900; margin-top: 4px; min-height: 50px; width: 100%; transition: background 0.15s, transform 0.1s; }
+.auth-btn:hover { background: var(--red-dark); }
+.auth-btn:active { transform: scale(0.98); }
+.auth-switch { color: var(--muted); font-size: 13px; font-weight: 700; text-align: center; }
+.auth-link { background: none; border: none; color: var(--red); cursor: pointer; font-size: 13px; font-weight: 900; padding: 0; text-decoration: underline; }
+.auth-link:hover { color: var(--red-dark); }
+.auth-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.auth-insta-wrap { display: flex; align-items: center; background: #f9fafb; border: 2px solid var(--line); border-radius: 12px; overflow: hidden; transition: border-color 0.15s; }
+.auth-insta-wrap:focus-within { border-color: var(--red); background: white; }
+.auth-insta-at { background: var(--red-light); color: var(--red); font-size: 16px; font-weight: 900; padding: 0 12px; min-height: 48px; display: flex; align-items: center; border-right: 2px solid var(--line); }
+.auth-insta-input { background: transparent !important; border: none !important; border-radius: 0 !important; flex: 1; min-height: 48px; outline: none; padding: 10px 12px !important; }
+#toast { background: #222; border-radius: 12px; bottom: 24px; color: white; font-weight: 900; opacity: 0; padding: 12px 18px; pointer-events: none; position: fixed; right: 24px; transform: translateY(12px); transition: 0.2s; z-index: 50; }
+#toast.show { opacity: 1; transform: translateY(0); }
+@media (max-width: 760px) { .main { padding: 14px 10px 28px; } .admin-grid { grid-template-columns: 1fr; } }
+@media (max-width: 420px) { .topbar { padding: 0 12px; } .logo { font-size: 22px; } .class-card, .stream-card, .book-card { min-height: 76px; padding: 12px; } .class-card strong, .book-card strong { font-size: 16px; } }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-left"><div class="logo">${appName}</div></div>
+  <div class="topbar-right">
+    <button class="menu-btn" id="menuBtn" type="button" aria-label="Open menu"><span></span><span></span><span></span></button>
+  </div>
+  <div class="menu-panel" id="menuPanel">
+    <div class="menu-title">Menu</div>
+    <div class="menu-login-card" id="menuLoginCard">
+      <div class="menu-login-icon">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      </div>
+      <div class="menu-login-title">Welcome to ${appName}</div>
+      <div class="menu-login-sub">Login or sign up to find sellers and list your books</div>
+      <button class="menu-login-btn" id="loginBtn" type="button">Login</button>
+      <button class="menu-create-btn" id="menuGoSignup" type="button">Create Account</button>
+    </div>
+    <button data-page="sell" id="menuSell" style="display:none;">Sell</button>
+    <button type="button" id="menuAccount" style="display:none;">Account details</button>
+  </div>
+</header>
+<div class="shell">
+  <main class="main">
+    <section class="page active" id="buyPage">
+      <div class="page-head">
+        <div class="search-wrap">
+          <input id="searchInput" placeholder="Search books">
+          <button id="clearSearch" type="button" aria-label="Clear">x</button>
+        </div>
+      </div>
+      <div class="location-lock">
+        <div><span>Country</span><strong>India</strong></div>
+        <div>
+          <span>State</span>
+          <select id="selectedState" style="font-weight:900;font-size:15px;border:none;background:transparent;outline:none;padding:0;cursor:pointer;margin-top:2px;display:block;width:100%;">
+            <option value="">Select State</option>
+            ${stateOptions}
+          </select>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h2 id="catalogTitle">Classes</h2>
+          <button class="btn btn-ghost" id="backBtn" type="button" style="display:none;">Back</button>
+        </div>
+        <div class="card-body">
+          <div class="class-grid" id="classGrid" style="display:grid;"></div>
+          <div class="stream-grid" id="boardGrid" style="display:none;"></div>
+          <div class="stream-grid" id="streamGrid" style="display:none;"></div>
+          <div class="book-grid" id="bookGrid" style="display:none;"><div>No books</div></div>
+        </div>
+      </div>
+      <div class="card" id="categoryCard" style="display:none;">
+        <div class="card-head"><h2>More Categories</h2></div>
+        <div class="card-body"><div class="class-grid" id="categoryGrid"></div></div>
+      </div>
+      <div class="card" id="matchCard" style="display:none;">
+        <div class="card-head"><h2>Match</h2></div>
+        <div class="card-body">
+          <form id="buyForm" class="form-grid">
+            <label>District <span style="color:#ef4444;font-size:11px;"> *required</span><select id="buyDistrict" required></select></label>
+            <label>Place <span style="color:#ef4444;font-size:11px;"> *required</span><select id="buyPlace" required></select></label>
+            <label class="wide">School <span style="color:var(--muted);font-size:11px;">(optional)</span><select id="buySchool"></select></label>
+            <label class="wide">Medium <span style="color:#ef4444;font-size:11px;"> *required</span>
+              <select id="buyMedium" required>
+                <option value="">— Select Medium —</option>
+                ${mediumOptions}
+              </select>
+            </label>
+            <button class="btn btn-primary wide" type="submit">Find sellers</button>
+          </form>
+          <div class="result-list" id="matchList"></div>
+        </div>
+      </div>
+    </section>
+    <section class="page" id="sellPage">
+      <div class="page-head">
+        <h1>Sell Books</h1>
+        <button class="btn btn-ghost" data-go-buy="">Select book</button>
+      </div>
+      <div class="location-lock">
+        <div><span>Country</span><strong>India</strong></div>
+        <div>
+          <span>State</span>
+          <select id="sellState" style="font-weight:900;font-size:15px;border:none;background:transparent;outline:none;padding:0;cursor:pointer;margin-top:2px;display:block;width:100%;">
+            <option value="">Select State</option>
+            ${stateOptions}
+          </select>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>Selected Book</h2></div>
+        <div class="card-body">
+          <div id="selectedBox" class="selected-box">
+            <strong>No subject selected</strong>
+            <span>Select class, board, stream, and subject first.</span>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>Seller Details</h2></div>
+        <div class="card-body">
+          <form id="sellForm" class="form-grid">
+            <label>District <select id="sellDistrict"></select></label>
+            <label>Place <select id="sellPlace"></select></label>
+            <label class="wide">School <select id="sellSchool"></select></label>
+            <label class="wide">Condition
+              <select id="sellCondition">
+                <option>Like new</option><option>Good</option><option>Usable</option>
+              </select>
+            </label>
+            ${S.settings.instagram?`<label class="wide">Instagram ID<div style="display:flex;align-items:center;background:#f9fafb;border:2px solid var(--line);border-radius:10px;overflow:hidden;"><span style="background:var(--red-light);color:var(--red);font-weight:900;padding:0 10px;min-height:40px;display:flex;align-items:center;">@</span><input type="text" id="sellInstagram" placeholder="your_instagram" style="border:none;border-radius:0;flex:1;min-height:40px;background:transparent;" required></div></label>`:''}
+            ${S.settings.whatsapp?`<label class="wide">WhatsApp Number<input type="tel" id="sellWhatsapp" placeholder="10-digit number" maxlength="10"/></label>`:''}
+            <label class="wide">Price Expectation (₹)<input type="number" id="sellPrice" placeholder="How much do you want?"/></label>
+            <button class="btn btn-primary wide" type="submit">List for Sale</button>
+          </form>
+        </div>
+      </div>
+    </section>
+    <section class="page" id="adminPage">
+      <h1>Admin</h1>
+      <div class="admin-grid">
+        <div class="card">
+          <div class="card-head"><h2>Add Subject</h2></div>
+          <div class="card-body">
+            <form id="bookForm" class="stack-form">
+              <select id="newClass"><option value="">Class</option></select>
+              <select id="newBoard"><option value="">Board</option></select>
+              <select id="newStream"><option value="">Stream (optional)</option></select>
+              <input id="newTitle" placeholder="Subject title" required>
+              <input id="newAuthor" placeholder="Author (if general book)">
+              <input id="newPrice" type="number" placeholder="Price ₹" required>
+              <input id="newImage" placeholder="Image URL (optional)">
+              <button class="btn btn-primary" type="submit">Add</button>
+            </form>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>Add School</h2></div>
+          <div class="card-body">
+            <form id="schoolForm" class="stack-form">
+              <select id="newDistrict"><option value="">District</option></select>
+              <select id="newPlace"><option value="">Place</option></select>
+              <input id="newSchool" placeholder="School" required>
+              <button class="btn btn-primary" type="submit">Add</button>
+            </form>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>Class Thumbnail</h2></div>
+          <div class="card-body">
+            <form id="classThumbForm" class="stack-form">
+              <input id="thumbClass" placeholder="Class 9 / Class 10 / General" required>
+              <input id="thumbImage" placeholder="Thumbnail image URL" required>
+              <button class="btn btn-primary" type="submit">Save</button>
+            </form>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>Add Category</h2></div>
+          <div class="card-body">
+            <form id="categoryForm" class="stack-form">
+              <input id="categoryName" placeholder="Novels / Author Books" required>
+              <input id="categoryImage" placeholder="Category image URL">
+              <button class="btn btn-primary" type="submit">Add</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<dialog id="loginDialog">
+  <div class="auth-modal">
+    <button class="auth-close" id="loginClose">&#10005;</button>
+    <div class="auth-brand"><div class="auth-logo">${appName}</div><p class="auth-tagline">Welcome back!</p></div>
+    <form class="auth-form" id="loginForm">
+      <div class="auth-field"><label>Mobile Number</label><input type="tel" placeholder="10-digit number" maxlength="10"></div>
+      <div class="auth-field"><label>Password / PIN</label><input type="password" placeholder="Enter your password or PIN"></div>
+      <button class="auth-btn" id="loginContinue" type="button">Login</button>
+      <p class="auth-switch">Don't have an account? <button type="button" class="auth-link" id="goSignup">Create account</button></p>
+    </form>
+  </div>
+</dialog>
+<dialog id="signupDialog">
+  <div class="auth-modal">
+    <button class="auth-close" id="signupClose">&#10005;</button>
+    <div class="auth-brand"><div class="auth-logo">${appName}</div><p class="auth-tagline">Create your account</p></div>
+    <form class="auth-form" id="signupForm">
+      <div class="auth-row">
+        <div class="auth-field"><label>First Name</label><input type="text" id="signupFirstName" placeholder="First name" required></div>
+        <div class="auth-field"><label>Last Name</label><input type="text" id="signupLastName" placeholder="Last name" required></div>
+      </div>
+      <div class="auth-field"><label>Mobile Number</label><input type="tel" id="signupMobile" placeholder="10-digit number" maxlength="10" required></div>
+      <div class="auth-field">
+        <label>Currently Studying Class</label>
+        <select id="signupClass" required>
+          <option value="">— Select Class —</option>
+          ${classOptions}
+        </select>
+      </div>
+      <div class="auth-field"><label>Instagram ID</label>
+        <div class="auth-insta-wrap"><span class="auth-insta-at">@</span><input type="text" id="signupInsta" placeholder="your_instagram_id" class="auth-insta-input"></div>
+      </div>
+      <div class="auth-row">
+        <div class="auth-field">
+          <label>State</label>
+          <select id="signupState" required>
+            <option value="">— Select State —</option>
+            ${stateOptions}
+          </select>
+        </div>
+        <div class="auth-field">
+          <label>District</label>
+          <select id="signupDistrict" required>
+            <option value="">— District —</option>
+            ${signupDistrictOptions}
+          </select>
+        </div>
+      </div>
+      <div class="auth-row">
+        <div class="auth-field">
+          <label>Place / Town</label>
+          <select id="signupPlace" required>
+            <option value="">— Place —</option>
+          </select>
+        </div>
+        <div class="auth-field">
+          <label>School / College</label>
+          <select id="signupSchool">
+            <option value="">— School (optional) —</option>
+          </select>
+        </div>
+      </div>
+      <div class="auth-field"><label>Create Password</label><input type="password" id="signupPassword" placeholder="8-16 characters" minlength="8" maxlength="16" required></div>
+      <button class="auth-btn" id="signupContinue" type="button">Create Account</button>
+      <p class="auth-switch">Already have an account? <button type="button" class="auth-link" id="goLogin">Login</button></p>
+    </form>
+  </div>
+</dialog>
+<div id="toast"></div>
+<script>
+const seed = ${seedJson};
+let state = normalizeState(JSON.parse(localStorage.getItem("pkitaap-simple") || "null") || structuredClone(seed));
+let selectedClass = "", selectedBoard = "", selectedStream = "", selectedBookId = "", selectedCategory = "";
+let search = "", catalogStep = "classes";
+
+function normalizeState(input) {
+  const next = input || structuredClone(seed);
+  next.settings    = { ...seed.settings,   ...(next.settings    || {}) };
+  next.classThumbs = { ...seed.classThumbs, ...(next.classThumbs || {}) };
+  next.categories  = next.categories || seed.categories;
+  next.books = (next.books || seed.books).map(item => {
+    let board = item.board || "";
+    if (item.type === "school" && !board) board = (item.className === "Class 11" || item.className === "Class 12") ? "AHSEC" : "SEBA";
+    return { image:"", author:"", ...item, board };
+  });
+  next.locations = next.locations || seed.locations;
+  next.listings  = next.listings  || seed.listings;
+  next.classes = next.classes || seed.classes || ["Class 9","Class 10","Class 11","Class 12"];
+  next.streams = next.streams || seed.streams || ["Science","Commerce","Arts"];
+  next.boardsByClass = next.boardsByClass || seed.boardsByClass || {};
+  return next;
+}
+function save() { localStorage.setItem("pkitaap-simple", JSON.stringify(state)); }
+function toast(text) { const el = document.querySelector("#toast"); el.textContent = text; el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 1800); }
+function book() { return state.books.find(item => item.id === selectedBookId) || null; }
+const classes = state.classes || ["Class 9","Class 10","Class 11","Class 12"];
+const streams = state.streams || ["Science","Commerce","Arts"];
+const boardsByClass = state.boardsByClass || {};
+function shownBooks() {
+  if (selectedCategory) {
+    return state.books.filter(item => item.categoryId === selectedCategory);
+  }
+  if (search) {
+    return state.books.filter(item => {
+      if (item.type === "general" && !state.settings.general) return false;
+      return [item.title,item.className,item.board,item.stream,item.author].join(" ").toLowerCase().includes(search.toLowerCase());
+    });
+  }
+  return state.books.filter(item => {
+    if (item.type === "general" && !state.settings.general) return false;
+    if (item.className !== selectedClass) return false;
+    if (item.type === "school" && item.board !== selectedBoard) return false;
+    if ((selectedClass === "Class 11" || selectedClass === "Class 12") && item.stream !== selectedStream) return false;
+    return true;
+  });
+}
+function placeholder(label) {
+  const safe = label.replace(/[<>&"]/g,"");
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="500" height="360" viewBox="0 0 500 360"><rect width="500" height="360" rx="26" fill="#16a34a"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-family="Arial" font-size="42" font-weight="800">' + safe + '</text></svg>';
+  return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+}
+function imageForClass(name) { return state.classThumbs?.[name] || placeholder(name); }
+function imageForBook(item)  { return item.image || placeholder(item.title); }
+function bookMeta(item)      { return [item.className,item.board,item.stream].filter(Boolean).join(" / "); }
+function priceText(item)     { return '&#8377;' + item.price; }
+function renderClasses() {
+  const all = state.settings.general ? [...classes,"General"] : classes;
+  const grid = document.querySelector("#classGrid");
+  grid.style.display = catalogStep === "classes" ? "grid" : "none";
+  grid.innerHTML = all.map(name => '<button class="class-card ' + (name===selectedClass?"active":"") + '" data-class="' + name + '"><img src="' + imageForClass(name) + '" alt="' + name + '"/><div class="card-info"><strong>' + name + '</strong><span>' + state.books.filter(b=>b.className===name&&(b.type!=="general"||state.settings.general)).length + ' books</span></div></button>').join("");
+  document.querySelectorAll(".class-card").forEach(card => {
+    card.onclick = () => { selectedClass = card.dataset.class; selectedBoard=""; selectedStream=""; selectedBookId=""; selectedCategory=""; catalogStep = selectedClass === "General" ? "books" : "boards"; render(); };
+  });
+}
+function renderCategories() {
+  const card = document.querySelector("#categoryCard");
+  const grid = document.querySelector("#categoryGrid");
+  const show = catalogStep === "classes" && (state.categories||[]).length > 0;
+  card.style.display = show ? "block" : "none";
+  if (!show) return;
+  grid.innerHTML = (state.categories||[]).map(cat => '<button class="class-card" data-catid="' + cat.id + '"><img src="' + (cat.image||placeholder(cat.name)) + '" alt="' + cat.name + '"/><div class="card-info"><strong>' + cat.name + '</strong><span>' + state.books.filter(b=>b.categoryId===cat.id).length + ' books</span></div></button>').join("");
+  document.querySelectorAll("[data-catid]").forEach(card => {
+    card.onclick = () => { selectedClass = "General"; selectedCategory = card.dataset.catid; search = ""; document.querySelector("#searchInput").value = ""; document.querySelector("#clearSearch").style.display = "none"; catalogStep = "books"; render(); };
+  });
+}
+function renderBoards() {
+  const boardGrid = document.querySelector("#boardGrid");
+  if (catalogStep !== "boards") { boardGrid.style.display="none"; boardGrid.innerHTML=""; return; }
+  boardGrid.style.display = "grid";
+  const bds = boardsByClass[selectedClass] || ["SEBA","CBSE"];
+  boardGrid.innerHTML = bds.map(name => '<button class="stream-card" data-board="' + name + '"><strong>' + name + '</strong></button>').join("");
+  document.querySelectorAll("[data-board]").forEach(card => {
+    card.onclick = () => { selectedBoard = card.dataset.board; if (selectedClass==="Class 11"||selectedClass==="Class 12") { selectedStream=""; selectedBookId=""; catalogStep="streams"; } else { selectedBookId=""; catalogStep="books"; } render(); };
+  });
+}
+function renderStreams() {
+  const show = catalogStep === "streams";
+  const grid = document.querySelector("#streamGrid");
+  grid.style.display = show ? "grid" : "none";
+  grid.innerHTML = show ? streams.map(name => '<button class="stream-card" data-stream="' + name + '"><strong>' + name + '</strong></button>').join("") : "";
+  document.querySelectorAll("[data-stream]").forEach(card => { card.onclick = () => { selectedStream=card.dataset.stream; selectedBookId=""; catalogStep="books"; render(); }; });
+}
+function renderBooks() {
+  const items = shownBooks();
+  const grid  = document.querySelector("#bookGrid");
+  grid.style.display = catalogStep === "books" ? "grid" : "none";
+  grid.innerHTML = items.length ? items.map(item => '<button class="book-card ' + (item.id===selectedBookId?"active":"") + '" data-id="' + item.id + '"><img src="' + imageForBook(item) + '" alt="' + item.title + '"/><div class="card-info"><strong>' + item.title + '</strong><small>' + bookMeta(item) + '</small><span class="price">' + priceText(item) + '</span></div></button>').join("") : '<div>No books found</div>';
+  document.querySelectorAll(".book-card").forEach(card => { card.onclick = () => { selectedBookId=card.dataset.id; render(); }; });
+}
+function renderSelected() {
+  const b = book();
+  const box = document.querySelector("#selectedBox");
+  if (b) { box.innerHTML = '<img src="' + imageForBook(b) + '" alt="' + b.title + '"/><strong>' + b.title + '</strong><span>' + bookMeta(b) + ' &mdash; ' + priceText(b) + '</span>'; }
+  else { box.innerHTML = '<strong>No subject selected</strong><span>Select class, board, stream, and subject first.</span>'; }
+}
+function renderMatches(bookId) {
+  const bId = bookId || selectedBookId;
+  const list = document.querySelector("#matchList");
+  const matches = state.listings.filter(l => l.bookId === bId);
+  list.innerHTML = matches.length ? matches.map(l => '<div class="result-card"><strong>' + l.seller + '</strong><span>' + l.district + ', ' + l.place + (l.school?' &mdash; '+l.school:'') + '</span><span>Condition: ' + l.condition + '</span><div class="contact-row">' + (state.settings.instagram&&l.instagram?'<a href="https://instagram.com/'+l.instagram+'" target="_blank" class="btn btn-ghost" style="font-size:12px;">Instagram</a>':'') + (state.settings.whatsapp&&l.whatsapp?'<a href="https://wa.me/91'+l.whatsapp+'" target="_blank" class="btn btn-primary" style="font-size:12px;">WhatsApp</a>':'') + '</div></div>') .join("") : '<p style="color:#888;font-size:13px;font-weight:700;padding:8px 0;">No sellers found in your area yet.</p>';
+}
+function fillLocations(prefix) {
+  const dSel = document.querySelector("#"+prefix+"District");
+  const pSel = document.querySelector("#"+prefix+"Place");
+  const sSel = document.querySelector("#"+prefix+"School");
+  if (!dSel) return;
+  dSel.innerHTML = '<option value="">— District —</option>' + state.locations.map(d => '<option>' + d.district + '</option>').join("");
+  dSel.onchange = () => {
+    const d = state.locations.find(x => x.district === dSel.value);
+    pSel.innerHTML = '<option value="">— Place —</option>' + (d?.places||[]).map(p => '<option>' + p.name + '</option>').join("");
+    pSel.onchange = () => {
+      const p = d?.places.find(x => x.name === pSel.value);
+      if(sSel) sSel.innerHTML = '<option value="">— School (optional) —</option>' + (p?.schools||[]).map(s => '<option>' + s + '</option>').join("");
+    };
+  };
+}
+function render() {
+  document.querySelector("#catalogTitle").textContent = catalogStep==="classes"?"Classes":catalogStep==="boards"?"Boards":catalogStep==="streams"?"Streams":"Subjects";
+  document.querySelector("#backBtn").style.display = catalogStep==="classes" ? "none" : "inline-block";
+  document.querySelector("#matchCard").style.display = (selectedBookId && catalogStep === "books") ? "block" : "none";
+  renderClasses(); renderCategories(); renderBoards(); renderStreams(); renderBooks(); renderSelected();
+}
+function bindMenu() {
+  const btn = document.getElementById("menuBtn");
+  const panel = document.getElementById("menuPanel");
+  btn.onclick = () => { btn.classList.toggle("open"); panel.classList.toggle("open"); };
+  document.addEventListener("click", e => { if (!btn.contains(e.target) && !panel.contains(e.target)) { btn.classList.remove("open"); panel.classList.remove("open"); } });
+}
+function bindSearch() {
+  const inp = document.querySelector("#searchInput");
+  const clr = document.querySelector("#clearSearch");
+  const back = document.querySelector("#backBtn");
+  if(back) back.onclick = () => {
+    selectedCategory = "";
+    if (catalogStep === "books") {
+      if (selectedStream) catalogStep = "streams";
+      else if (selectedBoard) catalogStep = selectedClass === "General" ? "classes" : "boards";
+      else catalogStep = "classes";
+      selectedBookId = "";
+    } else if (catalogStep === "streams") { catalogStep = "boards"; selectedStream = ""; selectedBookId = ""; }
+    else if (catalogStep === "boards") { catalogStep = "classes"; selectedBoard = ""; selectedStream = ""; selectedBookId = ""; }
+    else { catalogStep = "classes"; selectedClass = selectedBoard = selectedStream = selectedBookId = ""; }
+    render();
+  };
+  inp.oninput = () => { search = inp.value; clr.style.display = search ? "grid" : "none"; if(search) catalogStep="books"; else catalogStep="classes"; render(); };
+  clr.onclick = () => { inp.value=""; search=""; selectedCategory=""; clr.style.display="none"; catalogStep="classes"; selectedClass=selectedBoard=selectedStream=selectedBookId=""; render(); };
+}
+function bindBuyForm() {
+  const frm = document.querySelector("#buyForm");
+  if(frm) frm.onsubmit = e => { e.preventDefault(); if(!selectedBookId) return; renderMatches(); };
+}
+function bindSellForm() {
+  const frm = document.querySelector("#sellForm");
+  if(frm) frm.onsubmit = e => {
+    e.preventDefault();
+    if(!selectedBookId){ toast("Please select a book first"); return; }
+    const listing = { id:"ls"+Date.now(), bookId:selectedBookId, seller:"You", district:document.getElementById("sellDistrict").value, place:document.getElementById("sellPlace").value, school:document.getElementById("sellSchool")?.value||"", condition:document.getElementById("sellCondition").value, instagram:document.getElementById("sellInstagram")?.value||"", whatsapp:document.getElementById("sellWhatsapp")?.value||"" };
+    state.listings.push(listing); save(); toast("Listed for sale!"); };
+}
+function bindPageNav() {
+  document.querySelectorAll("[data-page]").forEach(btn => { btn.onclick = () => { const pg = btn.dataset.page; document.querySelectorAll(".page").forEach(p=>p.classList.remove("active")); document.getElementById(pg+"Page")?.classList.add("active"); }; });
+  document.querySelectorAll("[data-go-buy]").forEach(btn => { btn.onclick = () => { document.querySelectorAll(".page").forEach(p=>p.classList.remove("active")); document.getElementById("buyPage").classList.add("active"); }; });
+}
+function bindAdminForms() {
+  const bookForm = document.getElementById("bookForm");
+  if(bookForm){
+    const nCls=document.getElementById("newClass");
+    const nBrd=document.getElementById("newBoard");
+    const nStr=document.getElementById("newStream");
+    nCls.innerHTML = [...classes,...(state.settings.general?["General"]:[])].map(c=>'<option>'+c+'</option>').join("");
+    nCls.onchange = () => { const c=nCls.value; nBrd.innerHTML=(boardsByClass[c]||["SEBA","CBSE"]).map(b=>'<option>'+b+'</option>').join(""); };
+    nCls.onchange();
+    bookForm.onsubmit = e => { e.preventDefault(); const cls=nCls.value; const brd=nBrd.value; const str=nStr.value; const title=document.getElementById("newTitle").value.trim(); const price=parseInt(document.getElementById("newPrice").value)||0; const author=document.getElementById("newAuthor").value.trim(); const image=document.getElementById("newImage").value.trim(); if(!title||!price) return; state.books.push({id:"b"+Date.now(),type:cls==="General"?"general":"school",className:cls,board:brd,stream:str,title,price,author,image}); save(); toast("Subject added!"); e.target.reset(); nCls.onchange(); };
+  }
+  const schoolForm = document.getElementById("schoolForm");
+  if(schoolForm){
+    const nDist=document.getElementById("newDistrict");
+    const nPlace=document.getElementById("newPlace");
+    nDist.innerHTML = state.locations.map(d=>'<option>'+d.district+'</option>').join("");
+    nDist.onchange = () => { const d=state.locations.find(x=>x.district===nDist.value); nPlace.innerHTML=(d?.places||[]).map(p=>'<option>'+p.name+'</option>').join(""); };
+    nDist.onchange();
+    schoolForm.onsubmit = e => { e.preventDefault(); const d=state.locations.find(x=>x.district===nDist.value); const p=d?.places.find(x=>x.name===nPlace.value); const sc=document.getElementById("newSchool").value.trim(); if(!p||!sc) return; p.schools.push(sc); save(); toast("School added!"); document.getElementById("newSchool").value=""; };
+  }
+  const catForm = document.getElementById("categoryForm");
+  if(catForm) catForm.onsubmit = e => { e.preventDefault(); const name=document.getElementById("categoryName").value.trim(); const image=document.getElementById("categoryImage").value.trim(); if(!name) return; state.categories.push({id:"c"+Date.now(),name,image}); save(); toast("Category added!"); e.target.reset(); };
+  const thumbForm = document.getElementById("classThumbForm");
+  if(thumbForm) thumbForm.onsubmit = e => { e.preventDefault(); const cls=document.getElementById("thumbClass").value.trim(); const img=document.getElementById("thumbImage").value.trim(); if(!cls||!img) return; state.classThumbs[cls]=img; save(); toast("Thumbnail saved!"); e.target.reset(); };
+}
+function fillSignupLocations() {
+  const locs = ${signupLocationsJson};
+  const dSel = document.getElementById("signupDistrict");
+  const pSel = document.getElementById("signupPlace");
+  const sSel = document.getElementById("signupSchool");
+  if(!dSel) return;
+  function updatePlaces() {
+    const d = locs.find(x => x.district === dSel.value);
+    pSel.innerHTML = '<option value="">— Place —</option>' + (d?.places||[]).map(p=>'<option>'+p.name+'</option>').join("");
+    sSel.innerHTML = '<option value="">— School (optional) —</option>';
+  }
+  function updateSchools() {
+    const d = locs.find(x => x.district === dSel.value);
+    const p = d?.places.find(x => x.name === pSel.value);
+    sSel.innerHTML = '<option value="">— School (optional) —</option>' + (p?.schools||[]).map(s=>'<option>'+s+'</option>').join("");
+  }
+  dSel.onchange = updatePlaces;
+  pSel.onchange = updateSchools;
+}
+function init() { fillLocations("buy"); fillLocations("sell"); fillSignupLocations(); render(); bindMenu(); bindSearch(); bindBuyForm(); bindSellForm(); bindPageNav(); bindAdminForms(); }
+init();
+(function(){
+  window._isLoggedIn = false;
+  const loginDialog = document.getElementById("loginDialog");
+  const signupDialog = document.getElementById("signupDialog");
+  const menuLoginCard = document.getElementById("menuLoginCard");
+  const menuSell = document.getElementById("menuSell");
+  const menuAccount = document.getElementById("menuAccount");
+  function openLogin() { signupDialog.close(); loginDialog.showModal(); }
+  function openSignup() { loginDialog.close(); signupDialog.showModal(); }
+  document.getElementById("loginClose").onclick = () => loginDialog.close();
+  document.getElementById("signupClose").onclick = () => signupDialog.close();
+  loginDialog.addEventListener("click", e => { if(e.target===loginDialog) loginDialog.close(); });
+  signupDialog.addEventListener("click", e => { if(e.target===signupDialog) signupDialog.close(); });
+  document.getElementById("goSignup").onclick = openSignup;
+  document.getElementById("goLogin").onclick = openLogin;
+  document.getElementById("loginBtn").onclick = openLogin;
+  document.getElementById("menuGoSignup").onclick = openSignup;
+  function onAuthSuccess() { window._isLoggedIn=true; loginDialog.close(); signupDialog.close(); menuLoginCard.style.display="none"; menuSell.style.display=""; menuAccount.style.display=""; toast("Welcome! You are logged in."); }
+  document.getElementById("loginContinue").onclick = onAuthSuccess;
+  document.getElementById("signupContinue").onclick = () => {
+    const cls = document.getElementById("signupClass")?.value;
+    const district = document.getElementById("signupDistrict")?.value;
+    const place = document.getElementById("signupPlace")?.value;
+    const pwd = document.getElementById("signupPassword");
+    if(!cls){ toast("Please select your class"); return; }
+    if(!district){ toast("Please select your district"); return; }
+    if(!place){ toast("Please select your place / town"); return; }
+    if(pwd&&pwd.value.length<8){toast("Password must be at least 8 characters");return;}
+    onAuthSuccess();
+  };
+})();
+<\/script>
+</body>
+</html>`;
+}
+
+function exportHTML(){
+  const html = buildPkitaapHTML();
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'pkitaap.html';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+  toast('🌐 HTML exported!');
+}
+
+// ══════════════════════════════════════════════════
+//  BACKUP DOWNLOAD
+// ══════════════════════════════════════════════════
+function backupDownload(){
+  const blob = _buildAdminBlob();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'PKITAAP_ADMIN.html';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+  toast('💾 Admin file downloaded!');
+}
+function _buildAdminBlob(){
+  const stateJson = JSON.stringify(S);
+  let h = document.documentElement.outerHTML;
+  h = h.replace(/\/\/ ◆PKITAAP_ADMIN_STATE◆ .*/,'// ◆PKITAAP_ADMIN_STATE◆ '+stateJson);
+  if(!h.startsWith('<!DOCTYPE')) h='<!DOCTYPE html>\n'+h;
+  return new Blob([h],{type:'text/html;charset=utf-8'});
+}
+
+// ══════════════════════════════════════════════════
+//  COPY CODE
+// ══════════════════════════════════════════════════
+function copyCode(){
+  const btn = document.getElementById('copyCodeBtn');
+  const stateJson = JSON.stringify(S);
+  let h = document.documentElement.outerHTML;
+  h = h.replace(/\/\/ ◆PKITAAP_ADMIN_STATE◆ .*/,'// ◆PKITAAP_ADMIN_STATE◆ '+stateJson);
+  if(!h.startsWith('<!DOCTYPE')) h='<!DOCTYPE html>\n'+h;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(h).then(()=>{
+      btn.textContent='✅ Copied!';
+      btn.style.background='#dcfce7'; btn.style.color='#166534';
+      toast('📋 Full code copied to clipboard!');
+      setTimeout(()=>{ btn.textContent='📋 Copy Code'; btn.style.background=''; btn.style.color=''; }, 2500);
+    }).catch(()=>_copyFallback(h, btn));
+  } else {
+    _copyFallback(h, btn);
+  }
+}
+function _copyFallback(text, btn){
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0;';
+  document.body.appendChild(ta);
+  ta.select(); ta.setSelectionRange(0, ta.value.length);
+  try{
+    document.execCommand('copy');
+    btn.textContent='✅ Copied!';
+    btn.style.background='#dcfce7'; btn.style.color='#166534';
+    toast('📋 Full code copied to clipboard!');
+    setTimeout(()=>{ btn.textContent='📋 Copy Code'; btn.style.background=''; btn.style.color=''; }, 2500);
+  } catch(e){ toast('⚠️ Copy failed — use 💾 Backup instead.'); }
+  document.body.removeChild(ta);
+}
+
+// ══════════════════════════════════════════════════
+//  INTERNAL SELF-EMBED (patch state marker in live DOM)
+// ══════════════════════════════════════════════════
+function _embedStateInSelf(){
+  // Find the script tag containing the state marker and patch it in-place
+  // so document.documentElement.outerHTML always carries latest data
+  const scripts = document.querySelectorAll('script');
+  const marker = '// ◆PKITAAP_ADMIN_STATE◆';
+  for(const sc of scripts){
+    if(sc.textContent.includes(marker)){
+      sc.textContent = sc.textContent.replace(
+        /\/\/ ◆PKITAAP_ADMIN_STATE◆ .*/,
+        marker + ' ' + JSON.stringify(S)
+      );
+      break;
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  AUTO-SAVE ENGINE (same pattern as STIICKUU)
+// ══════════════════════════════════════════════════
+let _saveTimer = null;
+function scheduleSaveToFile(){
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(()=>saveToFile(true), 800);
+}
+
+const _IDB_NAME='pkitaap_admin_fs',_IDB_STORE='handles',_IDB_KEY='adminFile';
+function _idbGet(cb){ try{ const req=indexedDB.open(_IDB_NAME,1); req.onupgradeneeded=e=>e.target.result.createObjectStore(_IDB_STORE); req.onsuccess=e=>{ const db=e.target.result; const tx=db.transaction(_IDB_STORE,'readonly'); const r=tx.objectStore(_IDB_STORE).get(_IDB_KEY); r.onsuccess=()=>cb(null,r.result||null); r.onerror=()=>cb(r.error,null); }; req.onerror=()=>cb(req.error,null); }catch(e){cb(e,null);} }
+function _idbSet(handle,cb){ try{ const req=indexedDB.open(_IDB_NAME,1); req.onupgradeneeded=e=>e.target.result.createObjectStore(_IDB_STORE); req.onsuccess=e=>{ const db=e.target.result; const tx=db.transaction(_IDB_STORE,'readwrite'); const r=tx.objectStore(_IDB_STORE).put(handle,_IDB_KEY); r.onsuccess=()=>{if(cb)cb(null);}; r.onerror=()=>{if(cb)cb(r.error);}; }; req.onerror=()=>{if(cb)cb(req.error);}; }catch(e){if(cb)cb(e);} }
+function _idbClear(cb){ try{ const req=indexedDB.open(_IDB_NAME,1); req.onupgradeneeded=e=>e.target.result.createObjectStore(_IDB_STORE); req.onsuccess=e=>{ const db=e.target.result; const tx=db.transaction(_IDB_STORE,'readwrite'); tx.objectStore(_IDB_STORE).delete(_IDB_KEY); tx.oncomplete=()=>{if(cb)cb();}; }; req.onerror=()=>{if(cb)cb();}; }catch(e){if(cb)cb();} }
+
+function _setPill(state){
+  const p=document.getElementById('autoSavePill');
+  if(!p)return;
+  const styles={ linked:{bg:'#dcfce7',col:'#166534',txt:'🟢 Auto-saving'}, saving:{bg:'#dbeafe',col:'#1e40af',txt:'💾 Saving…'}, browser:{bg:'#fef3c7',col:'#92400e',txt:'🟡 Browser only'}, error:{bg:'#fee2e2',col:'#dc2626',txt:'🔴 Save failed'}, setup:{bg:'#f3f4f6',col:'#6b7280',txt:'⏳ Setting up…'} };
+  const s=styles[state]||styles.browser;
+  p.style.background=s.bg; p.style.color=s.col; p.textContent=s.txt;
+  if(state==='linked'){ p.title='Auto-saving to this admin file.'; p.onclick=()=>_promptSetup(); p.style.cursor='pointer'; }
+  else if(state==='browser'){ p.title='Click to enable auto-save to file.'; p.onclick=()=>_promptSetup(); p.style.cursor='pointer'; }
+  else { p.onclick=null; p.style.cursor='default'; p.title=''; }
+}
+async function saveToFile(silent){
+  if(!silent){ _buildAdminBlob(); return; }
+  if(!window._fileHandle){ _setPill('browser'); return; }
+  _setPill('saving');
+  try{
+    const perm=await window._fileHandle.queryPermission({mode:'readwrite'});
+    if(perm!=='granted'){ const req=await window._fileHandle.requestPermission({mode:'readwrite'}); if(req!=='granted'){ _setPill('browser'); return; } }
+    const blob=_buildAdminBlob();
+    const writable=await window._fileHandle.createWritable();
+    await writable.write(blob); await writable.close();
+    _setPill('linked'); _showSaveInd();
+  }catch(e){ if(e.name==='NotAllowedError'){ _setPill('browser'); } else { _setPill('error'); window._fileHandle=null; _idbClear(); } }
+}
+function _promptSetup(){
+  if(!window.showOpenFilePicker){ toast('ℹ️ Auto-save needs Chrome/Edge desktop. Use 💾 Backup instead.'); return; }
+  if(confirm('Enable auto-save?\n\nClick OK then select THIS same admin HTML file. Every change will auto-save into it.')){
+    (async()=>{
+      try{
+        const [handle]=await window.showOpenFilePicker({ types:[{description:'Admin HTML',accept:{'text/html':['.html','.htm']}}], multiple:false });
+        window._fileHandle=handle; _idbSet(handle);
+        await saveToFile(true);
+        toast('✅ Auto-save enabled!');
+      }catch(e){ if(e.name!=='AbortError') toast('⚠️ Could not set up auto-save: '+e.message); }
+    })();
+  }
+}
+function _showSaveInd(){
+  let ind=document.getElementById('_adminSaveInd');
+  if(!ind){ ind=document.createElement('div'); ind.id='_adminSaveInd'; ind.style.cssText='position:fixed;bottom:16px;left:16px;background:#16a34a;color:white;font-family:"Nunito",sans-serif;font-size:13px;font-weight:800;padding:7px 14px;border-radius:20px;z-index:99999;opacity:0;transition:opacity 0.3s;pointer-events:none;box-shadow:0 2px 10px rgba(0,0,0,0.2);'; document.body.appendChild(ind); }
+  ind.textContent='💾 Auto-saved'; ind.style.opacity='1';
+  clearTimeout(ind._t); ind._t=setTimeout(()=>{ind.style.opacity='0';},2500);
+}
+async function _initAutoSave(){
+  _setPill('setup');
+  if(!window.showOpenFilePicker){ _setPill('browser'); return; }
+  _idbGet(async(err,handle)=>{
+    if(err||!handle){ _setPill('browser'); return; }
+    window._fileHandle=handle;
+    try{ const perm=await handle.queryPermission({mode:'readwrite'}); if(perm==='granted') _setPill('linked'); else _setPill('browser'); }
+    catch(e){ window._fileHandle=null; _idbClear(); _setPill('browser'); }
+  });
+}
+
+// ══════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════
+updateCounts();
+renderDash();
+_initAutoSave();
+
+// Load saved state marker (for auto-save patching)
+// ◆PKITAAP_ADMIN_STATE◆ null
+</script>
+</body>
+</html>
