@@ -397,7 +397,6 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 </dialog>
 <dialog id="signupDialog">
   <div class="auth-modal">
-    <button class="auth-close" id="signupClose">&#10005;</button>
     <div class="auth-brand"><div class="auth-logo">PKITAAP</div><p class="auth-tagline" id="signupTagline">Create your account</p></div>
 
     <!-- ── Stage 1: Google Sign-up ─────────────────────────── -->
@@ -415,14 +414,15 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
     <!-- ── Stage 2: Profile form (shown after Google sign-in) ── -->
     <div id="signupStage2" style="display:none;">
       <form class="auth-form" id="signupForm">
-        <div class="auth-row">
-          <div class="auth-field"><label>First Name</label><input type="text" id="signupFirstName" placeholder="First name" required></div>
-          <div class="auth-field"><label>Last Name</label><input type="text" id="signupLastName" placeholder="Last name" required></div>
+        <div class="auth-field">
+          <label>Full Name</label>
+          <input type="text" id="signupFullName" placeholder="Your full name" required autocomplete="name">
         </div>
         <div class="auth-field">
           <label>Mobile Number</label>
           <input type="tel" id="signupMobile" placeholder="10-digit number" maxlength="10" required style="width:100%;">
         </div>
+        <!-- passport field is OFF -->
         <div class="auth-field">
           <label>Currently Studying Class</label>
           <select id="signupClass" required>
@@ -2201,6 +2201,7 @@ init();
   window._isLoggedIn  = false;
   window._currentUser = null;
   let _googleUser     = null;   // Firebase user returned from Google popup
+  let _authStateHandled = false; // Prevents onAuthStateChanged double-firing
 
   // ── Google SVG (reused in button resets) ──────────────────
   const GOOGLE_SVG = '<svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>';
@@ -2233,9 +2234,19 @@ init();
   }
 
   document.getElementById('loginClose').onclick  = function() { loginDialog.close(); };
-  document.getElementById('signupClose').onclick = function() { signupDialog.close(); _resetSignupToStage1(); };
+  // signupClose removed — user MUST fill the profile form before accessing the app
   loginDialog.addEventListener('click',  function(e) { if (e.target === loginDialog)  loginDialog.close(); });
-  signupDialog.addEventListener('click', function(e) { if (e.target === signupDialog) { signupDialog.close(); _resetSignupToStage1(); } });
+  // Prevent backdrop-click closing when in stage 2 (profile form must be completed)
+  signupDialog.addEventListener('click', function(e) {
+    if (e.target === signupDialog) {
+      const stage2 = document.getElementById('signupStage2');
+      if (stage2 && stage2.style.display === 'none') {
+        // Stage 1 — allow close
+        signupDialog.close(); _resetSignupToStage1();
+      }
+      // Stage 2 — do NOT close
+    }
+  });
 
   document.getElementById('goSignup').onclick     = openSignup;
   document.getElementById('goLogin').onclick      = openLogin;
@@ -2272,6 +2283,7 @@ init();
 
   // ── Google Sign-In (shared by login + signup) ──────────────
   window.googleSignIn = async function(mode) {
+    _authStateHandled = true; // Manual flow — ignore the onAuthStateChanged re-fire
     const btnId = mode === 'login' ? 'loginGoogleBtn' : 'signupGoogleBtn';
     const btn   = document.getElementById(btnId);
     if (btn) { btn.disabled = true; btn.innerHTML = '<span class="otp-spinner"></span>Opening Google…'; }
@@ -2328,11 +2340,8 @@ init();
   // Pre-fill name from Google profile
   function _prefillNameFromGoogle() {
     if (!_googleUser || !_googleUser.displayName) return;
-    const parts = _googleUser.displayName.trim().split(/s+/);
-    const fn = document.getElementById('signupFirstName');
-    const ln = document.getElementById('signupLastName');
-    if (fn && !fn.value) fn.value = parts[0] || '';
-    if (ln && !ln.value) ln.value = parts.slice(1).join(' ') || '';
+    const fn = document.getElementById('signupFullName');
+    if (fn && !fn.value) fn.value = _googleUser.displayName.trim();
   }
 
   // ── Profile form submit ────────────────────────────────────
@@ -2353,16 +2362,19 @@ init();
     if (!place)          { toast('Please enter your place / town'); return; }
     if (!school)         { toast('Please enter your school / college'); return; }
 
-    const firstName = ((document.getElementById('signupFirstName') || {}).value || '').trim();
-    const lastName  = ((document.getElementById('signupLastName')  || {}).value || '').trim();
+    const firstName = ((document.getElementById('signupFullName') || {}).value || '').trim();
+    const lastName  = '';
     const insta     = ((document.getElementById('signupInsta')     || {}).value || '').trim();
     const stateVal  = (document.getElementById('signupState')       || {}).value;
+    const passport  = ((document.getElementById('signupPassport')   || {}).value || '').trim();
+
+    if (!firstName) { toast('Please enter your full name'); return; }
 
     const userData = {
       id          : 'u' + Date.now(),
       uid         : _googleUser.uid,
       email       : _googleUser.email || '',
-      name        : (firstName + ' ' + lastName).trim(),
+      name        : firstName,
       mobile      : mobile,
       phone       : '+91' + mobile,
       insta       : insta || '',
@@ -2372,6 +2384,7 @@ init();
       subDistrict,
       place,
       school      : school || '',
+      passport    : passport || '',
       status      : 'active',
       role        : 'user',
       joinedAt    : new Date().toISOString().slice(0, 10)
@@ -2389,6 +2402,37 @@ init();
       continueBtn.textContent = 'Create Account';
     }
   };
+
+  // ── Session persistence — restore login on page reload ──────────
+  // Firebase Auth automatically restores the session. We listen here
+  // so the user never has to log in again after refreshing the page.
+  if (_auth) {
+    _auth.onAuthStateChanged(async function(firebaseUser) {
+      // onAuthStateChanged fires once on load. After that we ignore it
+      // to avoid double-handling the login popup flow.
+      if (_authStateHandled) return;
+      _authStateHandled = true;
+
+      if (!firebaseUser) return; // Not logged in — show normal UI
+
+      // Firebase says user is signed in — check if they have a profile
+      const existingData = await _getUserFromFirestore(firebaseUser.uid);
+
+      if (existingData) {
+        // Returning user with complete profile — restore session silently
+        await onAuthSuccess(existingData, firebaseUser);
+      } else {
+        // Firebase session exists but no Firestore profile yet
+        // (e.g. user signed in but closed browser before completing form)
+        _googleUser = firebaseUser;
+        document.getElementById('signupStage1').style.display = 'none';
+        document.getElementById('signupStage2').style.display = '';
+        document.getElementById('signupTagline').textContent  = 'Complete your profile';
+        _prefillNameFromGoogle();
+        signupDialog.showModal();
+      }
+    });
+  }
 
 })();
 </script>
