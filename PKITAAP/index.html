@@ -203,7 +203,7 @@ label{font-size:13px;font-weight:800;color:#444;display:block;margin-bottom:5px;
 <div class="sidebar">
   <div class="sidebar-section">
     <div class="sidebar-label">Main</div>
-    <div class="nav-item" onclick="nav('dash')"><span class="icon">📊</span>Dashboard</div>
+    <div class="nav-item active" onclick="nav('dash')"><span class="icon">📊</span>Dashboard</div>
     <div class="nav-item" onclick="nav('classes')"><span class="icon">🏫</span>Classes<span class="nav-count" id="nc-classes">4</span></div>
     <div class="nav-item" onclick="nav('subjects')"><span class="icon">📖</span>Subjects<span class="nav-count" id="nc-subjects">9</span></div>
     <div class="nav-item" onclick="nav('categories')"><span class="icon">🏷️</span>Categories<span class="nav-count" id="nc-categories">0</span></div>
@@ -216,7 +216,7 @@ label{font-size:13px;font-weight:800;color:#444;display:block;margin-bottom:5px;
     <div class="sidebar-label">Config</div>
     <div class="nav-item" onclick="nav('settings')"><span class="icon">⚙️</span>Settings</div>
     <div class="nav-item" onclick="nav('export')"><span class="icon">📤</span>Export &amp; Publish</div>
-    <div class="nav-item active" onclick="nav('firebase')"><span class="icon">🔥</span>Firebase<span class="nav-count" id="nc-firebase" style="background: rgb(254, 243, 199); color: rgb(146, 64, 14);">…</span></div>
+    <div class="nav-item" onclick="nav('firebase')"><span class="icon">🔥</span>Firebase<span class="nav-count" id="nc-firebase" style="background:#fef3c7;color:#b45309;">OFF</span></div>
   </div>
 </div>
 
@@ -224,7 +224,7 @@ label{font-size:13px;font-weight:800;color:#444;display:block;margin-bottom:5px;
 <div class="main">
 
 <!-- ═══ DASHBOARD ═══ -->
-<div class="panel" id="panel-dash">
+<div class="panel active" id="panel-dash">
   <div>
     <div class="page-title">Dashboard</div>
     <div class="page-sub">Overview of your PKITAAP app data</div>
@@ -971,7 +971,7 @@ Manipur, Imphal West" style="font-family:monospace;font-size:13px;resize:vertica
 
 
 <!-- ═══ FIREBASE ═══ -->
-<div class="panel active" id="panel-firebase">
+<div class="panel" id="panel-firebase">
   <div>
     <div class="page-title">🔥 Firebase</div>
     <div class="page-sub">Connect to Firebase Firestore — sync subjects, users &amp; listings online</div>
@@ -981,7 +981,7 @@ Manipur, Imphal West" style="font-family:monospace;font-size:13px;resize:vertica
   <div class="card" id="fb-config-card">
     <div class="card-head">
       <div class="card-title">⚙️ Firebase Configuration</div>
-      <div id="fb-status-pill" style="font-size: 12px; font-weight: 800; padding: 4px 14px; border-radius: 20px; background: rgb(254, 243, 199); color: rgb(146, 64, 14);">⏳ Connecting...</div>
+      <div id="fb-status-pill" style="font-size:12px;font-weight:800;padding:4px 14px;border-radius:20px;background:#fef3c7;color:#b45309;">● Not Connected</div>
     </div>
     <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
       <div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:12px;padding:12px 16px;font-size:13px;font-weight:700;color:#9a3412;line-height:1.8;">
@@ -3590,6 +3590,53 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 @media (max-width: 760px) { .main { padding: 14px 10px 28px; } .admin-grid { grid-template-columns: 1fr; } }
 @media (max-width: 420px) { .topbar { padding: 0 12px; } .logo { font-size: 22px; } .class-card, .stream-card, .book-card { min-height: 76px; padding: 12px; } .class-card strong, .book-card strong { font-size: 16px; } }
 .location-select { border: none; background: transparent; font-weight: 800; font-size: 17px; padding: 0; width: 100%; margin-top: 2px; cursor: pointer; outline: none; color: var(--text); min-height: unset; }
+/* FLOATING INPUT PREVIEW BUBBLE */
+.input-preview-bubble {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0; right: 0;
+  background: #1f2937;
+  color: #f9fafb;
+  border-radius: 12px;
+  padding: 9px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  word-break: break-word;
+  line-height: 1.5;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+  pointer-events: none;
+  z-index: 300;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  white-space: pre-wrap;
+}
+.input-preview-bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%; left: 20px;
+  border: 7px solid transparent;
+  border-top-color: #1f2937;
+}
+.input-preview-bubble.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+/* AUTOCOMPLETE */
+.pw-wrap { position: relative; }
+.pw-wrap input { padding-right: 48px; width: 100%; }
+.pw-eye { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; color: #9ca3af; font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center; transition: color 0.15s; }
+.pw-eye:hover { color: var(--red); }
+.pw-wrap input:disabled ~ .pw-eye { pointer-events: none; color: #d1d5db; }
+.ac-wrap { position: relative; }
+.ac-wrap input { padding-right: 52px; }
+.ac-ok { position: absolute; right: 7px; top: 50%; transform: translateY(-50%); background: var(--red); color: white; border: none; border-radius: 8px; font-size: 12px; font-weight: 900; padding: 5px 11px; cursor: pointer; display: none; z-index: 5; transition: background 0.15s; white-space: nowrap; }
+.ac-ok:hover { background: var(--red-dark); }
+.ac-wrap input:disabled { background: #f3f4f6; color: #aaa; cursor: not-allowed; border-color: #e5e7eb; }
+.ac-list { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: white; border: 2px solid var(--line); border-radius: 12px; box-shadow: 0 10px 28px rgba(0,0,0,0.13); max-height: 190px; overflow-y: auto; z-index: 200; display: none; }
+.ac-item { padding: 11px 14px; font-size: 14px; font-weight: 700; cursor: pointer; border-bottom: 1px solid var(--line); color: var(--text); transition: background 0.1s; }
+.ac-item:last-child { border-bottom: none; }
+.ac-item:hover { background: var(--red-light); color: var(--red); }
 </style>
 </head>
 <body>
@@ -3763,7 +3810,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
     <div class="auth-brand"><div class="auth-logo">${appName}</div><p class="auth-tagline">Welcome back!</p></div>
     <form class="auth-form" id="loginForm">
       <div class="auth-field"><label>Mobile Number</label><input type="tel" placeholder="10-digit number" maxlength="10"></div>
-      <div class="auth-field"><label>Password / PIN</label><input type="password" placeholder="Enter your password or PIN"></div>
+      <div class="auth-field"><label>Password / PIN</label><div class="pw-wrap"><input type="password" id="loginPassword" placeholder="Enter your password or PIN"><button type="button" class="pw-eye" onclick="togglePwEye('loginPassword',this)" tabindex="-1" title="Show/hide password">👁️</button></div></div>
       <button class="auth-btn" id="loginContinue" type="button">Login</button>
       <p class="auth-switch">Don't have an account? <button type="button" class="auth-link" id="goSignup">Create account</button></p>
     </form>
@@ -3829,27 +3876,33 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
       <div class="auth-row">
         <div class="auth-field">
           <label>Place / Town</label>
-          <select id="signupPlace" onchange="updateSignupSchools();checkPlaceManual()">
-            <option value="">— Place —</option>
-          </select>
-          <div id="placeManualWrap" style="display:none;margin-top:6px;">
-            <input type="text" id="signupPlaceManual" placeholder="Type your place / town" style="background:#f0fdf4;border-color:#86efac;">
+          <div class="ac-wrap" id="placeAcWrap">
+            <div class="input-preview-bubble" id="placeBubble"></div>
+            <input type="text" id="signupPlace" autocomplete="off" placeholder="Select sub-district first"
+              disabled
+              oninput="filterPlaceSuggestions(this.value);showInputBubble('placeBubble',this.value)"
+              onfocus="showPlaceSuggestions();showInputBubble('placeBubble',this.value)"
+              onblur="setTimeout(()=>{hideSuggestions('placeAcList');hideInputBubble('placeBubble')},150)">
+            <button type="button" class="ac-ok" id="placeOkBtn" onmousedown="event.preventDefault();confirmPlaceInput()">OK</button>
+            <div class="ac-list" id="placeAcList"></div>
           </div>
-          <button type="button" id="placeManualBtn" onclick="togglePlaceManual()" style="background:none;border:none;color:var(--red);font-size:12px;font-weight:900;cursor:pointer;padding:4px 0;text-align:left;text-decoration:underline;">✏️ Not listed? Add manually</button>
         </div>
         <div class="auth-field">
           <label>School / College</label>
-          <select id="signupSchool">
-            <option value="">— School (optional) —</option>
-          </select>
-          <div id="schoolManualWrap" style="display:none;margin-top:6px;">
-            <input type="text" id="signupSchoolManual" placeholder="Type your school / college" style="background:#f0fdf4;border-color:#86efac;">
+          <div class="ac-wrap" id="schoolAcWrap">
+            <div class="input-preview-bubble" id="schoolBubble"></div>
+            <input type="text" id="signupSchool" autocomplete="off" placeholder="Enter place first"
+              disabled
+              oninput="filterSchoolSuggestions(this.value);showInputBubble('schoolBubble',this.value)"
+              onfocus="showSchoolSuggestions();showInputBubble('schoolBubble',this.value)"
+              onblur="setTimeout(()=>{hideSuggestions('schoolAcList');hideInputBubble('schoolBubble')},150)">
+            <button type="button" class="ac-ok" id="schoolOkBtn" onmousedown="event.preventDefault();confirmSchoolInput()">OK</button>
+            <div class="ac-list" id="schoolAcList"></div>
           </div>
-          <button type="button" id="schoolManualBtn" onclick="toggleSchoolManual()" style="background:none;border:none;color:var(--red);font-size:12px;font-weight:900;cursor:pointer;padding:4px 0;text-align:left;text-decoration:underline;">✏️ Not listed? Add manually</button>
         </div>
       </div>
-      <div class="auth-field"><label>Create Password</label><input type="password" id="signupPassword" placeholder="8-16 characters" minlength="8" maxlength="16" required></div>
-      <button class="auth-btn" id="signupContinue" type="button">Create Account</button>
+      <div class="auth-field"><label>Create Password</label><div class="pw-wrap"><input type="password" id="signupPassword" placeholder="Enter place &amp; school first" minlength="8" maxlength="16" required disabled oninput="checkSignupPasswordFilled()"><button type="button" class="pw-eye" onclick="togglePwEye('signupPassword',this)" tabindex="-1" title="Show/hide password">👁️</button></div></div>
+      <button class="auth-btn" id="signupContinue" type="button" disabled style="opacity:0.5;cursor:not-allowed;">Create Account</button>
       <p class="auth-switch">Already have an account? <button type="button" class="auth-link" id="goLogin">Login</button></p>
     </form>
   </div>
@@ -4184,114 +4237,300 @@ function updateSignupDistricts() {
   const stateName = document.getElementById('signupState')?.value;
   const dSel  = document.getElementById('signupDistrict');
   const sdSel = document.getElementById('signupSubDistrict');
-  const pSel  = document.getElementById('signupPlace');
-  const sSel  = document.getElementById('signupSchool');
+  const pInp  = document.getElementById('signupPlace');
+  const sInp  = document.getElementById('signupSchool');
   if (!dSel) return;
   dSel.innerHTML = '<option value="">— District —</option>' + _getDistricts(stateName).map(d => '<option value="' + d.district + '">' + d.district + '</option>').join('');
   if (sdSel) sdSel.innerHTML = '<option value="">— Sub-District —</option>';
-  if (pSel)  pSel.innerHTML  = '<option value="">— Place —</option>';
-  if (sSel)  sSel.innerHTML  = '<option value="">— School (optional) —</option>';
-  _resetPlaceManual(); _resetSchoolManual();
+  if (pInp) { pInp.value = ''; pInp.disabled = true; pInp.placeholder = 'Select sub-district first'; }
+  if (sInp) { sInp.value = ''; sInp.disabled = true; sInp.placeholder = 'Enter place first'; }
+  window._placeOptions = []; window._schoolOptions = []; window._schoolLoadedForPlace = '';
+  const pOk = document.getElementById('placeOkBtn'); if (pOk) pOk.style.display='none';
+  const sOk = document.getElementById('schoolOkBtn'); if (sOk) sOk.style.display='none';
+  hideAllAcSuggestions();
 }
 function updateSignupSubDistricts() {
   const stateName = document.getElementById('signupState')?.value;
   const district  = document.getElementById('signupDistrict')?.value;
   const sdSel = document.getElementById('signupSubDistrict');
-  const pSel  = document.getElementById('signupPlace');
-  const sSel  = document.getElementById('signupSchool');
+  const pInp  = document.getElementById('signupPlace');
+  const sInp  = document.getElementById('signupSchool');
   if (!sdSel) return;
   sdSel.innerHTML = '<option value="">— Sub-District —</option>' +
     _getSubDistricts(stateName, district).map(sd =>
       '<option value="' + sd.subDistrict + '">' + sd.subDistrict + '</option>'
     ).join('');
-  if (pSel) pSel.innerHTML = '<option value="">— Place —</option>';
-  if (sSel) sSel.innerHTML = '<option value="">— School (optional) —</option>';
-  _resetPlaceManual(); _resetSchoolManual();
+  if (pInp) { pInp.value = ''; pInp.disabled = true; pInp.placeholder = 'Select sub-district first'; }
+  if (sInp) { sInp.value = ''; sInp.disabled = true; sInp.placeholder = 'Enter place first'; }
+  window._placeOptions = []; window._schoolOptions = []; window._schoolLoadedForPlace = '';
+  const pOk = document.getElementById('placeOkBtn'); if (pOk) pOk.style.display='none';
+  const sOk = document.getElementById('schoolOkBtn'); if (sOk) sOk.style.display='none';
+  hideAllAcSuggestions();
 }
+// ── AUTOCOMPLETE: Place & School ──────────────────────────────
+// Holds suggestion lists for the current sub-district
+window._placeOptions  = [];   // string[]
+window._schoolOptions = [];   // string[]
+window._schoolLoadedForPlace = '';
+
 function updateSignupPlaces() {
   const stateName   = document.getElementById('signupState')?.value;
   const district    = document.getElementById('signupDistrict')?.value;
   const subDistrict = document.getElementById('signupSubDistrict')?.value;
-  const pSel = document.getElementById('signupPlace');
-  const sSel = document.getElementById('signupSchool');
-  if (!pSel) return;
-  pSel.innerHTML = '<option value="">— Place —</option>' +
-    _getPlaces(stateName, district, subDistrict).map(p =>
-      '<option value="' + p.name + '">' + p.name + '</option>'
-    ).join('');
-  if (sSel) sSel.innerHTML = '<option value="">— School (optional) —</option>';
-  _resetPlaceManual(); _resetSchoolManual();
+  const pInp = document.getElementById('signupPlace');
+  const sInp = document.getElementById('signupSchool');
+  if (pInp) { pInp.value = ''; }
+  if (sInp) { sInp.value = ''; }
+  window._placeOptions  = _getPlaces(stateName, district, subDistrict).map(p => p.name);
+  window._schoolOptions = [];
+  window._schoolLoadedForPlace = '';
+  hideAllAcSuggestions();
+  const pOk = document.getElementById('placeOkBtn'); if (pOk) pOk.style.display='none';
+  const sOk = document.getElementById('schoolOkBtn'); if (sOk) sOk.style.display='none';
+  // Unlock Place only when all three location fields are selected
+  if (pInp) {
+    const ready = !!(stateName && district && subDistrict);
+    pInp.disabled = !ready;
+    pInp.placeholder = ready ? 'Type your place / town' : 'Select sub-district first';
+  }
+  // Always re-lock School when location changes
+  if (sInp) {
+    sInp.disabled = true;
+    sInp.placeholder = 'Enter place first';
+  }
+  _loadCommunityPlaces(stateName, district, subDistrict);
 }
+
 function updateSignupSchools() {
   const stateName   = document.getElementById('signupState')?.value;
   const district    = document.getElementById('signupDistrict')?.value;
   const subDistrict = document.getElementById('signupSubDistrict')?.value;
-  const place       = document.getElementById('signupPlace')?.value;
-  const sSel = document.getElementById('signupSchool');
-  if (sSel) sSel.innerHTML = '<option value="">— School (optional) —</option>' + _getSchools(stateName, district, subDistrict, place).map(s => '<option value="' + s + '">' + s + '</option>').join('');
-  _resetSchoolManual();
+  const place       = (document.getElementById('signupPlace')?.value || '').trim();
+  const sInp = document.getElementById('signupSchool');
+  if (sInp) sInp.value = '';
+  window._schoolOptions = _getSchools(stateName, district, subDistrict, place);
+  window._schoolLoadedForPlace = '';
+  hideSuggestions('schoolAcList');
+  const sOk = document.getElementById('schoolOkBtn'); if (sOk) sOk.style.display='none';
+  if (sInp) {
+    sInp.disabled = !place;
+    sInp.placeholder = place ? 'Type your school / college' : 'Enter place first';
+  }
+  if (place) _loadCommunitySchools(stateName, district, subDistrict, place);
+  // Re-lock password since school was cleared
+  _checkUnlockPassword();
 }
-function checkPlaceManual() {
-  // when user picks from select, hide manual input
-  const wrap = document.getElementById('placeManualWrap');
-  const inp = document.getElementById('signupPlaceManual');
-  const btn = document.getElementById('placeManualBtn');
-  if(wrap && wrap.style.display !== 'none'){
-    wrap.style.display = 'none';
-    if(inp) inp.value = '';
-    if(btn) btn.textContent = '✏️ Not listed? Add manually';
+
+function filterPlaceSuggestions(val) {
+  const list = document.getElementById('placeAcList');
+  if (!list) return;
+  const q = val.trim().toLowerCase();
+  const filtered = q
+    ? (window._placeOptions || []).filter(p => p.toLowerCase().includes(q))
+    : (window._placeOptions || []);
+  _renderAcList(list, filtered, val, 'selectPlaceSuggestion', 'placeOkBtn');
+}
+
+function showPlaceSuggestions() {
+  filterPlaceSuggestions(document.getElementById('signupPlace')?.value || '');
+}
+
+function filterSchoolSuggestions(val) {
+  const list = document.getElementById('schoolAcList');
+  if (!list) return;
+  const q = val.trim().toLowerCase();
+  const filtered = q
+    ? (window._schoolOptions || []).filter(s => s.toLowerCase().includes(q))
+    : (window._schoolOptions || []);
+  _renderAcList(list, filtered, val, 'selectSchoolSuggestion', 'schoolOkBtn');
+  // Lazily load community schools when user starts typing school
+  const place = (document.getElementById('signupPlace')?.value || '').trim();
+  if (place && window._schoolLoadedForPlace !== place) {
+    const st = document.getElementById('signupState')?.value;
+    const d  = document.getElementById('signupDistrict')?.value;
+    const sd = document.getElementById('signupSubDistrict')?.value;
+    _loadCommunitySchools(st, d, sd, place);
   }
 }
-function _resetPlaceManual() {
-  const wrap = document.getElementById('placeManualWrap');
-  const inp = document.getElementById('signupPlaceManual');
-  const btn = document.getElementById('placeManualBtn');
-  if(wrap) wrap.style.display = 'none';
-  if(inp) inp.value = '';
-  if(btn) btn.textContent = '✏️ Not listed? Add manually';
+
+function showSchoolSuggestions() {
+  filterSchoolSuggestions(document.getElementById('signupSchool')?.value || '');
 }
-function _resetSchoolManual() {
-  const wrap = document.getElementById('schoolManualWrap');
-  const inp = document.getElementById('signupSchoolManual');
-  const btn = document.getElementById('schoolManualBtn');
-  if(wrap) wrap.style.display = 'none';
-  if(inp) inp.value = '';
-  if(btn) btn.textContent = '✏️ Not listed? Add manually';
+
+function _renderAcList(listEl, items, inputVal, selectFn, okBtnId) {
+  const typed = (inputVal || '').trim();
+  // Show OK button when user has typed something
+  const okBtn = document.getElementById(okBtnId);
+  if (okBtn) okBtn.style.display = typed ? 'block' : 'none';
+
+  if (!items.length) { listEl.style.display = 'none'; listEl.innerHTML = ''; return; }
+  listEl.innerHTML = items.map(item =>
+    '<div class="ac-item" onmousedown="event.preventDefault();' + selectFn + '(' + JSON.stringify(item) + ')">' +
+    _acEsc(item) + '</div>'
+  ).join('');
+  listEl.style.display = 'block';
 }
-window.togglePlaceManual = function() {
-  const wrap = document.getElementById('placeManualWrap');
-  const inp = document.getElementById('signupPlaceManual');
-  const btn = document.getElementById('placeManualBtn');
-  const sel = document.getElementById('signupPlace');
-  if(!wrap) return;
-  const opening = wrap.style.display === 'none';
-  wrap.style.display = opening ? 'block' : 'none';
-  if(opening){
-    if(sel) sel.value = '';
-    btn.textContent = '✖ Cancel manual entry';
-    setTimeout(()=>inp&&inp.focus(), 50);
+
+// OK button handlers
+window.confirmPlaceInput = function() {
+  hideSuggestions('placeAcList');
+  const okBtn = document.getElementById('placeOkBtn');
+  if (okBtn) okBtn.style.display = 'none';
+  updateSignupSchools();   // this also unlocks school if place is filled
+};
+window.confirmSchoolInput = function() {
+  hideSuggestions('schoolAcList');
+  const okBtn = document.getElementById('schoolOkBtn');
+  if (okBtn) okBtn.style.display = 'none';
+  _checkUnlockPassword();
+};
+
+function _acEsc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+window.selectPlaceSuggestion = function(val) {
+  const inp = document.getElementById('signupPlace');
+  if (inp) inp.value = val;
+  hideSuggestions('placeAcList');
+  hideInputBubble('placeBubble');
+  const okBtn = document.getElementById('placeOkBtn');
+  if (okBtn) okBtn.style.display = 'none';
+  updateSignupSchools();
+};
+
+window.selectSchoolSuggestion = function(val) {
+  const inp = document.getElementById('signupSchool');
+  if (inp) inp.value = val;
+  hideSuggestions('schoolAcList');
+  hideInputBubble('schoolBubble');
+  const okBtn = document.getElementById('schoolOkBtn');
+  if (okBtn) okBtn.style.display = 'none';
+  _checkUnlockPassword();
+};
+
+function hideSuggestions(id) {
+  const el = document.getElementById(id);
+  if (el) { el.style.display = 'none'; }
+}
+function hideAllAcSuggestions() {
+  hideSuggestions('placeAcList');
+  hideSuggestions('schoolAcList');
+}
+
+window.showInputBubble = function(bubbleId, val) {
+  const bubble = document.getElementById(bubbleId);
+  if (!bubble) return;
+  const text = (val || '').trim();
+  if (text.length > 0) {
+    bubble.textContent = text;
+    bubble.classList.add('visible');
   } else {
-    if(inp) inp.value = '';
-    btn.textContent = '✏️ Not listed? Add manually';
+    bubble.classList.remove('visible');
   }
 };
-window.toggleSchoolManual = function() {
-  const wrap = document.getElementById('schoolManualWrap');
-  const inp = document.getElementById('signupSchoolManual');
-  const btn = document.getElementById('schoolManualBtn');
-  const sel = document.getElementById('signupSchool');
-  if(!wrap) return;
-  const opening = wrap.style.display === 'none';
-  wrap.style.display = opening ? 'block' : 'none';
-  if(opening){
-    if(sel) sel.value = '';
-    btn.textContent = '✖ Cancel manual entry';
-    setTimeout(()=>inp&&inp.focus(), 50);
-  } else {
-    if(inp) inp.value = '';
-    btn.textContent = '✏️ Not listed? Add manually';
-  }
+window.hideInputBubble = function(bubbleId) {
+  const bubble = document.getElementById(bubbleId);
+  if (bubble) bubble.classList.remove('visible');
 };
+function showInputBubble(bubbleId, val) { window.showInputBubble(bubbleId, val); }
+function hideInputBubble(bubbleId) { window.hideInputBubble(bubbleId); }
+
+// Toggle password visibility (eye icon)
+window.togglePwEye = function(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  if (!inp || inp.disabled) return;
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.textContent = show ? '🙈' : '👁️';
+};
+
+// Unlock password field once place AND school are both filled
+function _checkUnlockPassword() {
+  const place  = (document.getElementById('signupPlace')?.value  || '').trim();
+  const school = (document.getElementById('signupSchool')?.value || '').trim();
+  const pwInp  = document.getElementById('signupPassword');
+  const btnContinue = document.getElementById('signupContinue');
+  if (!pwInp) return;
+  if (place && school) {
+    pwInp.disabled = false;
+    pwInp.placeholder = '8-16 characters';
+  } else {
+    pwInp.disabled = true;
+    pwInp.type = 'password'; // reset visibility
+    pwInp.value = '';
+    pwInp.placeholder = 'Enter place & school first';
+    // Reset eye icon
+    const eyeBtn = pwInp.parentElement?.querySelector('.pw-eye');
+    if (eyeBtn) eyeBtn.textContent = '👁️';
+    // Also re-lock create account button
+    if (btnContinue) { btnContinue.disabled = true; btnContinue.style.opacity='0.5'; btnContinue.style.cursor='not-allowed'; }
+  }
+  checkSignupPasswordFilled();
+}
+
+// Unlock Create Account button once password has at least 8 chars
+function checkSignupPasswordFilled() {
+  const pw  = (document.getElementById('signupPassword')?.value || '');
+  const btn = document.getElementById('signupContinue');
+  if (!btn) return;
+  if (pw.length >= 8) {
+    btn.disabled = false; btn.style.opacity=''; btn.style.cursor='';
+  } else {
+    btn.disabled = true;  btn.style.opacity='0.5'; btn.style.cursor='not-allowed';
+  }
+}
+
+// ── Community places / schools — Firebase ─────────────────────
+async function _loadCommunityPlaces(state, district, subDistrict) {
+  if (!_db || !state || !district || !subDistrict) return;
+  try {
+    const key = [state, district, subDistrict].join('__').replace(/[^a-zA-Z0-9]/g,'_');
+    const snap = await _db.collection('community_data').doc('places__' + key).get();
+    if (snap.exists) {
+      const items = snap.data().items || [];
+      const existing = new Set((window._placeOptions || []).map(s => s.toLowerCase()));
+      items.forEach(i => { if (i && !existing.has(i.toLowerCase())) { window._placeOptions.push(i); existing.add(i.toLowerCase()); } });
+    }
+  } catch(e) {}
+}
+
+async function _loadCommunitySchools(state, district, subDistrict, place) {
+  if (!_db || !state || !district || !subDistrict || !place) return;
+  if (window._schoolLoadedForPlace === place) return;
+  window._schoolLoadedForPlace = place;
+  try {
+    const key = [state, district, subDistrict, place].join('__').replace(/[^a-zA-Z0-9]/g,'_');
+    const snap = await _db.collection('community_data').doc('schools__' + key).get();
+    if (snap.exists) {
+      const items = snap.data().items || [];
+      const existing = new Set((window._schoolOptions || []).map(s => s.toLowerCase()));
+      items.forEach(i => { if (i && !existing.has(i.toLowerCase())) { window._schoolOptions.push(i); existing.add(i.toLowerCase()); } });
+    }
+  } catch(e) {}
+}
+
+// Called after successful signup to persist new place/school for future users
+async function _saveCommunityLocation(state, district, subDistrict, place, school) {
+  if (!_db || !state || !district || !subDistrict) return;
+  try {
+    const placeKey = [state, district, subDistrict].join('__').replace(/[^a-zA-Z0-9]/g,'_');
+    // Only save if it's a genuinely new place (not already in seed data)
+    const seedPlaces = _getPlaces(state, district, subDistrict).map(p => p.toLowerCase());
+    if (place && !seedPlaces.includes(place.toLowerCase())) {
+      await _db.collection('community_data').doc('places__' + placeKey).set(
+        { items: firebase.firestore.FieldValue.arrayUnion(place) }, { merge: true }
+      );
+    }
+    if (school && place) {
+      const schoolKey = [state, district, subDistrict, place].join('__').replace(/[^a-zA-Z0-9]/g,'_');
+      const seedSchools = _getSchools(state, district, subDistrict, place).map(s => s.toLowerCase());
+      if (!seedSchools.includes(school.toLowerCase())) {
+        await _db.collection('community_data').doc('schools__' + schoolKey).set(
+          { items: firebase.firestore.FieldValue.arrayUnion(school) }, { merge: true }
+        );
+      }
+    }
+  } catch(e) { console.warn('[PKITAAP] _saveCommunityLocation error:', e); }
+}
 function render() {
   document.querySelector("#catalogTitle").textContent = catalogStep==="classes"?"Classes":catalogStep==="boards"?"Boards":catalogStep==="streams"?"Streams":"Subjects";
   document.querySelector("#backBtn").style.display = catalogStep==="classes" ? "none" : "inline-block";
@@ -4369,10 +4608,9 @@ function bindAdminForms() {
 function fillSignupLocations() {
   const dSel  = document.getElementById("signupDistrict");
   const sdSel = document.getElementById("signupSubDistrict");
-  const pSel  = document.getElementById("signupPlace");
   if (dSel)  dSel.onchange  = updateSignupSubDistricts;
   if (sdSel) sdSel.onchange = updateSignupPlaces;
-  if (pSel)  pSel.onchange  = updateSignupSchools;
+  // Place and School are now text inputs with oninput handlers — no onchange binding needed
 }
 function _updateMediumsForState(stateVal) {
   const meds = getMediumsForState(stateVal);
@@ -4646,14 +4884,8 @@ init();
     const cls         = (document.getElementById('signupClass')    || {}).value;
     const district    = (document.getElementById('signupDistrict') || {}).value;
     const subDistrict = (document.getElementById('signupSubDistrict') || {}).value;
-    const placeManualWrap = document.getElementById('placeManualWrap');
-    const placeManualVal  = ((document.getElementById('signupPlaceManual') || {}).value || '').trim();
-    const placeSelectVal  = (document.getElementById('signupPlace')        || {}).value;
-    const place = (placeManualWrap && placeManualWrap.style.display !== 'none') ? placeManualVal : placeSelectVal;
-    const schoolManualWrap = document.getElementById('schoolManualWrap');
-    const schoolManualVal  = ((document.getElementById('signupSchoolManual') || {}).value || '').trim();
-    const schoolSelectVal  = (document.getElementById('signupSchool')         || {}).value;
-    const school = (schoolManualWrap && schoolManualWrap.style.display !== 'none') ? schoolManualVal : schoolSelectVal;
+    const place  = ((document.getElementById('signupPlace')  || {}).value || '').trim();
+    const school = ((document.getElementById('signupSchool') || {}).value || '').trim();
     const pwd = document.getElementById('signupPassword');
 
     if (!mobile || !/^[0-9]{10}$/.test(mobile.trim())) { toast('Please enter a valid 10-digit mobile number'); return; }
@@ -4662,9 +4894,7 @@ init();
     if (!district)       { toast('Please select your district'); return; }
     if (!subDistrict)    { toast('Please select your sub-district'); return; }
     if (!place)          { toast('Please enter your place / town'); return; }
-    if (placeManualWrap && placeManualWrap.style.display !== 'none' && !placeManualVal) {
-      toast('Please type your place / town name'); return;
-    }
+    if (!school)         { toast('Please enter your school / college'); return; }
     if (pwd && pwd.value.length < 8) { toast('Password must be at least 8 characters'); return; }
 
     const firstName = ((document.getElementById('signupFirstName') || {}).value || '').trim();
@@ -4695,6 +4925,8 @@ init();
     continueBtn.innerHTML = '<span class=\"otp-spinner\"></span>Creating account…';
 
     try {
+      // Save new place/school to community data for future autocomplete suggestions
+      _saveCommunityLocation(stateVal, district, subDistrict, place, school);
       await onAuthSuccess(userData, window._fbVerifiedUser || null);
     } finally {
       continueBtn.disabled  = false;
