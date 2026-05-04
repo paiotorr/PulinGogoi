@@ -1,0 +1,2254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#16a34a"/>
+<title>PKITAAP</title>
+<!-- ═══ Firebase SDKs (compat v10) ═══ -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --red: #16a34a;
+  --red-dark: #15803d;
+  --red-light: #f0fdf4;
+  --bg: #f1f8f3;
+  --card: #ffffff;
+  --border: #bbf7d0;
+  --line: #d1fae5;
+  --line-dark: #111111;
+  --text: #222222;
+  --muted: #888888;
+  --sidebar: 230px;
+}
+body { background: var(--bg); color: var(--text); font-family: Nunito, Arial, sans-serif; min-height: 100vh; }
+a { text-decoration: none; }
+button, input, select { font: inherit; }
+.topbar {
+  align-items: center; background: var(--red);
+  box-shadow: 0 4px 20px rgba(22,163,74,0.25); color: white;
+  display: flex; height: 58px; justify-content: space-between;
+  padding: 0 20px; position: sticky; top: 0; z-index: 20;
+  border-bottom: 2px solid var(--line-dark);
+}
+.topbar-left, .topbar-right { align-items: center; display: flex; gap: 10px; }
+.logo { font-size: clamp(28px,7vw,38px); font-weight: 900; letter-spacing: 0; }
+.menu-btn {
+  background: rgba(255,255,255,0.2); border: 0; border-radius: 10px;
+  cursor: pointer; display: grid; gap: 4px; height: 40px; padding: 10px;
+  position: relative; width: 44px;
+}
+.menu-btn span { background: white; border-radius: 99px; display: block; height: 3px; transition: transform 0.2s ease, opacity 0.2s ease; transform-origin: center; }
+.menu-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.menu-btn.open span:nth-child(2) { opacity: 0; }
+.menu-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+.menu-panel {
+  background: white; border: 2px solid var(--line);
+  border-radius: 20px 0 0 20px; box-shadow: 0 14px 34px rgba(0,0,0,0.12);
+  display: none; min-height: 52vh; width: min(78vw,310px);
+  padding: 16px; position: fixed; right: 0; top: 58px; z-index: 40;
+}
+.menu-panel.open { display: flex; flex-direction: column; }
+.menu-panel > button { background: transparent; border: 0; border-radius: 10px; color: var(--text); cursor: pointer; font-weight: 900; padding: 14px 12px; text-align: left; }
+.menu-title { color: var(--muted); font-size: 12px; font-weight: 900; margin: 4px 4px 12px; text-transform: uppercase; }
+.menu-panel > button:hover { background: var(--red-light); color: var(--red); }
+.menu-login-card {
+  background: linear-gradient(135deg, var(--red-light) 0%, #dcfce7 100%);
+  border: 2px solid var(--border); border-radius: 18px;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 10px; margin: auto 0; padding: 28px 20px 24px; text-align: center;
+}
+.menu-login-icon { align-items: center; background: var(--red); border-radius: 50%; display: flex; height: 52px; justify-content: center; width: 52px; }
+.menu-login-title { color: var(--text); font-size: 17px; font-weight: 900; margin-top: 2px; }
+.menu-login-sub { color: var(--muted); font-size: 12px; font-weight: 700; line-height: 1.4; }
+.menu-login-btn { background: var(--red) !important; border: none !important; border-radius: 12px !important; color: white !important; cursor: pointer; font-size: 15px !important; font-weight: 900 !important; margin-top: 4px; min-height: 46px !important; padding: 0 !important; width: 100%; transition: background 0.15s, transform 0.1s; }
+.menu-login-btn:hover { background: var(--red-dark) !important; }
+.menu-login-btn:active { transform: scale(0.97); }
+.menu-create-btn { background: white !important; border: 2px solid var(--red) !important; border-radius: 12px !important; color: var(--red) !important; cursor: pointer; font-size: 15px !important; font-weight: 900 !important; min-height: 46px !important; padding: 0 !important; width: 100%; transition: background 0.15s, transform 0.1s; }
+.menu-create-btn:hover { background: var(--red-light) !important; }
+.menu-create-btn:active { transform: scale(0.97); }
+.shell { display: block; }
+.sidebar { display: none; }
+.nav-item, .bottom-item { background: transparent; border: 0; border-radius: 12px; color: #555; cursor: pointer; font-weight: 900; padding: 12px; text-align: left; }
+.nav-item.active, .bottom-item.active { background: var(--red); color: white; }
+.main { margin: 0 auto; max-width: 980px; padding: 18px 14px 32px; }
+.page { display: none; flex-direction: column; gap: 18px; }
+.page.active { display: flex; }
+.page-head { display: block; }
+.location-lock { display: grid; gap: 12px; grid-template-columns: repeat(2,minmax(0,1fr)); }
+.location-lock div { background: white; border: 2px solid var(--line); border-radius: 16px; padding: 12px 14px; }
+.location-lock span { color: var(--muted); display: block; font-size: 12px; font-weight: 900; }
+.location-lock strong { display: block; font-size: 18px; margin-top: 2px; }
+h1 { font-size: 28px; font-weight: 900; }
+h2 { color: var(--red); font-size: 18px; font-weight: 900; }
+.card { background: var(--card); border: 2px solid var(--line); border-radius: 20px; box-shadow: 0 2px 16px rgba(0,0,0,0.06); overflow: hidden; }
+.card-head { align-items: center; border-bottom: 2px solid var(--line); display: flex; justify-content: space-between; padding: 14px 16px; }
+.card-body { padding: 16px; }
+input, select { background: white; border: 2px solid var(--line); border-radius: 10px; font-weight: 700; min-height: 42px; outline: none; padding: 8px 11px; width: 100%; }
+input:focus, select:focus { border-color: var(--red); }
+.search-wrap { position: relative; width: 100%; }
+.search-wrap input { padding-right: 44px; }
+#clearSearch { align-items: center; background: var(--red-light); border: 0; border-radius: 8px; color: var(--red); cursor: pointer; display: none; font-weight: 900; height: 30px; justify-content: center; position: absolute; right: 6px; top: 6px; width: 30px; }
+label { color: #444; display: grid; font-size: 13px; font-weight: 900; gap: 5px; }
+.btn { border: 0; border-radius: 10px; cursor: pointer; font-weight: 900; min-height: 40px; padding: 8px 14px; }
+.btn-primary { background: var(--red); color: white; }
+.btn-ghost { background: var(--red-light); color: var(--red); }
+.btn-light { background: rgba(255,255,255,0.2); color: white; }
+.class-grid, .stream-grid, .book-grid, .admin-grid { display: grid; gap: 12px; grid-template-columns: repeat(2,minmax(0,1fr)); }
+.stream-grid { margin-top: 12px; }
+.class-card, .stream-card, .book-card { background: white; border: 2px solid var(--line); border-radius: 16px; cursor: pointer; min-height: 84px; padding: 0; text-align: left; overflow: hidden; }
+.stream-card { align-items: center; display: flex; justify-content: center; min-height: 120px; padding: 18px; text-align: center; }
+.stream-card strong { font-size: clamp(24px,5vw,34px); line-height: 1.05; overflow-wrap: anywhere; }
+.class-card img, .book-card img { aspect-ratio: 1.25; background: var(--red-light); border-radius: 12px 12px 0 0; display: block; object-fit: cover; width: 100%; }
+.class-card.active, .stream-card.active { border-color: var(--red); color: var(--text); }
+.book-card.active { border-color: var(--red); }
+.card-info { background: white; display: grid; gap: 7px; min-height: 82px; padding: 12px; align-content: center; }
+.book-card .card-info { place-items: center; text-align: center; }
+.class-card strong, .book-card strong { display: block; font-size: 18px; line-height: 1.1; overflow-wrap: anywhere; }
+.book-card strong { color: var(--text); }
+.book-card span, .class-card span { color: var(--muted); display: block; font-size: 12px; font-weight: 900; margin-top: 6px; }
+.book-card small { color: var(--muted); display: block; font-size: 11px; font-weight: 900; line-height: 1.25; }
+.book-card.active span { color: var(--red); }
+.book-card .price, .book-card.active .price { color: #000000; font-size: 15px; font-weight: 900; }
+.form-grid { display: grid; gap: 12px; grid-template-columns: repeat(2,minmax(0,1fr)); }
+.wide { grid-column: 1 / -1; }
+.stack-form { display: grid; gap: 12px; }
+.selected-box { background: var(--red-light); border: 2px solid var(--line); border-radius: 16px; padding: 16px; }
+.selected-box img { aspect-ratio: 1.4; border-radius: 14px; display: block; margin-bottom: 12px; object-fit: cover; width: 100%; }
+.selected-box strong { display: block; font-size: 22px; }
+.selected-box span { color: var(--muted); display: block; font-weight: 900; margin-top: 4px; }
+.result-list { display: grid; gap: 10px; margin-top: 14px; }
+.result-card { border: 2px solid var(--line); border-radius: 14px; padding: 12px; }
+.result-card strong { display: block; }
+.result-card span { color: var(--muted); display: block; font-size: 12px; font-weight: 900; margin-top: 4px; }
+.contact-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.toggle { align-items: center; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; padding: 12px 0; }
+.bottom-nav { display: none; }
+.bottom-item { text-align: center; }
+dialog { border: 0; border-radius: 20px; box-shadow: 0 24px 60px rgba(0,0,0,0.25); margin: auto; max-width: 420px; width: calc(100% - 32px); }
+dialog::backdrop { background: rgba(0,0,0,0.45); }
+.modal { background: white; }
+dialog { border: none; border-radius: 24px; box-shadow: 0 32px 80px rgba(0,0,0,0.22); margin: auto; max-width: 420px; width: calc(100% - 32px); padding: 0; background: transparent; }
+dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
+.auth-modal { background: white; border-radius: 24px; overflow-y: auto; max-height: 90vh; position: relative; }
+.auth-close { background: #f3f4f6; border: none; border-radius: 50%; color: #555; cursor: pointer; font-size: 14px; height: 34px; line-height: 1; position: absolute; right: 16px; top: 16px; width: 34px; display: flex; align-items: center; justify-content: center; z-index: 2; transition: background 0.15s; }
+.auth-close:hover { background: #e5e7eb; color: #111; }
+.auth-brand { background: var(--red); padding: 32px 28px 24px; text-align: center; }
+.auth-logo { color: white; font-size: 36px; font-weight: 900; letter-spacing: -1px; }
+.auth-tagline { color: rgba(255,255,255,0.8); font-size: 13px; font-weight: 700; margin-top: 6px; }
+.auth-form { padding: 24px 28px 28px; display: flex; flex-direction: column; gap: 14px; }
+.auth-field { display: flex; flex-direction: column; gap: 6px; }
+.auth-field label { color: #374151; font-size: 13px; font-weight: 900; }
+.auth-field input, .auth-field select { background: #f9fafb; border: 2px solid var(--line); border-radius: 12px; font-size: 15px; font-weight: 600; min-height: 48px; outline: none; padding: 10px 14px; width: 100%; transition: border-color 0.15s, background 0.15s; }
+.auth-field input:focus, .auth-field select:focus { border-color: var(--red); background: white; }
+.auth-btn { background: var(--red); border: none; border-radius: 12px; color: white; cursor: pointer; font-size: 16px; font-weight: 900; margin-top: 4px; min-height: 50px; width: 100%; transition: background 0.15s, transform 0.1s; }
+.auth-btn:hover { background: var(--red-dark); }
+.auth-btn:active { transform: scale(0.98); }
+.auth-switch { color: var(--muted); font-size: 13px; font-weight: 700; text-align: center; }
+.auth-link { background: none; border: none; color: var(--red); cursor: pointer; font-size: 13px; font-weight: 900; padding: 0; text-decoration: underline; }
+.auth-link:hover { color: var(--red-dark); }
+.auth-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.auth-insta-wrap { display: flex; align-items: center; background: #f9fafb; border: 2px solid var(--line); border-radius: 12px; overflow: hidden; transition: border-color 0.15s; }
+.auth-insta-wrap:focus-within { border-color: var(--red); background: white; }
+.auth-insta-at { background: var(--red-light); color: var(--red); font-size: 16px; font-weight: 900; padding: 0 12px; min-height: 48px; display: flex; align-items: center; border-right: 2px solid var(--line); }
+.auth-insta-input { background: transparent !important; border: none !important; border-radius: 0 !important; flex: 1; min-height: 48px; outline: none; padding: 10px 12px !important; }
+#toast { background: #222; border-radius: 12px; bottom: 24px; color: white; font-weight: 900; opacity: 0; padding: 12px 18px; pointer-events: none; position: fixed; right: 24px; transform: translateY(12px); transition: 0.2s; z-index: 50; }
+#toast.show { opacity: 1; transform: translateY(0); }
+.otp-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.4); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 5px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (max-width: 760px) { .main { padding: 14px 10px 28px; } .admin-grid { grid-template-columns: 1fr; } }
+@media (max-width: 420px) { .topbar { padding: 0 12px; } .logo { font-size: 22px; } .class-card, .stream-card, .book-card { min-height: 76px; padding: 12px; } .class-card strong, .book-card strong { font-size: 16px; } }
+.location-select { border: none; background: transparent; font-weight: 800; font-size: 17px; padding: 0; width: 100%; margin-top: 2px; cursor: pointer; outline: none; color: var(--text); min-height: unset; }
+</style>
+</head>
+<body>
+<!-- ═══ reCAPTCHA container (required by Firebase Phone Auth) ═══ -->
+<div id="recaptcha-container" style="display:none;"></div>
+<header class="topbar">
+  <div class="topbar-left"><div class="logo">PKITAAP</div></div>
+  <div class="topbar-right">
+    <button class="menu-btn" id="menuBtn" type="button" aria-label="Open menu"><span></span><span></span><span></span></button>
+  </div>
+  <div class="menu-panel" id="menuPanel">
+    <div class="menu-title">Menu</div>
+    <div class="menu-login-card" id="menuLoginCard">
+      <div class="menu-login-icon">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      </div>
+      <div class="menu-login-title">Welcome to PKITAAP</div>
+      <div class="menu-login-sub">Login or sign up to find sellers and list your books</div>
+      <button class="menu-login-btn" id="loginBtn" type="button">Login</button>
+      <button class="menu-create-btn" id="menuGoSignup" type="button">Create Account</button>
+    </div>
+    <button data-page="sell" id="menuSell" style="display:none;">Sell</button>
+    <button type="button" id="menuAccount" style="display:none;">Account details</button>
+  </div>
+</header>
+<div class="shell">
+  <main class="main">
+    <section class="page active" id="buyPage">
+      <div class="page-head">
+        <div class="search-wrap">
+          <input id="searchInput" placeholder="Search books">
+          <button id="clearSearch" type="button" aria-label="Clear">x</button>
+        </div>
+      </div>
+      <div class="location-lock">
+        <div><span>Country</span><strong>India</strong></div>
+        <div><span>States</span><select id="stateFilter" class="location-select" onchange="onStateFilterChange(this.value)"><option value="">— Select State —</option><option value="Assam">Assam</option></select></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h2 id="catalogTitle">Classes</h2>
+          <button class="btn btn-ghost" id="backBtn" type="button" style="display:none;">Back</button>
+        </div>
+        <div class="card-body">
+          <div class="class-grid" id="classGrid" style="display:grid;"></div>
+          <div class="stream-grid" id="boardGrid" style="display:none;"></div>
+          <div class="stream-grid" id="streamGrid" style="display:none;"></div>
+          <div class="book-grid" id="bookGrid" style="display:none;"><div>No books</div></div>
+        </div>
+      </div>
+      <div class="card" id="categoryCard" style="display:none;">
+        <div class="card-head"><h2>More Categories</h2></div>
+        <div class="card-body"><div class="class-grid" id="categoryGrid"></div></div>
+      </div>
+      <div class="card" id="matchCard" style="display:none;">
+        <div class="card-head"><h2>Match</h2></div>
+        <div class="card-body">
+          <form id="buyForm" class="form-grid">
+            <label class="wide">State <span style="color:#ef4444;font-size:11px;"> *required</span><select id="buyState" required onchange="updateBuyDistricts()"><option value="">— Select Your State —</option><option value="Assam">Assam</option></select></label>
+            <label>District <span style="color:#ef4444;font-size:11px;"> *required</span><select id="buyDistrict" required onchange="updateBuySubDistricts()"></select></label>
+            <label>Sub-District <span style="color:#ef4444;font-size:11px;"> *required</span><select id="buySubDistrict" required onchange="updateBuyPlaces()"></select></label>
+            <label>Place <span style="color:#ef4444;font-size:11px;"> *required</span><select id="buyPlace" required onchange="updateBuySchools()"></select></label>
+            <label class="wide">School <span style="color:var(--muted);font-size:11px;">(optional)</span><select id="buySchool"></select></label>
+            <label class="wide">Medium <span style="color:#ef4444;font-size:11px;"> *required</span>
+              <select id="buyMedium" required>
+                <option value="">— Select State first —</option>
+              </select>
+            </label>
+            <button class="btn btn-primary wide" type="submit">Find sellers</button>
+          </form>
+          <div class="result-list" id="matchList"></div>
+        </div>
+      </div>
+    </section>
+    <section class="page" id="sellPage">
+      <div class="page-head">
+        <h1>Sell Books</h1>
+        <button class="btn btn-ghost" data-go-buy="">Select book</button>
+      </div>
+      <div class="location-lock">
+        <div><span>Country</span><strong>India</strong></div>
+        <div><span>States</span><select id="stateFilter2" class="location-select" onchange="onStateFilterChange2(this.value)"><option value="">— Select State —</option><option value="Assam">Assam</option></select></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>Selected Book</h2></div>
+        <div class="card-body">
+          <div id="selectedBox" class="selected-box">
+            <strong>No subject selected</strong>
+            <span>Select class, board, stream, and subject first.</span>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>Seller Details</h2></div>
+        <div class="card-body">
+          <form id="sellForm" class="form-grid">
+            <label class="wide">State <select id="sellState" onchange="updateSellDistricts()"><option value="">— Select Your State —</option><option value="Assam">Assam</option></select></label>
+            <label>District <select id="sellDistrict" onchange="updateSellSubDistricts()"></select></label>
+            <label>Sub-District <select id="sellSubDistrict" onchange="updateSellPlaces()"></select></label>
+            <label>Place <select id="sellPlace" onchange="updateSellSchools()"></select></label>
+            <label class="wide">School <select id="sellSchool"></select></label>
+            <label class="wide">Condition
+              <select id="sellCondition">
+                <option>Like new</option><option>Good</option><option>Usable</option>
+              </select>
+            </label>
+            <label class="wide">Instagram ID<div style="display:flex;align-items:center;background:#f9fafb;border:2px solid var(--line);border-radius:10px;overflow:hidden;"><span style="background:var(--red-light);color:var(--red);font-weight:900;padding:0 10px;min-height:40px;display:flex;align-items:center;">@</span><input type="text" id="sellInstagram" placeholder="your_instagram" style="border:none;border-radius:0;flex:1;min-height:40px;background:transparent;" required></div></label>
+            
+            <label class="wide">Price Expectation (₹)<input type="number" id="sellPrice" placeholder="How much do you want?"/></label>
+            <button class="btn btn-primary wide" type="submit">List for Sale</button>
+          </form>
+        </div>
+      </div>
+    </section>
+    <section class="page" id="adminPage">
+      <h1>Admin</h1>
+      <div class="admin-grid">
+        <div class="card">
+          <div class="card-head"><h2>Add Subject</h2></div>
+          <div class="card-body">
+            <form id="bookForm" class="stack-form">
+              <select id="newClass"><option value="">Class</option></select>
+              <select id="newBoard"><option value="">Board</option></select>
+              <select id="newStream"><option value="">Stream (optional)</option></select>
+              <input id="newTitle" placeholder="Subject title" required>
+              <input id="newAuthor" placeholder="Author (if general book)">
+              <input id="newPrice" type="number" placeholder="Price ₹" required>
+              <input id="newImage" placeholder="Image URL (optional)">
+              <button class="btn btn-primary" type="submit">Add</button>
+            </form>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>Add School</h2></div>
+          <div class="card-body">
+            <form id="schoolForm" class="stack-form">
+              <select id="newDistrict"><option value="">District</option></select>
+              <select id="newPlace"><option value="">Place</option></select>
+              <input id="newSchool" placeholder="School" required>
+              <button class="btn btn-primary" type="submit">Add</button>
+            </form>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>Class Thumbnail</h2></div>
+          <div class="card-body">
+            <form id="classThumbForm" class="stack-form">
+              <input id="thumbClass" placeholder="Class 9 / Class 10 / General" required>
+              <input id="thumbImage" placeholder="Thumbnail image URL" required>
+              <button class="btn btn-primary" type="submit">Save</button>
+            </form>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>Add Category</h2></div>
+          <div class="card-body">
+            <form id="categoryForm" class="stack-form">
+              <input id="categoryName" placeholder="Novels / Author Books" required>
+              <input id="categoryImage" placeholder="Category image URL">
+              <button class="btn btn-primary" type="submit">Add</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<dialog id="loginDialog">
+  <div class="auth-modal">
+    <button class="auth-close" id="loginClose">&#10005;</button>
+    <div class="auth-brand"><div class="auth-logo">PKITAAP</div><p class="auth-tagline">Welcome back!</p></div>
+    <form class="auth-form" id="loginForm">
+      <div class="auth-field"><label>Mobile Number</label><input type="tel" placeholder="10-digit number" maxlength="10"></div>
+      <div class="auth-field"><label>Password / PIN</label><input type="password" placeholder="Enter your password or PIN"></div>
+      <button class="auth-btn" id="loginContinue" type="button">Login</button>
+      <p class="auth-switch">Don't have an account? <button type="button" class="auth-link" id="goSignup">Create account</button></p>
+    </form>
+  </div>
+</dialog>
+<dialog id="signupDialog">
+  <div class="auth-modal">
+    <button class="auth-close" id="signupClose">&#10005;</button>
+    <div class="auth-brand"><div class="auth-logo">PKITAAP</div><p class="auth-tagline">Create your account</p></div>
+    <form class="auth-form" id="signupForm">
+      <div class="auth-row">
+        <div class="auth-field"><label>First Name</label><input type="text" id="signupFirstName" placeholder="First name" required></div>
+        <div class="auth-field"><label>Last Name</label><input type="text" id="signupLastName" placeholder="Last name" required></div>
+      </div>
+      <div class="auth-field">
+        <label>Mobile Number</label>
+        <div style="display:flex;gap:8px;align-items:flex-start;">
+          <input type="tel" id="signupMobile" placeholder="10-digit number" maxlength="10" required style="flex:1;">
+          <button type="button" id="sendOtpBtn" onclick="sendOtp()" style="background:var(--red);color:white;border:none;border-radius:12px;font-weight:900;font-size:13px;min-height:48px;padding:0 14px;cursor:pointer;white-space:nowrap;flex-shrink:0;">Send OTP</button>
+        </div>
+        <div id="otpBox" style="display:none;margin-top:10px;background:#f0fdf4;border:2px solid var(--line);border-radius:14px;padding:14px;flex-direction:column;gap:10px;">
+          <p style="font-size:13px;font-weight:700;color:#166534;">📩 OTP sent to your number. Enter it below to verify.</p>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="text" id="otpInput" placeholder="Enter OTP" maxlength="6" inputmode="numeric" style="flex:1;letter-spacing:4px;font-size:18px;font-weight:900;text-align:center;" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+            <button type="button" id="verifyOtpBtn" onclick="verifyOtp()" style="background:var(--red);color:white;border:none;border-radius:12px;font-weight:900;font-size:13px;min-height:48px;padding:0 14px;cursor:pointer;white-space:nowrap;flex-shrink:0;">Verify</button>
+          </div>
+          <p id="otpStatus" style="font-size:12px;font-weight:800;display:none;"></p>
+        </div>
+      </div>
+      <div class="auth-field">
+        <label>Currently Studying Class</label>
+        <select id="signupClass" required>
+          <option value="">— Select Class —</option>
+          <option value="Class 9">Class 9</option><option value="Class 10">Class 10</option><option value="Class 11">Class 11</option><option value="Class 12">Class 12</option>
+        </select>
+      </div>
+      <div class="auth-field"><label>Instagram ID</label>
+        <div class="auth-insta-wrap"><span class="auth-insta-at">@</span><input type="text" id="signupInsta" placeholder="your_instagram_id" class="auth-insta-input"></div>
+      </div>
+      <div class="auth-row">
+        <div class="auth-field">
+          <label>State</label>
+          <select id="signupState" required onchange="updateSignupDistricts()">
+            <option value="">— Select Your State —</option>
+            <option value="Assam">Assam</option>
+          </select>
+        </div>
+        <div class="auth-field">
+          <label>District</label>
+          <select id="signupDistrict" required onchange="updateSignupSubDistricts()">
+            <option value="">— District —</option>
+          </select>
+        </div>
+      </div>
+      <div class="auth-row">
+        <div class="auth-field">
+          <label>Sub-District / Block</label>
+          <select id="signupSubDistrict" required onchange="updateSignupPlaces()">
+            <option value="">— Sub-District —</option>
+          </select>
+        </div>
+      </div>
+      <div class="auth-row">
+        <div class="auth-field">
+          <label>Place / Town</label>
+          <select id="signupPlace" onchange="updateSignupSchools();checkPlaceManual()">
+            <option value="">— Place —</option>
+          </select>
+          <div id="placeManualWrap" style="display:none;margin-top:6px;">
+            <input type="text" id="signupPlaceManual" placeholder="Type your place / town" style="background:#f0fdf4;border-color:#86efac;">
+          </div>
+          <button type="button" id="placeManualBtn" onclick="togglePlaceManual()" style="background:none;border:none;color:var(--red);font-size:12px;font-weight:900;cursor:pointer;padding:4px 0;text-align:left;text-decoration:underline;">✏️ Not listed? Add manually</button>
+        </div>
+        <div class="auth-field">
+          <label>School / College</label>
+          <select id="signupSchool">
+            <option value="">— School (optional) —</option>
+          </select>
+          <div id="schoolManualWrap" style="display:none;margin-top:6px;">
+            <input type="text" id="signupSchoolManual" placeholder="Type your school / college" style="background:#f0fdf4;border-color:#86efac;">
+          </div>
+          <button type="button" id="schoolManualBtn" onclick="toggleSchoolManual()" style="background:none;border:none;color:var(--red);font-size:12px;font-weight:900;cursor:pointer;padding:4px 0;text-align:left;text-decoration:underline;">✏️ Not listed? Add manually</button>
+        </div>
+      </div>
+      <div class="auth-field"><label>Create Password</label><input type="password" id="signupPassword" placeholder="8-16 characters" minlength="8" maxlength="16" required></div>
+      <button class="auth-btn" id="signupContinue" type="button">Create Account</button>
+      <p class="auth-switch">Already have an account? <button type="button" class="auth-link" id="goLogin">Login</button></p>
+    </form>
+  </div>
+</dialog>
+<div id="toast"></div>
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  FIREBASE INITIALISATION
+//  Config is baked in at export-time from the Admin Firebase tab.
+// ═══════════════════════════════════════════════════════════════
+const PKITAAP_FB_CONFIG = {"apiKey":"AIzaSyBfddqQmMk0GWChrC-eGFqFCiQA7tEMKUs","authDomain":"pkitaap.firebaseapp.com","projectId":"pkitaap","storageBucket":"pkitaap.firebasestorage.app","messagingSenderId":"8439723706","appId":"1:8439723706:web:2c1e96a447bca698b1b483"};
+let _db   = null;   // Firestore instance
+let _auth = null;   // Auth instance
+
+(function initFirebase() {
+  if (!PKITAAP_FB_CONFIG || !PKITAAP_FB_CONFIG.apiKey) {
+    console.warn('[PKITAAP] Firebase config not set — running in localStorage-only mode.');
+    return;
+  }
+  try {
+    if (!firebase.apps.length) {
+      firebase.initializeApp(PKITAAP_FB_CONFIG);
+    }
+    _db   = firebase.firestore();
+    _auth = firebase.auth();
+    _db.enablePersistence({ synchronizeTabs: true }).catch(function(){});
+    console.log('[PKITAAP] Firebase initialised ✅');
+  } catch (e) {
+    console.error('[PKITAAP] Firebase init error:', e);
+  }
+})();
+
+// ═══════════════════════════════════════════════════════════════
+//  FIRESTORE — save user after OTP verification
+//
+//  Firestore schema — collection: "users" / doc: mobile (10-digit)
+//  {
+//    uid        : string   (Firebase Auth UID)
+//    name       : string
+//    mobile     : string   (10-digit, no country code)
+//    phone      : string   (E.164, e.g. "+919876543210")
+//    insta      : string
+//    className  : string
+//    state      : string
+//    district   : string
+//    subDistrict: string
+//    place      : string
+//    school     : string
+//    status     : "active" | "inactive" | "banned"
+//    role       : "user"
+//    joinedAt   : ISO date string  (YYYY-MM-DD)
+//    lastLoginAt: ISO datetime string
+//  }
+// ═══════════════════════════════════════════════════════════════
+async function _saveUserToFirestore(userData) {
+  const docId = userData.mobile;
+  // Mirror to localStorage (offline fallback)
+  try {
+    const existing = JSON.parse(localStorage.getItem('pkitaap_registered_users') || '[]');
+    const idx = existing.findIndex(function(u){ return u.mobile === userData.mobile; });
+    if (idx >= 0) { existing[idx] = Object.assign({}, existing[idx], userData); }
+    else { existing.push(userData); }
+    localStorage.setItem('pkitaap_registered_users', JSON.stringify(existing));
+  } catch(e) {}
+  // Write to Firestore
+  if (_db) {
+    try {
+      await _db.collection('users').doc(docId).set(
+        Object.assign({}, userData, { lastLoginAt: new Date().toISOString() }),
+        { merge: true }
+      );
+    } catch (e) {
+      console.warn('[PKITAAP] Firestore write failed (localStorage used):', e);
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  APP SEED
+// ═══════════════════════════════════════════════════════════════
+const seed = {
+  "appName": "PKITAAP",
+  "appTagline": "Find & sell used school books near you",
+  "classes": [
+    "Class 9",
+    "Class 10",
+    "Class 11",
+    "Class 12"
+  ],
+  "classThumbs": {
+    "Class 9": "",
+    "Class 10": "",
+    "Class 11": "",
+    "Class 12": "",
+    "General": ""
+  },
+  "streams": [
+    "Science",
+    "Commerce",
+    "Arts"
+  ],
+  "boardsByState": {
+    "Assam": [
+      "seba"
+    ]
+  },
+  "mediumsByState": {
+    "Assam": [
+      "ass"
+    ]
+  },
+  "settings": {
+    "general": false,
+    "instagram": true,
+    "whatsapp": false
+  },
+  "categories": [],
+  "books": [
+    {
+      "id": "xswzgbha",
+      "type": "school",
+      "state": "",
+      "board": "",
+      "stream": "",
+      "className": "Class 9",
+      "title": "asssamese",
+      "price": 100,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "x52sthqc",
+      "type": "school",
+      "state": "",
+      "board": "",
+      "stream": "Science",
+      "className": "Class 11",
+      "title": "asssamese",
+      "price": 100,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "xnmrdahb",
+      "type": "school",
+      "state": "",
+      "board": "",
+      "stream": "Commerce",
+      "className": "Class 11",
+      "title": "asssamese",
+      "price": 100,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "xhnkwmza",
+      "type": "school",
+      "state": "",
+      "board": "",
+      "stream": "Arts",
+      "className": "Class 11",
+      "title": "asssamese",
+      "price": 100,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "xbd5zdtg",
+      "type": "school",
+      "state": "",
+      "board": "",
+      "stream": "Science",
+      "className": "Class 12",
+      "title": "asssamese",
+      "price": 100,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "xobr9y6w",
+      "type": "school",
+      "state": "",
+      "board": "",
+      "stream": "Commerce",
+      "className": "Class 12",
+      "title": "asssamese",
+      "price": 100,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "xas97424",
+      "type": "school",
+      "state": "",
+      "board": "",
+      "stream": "Arts",
+      "className": "Class 12",
+      "title": "asssamese",
+      "price": 100,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "x68h0en9",
+      "type": "school",
+      "state": "",
+      "board": "seba",
+      "stream": "",
+      "className": "Class 9",
+      "title": "assamese",
+      "price": 100,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "xc9ve81t",
+      "type": "school",
+      "state": "",
+      "board": "seba",
+      "stream": "",
+      "className": "Class 10",
+      "title": "assamese",
+      "price": 100,
+      "author": "",
+      "image": ""
+    }
+  ],
+  "locations": [
+    {
+      "state": "Assam",
+      "districts": [
+        {
+          "district": "Bajali",
+          "subDistricts": [
+            {
+              "subDistrict": "Bajali (Pt)",
+              "places": []
+            },
+            {
+              "subDistrict": "Sarupeta (Pt)",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Baksa",
+          "subDistricts": [
+            {
+              "subDistrict": "Baganpara (Pt)",
+              "places": []
+            },
+            {
+              "subDistrict": "Barama Pt",
+              "places": []
+            },
+            {
+              "subDistrict": "Baska",
+              "places": []
+            },
+            {
+              "subDistrict": "Jalah (Pt)",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Barpeta",
+          "subDistricts": [
+            {
+              "subDistrict": "Baghbor",
+              "places": []
+            },
+            {
+              "subDistrict": "Barnagar (Pt)",
+              "places": []
+            },
+            {
+              "subDistrict": "Barpeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Chenga",
+              "places": []
+            },
+            {
+              "subDistrict": "Kalgachia",
+              "places": []
+            },
+            {
+              "subDistrict": "Sarthebari",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Biswanath",
+          "subDistricts": [
+            {
+              "subDistrict": "Biswanath",
+              "places": []
+            },
+            {
+              "subDistrict": "Gohpur",
+              "places": []
+            },
+            {
+              "subDistrict": "Helem",
+              "places": []
+            },
+            {
+              "subDistrict": "Na-Duar",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Bongaigaon",
+          "subDistricts": [
+            {
+              "subDistrict": "Boitamari",
+              "places": []
+            },
+            {
+              "subDistrict": "Bongaigaon (Pt)",
+              "places": []
+            },
+            {
+              "subDistrict": "Dangtal Revenue Circle",
+              "places": []
+            },
+            {
+              "subDistrict": "Manikpur",
+              "places": []
+            },
+            {
+              "subDistrict": "Srijangram",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Cachar",
+          "subDistricts": [
+            {
+              "subDistrict": "Katigora",
+              "places": []
+            },
+            {
+              "subDistrict": "Lakhipur",
+              "places": []
+            },
+            {
+              "subDistrict": "Silchar",
+              "places": []
+            },
+            {
+              "subDistrict": "Sonai",
+              "places": []
+            },
+            {
+              "subDistrict": "Udarbond",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Charaideo",
+          "subDistricts": [
+            {
+              "subDistrict": "Mahmora",
+              "places": []
+            },
+            {
+              "subDistrict": "Sapekhati",
+              "places": []
+            },
+            {
+              "subDistrict": "Sonari",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Chirang",
+          "subDistricts": [
+            {
+              "subDistrict": "Bengtol",
+              "places": []
+            },
+            {
+              "subDistrict": "Bijni (Pt)",
+              "places": []
+            },
+            {
+              "subDistrict": "Sidli (Pt)",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Darrang",
+          "subDistricts": [
+            {
+              "subDistrict": "Dalgaon (Pt)",
+              "places": []
+            },
+            {
+              "subDistrict": "Mangaldoi (Pt)",
+              "places": []
+            },
+            {
+              "subDistrict": "Pathorighat (Pt)",
+              "places": []
+            },
+            {
+              "subDistrict": "Pub Mangaldai",
+              "places": []
+            },
+            {
+              "subDistrict": "Sipajhar",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Dhemaji",
+          "subDistricts": [
+            {
+              "subDistrict": "Dhemaji",
+              "places": []
+            },
+            {
+              "subDistrict": "Gogamukh",
+              "places": []
+            },
+            {
+              "subDistrict": "Jonai",
+              "places": []
+            },
+            {
+              "subDistrict": "Sissibargaon",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Dhubri",
+          "subDistricts": [
+            {
+              "subDistrict": "Agamoni",
+              "places": []
+            },
+            {
+              "subDistrict": "Athani",
+              "places": []
+            },
+            {
+              "subDistrict": "Bilasipara Pt",
+              "places": []
+            },
+            {
+              "subDistrict": "Chapar Pt",
+              "places": []
+            },
+            {
+              "subDistrict": "Dhubri",
+              "places": []
+            },
+            {
+              "subDistrict": "Gauripur",
+              "places": []
+            },
+            {
+              "subDistrict": "Golakganj Pt",
+              "places": []
+            },
+            {
+              "subDistrict": "South Salmara Pt",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Dibrugarh",
+          "subDistricts": [
+            {
+              "subDistrict": "Chabua",
+              "places": []
+            },
+            {
+              "subDistrict": "Dibrugarh East",
+              "places": []
+            },
+            {
+              "subDistrict": "Dibrugarh West",
+              "places": []
+            },
+            {
+              "subDistrict": "Moran",
+              "places": []
+            },
+            {
+              "subDistrict": "Naharkatiya",
+              "places": []
+            },
+            {
+              "subDistrict": "Tengakhat",
+              "places": []
+            },
+            {
+              "subDistrict": "Tingkhong",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Dima Hasao",
+          "subDistricts": [
+            {
+              "subDistrict": "Haflong",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Goalpara",
+          "subDistricts": [
+            {
+              "subDistrict": "Balijana",
+              "places": []
+            },
+            {
+              "subDistrict": "Dudhnai",
+              "places": []
+            },
+            {
+              "subDistrict": "Lakhipur",
+              "places": []
+            },
+            {
+              "subDistrict": "Matia",
+              "places": []
+            },
+            {
+              "subDistrict": "Rangjuli",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Golaghat",
+          "subDistricts": [
+            {
+              "subDistrict": "Bokakhat",
+              "places": []
+            },
+            {
+              "subDistrict": "Dergaon",
+              "places": []
+            },
+            {
+              "subDistrict": "Golaghat",
+              "places": []
+            },
+            {
+              "subDistrict": "Khumtai",
+              "places": []
+            },
+            {
+              "subDistrict": "Morangi",
+              "places": []
+            },
+            {
+              "subDistrict": "Sarupathar",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Hailakandi",
+          "subDistricts": [
+            {
+              "subDistrict": "Algapur",
+              "places": []
+            },
+            {
+              "subDistrict": "Hailakandi",
+              "places": []
+            },
+            {
+              "subDistrict": "Katlichara",
+              "places": []
+            },
+            {
+              "subDistrict": "Lala",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Hojai",
+          "subDistricts": [
+            {
+              "subDistrict": "Doboka",
+              "places": []
+            },
+            {
+              "subDistrict": "Hojai",
+              "places": []
+            },
+            {
+              "subDistrict": "Lanka",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Jorhat",
+          "subDistricts": [
+            {
+              "subDistrict": "Jorhat East",
+              "places": []
+            },
+            {
+              "subDistrict": "Jorhat West",
+              "places": []
+            },
+            {
+              "subDistrict": "Mariani",
+              "places": []
+            },
+            {
+              "subDistrict": "Teok",
+              "places": []
+            },
+            {
+              "subDistrict": "Titabor",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Kamrup",
+          "subDistricts": [
+            {
+              "subDistrict": "Boko",
+              "places": []
+            },
+            {
+              "subDistrict": "Chamaria",
+              "places": []
+            },
+            {
+              "subDistrict": "Chhaygaon",
+              "places": []
+            },
+            {
+              "subDistrict": "Goroimari",
+              "places": []
+            },
+            {
+              "subDistrict": "Hajo",
+              "places": []
+            },
+            {
+              "subDistrict": "Kamalpur",
+              "places": []
+            },
+            {
+              "subDistrict": "Koya",
+              "places": []
+            },
+            {
+              "subDistrict": "Nagarbera",
+              "places": []
+            },
+            {
+              "subDistrict": "North Guwahati",
+              "places": []
+            },
+            {
+              "subDistrict": "Palasbari",
+              "places": []
+            },
+            {
+              "subDistrict": "Rangia",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Kamrup Metro",
+          "subDistricts": [
+            {
+              "subDistrict": "Azara",
+              "places": []
+            },
+            {
+              "subDistrict": "Chandrapur",
+              "places": []
+            },
+            {
+              "subDistrict": "Dispur",
+              "places": []
+            },
+            {
+              "subDistrict": "Guwahati",
+              "places": []
+            },
+            {
+              "subDistrict": "Sonapur",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Karbi Anglong",
+          "subDistricts": [
+            {
+              "subDistrict": "Diphu",
+              "places": []
+            },
+            {
+              "subDistrict": "Phuloni",
+              "places": []
+            },
+            {
+              "subDistrict": "Silonijan",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Kokrajhar",
+          "subDistricts": [
+            {
+              "subDistrict": "Bagribari (Pt)",
+              "places": []
+            },
+            {
+              "subDistrict": "Bhowraguri",
+              "places": []
+            },
+            {
+              "subDistrict": "Dotoma",
+              "places": []
+            },
+            {
+              "subDistrict": "Gossaigaon (Pt)",
+              "places": []
+            },
+            {
+              "subDistrict": "Kokrajhar",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Lakhimpur",
+          "subDistricts": [
+            {
+              "subDistrict": "Bihpuria",
+              "places": []
+            },
+            {
+              "subDistrict": "Dhakuakhana (Pt-I)",
+              "places": []
+            },
+            {
+              "subDistrict": "Kadam",
+              "places": []
+            },
+            {
+              "subDistrict": "Naobaicha",
+              "places": []
+            },
+            {
+              "subDistrict": "Narayanpur",
+              "places": []
+            },
+            {
+              "subDistrict": "North Lakhimpur",
+              "places": []
+            },
+            {
+              "subDistrict": "Subansiri (Pt-I)",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Majuli",
+          "subDistricts": [
+            {
+              "subDistrict": "Majuli",
+              "places": []
+            },
+            {
+              "subDistrict": "Ujani Majuli Circle",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Marigaon",
+          "subDistricts": [
+            {
+              "subDistrict": "Bhuragaon",
+              "places": []
+            },
+            {
+              "subDistrict": "Laharighat",
+              "places": []
+            },
+            {
+              "subDistrict": "Marigaon",
+              "places": []
+            },
+            {
+              "subDistrict": "Mayong",
+              "places": []
+            },
+            {
+              "subDistrict": "Mikirbheta",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Nagaon",
+          "subDistricts": [
+            {
+              "subDistrict": "Batadrava",
+              "places": []
+            },
+            {
+              "subDistrict": "Dhing",
+              "places": []
+            },
+            {
+              "subDistrict": "Haibargaon",
+              "places": []
+            },
+            {
+              "subDistrict": "Hojai",
+              "places": []
+            },
+            {
+              "subDistrict": "Kaliabor",
+              "places": []
+            },
+            {
+              "subDistrict": "Lumding",
+              "places": []
+            },
+            {
+              "subDistrict": "Nagaon",
+              "places": []
+            },
+            {
+              "subDistrict": "Raha",
+              "places": []
+            },
+            {
+              "subDistrict": "Rupahihat",
+              "places": []
+            },
+            {
+              "subDistrict": "Samaguri",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Nalbari",
+          "subDistricts": [
+            {
+              "subDistrict": "Barkhetri",
+              "places": []
+            },
+            {
+              "subDistrict": "Ghograpar",
+              "places": []
+            },
+            {
+              "subDistrict": "Mukalmua",
+              "places": []
+            },
+            {
+              "subDistrict": "Nalbari",
+              "places": []
+            },
+            {
+              "subDistrict": "Tihu",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Sivasagar",
+          "subDistricts": [
+            {
+              "subDistrict": "Demow",
+              "places": []
+            },
+            {
+              "subDistrict": "Nazira",
+              "places": []
+            },
+            {
+              "subDistrict": "Sibasagar",
+              "places": []
+            },
+            {
+              "subDistrict": "Thowra",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Sonitpur",
+          "subDistricts": [
+            {
+              "subDistrict": "Biswanath Chariali",
+              "places": []
+            },
+            {
+              "subDistrict": "Dhekiajuli",
+              "places": []
+            },
+            {
+              "subDistrict": "Gohpur",
+              "places": []
+            },
+            {
+              "subDistrict": "Rangapara",
+              "places": []
+            },
+            {
+              "subDistrict": "Sootea",
+              "places": []
+            },
+            {
+              "subDistrict": "Tezpur",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "South Salmara-Mankachar",
+          "subDistricts": [
+            {
+              "subDistrict": "Hatsingimari",
+              "places": []
+            },
+            {
+              "subDistrict": "Mankachar",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Sribhumi (Karimganj)",
+          "subDistricts": [
+            {
+              "subDistrict": "Badarpur",
+              "places": []
+            },
+            {
+              "subDistrict": "Karimganj",
+              "places": []
+            },
+            {
+              "subDistrict": "Nilambazar",
+              "places": []
+            },
+            {
+              "subDistrict": "Patharkandi",
+              "places": []
+            },
+            {
+              "subDistrict": "Ramkrishna Nagar",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Tamulpur",
+          "subDistricts": [
+            {
+              "subDistrict": "Tamulpur",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Tinsukia",
+          "subDistricts": [
+            {
+              "subDistrict": "Doomdooma",
+              "places": []
+            },
+            {
+              "subDistrict": "Margherita",
+              "places": []
+            },
+            {
+              "subDistrict": "Sadiya",
+              "places": []
+            },
+            {
+              "subDistrict": "Tinsukia",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Udalguri",
+          "subDistricts": [
+            {
+              "subDistrict": "Bhergaon",
+              "places": []
+            },
+            {
+              "subDistrict": "Kalaigaon",
+              "places": []
+            },
+            {
+              "subDistrict": "Mazbat",
+              "places": []
+            },
+            {
+              "subDistrict": "Udalguri",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "West Karbi Anglong",
+          "subDistricts": [
+            {
+              "subDistrict": "Hamren",
+              "places": []
+            },
+            {
+              "subDistrict": "Baithalangso",
+              "places": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "listings": []
+};
+let state = normalizeState(JSON.parse(localStorage.getItem("pkitaap-simple") || "null") || structuredClone(seed));
+let selectedClass = "", selectedBoard = "", selectedStream = "", selectedBookId = "", selectedCategory = "";
+let search = "", catalogStep = "classes";
+
+function normalizeState(input) {
+  const next = input || structuredClone(seed);
+  next.settings    = { ...seed.settings,   ...(next.settings    || {}) };
+  next.classThumbs = { ...seed.classThumbs, ...(next.classThumbs || {}) };
+  next.categories  = next.categories || seed.categories;
+  next.books = (next.books || seed.books).map(item => {
+    return { image:"", author:"", ...item, board: item.board || "" };
+  });
+  next.locations     = next.locations     || seed.locations;
+  next.listings      = next.listings      || seed.listings;
+  next.classes       = next.classes       || seed.classes  || ["Class 9","Class 10","Class 11","Class 12"];
+  next.streams       = next.streams       || seed.streams  || ["Science","Commerce","Arts"];
+  next.boardsByState  = next.boardsByState  || seed.boardsByState  || {};
+  next.mediumsByState = next.mediumsByState || seed.mediumsByState || {};
+  return next;
+}
+function save() { localStorage.setItem("pkitaap-simple", JSON.stringify(state)); }
+function toast(text) { const el = document.querySelector("#toast"); el.textContent = text; el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 1800); }
+function book() { return state.books.find(item => item.id === selectedBookId) || null; }
+let selectedState = "";
+const classes = state.classes || ["Class 9","Class 10","Class 11","Class 12"];
+const streams  = state.streams || ["Science","Commerce","Arts"];
+function getBoardsForState(st) {
+  return (state.boardsByState||{})[st] || [];
+}
+function getMediumsForState(st) {
+  return (state.mediumsByState||{})[st] || [];
+}
+function shownBooks() {
+  if (selectedCategory) {
+    return state.books.filter(item => item.categoryId === selectedCategory);
+  }
+  if (search) {
+    return state.books.filter(item => {
+      if (item.type === "general" && !state.settings.general) return false;
+      return [item.title,item.className,item.board,item.stream,item.author].join(" ").toLowerCase().includes(search.toLowerCase());
+    });
+  }
+  return state.books.filter(item => {
+    if (item.type === "general" && !state.settings.general) return false;
+    if (item.className !== selectedClass) return false;
+    if (item.type === "school" && (item.board||"").toLowerCase() !== (selectedBoard||"").toLowerCase()) return false;
+    if ((selectedClass === "Class 11" || selectedClass === "Class 12") && item.stream !== selectedStream) return false;
+    return true;
+  });
+}
+function placeholder(label) {
+  const safe = label.replace(/[<>&"]/g,"");
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="500" height="360" viewBox="0 0 500 360"><rect width="500" height="360" rx="26" fill="#16a34a"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-family="Arial" font-size="42" font-weight="800">' + safe + '</text></svg>';
+  return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+}
+function imageForClass(name) { return state.classThumbs?.[name] || placeholder(name); }
+function imageForBook(item)  { return item.image || placeholder(item.title); }
+function bookMeta(item)      { return [item.className,item.board,item.stream].filter(Boolean).join(" / "); }
+function priceText(item)     { return '&#8377;' + item.price; }
+function renderClasses() {
+  const all = state.settings.general ? [...classes,"General"] : classes;
+  const grid = document.querySelector("#classGrid");
+  grid.style.display = catalogStep === "classes" ? "grid" : "none";
+  grid.innerHTML = all.map(name => '<button class="class-card ' + (name===selectedClass?"active":"") + '" data-class="' + name + '"><img src="' + imageForClass(name) + '" alt="' + name + '"/><div class="card-info"><strong>' + name + '</strong><span>' + state.books.filter(b=>b.className===name&&(b.type!=="general"||state.settings.general)).length + ' books</span></div></button>').join("");
+  document.querySelectorAll(".class-card").forEach(card => {
+    card.onclick = () => { selectedClass = card.dataset.class; selectedBoard=""; selectedStream=""; selectedBookId=""; selectedCategory=""; catalogStep = selectedClass === "General" ? "books" : "boards"; render(); };
+  });
+}
+function renderCategories() {
+  const card = document.querySelector("#categoryCard");
+  const grid = document.querySelector("#categoryGrid");
+  const show = catalogStep === "classes" && (state.categories||[]).length > 0;
+  card.style.display = show ? "block" : "none";
+  if (!show) return;
+  grid.innerHTML = (state.categories||[]).map(cat => '<button class="class-card" data-catid="' + cat.id + '"><img src="' + (cat.image||placeholder(cat.name)) + '" alt="' + cat.name + '"/><div class="card-info"><strong>' + cat.name + '</strong><span>' + state.books.filter(b=>b.categoryId===cat.id).length + ' books</span></div></button>').join("");
+  document.querySelectorAll("[data-catid]").forEach(card => {
+    card.onclick = () => { selectedClass = "General"; selectedCategory = card.dataset.catid; search = ""; document.querySelector("#searchInput").value = ""; document.querySelector("#clearSearch").style.display = "none"; catalogStep = "books"; render(); };
+  });
+}
+function renderBoards() {
+  const boardGrid = document.querySelector("#boardGrid");
+  if (catalogStep !== "boards") { boardGrid.style.display="none"; boardGrid.innerHTML=""; return; }
+  boardGrid.style.display = "grid";
+  // Require a state to be selected first
+  if (!selectedState) {
+    boardGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#888;font-weight:700;font-size:14px;">Please select your state above to see available boards.</div>';
+    return;
+  }
+  // Boards configured for this state
+  const stateBds = getBoardsForState(selectedState);
+  // Also include any boards that actually have subjects for this class+state (safety net)
+  const classBds = [...new Set(
+    state.books
+      .filter(b => b.type === "school" && b.className === selectedClass && b.board && (!b.state || b.state === selectedState))
+      .map(b => b.board)
+  )];
+  // Merge: state boards first, then any extra boards that have actual subjects
+  const bds = [...new Set([...stateBds, ...classBds.filter(b => {
+    return !stateBds.some(sb => sb.toLowerCase() === b.toLowerCase());
+  })])];
+  if (!bds.length) {
+    boardGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#888;font-weight:700;font-size:14px;">No boards found for ' + selectedClass + ' in ' + selectedState + '. Configure boards in the admin panel.</div>';
+    return;
+  }
+  boardGrid.innerHTML = bds.map(name => '<button class="stream-card" data-board="' + name + '"><strong>' + name + '</strong></button>').join("");
+  document.querySelectorAll("[data-board]").forEach(card => {
+    card.onclick = () => { selectedBoard = card.dataset.board; if (selectedClass==="Class 11"||selectedClass==="Class 12") { selectedStream=""; selectedBookId=""; catalogStep="streams"; } else { selectedBookId=""; catalogStep="books"; } render(); };
+  });
+}
+function renderStreams() {
+  const show = catalogStep === "streams";
+  const grid = document.querySelector("#streamGrid");
+  grid.style.display = show ? "grid" : "none";
+  if (!show) { grid.innerHTML = ""; return; }
+  // Only show streams that have at least one subject for this class+board
+  const activeStreams = [...new Set(
+    state.books
+      .filter(b => b.type === "school" && b.className === selectedClass &&
+        (b.board||"").toLowerCase() === (selectedBoard||"").toLowerCase() && b.stream)
+      .map(b => b.stream)
+  )];
+  // Fall back to all streams if none found (safety)
+  const toShow = activeStreams.length ? activeStreams : streams;
+  grid.innerHTML = toShow.map(name => '<button class="stream-card" data-stream="' + name + '"><strong>' + name + '</strong></button>').join("");
+  document.querySelectorAll("[data-stream]").forEach(card => { card.onclick = () => { selectedStream=card.dataset.stream; selectedBookId=""; catalogStep="books"; render(); }; });
+}
+function renderBooks() {
+  const items = shownBooks();
+  const grid  = document.querySelector("#bookGrid");
+  grid.style.display = catalogStep === "books" ? "grid" : "none";
+  grid.innerHTML = items.length ? items.map(item => '<button class="book-card ' + (item.id===selectedBookId?"active":"") + '" data-id="' + item.id + '"><img src="' + imageForBook(item) + '" alt="' + item.title + '"/><div class="card-info"><strong>' + item.title + '</strong><small>' + bookMeta(item) + '</small><span class="price">' + priceText(item) + '</span></div></button>').join("") : '<div>No books found</div>';
+  document.querySelectorAll(".book-card").forEach(card => { card.onclick = () => { selectedBookId=card.dataset.id; render(); }; });
+}
+function renderSelected() {
+  const b = book();
+  const box = document.querySelector("#selectedBox");
+  if (b) { box.innerHTML = '<img src="' + imageForBook(b) + '" alt="' + b.title + '"/><strong>' + b.title + '</strong><span>' + bookMeta(b) + ' &mdash; ' + priceText(b) + '</span>'; }
+  else { box.innerHTML = '<strong>No subject selected</strong><span>Select class, board, stream, and subject first.</span>'; }
+}
+function renderMatches(bookId) {
+  const bId = bookId || selectedBookId;
+  const list = document.querySelector("#matchList");
+  const matches = state.listings.filter(l => l.bookId === bId);
+  list.innerHTML = matches.length ? matches.map(l => '<div class="result-card"><strong>' + l.seller + '</strong><span>' + (l.state?l.state+' · ':'') + l.district + ', ' + l.place + (l.school?' &mdash; '+l.school:'') + '</span><span>Condition: ' + l.condition + '</span><div class="contact-row">' + (state.settings.instagram&&l.instagram?'<a href="https://instagram.com/'+l.instagram+'" target="_blank" class="btn btn-ghost" style="font-size:12px;">Instagram</a>':'') + (state.settings.whatsapp&&l.whatsapp?'<a href="https://wa.me/91'+l.whatsapp+'" target="_blank" class="btn btn-primary" style="font-size:12px;">WhatsApp</a>':'') + '</div></div>') .join("") : '<p style="color:#888;font-size:13px;font-weight:700;padding:8px 0;">No sellers found in your area yet.</p>';
+}
+// ── Location helpers (State → District → Place → School) ──────────────────
+function _getLocData() { return state.locations || []; }
+function _getDistricts(stateName) {
+  const st = _getLocData().find(x => x.state === stateName);
+  return st?.districts || [];
+}
+function _getSubDistricts(stateName, districtName) {
+  const d = _getDistricts(stateName).find(x => x.district === districtName);
+  return d?.subDistricts || [];
+}
+function _getPlaces(stateName, districtName, subDistrictName) {
+  if (subDistrictName) {
+    const sd = _getSubDistricts(stateName, districtName).find(x => x.subDistrict === subDistrictName);
+    return sd?.places || [];
+  }
+  // No subDistrict filter — flatten all places across all sub-districts
+  return _getSubDistricts(stateName, districtName).flatMap(sd => sd.places || []);
+}
+function _getSchools(stateName, districtName, subDistrictName, placeName) {
+  const p = _getPlaces(stateName, districtName, subDistrictName).find(x => x.name === placeName);
+  return p?.schools || [];
+}
+function updateBuyDistricts() {
+  const stateName = document.getElementById('buyState')?.value;
+  const dSel  = document.getElementById('buyDistrict');
+  const sdSel = document.getElementById('buySubDistrict');
+  const pSel  = document.getElementById('buyPlace');
+  const sSel  = document.getElementById('buySchool');
+  if (!dSel) return;
+  dSel.innerHTML = '<option value="">— District —</option>' + _getDistricts(stateName).map(d => '<option>' + d.district + '</option>').join('');
+  if (sdSel) sdSel.innerHTML = '<option value="">— Sub-District —</option>';
+  if (pSel)  pSel.innerHTML  = '<option value="">— Place —</option>';
+  if (sSel)  sSel.innerHTML  = '<option value="">— School (optional) —</option>';
+}
+function updateBuySubDistricts() {
+  const stateName = document.getElementById('buyState')?.value;
+  const district  = document.getElementById('buyDistrict')?.value;
+  const sdSel = document.getElementById('buySubDistrict');
+  const pSel  = document.getElementById('buyPlace');
+  const sSel  = document.getElementById('buySchool');
+  if (!sdSel) return;
+  sdSel.innerHTML = '<option value="">— Sub-District —</option>' + _getSubDistricts(stateName, district).map(sd => '<option>' + sd.subDistrict + '</option>').join('');
+  if (pSel) pSel.innerHTML = '<option value="">— Place —</option>';
+  if (sSel) sSel.innerHTML = '<option value="">— School (optional) —</option>';
+}
+function updateBuyPlaces() {
+  const stateName   = document.getElementById('buyState')?.value;
+  const district    = document.getElementById('buyDistrict')?.value;
+  const subDistrict = document.getElementById('buySubDistrict')?.value;
+  const pSel = document.getElementById('buyPlace');
+  const sSel = document.getElementById('buySchool');
+  if (!pSel) return;
+  pSel.innerHTML = '<option value="">— Place —</option>' + _getPlaces(stateName, district, subDistrict).map(p => '<option>' + p.name + '</option>').join('');
+  if (sSel) sSel.innerHTML = '<option value="">— School (optional) —</option>';
+}
+function updateBuySchools() {
+  const stateName   = document.getElementById('buyState')?.value;
+  const district    = document.getElementById('buyDistrict')?.value;
+  const subDistrict = document.getElementById('buySubDistrict')?.value;
+  const place       = document.getElementById('buyPlace')?.value;
+  const sSel = document.getElementById('buySchool');
+  if (sSel) sSel.innerHTML = '<option value="">— School (optional) —</option>' + _getSchools(stateName, district, subDistrict, place).map(s => '<option>' + s + '</option>').join('');
+}
+function updateSellDistricts() {
+  const stateName = document.getElementById('sellState')?.value;
+  const dSel  = document.getElementById('sellDistrict');
+  const sdSel = document.getElementById('sellSubDistrict');
+  const pSel  = document.getElementById('sellPlace');
+  const sSel  = document.getElementById('sellSchool');
+  if (!dSel) return;
+  dSel.innerHTML = '<option value="">— District —</option>' + _getDistricts(stateName).map(d => '<option>' + d.district + '</option>').join('');
+  if (sdSel) sdSel.innerHTML = '<option value="">— Sub-District —</option>';
+  if (pSel)  pSel.innerHTML  = '<option value="">— Place —</option>';
+  if (sSel)  sSel.innerHTML  = '<option value="">— School (optional) —</option>';
+}
+function updateSellSubDistricts() {
+  const stateName = document.getElementById('sellState')?.value;
+  const district  = document.getElementById('sellDistrict')?.value;
+  const sdSel = document.getElementById('sellSubDistrict');
+  const pSel  = document.getElementById('sellPlace');
+  const sSel  = document.getElementById('sellSchool');
+  if (!sdSel) return;
+  sdSel.innerHTML = '<option value="">— Sub-District —</option>' + _getSubDistricts(stateName, district).map(sd => '<option>' + sd.subDistrict + '</option>').join('');
+  if (pSel) pSel.innerHTML = '<option value="">— Place —</option>';
+  if (sSel) sSel.innerHTML = '<option value="">— School (optional) —</option>';
+}
+function updateSellPlaces() {
+  const stateName   = document.getElementById('sellState')?.value;
+  const district    = document.getElementById('sellDistrict')?.value;
+  const subDistrict = document.getElementById('sellSubDistrict')?.value;
+  const pSel = document.getElementById('sellPlace');
+  const sSel = document.getElementById('sellSchool');
+  if (!pSel) return;
+  pSel.innerHTML = '<option value="">— Place —</option>' + _getPlaces(stateName, district, subDistrict).map(p => '<option>' + p.name + '</option>').join('');
+  if (sSel) sSel.innerHTML = '<option value="">— School (optional) —</option>';
+}
+function updateSellSchools() {
+  const stateName   = document.getElementById('sellState')?.value;
+  const district    = document.getElementById('sellDistrict')?.value;
+  const subDistrict = document.getElementById('sellSubDistrict')?.value;
+  const place       = document.getElementById('sellPlace')?.value;
+  const sSel = document.getElementById('sellSchool');
+  if (sSel) sSel.innerHTML = '<option value="">— School (optional) —</option>' + _getSchools(stateName, district, subDistrict, place).map(s => '<option>' + s + '</option>').join('');
+}
+function updateSignupDistricts() {
+  const stateName = document.getElementById('signupState')?.value;
+  const dSel  = document.getElementById('signupDistrict');
+  const sdSel = document.getElementById('signupSubDistrict');
+  const pSel  = document.getElementById('signupPlace');
+  const sSel  = document.getElementById('signupSchool');
+  if (!dSel) return;
+  dSel.innerHTML = '<option value="">— District —</option>' + _getDistricts(stateName).map(d => '<option value="' + d.district + '">' + d.district + '</option>').join('');
+  if (sdSel) sdSel.innerHTML = '<option value="">— Sub-District —</option>';
+  if (pSel)  pSel.innerHTML  = '<option value="">— Place —</option>';
+  if (sSel)  sSel.innerHTML  = '<option value="">— School (optional) —</option>';
+  _resetPlaceManual(); _resetSchoolManual();
+}
+function updateSignupSubDistricts() {
+  const stateName = document.getElementById('signupState')?.value;
+  const district  = document.getElementById('signupDistrict')?.value;
+  const sdSel = document.getElementById('signupSubDistrict');
+  const pSel  = document.getElementById('signupPlace');
+  const sSel  = document.getElementById('signupSchool');
+  if (!sdSel) return;
+  sdSel.innerHTML = '<option value="">— Sub-District —</option>' +
+    _getSubDistricts(stateName, district).map(sd =>
+      '<option value="' + sd.subDistrict + '">' + sd.subDistrict + '</option>'
+    ).join('');
+  if (pSel) pSel.innerHTML = '<option value="">— Place —</option>';
+  if (sSel) sSel.innerHTML = '<option value="">— School (optional) —</option>';
+  _resetPlaceManual(); _resetSchoolManual();
+}
+function updateSignupPlaces() {
+  const stateName   = document.getElementById('signupState')?.value;
+  const district    = document.getElementById('signupDistrict')?.value;
+  const subDistrict = document.getElementById('signupSubDistrict')?.value;
+  const pSel = document.getElementById('signupPlace');
+  const sSel = document.getElementById('signupSchool');
+  if (!pSel) return;
+  pSel.innerHTML = '<option value="">— Place —</option>' +
+    _getPlaces(stateName, district, subDistrict).map(p =>
+      '<option value="' + p.name + '">' + p.name + '</option>'
+    ).join('');
+  if (sSel) sSel.innerHTML = '<option value="">— School (optional) —</option>';
+  _resetPlaceManual(); _resetSchoolManual();
+}
+function updateSignupSchools() {
+  const stateName   = document.getElementById('signupState')?.value;
+  const district    = document.getElementById('signupDistrict')?.value;
+  const subDistrict = document.getElementById('signupSubDistrict')?.value;
+  const place       = document.getElementById('signupPlace')?.value;
+  const sSel = document.getElementById('signupSchool');
+  if (sSel) sSel.innerHTML = '<option value="">— School (optional) —</option>' + _getSchools(stateName, district, subDistrict, place).map(s => '<option value="' + s + '">' + s + '</option>').join('');
+  _resetSchoolManual();
+}
+function checkPlaceManual() {
+  // when user picks from select, hide manual input
+  const wrap = document.getElementById('placeManualWrap');
+  const inp = document.getElementById('signupPlaceManual');
+  const btn = document.getElementById('placeManualBtn');
+  if(wrap && wrap.style.display !== 'none'){
+    wrap.style.display = 'none';
+    if(inp) inp.value = '';
+    if(btn) btn.textContent = '✏️ Not listed? Add manually';
+  }
+}
+function _resetPlaceManual() {
+  const wrap = document.getElementById('placeManualWrap');
+  const inp = document.getElementById('signupPlaceManual');
+  const btn = document.getElementById('placeManualBtn');
+  if(wrap) wrap.style.display = 'none';
+  if(inp) inp.value = '';
+  if(btn) btn.textContent = '✏️ Not listed? Add manually';
+}
+function _resetSchoolManual() {
+  const wrap = document.getElementById('schoolManualWrap');
+  const inp = document.getElementById('signupSchoolManual');
+  const btn = document.getElementById('schoolManualBtn');
+  if(wrap) wrap.style.display = 'none';
+  if(inp) inp.value = '';
+  if(btn) btn.textContent = '✏️ Not listed? Add manually';
+}
+window.togglePlaceManual = function() {
+  const wrap = document.getElementById('placeManualWrap');
+  const inp = document.getElementById('signupPlaceManual');
+  const btn = document.getElementById('placeManualBtn');
+  const sel = document.getElementById('signupPlace');
+  if(!wrap) return;
+  const opening = wrap.style.display === 'none';
+  wrap.style.display = opening ? 'block' : 'none';
+  if(opening){
+    if(sel) sel.value = '';
+    btn.textContent = '✖ Cancel manual entry';
+    setTimeout(()=>inp&&inp.focus(), 50);
+  } else {
+    if(inp) inp.value = '';
+    btn.textContent = '✏️ Not listed? Add manually';
+  }
+};
+window.toggleSchoolManual = function() {
+  const wrap = document.getElementById('schoolManualWrap');
+  const inp = document.getElementById('signupSchoolManual');
+  const btn = document.getElementById('schoolManualBtn');
+  const sel = document.getElementById('signupSchool');
+  if(!wrap) return;
+  const opening = wrap.style.display === 'none';
+  wrap.style.display = opening ? 'block' : 'none';
+  if(opening){
+    if(sel) sel.value = '';
+    btn.textContent = '✖ Cancel manual entry';
+    setTimeout(()=>inp&&inp.focus(), 50);
+  } else {
+    if(inp) inp.value = '';
+    btn.textContent = '✏️ Not listed? Add manually';
+  }
+};
+function render() {
+  document.querySelector("#catalogTitle").textContent = catalogStep==="classes"?"Classes":catalogStep==="boards"?"Boards":catalogStep==="streams"?"Streams":"Subjects";
+  document.querySelector("#backBtn").style.display = catalogStep==="classes" ? "none" : "inline-block";
+  document.querySelector("#matchCard").style.display = (selectedBookId && catalogStep === "books") ? "block" : "none";
+  renderClasses(); renderCategories(); renderBoards(); renderStreams(); renderBooks(); renderSelected();
+}
+function bindMenu() {
+  const btn = document.getElementById("menuBtn");
+  const panel = document.getElementById("menuPanel");
+  btn.onclick = () => { btn.classList.toggle("open"); panel.classList.toggle("open"); };
+  document.addEventListener("click", e => { if (!btn.contains(e.target) && !panel.contains(e.target)) { btn.classList.remove("open"); panel.classList.remove("open"); } });
+}
+function bindSearch() {
+  const inp = document.querySelector("#searchInput");
+  const clr = document.querySelector("#clearSearch");
+  const back = document.querySelector("#backBtn");
+  if(back) back.onclick = () => {
+    selectedCategory = "";
+    if (catalogStep === "books") {
+      if (selectedStream) catalogStep = "streams";
+      else if (selectedBoard) catalogStep = selectedClass === "General" ? "classes" : "boards";
+      else catalogStep = "classes";
+      selectedBookId = "";
+    } else if (catalogStep === "streams") { catalogStep = "boards"; selectedStream = ""; selectedBookId = ""; }
+    else if (catalogStep === "boards") { catalogStep = "classes"; selectedBoard = ""; selectedStream = ""; selectedBookId = ""; }
+    else { catalogStep = "classes"; selectedClass = selectedBoard = selectedStream = selectedBookId = ""; }
+    render();
+  };
+  inp.oninput = () => { search = inp.value; clr.style.display = search ? "grid" : "none"; if(search) catalogStep="books"; else catalogStep="classes"; render(); };
+  clr.onclick = () => { inp.value=""; search=""; selectedCategory=""; clr.style.display="none"; catalogStep="classes"; selectedClass=selectedBoard=selectedStream=selectedBookId=""; render(); };
+}
+function bindBuyForm() {
+  const frm = document.querySelector("#buyForm");
+  if(frm) frm.onsubmit = e => { e.preventDefault(); if(!selectedBookId) return; renderMatches(); };
+}
+function bindSellForm() {
+  const frm = document.querySelector("#sellForm");
+  if(frm) frm.onsubmit = e => {
+    e.preventDefault();
+    if(!selectedBookId){ toast("Please select a book first"); return; }
+    const listing = { id:"ls"+Date.now(), bookId:selectedBookId, seller:"You", state:document.getElementById("sellState")?.value||"", district:document.getElementById("sellDistrict").value, subDistrict:document.getElementById("sellSubDistrict")?.value||"", place:document.getElementById("sellPlace").value, school:document.getElementById("sellSchool")?.value||"", condition:document.getElementById("sellCondition").value, instagram:document.getElementById("sellInstagram")?.value||"", whatsapp:document.getElementById("sellWhatsapp")?.value||"" };
+    state.listings.push(listing); save(); toast("Listed for sale!"); };
+}
+function bindPageNav() {
+  document.querySelectorAll("[data-page]").forEach(btn => { btn.onclick = () => { const pg = btn.dataset.page; document.querySelectorAll(".page").forEach(p=>p.classList.remove("active")); document.getElementById(pg+"Page")?.classList.add("active"); }; });
+  document.querySelectorAll("[data-go-buy]").forEach(btn => { btn.onclick = () => { document.querySelectorAll(".page").forEach(p=>p.classList.remove("active")); document.getElementById("buyPage").classList.add("active"); }; });
+}
+function bindAdminForms() {
+  const bookForm = document.getElementById("bookForm");
+  if(bookForm){
+    const nCls=document.getElementById("newClass");
+    const nBrd=document.getElementById("newBoard");
+    const nStr=document.getElementById("newStream");
+    nCls.innerHTML = [...classes,...(state.settings.general?["General"]:[])].map(c=>'<option>'+c+'</option>').join("");
+    nCls.onchange = () => { const c=nCls.value; nBrd.innerHTML=(getBoardsForState(selectedState)||[]).map(b=>'<option>'+b+'</option>').join(""); };
+    nCls.onchange();
+    bookForm.onsubmit = e => { e.preventDefault(); const cls=nCls.value; const brd=nBrd.value; const str=nStr.value; const title=document.getElementById("newTitle").value.trim(); const price=parseInt(document.getElementById("newPrice").value)||0; const author=document.getElementById("newAuthor").value.trim(); const image=document.getElementById("newImage").value.trim(); if(!title||!price) return; state.books.push({id:"b"+Date.now(),type:cls==="General"?"general":"school",className:cls,board:brd,stream:str,title,price,author,image}); save(); toast("Subject added!"); e.target.reset(); nCls.onchange(); };
+  }
+  const schoolForm = document.getElementById("schoolForm");
+  if(schoolForm){
+    const nDist=document.getElementById("newDistrict");
+    const nPlace=document.getElementById("newPlace");
+    // Populate from all districts across all states
+    const allDists = state.locations.flatMap(st=>st.districts||[]);
+    nDist.innerHTML = allDists.map(d=>'<option>'+d.district+'</option>').join("");
+    nDist.onchange = () => { const d=allDists.find(x=>x.district===nDist.value); nPlace.innerHTML=(d?.places||[]).map(p=>'<option>'+p.name+'</option>').join(""); };
+    nDist.onchange();
+    schoolForm.onsubmit = e => { e.preventDefault(); const d=allDists.find(x=>x.district===nDist.value); const p=d?.places.find(x=>x.name===nPlace.value); const sc=document.getElementById("newSchool").value.trim(); if(!p||!sc) return; p.schools.push(sc); save(); toast("School added!"); document.getElementById("newSchool").value=""; };
+  }
+  const catForm = document.getElementById("categoryForm");
+  if(catForm) catForm.onsubmit = e => { e.preventDefault(); const name=document.getElementById("categoryName").value.trim(); const image=document.getElementById("categoryImage").value.trim(); if(!name) return; state.categories.push({id:"c"+Date.now(),name,image}); save(); toast("Category added!"); e.target.reset(); };
+  const thumbForm = document.getElementById("classThumbForm");
+  if(thumbForm) thumbForm.onsubmit = e => { e.preventDefault(); const cls=document.getElementById("thumbClass").value.trim(); const img=document.getElementById("thumbImage").value.trim(); if(!cls||!img) return; state.classThumbs[cls]=img; save(); toast("Thumbnail saved!"); e.target.reset(); };
+}
+function fillSignupLocations() {
+  const dSel  = document.getElementById("signupDistrict");
+  const sdSel = document.getElementById("signupSubDistrict");
+  const pSel  = document.getElementById("signupPlace");
+  if (dSel)  dSel.onchange  = updateSignupSubDistricts;
+  if (sdSel) sdSel.onchange = updateSignupPlaces;
+  if (pSel)  pSel.onchange  = updateSignupSchools;
+}
+function _updateMediumsForState(stateVal) {
+  const meds = getMediumsForState(stateVal);
+  const sel = document.getElementById('buyMedium');
+  if (!sel) return;
+  if (!stateVal) { sel.innerHTML = '<option value="">— Select State first —</option>'; return; }
+  sel.innerHTML = '<option value="">— Select Medium —</option>' +
+    (meds.length ? meds.map(m=>'<option value="'+m+'">'+m+'</option>').join('') :
+      '<option value="English Medium">English Medium</option>');
+}
+function onStateFilterChange(stateVal) {
+  selectedState = stateVal;
+  // Reset board/stream selection when state changes
+  selectedBoard = ""; selectedStream = ""; selectedBookId = "";
+  if (catalogStep === "boards" || catalogStep === "streams" || catalogStep === "books") {
+    catalogStep = selectedClass ? "boards" : "classes";
+  }
+  // Sync stateFilter2 (sell page)
+  const sf2 = document.getElementById('stateFilter2');
+  if (sf2 && sf2.value !== stateVal) sf2.value = stateVal;
+  // Update buy form
+  const buyStateEl = document.getElementById('buyState');
+  if (buyStateEl) { buyStateEl.value = stateVal; updateBuyDistricts(); }
+  // Update mediums dropdown
+  _updateMediumsForState(stateVal);
+  render();
+}
+function onStateFilterChange2(stateVal) {
+  selectedState = stateVal;
+  selectedBoard = ""; selectedStream = ""; selectedBookId = "";
+  if (catalogStep === "boards" || catalogStep === "streams" || catalogStep === "books") {
+    catalogStep = selectedClass ? "boards" : "classes";
+  }
+  const sf1 = document.getElementById('stateFilter');
+  if (sf1 && sf1.value !== stateVal) sf1.value = stateVal;
+  const sellStateEl = document.getElementById('sellState');
+  if (sellStateEl) { sellStateEl.value = stateVal; updateSellDistricts(); }
+  _updateMediumsForState(stateVal);
+  render();
+}
+function init() { fillSignupLocations(); render(); bindMenu(); bindSearch(); bindBuyForm(); bindSellForm(); bindPageNav(); bindAdminForms(); }
+init();
+// ═══════════════════════════════════════════════════════════════
+//  AUTH MODULE  — Firebase Phone OTP + Firestore user persistence
+// ═══════════════════════════════════════════════════════════════
+(function() {
+
+  // ── State ──────────────────────────────────────────────────
+  window._isLoggedIn     = false;
+  window._currentUser    = null;
+  let _confirmationResult = null;   // Firebase confirmationResult
+  let _otpVerified        = false;
+  let _recaptchaVerifier  = null;
+
+  // ── Dialog refs ────────────────────────────────────────────
+  const loginDialog  = document.getElementById('loginDialog');
+  const signupDialog = document.getElementById('signupDialog');
+
+  function openLogin()  { signupDialog.close(); loginDialog.showModal(); }
+  function openSignup() { loginDialog.close();  signupDialog.showModal(); }
+
+  document.getElementById('loginClose').onclick  = function() { loginDialog.close(); };
+  document.getElementById('signupClose').onclick = function() { signupDialog.close(); };
+  loginDialog.addEventListener('click',  function(e) { if (e.target === loginDialog)  loginDialog.close(); });
+  signupDialog.addEventListener('click', function(e) { if (e.target === signupDialog) signupDialog.close(); });
+
+  document.getElementById('goSignup').onclick    = openSignup;
+  document.getElementById('goLogin').onclick     = openLogin;
+  document.getElementById('loginBtn').onclick    = openLogin;
+  document.getElementById('menuGoSignup').onclick = openSignup;
+
+  // ── Auth success handler ───────────────────────────────────
+  async function onAuthSuccess(userData, firebaseUser) {
+    window._isLoggedIn  = true;
+    window._currentUser = userData || null;
+
+    if (userData) {
+      // Attach Firebase UID if we have it
+      if (firebaseUser && firebaseUser.uid) {
+        userData.uid   = firebaseUser.uid;
+        userData.phone = firebaseUser.phoneNumber || ('+91' + userData.mobile);
+      }
+      await _saveUserToFirestore(userData);
+    }
+
+    loginDialog.close();
+    signupDialog.close();
+
+    const menuLoginCard = document.getElementById('menuLoginCard');
+    const menuSell      = document.getElementById('menuSell');
+    const menuAccount   = document.getElementById('menuAccount');
+    if (menuLoginCard) menuLoginCard.style.display = 'none';
+    if (menuSell)      menuSell.style.display = '';
+    if (menuAccount)   menuAccount.style.display = '';
+
+    toast('✅ Welcome! You are logged in.');
+  }
+
+  // Simple login button (no OTP for returning users in this build)
+  document.getElementById('loginContinue').onclick = function() { onAuthSuccess(null, null); };
+
+  // ── reCAPTCHA initialisation ───────────────────────────────
+  // Called lazily the first time sendOtp() is triggered.
+  function _initRecaptcha() {
+    if (_recaptchaVerifier) return;          // already set up
+    if (!_auth) {
+      toast('⚠️ Firebase not initialised. Check your config.');
+      return null;
+    }
+    try {
+      _recaptchaVerifier = new firebase.auth.RecaptchaVerifier(
+        'recaptcha-container',
+        {
+          size: 'invisible',   // invisible reCAPTCHA — no user interaction needed
+          callback: function() {},
+          'expired-callback': function() {
+            _recaptchaVerifier = null;      // force re-init on next OTP send
+          }
+        }
+      );
+      return _recaptchaVerifier;
+    } catch (e) {
+      console.error('[PKITAAP] RecaptchaVerifier error:', e);
+      return null;
+    }
+  }
+
+  // ── sendOtp ────────────────────────────────────────────────
+  window.sendOtp = async function() {
+    const mobile = (document.getElementById('signupMobile') || {}).value;
+    if (!mobile || !/^[0-9]{10}$/.test(mobile.trim())) {
+      toast('Please enter a valid 10-digit mobile number first');
+      return;
+    }
+    const phoneNumber = '+91' + mobile.trim();  // India country code
+
+    // UI — disable button & show spinner while sending
+    const sendBtn = document.getElementById('sendOtpBtn');
+    const status  = document.getElementById('otpStatus');
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<span class="otp-spinner"></span>Sending…';
+    status.style.display = 'none';
+    _otpVerified       = false;
+    _confirmationResult = null;
+
+    // ── Firebase path ──────────────────────────────────────
+    if (_auth && PKITAAP_FB_CONFIG) {
+      try {
+        const verifier = _initRecaptcha();
+        if (!verifier) {
+          sendBtn.disabled = false;
+          sendBtn.textContent = 'Send OTP';
+          toast('⚠️ reCAPTCHA setup failed. Try reloading the page.');
+          return;
+        }
+        _confirmationResult = await firebase.auth().signInWithPhoneNumber(phoneNumber, verifier);
+
+        // Show OTP input box
+        const otpBox = document.getElementById('otpBox');
+        otpBox.style.display = 'flex';
+        document.getElementById('otpInput').value = '';
+        document.getElementById('otpInput').disabled = false;
+        document.getElementById('verifyOtpBtn').textContent = 'Verify';
+        document.getElementById('verifyOtpBtn').style.background = 'var(--red)';
+        sendBtn.disabled = false;
+        sendBtn.textContent = 'Resend OTP';
+        toast('📱 OTP sent to +91 ' + mobile.trim());
+      } catch (e) {
+        sendBtn.disabled = false;
+        sendBtn.textContent = 'Send OTP';
+        // Reset reCAPTCHA on error so it can be re-used
+        if (_recaptchaVerifier) {
+          try { _recaptchaVerifier.clear(); } catch(ignored) {}
+          _recaptchaVerifier = null;
+        }
+        let errMsg = e.message || 'Unknown error';
+        if (e.code === 'auth/invalid-phone-number')  errMsg = 'Invalid phone number. Use a valid Indian number.';
+        if (e.code === 'auth/too-many-requests')     errMsg = 'Too many OTP requests. Please try again later.';
+        if (e.code === 'auth/quota-exceeded')        errMsg = 'SMS quota exceeded. Contact the app owner.';
+        status.style.display  = 'block';
+        status.style.color    = '#dc2626';
+        status.textContent    = '❌ ' + errMsg;
+        toast('❌ OTP failed: ' + errMsg);
+        console.error('[PKITAAP] signInWithPhoneNumber error:', e);
+      }
+      return;
+    }
+
+    // ── Fallback: demo mode (no Firebase config) ───────────
+    console.warn('[PKITAAP] Firebase not configured — using demo OTP mode.');
+    window._demoOtp = String(Math.floor(100000 + Math.random() * 900000));
+    const otpBox = document.getElementById('otpBox');
+    otpBox.style.display = 'flex';
+    document.getElementById('otpInput').value = '';
+    document.getElementById('otpInput').disabled = false;
+    document.getElementById('verifyOtpBtn').textContent = 'Verify';
+    document.getElementById('verifyOtpBtn').style.background = 'var(--red)';
+    sendBtn.disabled = false;
+    sendBtn.textContent = 'Resend OTP';
+    toast('📱 [DEMO] OTP: ' + window._demoOtp + ' (Firebase not configured)');
+  };
+
+  // ── verifyOtp ──────────────────────────────────────────────
+  window.verifyOtp = async function() {
+    const entered = ((document.getElementById('otpInput') || {}).value || '').trim();
+    const status  = document.getElementById('otpStatus');
+    if (!entered) { toast('Please enter the OTP'); return; }
+
+    const verifyBtn = document.getElementById('verifyOtpBtn');
+    verifyBtn.disabled = true;
+    verifyBtn.innerHTML = '<span class="otp-spinner"></span>Verifying…';
+
+    // ── Firebase path ──────────────────────────────────────
+    if (_confirmationResult) {
+      try {
+        const result = await _confirmationResult.confirm(entered);
+        // result.user is the Firebase User object
+        _otpVerified = true;
+        status.style.display  = 'block';
+        status.style.color    = '#166534';
+        status.textContent    = '✅ Mobile number verified!';
+        verifyBtn.disabled    = false;
+        verifyBtn.textContent = '✔ Verified';
+        verifyBtn.style.background = '#15803d';
+        document.getElementById('otpInput').disabled = true;
+        // Store Firebase user for use in signupContinue
+        window._fbVerifiedUser = result.user;
+        toast('✅ Mobile number verified!');
+      } catch (e) {
+        _otpVerified = false;
+        verifyBtn.disabled    = false;
+        verifyBtn.textContent = 'Verify';
+        let errMsg = 'Incorrect OTP. Please try again.';
+        if (e.code === 'auth/invalid-verification-code') errMsg = 'Incorrect OTP. Please try again.';
+        if (e.code === 'auth/code-expired')              errMsg = 'OTP expired. Click Resend OTP.';
+        if (e.code === 'auth/session-expired')           errMsg = 'Session expired. Click Resend OTP.';
+        status.style.display  = 'block';
+        status.style.color    = '#dc2626';
+        status.textContent    = '❌ ' + errMsg;
+        toast('❌ ' + errMsg);
+        console.error('[PKITAAP] OTP confirm error:', e);
+      }
+      return;
+    }
+
+    // ── Fallback: demo mode ────────────────────────────────
+    if (entered === window._demoOtp) {
+      _otpVerified = true;
+      status.style.display  = 'block';
+      status.style.color    = '#166534';
+      status.textContent    = '✅ Mobile number verified! (demo mode)';
+      verifyBtn.disabled    = false;
+      verifyBtn.textContent = '✔ Verified';
+      verifyBtn.style.background = '#15803d';
+      document.getElementById('otpInput').disabled = true;
+      window._fbVerifiedUser = null;
+      toast('✅ Mobile number verified! (demo mode)');
+    } else {
+      _otpVerified = false;
+      verifyBtn.disabled    = false;
+      verifyBtn.textContent = 'Verify';
+      status.style.display  = 'block';
+      status.style.color    = '#dc2626';
+      status.textContent    = '❌ Incorrect OTP. Please try again.';
+    }
+  };
+
+  // ── signupContinue ─────────────────────────────────────────
+  document.getElementById('signupContinue').onclick = async function() {
+    const mobile      = (document.getElementById('signupMobile')  || {}).value;
+    const cls         = (document.getElementById('signupClass')    || {}).value;
+    const district    = (document.getElementById('signupDistrict') || {}).value;
+    const subDistrict = (document.getElementById('signupSubDistrict') || {}).value;
+    const placeManualWrap = document.getElementById('placeManualWrap');
+    const placeManualVal  = ((document.getElementById('signupPlaceManual') || {}).value || '').trim();
+    const placeSelectVal  = (document.getElementById('signupPlace')        || {}).value;
+    const place = (placeManualWrap && placeManualWrap.style.display !== 'none') ? placeManualVal : placeSelectVal;
+    const schoolManualWrap = document.getElementById('schoolManualWrap');
+    const schoolManualVal  = ((document.getElementById('signupSchoolManual') || {}).value || '').trim();
+    const schoolSelectVal  = (document.getElementById('signupSchool')         || {}).value;
+    const school = (schoolManualWrap && schoolManualWrap.style.display !== 'none') ? schoolManualVal : schoolSelectVal;
+    const pwd = document.getElementById('signupPassword');
+
+    if (!mobile || !/^[0-9]{10}$/.test(mobile.trim())) { toast('Please enter a valid 10-digit mobile number'); return; }
+    if (!_otpVerified)   { toast('Please verify your mobile number with OTP first'); return; }
+    if (!cls)            { toast('Please select your class'); return; }
+    if (!district)       { toast('Please select your district'); return; }
+    if (!subDistrict)    { toast('Please select your sub-district'); return; }
+    if (!place)          { toast('Please enter your place / town'); return; }
+    if (placeManualWrap && placeManualWrap.style.display !== 'none' && !placeManualVal) {
+      toast('Please type your place / town name'); return;
+    }
+    if (pwd && pwd.value.length < 8) { toast('Password must be at least 8 characters'); return; }
+
+    const firstName = ((document.getElementById('signupFirstName') || {}).value || '').trim();
+    const lastName  = ((document.getElementById('signupLastName')  || {}).value || '').trim();
+    const insta     = ((document.getElementById('signupInsta')     || {}).value || '').trim();
+    const stateVal  = (document.getElementById('signupState')      || {}).value;
+
+    const userData = {
+      id         : 'u' + Date.now(),
+      name       : (firstName + ' ' + lastName).trim(),
+      mobile     : mobile.trim(),
+      phone      : '+91' + mobile.trim(),
+      insta      : insta || '',
+      className  : cls,
+      state      : stateVal || '',
+      district,
+      subDistrict,
+      place,
+      school     : school || '',
+      status     : 'active',
+      role       : 'user',
+      joinedAt   : new Date().toISOString().slice(0, 10)
+    };
+
+    // Disable button during save
+    const continueBtn = document.getElementById('signupContinue');
+    continueBtn.disabled = true;
+    continueBtn.innerHTML = '<span class="otp-spinner"></span>Creating account…';
+
+    try {
+      await onAuthSuccess(userData, window._fbVerifiedUser || null);
+    } finally {
+      continueBtn.disabled  = false;
+      continueBtn.textContent = 'Create Account';
+    }
+  };
+
+})();
+</script>
+</body>
+</html>
