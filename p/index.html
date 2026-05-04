@@ -159,6 +159,12 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 #toast.show { opacity: 1; transform: translateY(0); }
 .otp-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.4); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 5px; }
 @keyframes spin { to { transform: rotate(360deg); } }
+.google-btn { align-items: center; background: white; border: 2px solid #dadce0; border-radius: 12px; color: #3c4043; cursor: pointer; display: flex; font-size: 15px; font-weight: 900; gap: 10px; justify-content: center; min-height: 52px; padding: 0 16px; transition: background 0.15s, box-shadow 0.15s; width: 100%; margin-top: 4px; }
+.google-btn:hover { background: #f8f9fa; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+.google-btn:active { transform: scale(0.98); }
+.google-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.auth-divider { align-items: center; color: var(--muted); display: flex; font-size: 12px; font-weight: 800; gap: 10px; margin: 2px 0; }
+.auth-divider::before, .auth-divider::after { background: var(--line); content: ''; flex: 1; height: 2px; }
 @media (max-width: 760px) { .main { padding: 14px 10px 28px; } .admin-grid { grid-template-columns: 1fr; } }
 @media (max-width: 420px) { .topbar { padding: 0 12px; } .logo { font-size: 22px; } .class-card, .stream-card, .book-card { min-height: 76px; padding: 12px; } .class-card strong, .book-card strong { font-size: 16px; } }
 .location-select { border: none; background: transparent; font-weight: 800; font-size: 17px; padding: 0; width: 100%; margin-top: 2px; cursor: pointer; outline: none; color: var(--text); min-height: unset; }
@@ -212,8 +218,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 </style>
 </head>
 <body>
-<!-- ═══ reCAPTCHA container (required by Firebase Phone Auth) ═══ -->
-<div id="recaptcha-container" style="display:none;"></div>
+<!-- Google Sign-In popup auth — no reCAPTCHA needed -->
 <header class="topbar">
   <div class="topbar-left"><div class="logo">PKITAAP</div></div>
   <div class="topbar-right">
@@ -380,103 +385,109 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
   <div class="auth-modal">
     <button class="auth-close" id="loginClose">&#10005;</button>
     <div class="auth-brand"><div class="auth-logo">PKITAAP</div><p class="auth-tagline">Welcome back!</p></div>
-    <form class="auth-form" id="loginForm">
-      <div class="auth-field"><label>Mobile Number</label><input type="tel" placeholder="10-digit number" maxlength="10"></div>
-      <div class="auth-field"><label>Password / PIN</label><div class="pw-wrap"><input type="password" id="loginPassword" placeholder="Enter your password or PIN"><button type="button" class="pw-eye" onclick="togglePwEye('loginPassword',this)" tabindex="-1" title="Show/hide password">👁️</button></div></div>
-      <button class="auth-btn" id="loginContinue" type="button">Login</button>
+    <div class="auth-form" id="loginForm">
+      <p style="font-size:13px;font-weight:700;color:var(--muted);text-align:center;margin-bottom:2px;">Sign in with your Google account to continue.</p>
+      <button class="google-btn" id="loginGoogleBtn" type="button" onclick="googleSignIn('login')">
+        <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+        Continue with Google
+      </button>
       <p class="auth-switch">Don't have an account? <button type="button" class="auth-link" id="goSignup">Create account</button></p>
-    </form>
+    </div>
   </div>
 </dialog>
 <dialog id="signupDialog">
   <div class="auth-modal">
     <button class="auth-close" id="signupClose">&#10005;</button>
-    <div class="auth-brand"><div class="auth-logo">PKITAAP</div><p class="auth-tagline">Create your account</p></div>
-    <form class="auth-form" id="signupForm">
-      <div class="auth-row">
-        <div class="auth-field"><label>First Name</label><input type="text" id="signupFirstName" placeholder="First name" required></div>
-        <div class="auth-field"><label>Last Name</label><input type="text" id="signupLastName" placeholder="Last name" required></div>
+    <div class="auth-brand"><div class="auth-logo">PKITAAP</div><p class="auth-tagline" id="signupTagline">Create your account</p></div>
+
+    <!-- ── Stage 1: Google Sign-up ─────────────────────────── -->
+    <div id="signupStage1">
+      <div class="auth-form">
+        <p style="font-size:13px;font-weight:700;color:var(--muted);text-align:center;margin-bottom:2px;">Sign up with your Google account to get started.</p>
+        <button class="google-btn" id="signupGoogleBtn" type="button" onclick="googleSignIn('signup')">
+          <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+          Sign up with Google
+        </button>
+        <p class="auth-switch">Already have an account? <button type="button" class="auth-link" id="goLogin">Login</button></p>
       </div>
-      <div class="auth-field">
-        <label>Mobile Number</label>
-        <div style="display:flex;gap:8px;align-items:flex-start;">
-          <input type="tel" id="signupMobile" placeholder="10-digit number" maxlength="10" required style="flex:1;">
-          <button type="button" id="sendOtpBtn" onclick="sendOtp()" style="background:var(--red);color:white;border:none;border-radius:12px;font-weight:900;font-size:13px;min-height:48px;padding:0 14px;cursor:pointer;white-space:nowrap;flex-shrink:0;">Send OTP</button>
+    </div>
+
+    <!-- ── Stage 2: Profile form (shown after Google sign-in) ── -->
+    <div id="signupStage2" style="display:none;">
+      <form class="auth-form" id="signupForm">
+        <div class="auth-row">
+          <div class="auth-field"><label>First Name</label><input type="text" id="signupFirstName" placeholder="First name" required></div>
+          <div class="auth-field"><label>Last Name</label><input type="text" id="signupLastName" placeholder="Last name" required></div>
         </div>
-        <div id="otpBox" style="display:none;margin-top:10px;background:#f0fdf4;border:2px solid var(--line);border-radius:14px;padding:14px;flex-direction:column;gap:10px;">
-          <p style="font-size:13px;font-weight:700;color:#166534;">📩 OTP sent to your number. Enter it below to verify.</p>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <input type="text" id="otpInput" placeholder="Enter OTP" maxlength="6" inputmode="numeric" style="flex:1;letter-spacing:4px;font-size:18px;font-weight:900;text-align:center;" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
-            <button type="button" id="verifyOtpBtn" onclick="verifyOtp()" style="background:var(--red);color:white;border:none;border-radius:12px;font-weight:900;font-size:13px;min-height:48px;padding:0 14px;cursor:pointer;white-space:nowrap;flex-shrink:0;">Verify</button>
-          </div>
-          <p id="otpStatus" style="font-size:12px;font-weight:800;display:none;"></p>
-        </div>
-      </div>
-      <div class="auth-field">
-        <label>Currently Studying Class</label>
-        <select id="signupClass" required>
-          <option value="">— Select Class —</option>
-          <option value="Class 9">Class 9</option><option value="Class 10">Class 10</option><option value="Class 11">Class 11</option><option value="Class 12">Class 12</option>
-        </select>
-      </div>
-      <div class="auth-field"><label>Instagram ID</label>
-        <div class="auth-insta-wrap"><span class="auth-insta-at">@</span><input type="text" id="signupInsta" placeholder="your_instagram_id" class="auth-insta-input"></div>
-      </div>
-      <div class="auth-row">
         <div class="auth-field">
-          <label>State</label>
-          <select id="signupState" required onchange="updateSignupDistricts()">
-            <option value="">— Select Your State —</option>
-            <option value="Assam">Assam</option>
+          <label>Mobile Number</label>
+          <input type="tel" id="signupMobile" placeholder="10-digit number" maxlength="10" required style="width:100%;">
+        </div>
+        <div class="auth-field">
+          <label>Currently Studying Class</label>
+          <select id="signupClass" required>
+            <option value="">— Select Class —</option>
+            <option value="Class 9">Class 9</option><option value="Class 10">Class 10</option><option value="Class 11">Class 11</option><option value="Class 12">Class 12</option>
           </select>
         </div>
-        <div class="auth-field">
-          <label>District</label>
-          <select id="signupDistrict" required onchange="updateSignupSubDistricts()">
-            <option value="">— District —</option>
-          </select>
+        <div class="auth-field"><label>Instagram ID</label>
+          <div class="auth-insta-wrap"><span class="auth-insta-at">@</span><input type="text" id="signupInsta" placeholder="your_instagram_id" class="auth-insta-input"></div>
         </div>
-      </div>
-      <div class="auth-row">
-        <div class="auth-field">
-          <label>Sub-District / Block</label>
-          <select id="signupSubDistrict" required onchange="updateSignupPlaces()">
-            <option value="">— Sub-District —</option>
-          </select>
-        </div>
-      </div>
-      <div class="auth-row">
-        <div class="auth-field">
-          <label>Place / Town</label>
-          <div class="ac-wrap" id="placeAcWrap">
-            <div class="input-preview-bubble" id="placeBubble"></div>
-            <input type="text" id="signupPlace" autocomplete="off" placeholder="Select sub-district first"
-              disabled
-              oninput="filterPlaceSuggestions(this.value);showInputBubble('placeBubble',this.value)"
-              onfocus="showPlaceSuggestions();showInputBubble('placeBubble',this.value)"
-              onblur="setTimeout(()=>{hideSuggestions('placeAcList');hideInputBubble('placeBubble')},150)">
-            <button type="button" class="ac-ok" id="placeOkBtn" onmousedown="event.preventDefault();confirmPlaceInput()">OK</button>
-            <div class="ac-list" id="placeAcList"></div>
+        <div class="auth-row">
+          <div class="auth-field">
+            <label>State</label>
+            <select id="signupState" required onchange="updateSignupDistricts()">
+              <option value="">— Select Your State —</option>
+              <option value="Assam">Assam</option>
+            </select>
+          </div>
+          <div class="auth-field">
+            <label>District</label>
+            <select id="signupDistrict" required onchange="updateSignupSubDistricts()">
+              <option value="">— District —</option>
+            </select>
           </div>
         </div>
-        <div class="auth-field">
-          <label>School / College</label>
-          <div class="ac-wrap" id="schoolAcWrap">
-            <div class="input-preview-bubble" id="schoolBubble"></div>
-            <input type="text" id="signupSchool" autocomplete="off" placeholder="Enter place first"
-              disabled
-              oninput="filterSchoolSuggestions(this.value);showInputBubble('schoolBubble',this.value)"
-              onfocus="showSchoolSuggestions();showInputBubble('schoolBubble',this.value)"
-              onblur="setTimeout(()=>{hideSuggestions('schoolAcList');hideInputBubble('schoolBubble')},150)">
-            <button type="button" class="ac-ok" id="schoolOkBtn" onmousedown="event.preventDefault();confirmSchoolInput()">OK</button>
-            <div class="ac-list" id="schoolAcList"></div>
+        <div class="auth-row">
+          <div class="auth-field">
+            <label>Sub-District / Block</label>
+            <select id="signupSubDistrict" required onchange="updateSignupPlaces()">
+              <option value="">— Sub-District —</option>
+            </select>
           </div>
         </div>
-      </div>
-      <div class="auth-field"><label>Create Password</label><div class="pw-wrap"><input type="password" id="signupPassword" placeholder="Enter place &amp; school first" minlength="8" maxlength="16" required disabled oninput="checkSignupPasswordFilled()"><button type="button" class="pw-eye" onclick="togglePwEye('signupPassword',this)" tabindex="-1" title="Show/hide password">👁️</button></div></div>
-      <button class="auth-btn" id="signupContinue" type="button" disabled style="opacity:0.5;cursor:not-allowed;">Create Account</button>
-      <p class="auth-switch">Already have an account? <button type="button" class="auth-link" id="goLogin">Login</button></p>
-    </form>
+        <div class="auth-row">
+          <div class="auth-field">
+            <label>Place / Town</label>
+            <div class="ac-wrap" id="placeAcWrap">
+              <div class="input-preview-bubble" id="placeBubble"></div>
+              <input type="text" id="signupPlace" autocomplete="off" placeholder="Select sub-district first"
+                disabled
+                oninput="filterPlaceSuggestions(this.value);showInputBubble('placeBubble',this.value)"
+                onfocus="showPlaceSuggestions();showInputBubble('placeBubble',this.value)"
+                onblur="setTimeout(()=>{hideSuggestions('placeAcList');hideInputBubble('placeBubble')},150)">
+              <button type="button" class="ac-ok" id="placeOkBtn" onmousedown="event.preventDefault();confirmPlaceInput()">OK</button>
+              <div class="ac-list" id="placeAcList"></div>
+            </div>
+          </div>
+          <div class="auth-field">
+            <label>School / College</label>
+            <div class="ac-wrap" id="schoolAcWrap">
+              <div class="input-preview-bubble" id="schoolBubble"></div>
+              <input type="text" id="signupSchool" autocomplete="off" placeholder="Enter place first"
+                disabled
+                oninput="filterSchoolSuggestions(this.value);showInputBubble('schoolBubble',this.value)"
+                onfocus="showSchoolSuggestions();showInputBubble('schoolBubble',this.value)"
+                onblur="setTimeout(()=>{hideSuggestions('schoolAcList');hideInputBubble('schoolBubble')},150)">
+              <button type="button" class="ac-ok" id="schoolOkBtn" onmousedown="event.preventDefault();confirmSchoolInput()">OK</button>
+              <div class="ac-list" id="schoolAcList"></div>
+            </div>
+          </div>
+        </div>
+        <button class="auth-btn" id="signupContinue" type="button">Create Account</button>
+        <p class="auth-switch">Already have an account? <button type="button" class="auth-link" id="goLogin2">Login</button></p>
+      </form>
+    </div>
   </div>
 </dialog>
 <div id="toast"></div>
@@ -529,12 +540,22 @@ let _auth = null;   // Auth instance
 //    lastLoginAt: ISO datetime string
 //  }
 // ═══════════════════════════════════════════════════════════════
+// Fetch a user profile from Firestore by Firebase UID
+async function _getUserFromFirestore(uid) {
+  if (!_db || !uid) return null;
+  try {
+    const snap = await _db.collection('users').doc(uid).get();
+    if (snap.exists) return snap.data();
+  } catch(e) { console.warn('[PKITAAP] _getUserFromFirestore error:', e); }
+  return null;
+}
+
 async function _saveUserToFirestore(userData) {
-  const docId = userData.mobile;
+  const docId = userData.uid || userData.mobile;
   // Mirror to localStorage (offline fallback)
   try {
     const existing = JSON.parse(localStorage.getItem('pkitaap_registered_users') || '[]');
-    const idx = existing.findIndex(function(u){ return u.mobile === userData.mobile; });
+    const idx = existing.findIndex(function(u){ return u.uid === userData.uid || u.mobile === userData.mobile; });
     if (idx >= 0) { existing[idx] = Object.assign({}, existing[idx], userData); }
     else { existing.push(userData); }
     localStorage.setItem('pkitaap_registered_users', JSON.stringify(existing));
@@ -1981,49 +2002,21 @@ function showInputBubble(bubbleId, val) { window.showInputBubble(bubbleId, val);
 function hideInputBubble(bubbleId) { window.hideInputBubble(bubbleId); }
 
 // Toggle password visibility (eye icon)
-window.togglePwEye = function(inputId, btn) {
-  const inp = document.getElementById(inputId);
-  if (!inp || inp.disabled) return;
-  const show = inp.type === 'password';
-  inp.type = show ? 'text' : 'password';
-  btn.textContent = show ? '🙈' : '👁️';
-};
-
-// Unlock password field once place AND school are both filled
+// Unlock Create Account button once place AND school are both filled
 function _checkUnlockPassword() {
   const place  = (document.getElementById('signupPlace')?.value  || '').trim();
   const school = (document.getElementById('signupSchool')?.value || '').trim();
-  const pwInp  = document.getElementById('signupPassword');
   const btnContinue = document.getElementById('signupContinue');
-  if (!pwInp) return;
+  if (!btnContinue) return;
   if (place && school) {
-    pwInp.disabled = false;
-    pwInp.placeholder = '8-16 characters';
+    btnContinue.disabled = false; btnContinue.style.opacity=''; btnContinue.style.cursor='';
   } else {
-    pwInp.disabled = true;
-    pwInp.type = 'password'; // reset visibility
-    pwInp.value = '';
-    pwInp.placeholder = 'Enter place & school first';
-    // Reset eye icon
-    const eyeBtn = pwInp.parentElement?.querySelector('.pw-eye');
-    if (eyeBtn) eyeBtn.textContent = '👁️';
-    // Also re-lock create account button
-    if (btnContinue) { btnContinue.disabled = true; btnContinue.style.opacity='0.5'; btnContinue.style.cursor='not-allowed'; }
+    btnContinue.disabled = true; btnContinue.style.opacity='0.5'; btnContinue.style.cursor='not-allowed';
   }
-  checkSignupPasswordFilled();
 }
 
-// Unlock Create Account button once password has at least 8 chars
-function checkSignupPasswordFilled() {
-  const pw  = (document.getElementById('signupPassword')?.value || '');
-  const btn = document.getElementById('signupContinue');
-  if (!btn) return;
-  if (pw.length >= 8) {
-    btn.disabled = false; btn.style.opacity=''; btn.style.cursor='';
-  } else {
-    btn.disabled = true;  btn.style.opacity='0.5'; btn.style.cursor='not-allowed';
-  }
-}
+// (kept as no-op for compatibility)
+function checkSignupPasswordFilled() { _checkUnlockPassword(); }
 
 // ── Community places / schools — Firebase ─────────────────────
 async function _loadCommunityPlaces(state, district, subDistrict) {
@@ -2205,27 +2198,50 @@ init();
 (function() {
 
   // ── State ──────────────────────────────────────────────────
-  window._isLoggedIn     = false;
-  window._currentUser    = null;
-  let _confirmationResult = null;   // Firebase confirmationResult
-  let _otpVerified        = false;
-  let _recaptchaVerifier  = null;
+  window._isLoggedIn  = false;
+  window._currentUser = null;
+  let _googleUser     = null;   // Firebase user returned from Google popup
+
+  // ── Google SVG (reused in button resets) ──────────────────
+  const GOOGLE_SVG = '<svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>';
 
   // ── Dialog refs ────────────────────────────────────────────
   const loginDialog  = document.getElementById('loginDialog');
   const signupDialog = document.getElementById('signupDialog');
 
-  function openLogin()  { signupDialog.close(); loginDialog.showModal(); }
-  function openSignup() { loginDialog.close();  signupDialog.showModal(); }
+  function openLogin() {
+    // Reset signup to stage 1 whenever login dialog opens
+    _resetSignupToStage1();
+    signupDialog.close();
+    loginDialog.showModal();
+  }
+  function openSignup() {
+    _resetSignupToStage1();
+    loginDialog.close();
+    signupDialog.showModal();
+  }
+  function _resetSignupToStage1() {
+    const s1 = document.getElementById('signupStage1');
+    const s2 = document.getElementById('signupStage2');
+    const tag = document.getElementById('signupTagline');
+    if (s1) s1.style.display = '';
+    if (s2) s2.style.display = 'none';
+    if (tag) tag.textContent = 'Create your account';
+    _googleUser = null;
+    const sgBtn = document.getElementById('signupGoogleBtn');
+    if (sgBtn) { sgBtn.disabled = false; sgBtn.innerHTML = GOOGLE_SVG + ' Sign up with Google'; }
+  }
 
   document.getElementById('loginClose').onclick  = function() { loginDialog.close(); };
-  document.getElementById('signupClose').onclick = function() { signupDialog.close(); };
+  document.getElementById('signupClose').onclick = function() { signupDialog.close(); _resetSignupToStage1(); };
   loginDialog.addEventListener('click',  function(e) { if (e.target === loginDialog)  loginDialog.close(); });
-  signupDialog.addEventListener('click', function(e) { if (e.target === signupDialog) signupDialog.close(); });
+  signupDialog.addEventListener('click', function(e) { if (e.target === signupDialog) { signupDialog.close(); _resetSignupToStage1(); } });
 
-  document.getElementById('goSignup').onclick    = openSignup;
-  document.getElementById('goLogin').onclick     = openLogin;
-  document.getElementById('loginBtn').onclick    = openLogin;
+  document.getElementById('goSignup').onclick     = openSignup;
+  document.getElementById('goLogin').onclick      = openLogin;
+  const goLogin2 = document.getElementById('goLogin2');
+  if (goLogin2) goLogin2.onclick = openLogin;
+  document.getElementById('loginBtn').onclick     = openLogin;
   document.getElementById('menuGoSignup').onclick = openSignup;
 
   // ── Auth success handler ───────────────────────────────────
@@ -2234,10 +2250,9 @@ init();
     window._currentUser = userData || null;
 
     if (userData) {
-      // Attach Firebase UID if we have it
       if (firebaseUser && firebaseUser.uid) {
         userData.uid   = firebaseUser.uid;
-        userData.phone = firebaseUser.phoneNumber || ('+91' + userData.mobile);
+        userData.email = firebaseUser.email || '';
       }
       await _saveUserToFirestore(userData);
     }
@@ -2255,225 +2270,120 @@ init();
     toast('✅ Welcome! You are logged in.');
   }
 
-  // Simple login button (no OTP for returning users in this build)
-  document.getElementById('loginContinue').onclick = function() { onAuthSuccess(null, null); };
+  // ── Google Sign-In (shared by login + signup) ──────────────
+  window.googleSignIn = async function(mode) {
+    const btnId = mode === 'login' ? 'loginGoogleBtn' : 'signupGoogleBtn';
+    const btn   = document.getElementById(btnId);
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="otp-spinner"></span>Opening Google…'; }
 
-  // ── reCAPTCHA initialisation ───────────────────────────────
-  // Called lazily the first time sendOtp() is triggered.
-  function _initRecaptcha() {
-    if (_recaptchaVerifier) return;          // already set up
-    if (!_auth) {
-      toast('⚠️ Firebase not initialised. Check your config.');
-      return null;
-    }
     try {
-      _recaptchaVerifier = new firebase.auth.RecaptchaVerifier(
-        'recaptcha-container',
-        {
-          size: 'invisible',   // invisible reCAPTCHA — no user interaction needed
-          callback: function() {},
-          'expired-callback': function() {
-            _recaptchaVerifier = null;      // force re-init on next OTP send
-          }
-        }
-      );
-      return _recaptchaVerifier;
+      if (!_auth) throw new Error('Firebase not initialised. Check your config.');
+
+      const provider = new firebase.auth.GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      const result  = await firebase.auth().signInWithPopup(provider);
+      _googleUser   = result.user;
+
+      // Check if this Google UID already has a profile in Firestore
+      const existingData = await _getUserFromFirestore(_googleUser.uid);
+
+      if (existingData) {
+        // ── Returning user ─ log in directly ──────────────
+        await onAuthSuccess(existingData, _googleUser);
+        return;
+      }
+
+      // ── New user ───────────────────────────────────────────
+      if (mode === 'login') {
+        // Came through Login but no profile found — move them to signup stage 2
+        loginDialog.close();
+        toast('⚠️ No account found. Please complete your profile.');
+        await new Promise(r => setTimeout(r, 400));
+        document.getElementById('signupStage1').style.display = 'none';
+        document.getElementById('signupStage2').style.display = '';
+        document.getElementById('signupTagline').textContent  = 'Complete your profile';
+        _prefillNameFromGoogle();
+        signupDialog.showModal();
+      } else {
+        // Signup mode — show profile form
+        document.getElementById('signupStage1').style.display = 'none';
+        document.getElementById('signupStage2').style.display = '';
+        document.getElementById('signupTagline').textContent  = 'Complete your profile';
+        _prefillNameFromGoogle();
+        if (btn) { btn.disabled = false; btn.innerHTML = GOOGLE_SVG + ' Sign up with Google'; }
+      }
+
     } catch (e) {
-      console.error('[PKITAAP] RecaptchaVerifier error:', e);
-      return null;
+      if (btn) { btn.disabled = false; btn.innerHTML = mode === 'login' ? GOOGLE_SVG + ' Continue with Google' : GOOGLE_SVG + ' Sign up with Google'; }
+      let msg = 'Google sign-in failed. Please try again.';
+      if (e.code === 'auth/popup-closed-by-user')  msg = 'Sign-in cancelled.';
+      if (e.code === 'auth/popup-blocked')          msg = 'Popup blocked — please allow popups for this site.';
+      if (e.code === 'auth/cancelled-popup-request') msg = 'Sign-in cancelled.';
+      if (e.message && !e.code)                     msg = e.message;
+      toast('❌ ' + msg);
+      console.error('[PKITAAP] Google sign-in error:', e);
     }
+  };
+
+  // Pre-fill name from Google profile
+  function _prefillNameFromGoogle() {
+    if (!_googleUser || !_googleUser.displayName) return;
+    const parts = _googleUser.displayName.trim().split(/s+/);
+    const fn = document.getElementById('signupFirstName');
+    const ln = document.getElementById('signupLastName');
+    if (fn && !fn.value) fn.value = parts[0] || '';
+    if (ln && !ln.value) ln.value = parts.slice(1).join(' ') || '';
   }
 
-  // ── sendOtp ────────────────────────────────────────────────
-  window.sendOtp = async function() {
-    const mobile = (document.getElementById('signupMobile') || {}).value;
-    if (!mobile || !/^[0-9]{10}$/.test(mobile.trim())) {
-      toast('Please enter a valid 10-digit mobile number first');
-      return;
-    }
-    const phoneNumber = '+91' + mobile.trim();  // India country code
-
-    // UI — disable button & show spinner while sending
-    const sendBtn = document.getElementById('sendOtpBtn');
-    const status  = document.getElementById('otpStatus');
-    sendBtn.disabled = true;
-    sendBtn.innerHTML = '<span class="otp-spinner"></span>Sending…';
-    status.style.display = 'none';
-    _otpVerified       = false;
-    _confirmationResult = null;
-
-    // ── Firebase path ──────────────────────────────────────
-    if (_auth && PKITAAP_FB_CONFIG) {
-      try {
-        const verifier = _initRecaptcha();
-        if (!verifier) {
-          sendBtn.disabled = false;
-          sendBtn.textContent = 'Send OTP';
-          toast('⚠️ reCAPTCHA setup failed. Try reloading the page.');
-          return;
-        }
-        _confirmationResult = await firebase.auth().signInWithPhoneNumber(phoneNumber, verifier);
-
-        // Show OTP input box
-        const otpBox = document.getElementById('otpBox');
-        otpBox.style.display = 'flex';
-        document.getElementById('otpInput').value = '';
-        document.getElementById('otpInput').disabled = false;
-        document.getElementById('verifyOtpBtn').textContent = 'Verify';
-        document.getElementById('verifyOtpBtn').style.background = 'var(--red)';
-        sendBtn.disabled = false;
-        sendBtn.textContent = 'Resend OTP';
-        toast('📱 OTP sent to +91 ' + mobile.trim());
-      } catch (e) {
-        sendBtn.disabled = false;
-        sendBtn.textContent = 'Send OTP';
-        // Reset reCAPTCHA on error so it can be re-used
-        if (_recaptchaVerifier) {
-          try { _recaptchaVerifier.clear(); } catch(ignored) {}
-          _recaptchaVerifier = null;
-        }
-        let errMsg = e.message || 'Unknown error';
-        if (e.code === 'auth/invalid-phone-number')  errMsg = 'Invalid phone number. Use a valid Indian number.';
-        if (e.code === 'auth/too-many-requests')     errMsg = 'Too many OTP requests. Please try again later.';
-        if (e.code === 'auth/quota-exceeded')        errMsg = 'SMS quota exceeded. Contact the app owner.';
-        status.style.display  = 'block';
-        status.style.color    = '#dc2626';
-        status.textContent    = '❌ ' + errMsg;
-        toast('❌ OTP failed: ' + errMsg);
-        console.error('[PKITAAP] signInWithPhoneNumber error:', e);
-      }
-      return;
-    }
-
-    // ── Fallback: demo mode (no Firebase config) ───────────
-    console.warn('[PKITAAP] Firebase not configured — using demo OTP mode.');
-    window._demoOtp = String(Math.floor(100000 + Math.random() * 900000));
-    const otpBox = document.getElementById('otpBox');
-    otpBox.style.display = 'flex';
-    document.getElementById('otpInput').value = '';
-    document.getElementById('otpInput').disabled = false;
-    document.getElementById('verifyOtpBtn').textContent = 'Verify';
-    document.getElementById('verifyOtpBtn').style.background = 'var(--red)';
-    sendBtn.disabled = false;
-    sendBtn.textContent = 'Resend OTP';
-    toast('📱 [DEMO] OTP: ' + window._demoOtp + ' (Firebase not configured)');
-  };
-
-  // ── verifyOtp ──────────────────────────────────────────────
-  window.verifyOtp = async function() {
-    const entered = ((document.getElementById('otpInput') || {}).value || '').trim();
-    const status  = document.getElementById('otpStatus');
-    if (!entered) { toast('Please enter the OTP'); return; }
-
-    const verifyBtn = document.getElementById('verifyOtpBtn');
-    verifyBtn.disabled = true;
-    verifyBtn.innerHTML = '<span class="otp-spinner"></span>Verifying…';
-
-    // ── Firebase path ──────────────────────────────────────
-    if (_confirmationResult) {
-      try {
-        const result = await _confirmationResult.confirm(entered);
-        // result.user is the Firebase User object
-        _otpVerified = true;
-        status.style.display  = 'block';
-        status.style.color    = '#166534';
-        status.textContent    = '✅ Mobile number verified!';
-        verifyBtn.disabled    = false;
-        verifyBtn.textContent = '✔ Verified';
-        verifyBtn.style.background = '#15803d';
-        document.getElementById('otpInput').disabled = true;
-        // Store Firebase user for use in signupContinue
-        window._fbVerifiedUser = result.user;
-        toast('✅ Mobile number verified!');
-      } catch (e) {
-        _otpVerified = false;
-        verifyBtn.disabled    = false;
-        verifyBtn.textContent = 'Verify';
-        let errMsg = 'Incorrect OTP. Please try again.';
-        if (e.code === 'auth/invalid-verification-code') errMsg = 'Incorrect OTP. Please try again.';
-        if (e.code === 'auth/code-expired')              errMsg = 'OTP expired. Click Resend OTP.';
-        if (e.code === 'auth/session-expired')           errMsg = 'Session expired. Click Resend OTP.';
-        status.style.display  = 'block';
-        status.style.color    = '#dc2626';
-        status.textContent    = '❌ ' + errMsg;
-        toast('❌ ' + errMsg);
-        console.error('[PKITAAP] OTP confirm error:', e);
-      }
-      return;
-    }
-
-    // ── Fallback: demo mode ────────────────────────────────
-    if (entered === window._demoOtp) {
-      _otpVerified = true;
-      status.style.display  = 'block';
-      status.style.color    = '#166534';
-      status.textContent    = '✅ Mobile number verified! (demo mode)';
-      verifyBtn.disabled    = false;
-      verifyBtn.textContent = '✔ Verified';
-      verifyBtn.style.background = '#15803d';
-      document.getElementById('otpInput').disabled = true;
-      window._fbVerifiedUser = null;
-      toast('✅ Mobile number verified! (demo mode)');
-    } else {
-      _otpVerified = false;
-      verifyBtn.disabled    = false;
-      verifyBtn.textContent = 'Verify';
-      status.style.display  = 'block';
-      status.style.color    = '#dc2626';
-      status.textContent    = '❌ Incorrect OTP. Please try again.';
-    }
-  };
-
-  // ── signupContinue ─────────────────────────────────────────
+  // ── Profile form submit ────────────────────────────────────
   document.getElementById('signupContinue').onclick = async function() {
-    const mobile      = (document.getElementById('signupMobile')  || {}).value;
-    const cls         = (document.getElementById('signupClass')    || {}).value;
-    const district    = (document.getElementById('signupDistrict') || {}).value;
-    const subDistrict = (document.getElementById('signupSubDistrict') || {}).value;
-    const place  = ((document.getElementById('signupPlace')  || {}).value || '').trim();
-    const school = ((document.getElementById('signupSchool') || {}).value || '').trim();
-    const pwd = document.getElementById('signupPassword');
+    if (!_googleUser) { toast('⚠️ Please sign in with Google first.'); openSignup(); return; }
 
-    if (!mobile || !/^[0-9]{10}$/.test(mobile.trim())) { toast('Please enter a valid 10-digit mobile number'); return; }
-    if (!_otpVerified)   { toast('Please verify your mobile number with OTP first'); return; }
+    const mobile      = ((document.getElementById('signupMobile')      || {}).value || '').trim();
+    const cls         = (document.getElementById('signupClass')         || {}).value;
+    const district    = (document.getElementById('signupDistrict')      || {}).value;
+    const subDistrict = (document.getElementById('signupSubDistrict')   || {}).value;
+    const place       = ((document.getElementById('signupPlace')        || {}).value || '').trim();
+    const school      = ((document.getElementById('signupSchool')       || {}).value || '').trim();
+
+    if (!mobile || !/^[0-9]{10}$/.test(mobile)) { toast('Please enter a valid 10-digit mobile number'); return; }
     if (!cls)            { toast('Please select your class'); return; }
     if (!district)       { toast('Please select your district'); return; }
     if (!subDistrict)    { toast('Please select your sub-district'); return; }
     if (!place)          { toast('Please enter your place / town'); return; }
     if (!school)         { toast('Please enter your school / college'); return; }
-    if (pwd && pwd.value.length < 8) { toast('Password must be at least 8 characters'); return; }
 
     const firstName = ((document.getElementById('signupFirstName') || {}).value || '').trim();
     const lastName  = ((document.getElementById('signupLastName')  || {}).value || '').trim();
     const insta     = ((document.getElementById('signupInsta')     || {}).value || '').trim();
-    const stateVal  = (document.getElementById('signupState')      || {}).value;
+    const stateVal  = (document.getElementById('signupState')       || {}).value;
 
     const userData = {
-      id         : 'u' + Date.now(),
-      name       : (firstName + ' ' + lastName).trim(),
-      mobile     : mobile.trim(),
-      phone      : '+91' + mobile.trim(),
-      insta      : insta || '',
-      className  : cls,
-      state      : stateVal || '',
+      id          : 'u' + Date.now(),
+      uid         : _googleUser.uid,
+      email       : _googleUser.email || '',
+      name        : (firstName + ' ' + lastName).trim(),
+      mobile      : mobile,
+      phone       : '+91' + mobile,
+      insta       : insta || '',
+      className   : cls,
+      state       : stateVal || '',
       district,
       subDistrict,
       place,
-      school     : school || '',
-      status     : 'active',
-      role       : 'user',
-      joinedAt   : new Date().toISOString().slice(0, 10)
+      school      : school || '',
+      status      : 'active',
+      role        : 'user',
+      joinedAt    : new Date().toISOString().slice(0, 10)
     };
 
-    // Disable button during save
     const continueBtn = document.getElementById('signupContinue');
     continueBtn.disabled = true;
     continueBtn.innerHTML = '<span class="otp-spinner"></span>Creating account…';
 
     try {
-      // Save new place/school to community data for future autocomplete suggestions
       _saveCommunityLocation(stateVal, district, subDistrict, place, school);
-      await onAuthSuccess(userData, window._fbVerifiedUser || null);
+      await onAuthSuccess(userData, _googleUser);
     } finally {
       continueBtn.disabled  = false;
       continueBtn.textContent = 'Create Account';
