@@ -217,6 +217,8 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 .ac-item:hover { background: var(--red-light); color: var(--red); }
 .locked-control { opacity: 0.5; pointer-events: none; }
 .home-link { color: var(--red) !important; font-weight: 900 !important; }
+.page-head { align-items: center; display: flex; gap: 12px; justify-content: space-between; }
+.page-head .search-wrap { flex: 1; }
 </style>
 </head>
 <body>
@@ -297,7 +299,6 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
       <div class="page-head">
         <h1>Sell Books</h1>
         <button class="btn btn-primary" type="button" data-go-buy>Home</button>
-        <button class="btn btn-ghost" type="button" data-go-buy>Back</button>
       </div>
       <div class="location-lock">
         <div><span>Country</span><strong>India</strong></div>
@@ -351,7 +352,6 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
       <div class="page-head">
         <h1>My Listings</h1>
         <button class="btn btn-primary" type="button" data-go-buy>Home</button>
-        <button class="btn btn-ghost" type="button" data-go-buy>Back</button>
       </div>
       <div class="card">
         <div class="card-head"><h2>Your Listed Books</h2></div>
@@ -2209,9 +2209,12 @@ async function renderMyListings(skipFetch) {
       '<span>' + _acEsc(meta || 'Subject') + ' · ' + _acEsc(price) + '</span>' +
       '<span>' + _acEsc([l.state,l.district,l.subDistrict,l.place].filter(Boolean).join(', ') || 'Location not set') + '</span>' +
       '<span>Condition: ' + _acEsc(l.condition || 'Not set') + (l.createdAt ? ' · Posted ' + _acEsc(String(l.createdAt).slice(0,10)) : '') + '</span>' +
-      '<div class="contact-row"><button class="btn btn-danger" type="button" style="font-size:12px;" onclick="removeMyListing(' + JSON.stringify(l.id) + ')">Remove</button></div>' +
+      '<div class="contact-row"><button class="btn btn-danger" type="button" style="font-size:12px;" data-remove-listing="' + _acEsc(l.id) + '">Remove</button></div>' +
     '</div>';
   }).join('');
+  list.querySelectorAll('[data-remove-listing]').forEach(btn => {
+    btn.onclick = () => removeMyListing(btn.getAttribute('data-remove-listing'));
+  });
 }
 async function removeMyListing(id) {
   if (!id || !confirm('Remove this listed book?')) return;
@@ -2448,6 +2451,7 @@ function updateSignupDistricts() {
   const pOk = document.getElementById('placeOkBtn'); if (pOk) pOk.style.display='none';
   const sOk = document.getElementById('schoolOkBtn'); if (sOk) sOk.style.display='none';
   hideAllAcSuggestions();
+  _checkUnlockPassword();
 }
 function updateSignupSubDistricts() {
   const stateName = document.getElementById('signupState')?.value;
@@ -2466,6 +2470,7 @@ function updateSignupSubDistricts() {
   const pOk = document.getElementById('placeOkBtn'); if (pOk) pOk.style.display='none';
   const sOk = document.getElementById('schoolOkBtn'); if (sOk) sOk.style.display='none';
   hideAllAcSuggestions();
+  _checkUnlockPassword();
 }
 // ── AUTOCOMPLETE: Place & School ──────────────────────────────
 // Holds suggestion lists for the current sub-district
@@ -2502,6 +2507,7 @@ function updateSignupPlaces() {
     window._placeOptions = _getPlaces(stateName, district, subDistrict).map(p => p.name);
     filterPlaceSuggestions(pInp?.value || '');
   });
+  _checkUnlockPassword();
 }
 
 function updateSignupSchools() {
@@ -2577,9 +2583,24 @@ function _renderAcList(listEl, items, inputVal, selectFn, okBtnId) {
 
   if (!items.length) { listEl.style.display = 'none'; listEl.innerHTML = ''; return; }
   listEl.innerHTML = items.map(item =>
-    '<div class="ac-item" onmousedown="event.preventDefault();' + selectFn + '(' + JSON.stringify(item) + ')">' +
-    _acEsc(item) + '</div>'
+    '<div class="ac-item" data-ac-value="' + _acEsc(item) + '">' + _acEsc(item) + '</div>'
   ).join('');
+  const okBtnAfterRender = document.getElementById(okBtnId);
+  if (okBtnAfterRender && items.length) okBtnAfterRender.style.display = 'none';
+  listEl.querySelectorAll('.ac-item').forEach(el => {
+    el.onpointerdown = function(e) {
+      e.preventDefault();
+      const val = this.getAttribute('data-ac-value') || this.textContent || '';
+      if (selectFn === 'selectPlaceSuggestion') window.selectPlaceSuggestion(val);
+      else if (selectFn === 'selectSchoolSuggestion') window.selectSchoolSuggestion(val);
+    };
+    el.onclick = function(e) {
+      e.preventDefault();
+      const val = this.getAttribute('data-ac-value') || this.textContent || '';
+      if (selectFn === 'selectPlaceSuggestion') window.selectPlaceSuggestion(val);
+      else if (selectFn === 'selectSchoolSuggestion') window.selectSchoolSuggestion(val);
+    };
+  });
   listEl.style.display = 'block';
 }
 
@@ -2646,14 +2667,23 @@ window.hideInputBubble = function(bubbleId) {
 function showInputBubble(bubbleId, val) { window.showInputBubble(bubbleId, val); }
 function hideInputBubble(bubbleId) { window.hideInputBubble(bubbleId); }
 
-// Toggle password visibility (eye icon)
-// Unlock Create Account button once place AND school are both filled
+// Unlock Create Account button only after all required profile fields are filled
 function _checkUnlockPassword() {
+  const fullName = (document.getElementById('signupFullName')?.value || '').trim();
+  const mobile = (document.getElementById('signupMobile')?.value || '').trim();
+  const cls = (document.getElementById('signupClass')?.value || '').trim();
+  const insta = (document.getElementById('signupInsta')?.value || '').trim().replace(/^@+/, '');
+  const stateVal = (document.getElementById('signupState')?.value || '').trim();
+  const district = (document.getElementById('signupDistrict')?.value || '').trim();
+  const subDistrict = (document.getElementById('signupSubDistrict')?.value || '').trim();
   const place  = (document.getElementById('signupPlace')?.value  || '').trim();
   const school = (document.getElementById('signupSchool')?.value || '').trim();
+  const passportRequired = state.settings && state.settings.passport;
+  const passport = (document.getElementById('signupPassport')?.value || '').trim();
   const btnContinue = document.getElementById('signupContinue');
   if (!btnContinue) return;
-  if (place && school) {
+  const complete = !!(fullName && /^[0-9]{10}$/.test(mobile) && cls && insta && stateVal && district && subDistrict && place && school && (!passportRequired || passport));
+  if (complete) {
     btnContinue.disabled = false; btnContinue.style.opacity=''; btnContinue.style.cursor='';
   } else {
     btnContinue.disabled = true; btnContinue.style.opacity='0.5'; btnContinue.style.cursor='not-allowed';
@@ -2885,8 +2915,15 @@ function bindAdminForms() {
 function fillSignupLocations() {
   const dSel  = document.getElementById("signupDistrict");
   const sdSel = document.getElementById("signupSubDistrict");
-  if (dSel)  dSel.onchange  = updateSignupSubDistricts;
-  if (sdSel) sdSel.onchange = updateSignupPlaces;
+  if (dSel)  dSel.onchange  = () => { updateSignupSubDistricts(); _checkUnlockPassword(); };
+  if (sdSel) sdSel.onchange = () => { updateSignupPlaces(); _checkUnlockPassword(); };
+  ['signupFullName','signupMobile','signupClass','signupInsta','signupState','signupDistrict','signupSubDistrict','signupPlace','signupSchool','signupPassport'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', _checkUnlockPassword);
+    el.addEventListener('change', _checkUnlockPassword);
+  });
+  _checkUnlockPassword();
   // Place and School are now text inputs with oninput handlers — no onchange binding needed
 }
 function _updateMediumsForState(stateVal) {
