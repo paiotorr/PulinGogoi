@@ -192,7 +192,7 @@ label{font-size:13px;font-weight:800;color:#444;display:block;margin-bottom:5px;
   </div>
   <div class="topbar-right">
     <div id="autoSavePill">⏳ Loading…</div>
-    <button class="btn btn-ghost btn-sm" id="copyCodeBtn" onclick="copyCode()" title="Copy full HTML with all current data embedded">📋 Copy Code</button>
+    <button class="btn btn-ghost btn-sm" id="copyCodeBtn" onclick="copyCode()" title="Copy full HTML with all current data embedded" style="">📋 Copy Code</button>
     <button class="btn btn-ghost btn-sm" onclick="backupDownload()">💾 Backup</button>
   </div>
 </div>
@@ -939,6 +939,14 @@ Manipur, Imphal West" style="font-family:monospace;font-size:13px;resize:vertica
         <div class="toggle-info"><strong>WhatsApp Contact</strong><span>Allow buyers to contact sellers via WhatsApp</span></div>
         <label class="toggle-sw"><input type="checkbox" id="t-whatsapp"><span class="sl"></span></label>
       </div>
+      <div class="toggle-row">
+        <div class="toggle-info"><strong>🪪 Passport / ID Number Field</strong><span>Show a Passport/ID field in signup form. Currently OFF — enable when you need it in future.</span></div>
+        <label class="toggle-sw"><input type="checkbox" id="t-passport"><span class="sl"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-info"><strong>Seller Price Entry</strong><span>Allow sellers to enter a price up to the admin-set book price. If OFF, listings use the exact admin price.</span></div>
+        <label class="toggle-sw"><input type="checkbox" id="t-allowUserPrice"><span class="sl"></span></label>
+      </div>
       <div style="margin-top:14px;">
         <button class="btn btn-primary" onclick="saveToggles()">Save Toggles</button>
       </div>
@@ -957,7 +965,10 @@ Manipur, Imphal West" style="font-family:monospace;font-size:13px;resize:vertica
       <div style="font-size:36px;">🌐</div>
       <h3>Export as Web App (HTML)</h3>
       <p>Downloads a fully working <b>pkitaap.html</b> with all your updated data embedded. Open it in any browser. Share it on WhatsApp, Telegram, or host on any website.</p>
-      <button class="btn btn-primary" onclick="exportHTML(false)">⬇️ Export pkitaap.html</button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="exportHTML(false)">⬇️ Export pkitaap.html</button>
+        <button class="btn btn-ghost" id="copyExportBtn" onclick="copyExportCode()" title="Copy all the exported app HTML code to clipboard — paste it anywhere">📋 Copy Export Code</button>
+      </div>
     </div>
 
     <div class="export-option">
@@ -1262,7 +1273,7 @@ service cloud.firestore {
   </div>
 </div>
 
-<div id="toast"></div>
+<div id="toast" class="">📋 Full code copied to clipboard!</div>
 
 <script>
 // ══════════════════════════════════════════════════
@@ -1314,7 +1325,7 @@ const DEFAULT = {
       ]}
     ]}
   ],
-  settings:{general:false,instagram:true,whatsapp:false},
+  settings:{general:false,instagram:true,whatsapp:false,passport:false,allowUserPrice:false},
   listings:[]
 };
 
@@ -1430,7 +1441,7 @@ function renderPanel(id){
   else if(id==='categories') renderCategories();
   else if(id==='locations') renderLocations();
   else if(id==='stateboards') renderStateBoardsPanel();
-  else if(id==='users') renderUsers();
+  else if(id==='users') { renderUsers(); if(typeof fbPullUsers === 'function' && typeof _fbDb !== 'undefined' && _fbDb) fbPullUsers({silent:true}); }
   else if(id==='settings') renderSettings();
   else if(id==='firebase') renderFirebasePanel();
 }
@@ -3336,6 +3347,8 @@ function renderSettings(){
   document.getElementById('t-general').checked = S.settings.general;
   document.getElementById('t-instagram').checked = S.settings.instagram;
   document.getElementById('t-whatsapp').checked = S.settings.whatsapp;
+  document.getElementById('t-passport').checked = S.settings.passport || false;
+  document.getElementById('t-allowUserPrice').checked = S.settings.allowUserPrice || false;
 }
 function saveSettings(){
   S.appName = document.getElementById('s-appname').value.trim()||'PKITAAP';
@@ -3347,6 +3360,8 @@ function saveToggles(){
   S.settings.general = document.getElementById('t-general').checked;
   S.settings.instagram = document.getElementById('t-instagram').checked;
   S.settings.whatsapp = document.getElementById('t-whatsapp').checked;
+  S.settings.passport = document.getElementById('t-passport').checked;
+  S.settings.allowUserPrice = document.getElementById('t-allowUserPrice').checked;
   save(); toast('Toggles saved ✅');
 }
 
@@ -3587,6 +3602,12 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 #toast.show { opacity: 1; transform: translateY(0); }
 .otp-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.4); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 5px; }
 @keyframes spin { to { transform: rotate(360deg); } }
+.google-btn { align-items: center; background: white; border: 2px solid #dadce0; border-radius: 12px; color: #3c4043; cursor: pointer; display: flex; font-size: 15px; font-weight: 900; gap: 10px; justify-content: center; min-height: 52px; padding: 0 16px; transition: background 0.15s, box-shadow 0.15s; width: 100%; margin-top: 4px; }
+.google-btn:hover { background: #f8f9fa; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+.google-btn:active { transform: scale(0.98); }
+.google-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.auth-divider { align-items: center; color: var(--muted); display: flex; font-size: 12px; font-weight: 800; gap: 10px; margin: 2px 0; }
+.auth-divider::before, .auth-divider::after { background: var(--line); content: ''; flex: 1; height: 2px; }
 @media (max-width: 760px) { .main { padding: 14px 10px 28px; } .admin-grid { grid-template-columns: 1fr; } }
 @media (max-width: 420px) { .topbar { padding: 0 12px; } .logo { font-size: 22px; } .class-card, .stream-card, .book-card { min-height: 76px; padding: 12px; } .class-card strong, .book-card strong { font-size: 16px; } }
 .location-select { border: none; background: transparent; font-weight: 800; font-size: 17px; padding: 0; width: 100%; margin-top: 2px; cursor: pointer; outline: none; color: var(--text); min-height: unset; }
@@ -3640,8 +3661,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 </style>
 </head>
 <body>
-<!-- ═══ reCAPTCHA container (required by Firebase Phone Auth) ═══ -->
-<div id="recaptcha-container" style="display:none;"></div>
+<!-- Google Sign-In popup auth — no reCAPTCHA needed -->
 <header class="topbar">
   <div class="topbar-left"><div class="logo">${appName}</div></div>
   <div class="topbar-right">
@@ -3658,8 +3678,10 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
       <button class="menu-login-btn" id="loginBtn" type="button">Login</button>
       <button class="menu-create-btn" id="menuGoSignup" type="button">Create Account</button>
     </div>
-    <button data-page="sell" id="menuSell" style="display:none;">Sell</button>
-    <button type="button" id="menuAccount" style="display:none;">Account details</button>
+    <button data-page="sell" id="menuSell" style="display:none;">📦 Sell Books</button>
+    <button data-page="myListings" id="menuListings" style="display:none;">📚 My Listings</button>
+    <button type="button" id="menuAccount" style="display:none;">👤 Account Details</button>
+    <button type="button" id="menuLogout" style="display:none;color:#dc2626;">🚪 Log Out</button>
   </div>
 </header>
 <div class="shell">
@@ -3714,13 +3736,26 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
     <section class="page" id="sellPage">
       <div class="page-head">
         <h1>Sell Books</h1>
-        <button class="btn btn-ghost" data-go-buy="">Select book</button>
+        <button class="btn btn-ghost" type="button" data-go-buy>Back</button>
       </div>
       <div class="location-lock">
         <div><span>Country</span><strong>India</strong></div>
         <div><span>States</span><select id="stateFilter2" class="location-select" onchange="onStateFilterChange2(this.value)"><option value="">— Select State —</option>${signupStateOptions}</select></div>
       </div>
-      <div class="card">
+      <!-- Book selector (same as buy page) -->
+      <div class="card" id="sellCatalogCard">
+        <div class="card-head">
+          <h2 id="sellCatalogTitle">Select a Book to Sell</h2>
+          <button class="btn btn-ghost" id="sellBackBtn" type="button" style="display:none;">Back</button>
+        </div>
+        <div class="card-body">
+          <div class="class-grid" id="sellClassGrid" style="display:grid;"></div>
+          <div class="stream-grid" id="sellBoardGrid" style="display:none;"></div>
+          <div class="stream-grid" id="sellStreamGrid" style="display:none;"></div>
+          <div class="book-grid" id="sellBookGrid" style="display:none;"><div>No books</div></div>
+        </div>
+      </div>
+      <div class="card" id="sellSelectedCard" style="display:none;">
         <div class="card-head"><h2>Selected Book</h2></div>
         <div class="card-body">
           <div id="selectedBox" class="selected-box">
@@ -3729,25 +3764,39 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
           </div>
         </div>
       </div>
-      <div class="card">
+      <div class="card" id="sellFormCard" style="display:none;">
         <div class="card-head"><h2>Seller Details</h2></div>
         <div class="card-body">
           <form id="sellForm" class="form-grid">
             <label class="wide">State <select id="sellState" onchange="updateSellDistricts()"><option value="">— Select Your State —</option>${signupStateOptions}</select></label>
             <label>District <select id="sellDistrict" onchange="updateSellSubDistricts()"></select></label>
             <label>Sub-District <select id="sellSubDistrict" onchange="updateSellPlaces()"></select></label>
-            <label>Place <select id="sellPlace" onchange="updateSellSchools()"></select></label>
-            <label class="wide">School <select id="sellSchool"></select></label>
+            <label>Place <input id="sellPlace" list="sellPlaceOptions" onchange="updateSellSchools()" placeholder="Place / town"><datalist id="sellPlaceOptions"></datalist></label>
+            <label class="wide">School <input id="sellSchool" list="sellSchoolOptions" placeholder="School / college"><datalist id="sellSchoolOptions"></datalist></label>
             <label class="wide">Condition
               <select id="sellCondition">
                 <option>Like new</option><option>Good</option><option>Usable</option>
               </select>
             </label>
-            ${S.settings.instagram?`<label class="wide">Instagram ID<div style="display:flex;align-items:center;background:#f9fafb;border:2px solid var(--line);border-radius:10px;overflow:hidden;"><span style="background:var(--red-light);color:var(--red);font-weight:900;padding:0 10px;min-height:40px;display:flex;align-items:center;">@</span><input type="text" id="sellInstagram" placeholder="your_instagram" style="border:none;border-radius:0;flex:1;min-height:40px;background:transparent;" required></div></label>`:''}
+            ${S.settings.instagram?`<label class="wide">Instagram ID<div style="display:flex;align-items:center;background:#f9fafb;border:2px solid var(--line);border-radius:10px;overflow:hidden;"><span style="background:var(--red-light);color:var(--red);font-weight:900;padding:0 10px;min-height:40px;display:flex;align-items:center;">@</span><input type="text" id="sellInstagram" placeholder="your_instagram" style="border:none;border-radius:0;flex:1;min-height:40px;background:transparent;" readonly></div></label>`:''}
             ${S.settings.whatsapp?`<label class="wide">WhatsApp Number<input type="tel" id="sellWhatsapp" placeholder="10-digit number" maxlength="10"/></label>`:''}
-            <label class="wide">Price Expectation (₹)<input type="number" id="sellPrice" placeholder="How much do you want?"/></label>
+            ${S.settings.allowUserPrice ? `<label class="wide" id="sellPriceWrap">Price Expectation (₹)<input type="number" id="sellPrice" placeholder="Leave blank to use admin price"/><span id="sellPriceHelp" style="color:var(--muted);font-size:11px;font-weight:800;margin-top:4px;"></span></label>` : `<div class="wide" id="sellFixedPriceInfo" style="background:var(--red-light);border:2px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:900;color:var(--red);">Price: <strong id="sellFixedPriceText">Select a book</strong></div>`}
             <button class="btn btn-primary wide" type="submit">List for Sale</button>
           </form>
+        </div>
+      </div>
+    </section>
+    <section class="page" id="myListingsPage">
+      <div class="page-head">
+        <h1>My Listings</h1>
+        <button class="btn btn-ghost" type="button" data-go-buy>Back</button>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>Your Listed Books</h2></div>
+        <div class="card-body">
+          <div class="result-list" id="myListingsList">
+            <p style="color:#888;font-size:13px;font-weight:700;padding:8px 0;">No books listed yet.</p>
+          </div>
         </div>
       </div>
     </section>
@@ -3808,59 +3857,147 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
   <div class="auth-modal">
     <button class="auth-close" id="loginClose">&#10005;</button>
     <div class="auth-brand"><div class="auth-logo">${appName}</div><p class="auth-tagline">Welcome back!</p></div>
-    <form class="auth-form" id="loginForm">
-      <div class="auth-field"><label>Mobile Number</label><input type="tel" placeholder="10-digit number" maxlength="10"></div>
-      <div class="auth-field"><label>Password / PIN</label><div class="pw-wrap"><input type="password" id="loginPassword" placeholder="Enter your password or PIN"><button type="button" class="pw-eye" onclick="togglePwEye('loginPassword',this)" tabindex="-1" title="Show/hide password">👁️</button></div></div>
-      <button class="auth-btn" id="loginContinue" type="button">Login</button>
+    <div class="auth-form" id="loginForm">
+      <p style="font-size:13px;font-weight:700;color:var(--muted);text-align:center;margin-bottom:2px;">Sign in with your Google account to continue.</p>
+      <button class="google-btn" id="loginGoogleBtn" type="button" onclick="googleSignIn('login')">
+        <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+        Continue with Google
+      </button>
       <p class="auth-switch">Don't have an account? <button type="button" class="auth-link" id="goSignup">Create account</button></p>
-    </form>
+    </div>
   </div>
 </dialog>
 <dialog id="signupDialog">
   <div class="auth-modal">
-    <button class="auth-close" id="signupClose">&#10005;</button>
-    <div class="auth-brand"><div class="auth-logo">${appName}</div><p class="auth-tagline">Create your account</p></div>
-    <form class="auth-form" id="signupForm">
-      <div class="auth-row">
-        <div class="auth-field"><label>First Name</label><input type="text" id="signupFirstName" placeholder="First name" required></div>
-        <div class="auth-field"><label>Last Name</label><input type="text" id="signupLastName" placeholder="Last name" required></div>
+    <div class="auth-brand"><div class="auth-logo">${appName}</div><p class="auth-tagline" id="signupTagline">Create your account</p></div>
+
+    <!-- ── Stage 1: Google Sign-up ─────────────────────────── -->
+    <div id="signupStage1">
+      <div class="auth-form">
+        <p style="font-size:13px;font-weight:700;color:var(--muted);text-align:center;margin-bottom:2px;">Sign up with your Google account to get started.</p>
+        <button class="google-btn" id="signupGoogleBtn" type="button" onclick="googleSignIn('signup')">
+          <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+          Sign up with Google
+        </button>
+        <p class="auth-switch">Already have an account? <button type="button" class="auth-link" id="goLogin">Login</button></p>
+      </div>
+    </div>
+
+    <!-- ── Stage 2: Profile form (shown after Google sign-in) ── -->
+    <div id="signupStage2" style="display:none;">
+      <form class="auth-form" id="signupForm">
+        <div class="auth-field">
+          <label>Full Name</label>
+          <input type="text" id="signupFullName" placeholder="Your full name" required autocomplete="name">
+        </div>
+        <div class="auth-field">
+          <label>Mobile Number</label>
+          <input type="tel" id="signupMobile" placeholder="10-digit number" maxlength="10" required style="width:100%;">
+        </div>
+        ${S.settings.passport ? `<div class="auth-field">
+          <label>Passport / ID Number</label>
+          <input type="text" id="signupPassport" placeholder="Passport or ID number">
+        </div>` : '<!-- passport field is OFF -->'}
+        <div class="auth-field">
+          <label>Currently Studying Class</label>
+          <select id="signupClass" required>
+            <option value="">— Select Class —</option>
+            ${classOptions}
+          </select>
+        </div>
+        <div class="auth-field"><label>Instagram ID</label>
+          <div class="auth-insta-wrap"><span class="auth-insta-at">@</span><input type="text" id="signupInsta" placeholder="your_instagram_id" class="auth-insta-input" required></div>
+        </div>
+        <div class="auth-row">
+          <div class="auth-field">
+            <label>State</label>
+            <select id="signupState" required onchange="updateSignupDistricts()">
+              <option value="">— Select Your State —</option>
+              ${signupStateOptions}
+            </select>
+          </div>
+          <div class="auth-field">
+            <label>District</label>
+            <select id="signupDistrict" required onchange="updateSignupSubDistricts()">
+              <option value="">— District —</option>
+            </select>
+          </div>
+        </div>
+        <div class="auth-row">
+          <div class="auth-field">
+            <label>Sub-District / Block</label>
+            <select id="signupSubDistrict" required onchange="updateSignupPlaces()">
+              <option value="">— Sub-District —</option>
+            </select>
+          </div>
+        </div>
+        <div class="auth-row">
+          <div class="auth-field">
+            <label>Place / Town</label>
+            <div class="ac-wrap" id="placeAcWrap">
+              <div class="input-preview-bubble" id="placeBubble"></div>
+              <input type="text" id="signupPlace" autocomplete="off" placeholder="Select sub-district first"
+                disabled
+                oninput="filterPlaceSuggestions(this.value);showInputBubble('placeBubble',this.value)"
+                onfocus="showPlaceSuggestions();showInputBubble('placeBubble',this.value)"
+                onblur="setTimeout(()=>{hideSuggestions('placeAcList');hideInputBubble('placeBubble')},150)">
+              <button type="button" class="ac-ok" id="placeOkBtn" onmousedown="event.preventDefault();confirmPlaceInput()">OK</button>
+              <div class="ac-list" id="placeAcList"></div>
+            </div>
+          </div>
+          <div class="auth-field">
+            <label>School / College</label>
+            <div class="ac-wrap" id="schoolAcWrap">
+              <div class="input-preview-bubble" id="schoolBubble"></div>
+              <input type="text" id="signupSchool" autocomplete="off" placeholder="Enter place first"
+                disabled
+                oninput="filterSchoolSuggestions(this.value);showInputBubble('schoolBubble',this.value)"
+                onfocus="showSchoolSuggestions();showInputBubble('schoolBubble',this.value)"
+                onblur="setTimeout(()=>{hideSuggestions('schoolAcList');hideInputBubble('schoolBubble')},150)">
+              <button type="button" class="ac-ok" id="schoolOkBtn" onmousedown="event.preventDefault();confirmSchoolInput()">OK</button>
+              <div class="ac-list" id="schoolAcList"></div>
+            </div>
+          </div>
+        </div>
+        <button class="auth-btn" id="signupContinue" type="button">Create Account</button>
+      </form>
+    </div>
+  </div>
+</dialog>
+<dialog id="accountDialog">
+  <div class="auth-modal">
+    <button class="auth-close" id="accountClose">&#10005;</button>
+    <div class="auth-brand"><div class="auth-logo">${appName}</div><p class="auth-tagline">My Account</p></div>
+    <div class="auth-form" id="accountForm">
+      <div class="auth-field">
+        <label>Full Name</label>
+        <input type="text" id="accName" placeholder="Your full name" required>
       </div>
       <div class="auth-field">
         <label>Mobile Number</label>
-        <div style="display:flex;gap:8px;align-items:flex-start;">
-          <input type="tel" id="signupMobile" placeholder="10-digit number" maxlength="10" required style="flex:1;">
-          <button type="button" id="sendOtpBtn" onclick="sendOtp()" style="background:var(--red);color:white;border:none;border-radius:12px;font-weight:900;font-size:13px;min-height:48px;padding:0 14px;cursor:pointer;white-space:nowrap;flex-shrink:0;">Send OTP</button>
-        </div>
-        <div id="otpBox" style="display:none;margin-top:10px;background:#f0fdf4;border:2px solid var(--line);border-radius:14px;padding:14px;flex-direction:column;gap:10px;">
-          <p style="font-size:13px;font-weight:700;color:#166534;">📩 OTP sent to your number. Enter it below to verify.</p>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <input type="text" id="otpInput" placeholder="Enter OTP" maxlength="6" inputmode="numeric" style="flex:1;letter-spacing:4px;font-size:18px;font-weight:900;text-align:center;" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
-            <button type="button" id="verifyOtpBtn" onclick="verifyOtp()" style="background:var(--red);color:white;border:none;border-radius:12px;font-weight:900;font-size:13px;min-height:48px;padding:0 14px;cursor:pointer;white-space:nowrap;flex-shrink:0;">Verify</button>
-          </div>
-          <p id="otpStatus" style="font-size:12px;font-weight:800;display:none;"></p>
-        </div>
+        <input type="tel" id="accMobile" placeholder="10-digit number" maxlength="10">
       </div>
       <div class="auth-field">
         <label>Currently Studying Class</label>
-        <select id="signupClass" required>
+        <select id="accClass">
           <option value="">— Select Class —</option>
           ${classOptions}
         </select>
       </div>
       <div class="auth-field"><label>Instagram ID</label>
-        <div class="auth-insta-wrap"><span class="auth-insta-at">@</span><input type="text" id="signupInsta" placeholder="your_instagram_id" class="auth-insta-input"></div>
+        <div class="auth-insta-wrap"><span class="auth-insta-at">@</span><input type="text" id="accInsta" placeholder="your_instagram_id" class="auth-insta-input"></div>
       </div>
       <div class="auth-row">
         <div class="auth-field">
           <label>State</label>
-          <select id="signupState" required onchange="updateSignupDistricts()">
-            <option value="">— Select Your State —</option>
+          <select id="accState" onchange="updateAccDistricts()">
+            <option value="">— Select State —</option>
             ${signupStateOptions}
           </select>
         </div>
         <div class="auth-field">
           <label>District</label>
-          <select id="signupDistrict" required onchange="updateSignupSubDistricts()">
+          <select id="accDistrict" onchange="updateAccSubDistricts()">
             <option value="">— District —</option>
           </select>
         </div>
@@ -3868,7 +4005,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
       <div class="auth-row">
         <div class="auth-field">
           <label>Sub-District / Block</label>
-          <select id="signupSubDistrict" required onchange="updateSignupPlaces()">
+          <select id="accSubDistrict" onchange="updateAccPlaces()">
             <option value="">— Sub-District —</option>
           </select>
         </div>
@@ -3876,35 +4013,19 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
       <div class="auth-row">
         <div class="auth-field">
           <label>Place / Town</label>
-          <div class="ac-wrap" id="placeAcWrap">
-            <div class="input-preview-bubble" id="placeBubble"></div>
-            <input type="text" id="signupPlace" autocomplete="off" placeholder="Select sub-district first"
-              disabled
-              oninput="filterPlaceSuggestions(this.value);showInputBubble('placeBubble',this.value)"
-              onfocus="showPlaceSuggestions();showInputBubble('placeBubble',this.value)"
-              onblur="setTimeout(()=>{hideSuggestions('placeAcList');hideInputBubble('placeBubble')},150)">
-            <button type="button" class="ac-ok" id="placeOkBtn" onmousedown="event.preventDefault();confirmPlaceInput()">OK</button>
-            <div class="ac-list" id="placeAcList"></div>
-          </div>
+          <input type="text" id="accPlace" list="accPlaceOptions" onchange="updateAccSchools()" placeholder="Place / town">
+          <datalist id="accPlaceOptions"></datalist>
         </div>
         <div class="auth-field">
           <label>School / College</label>
-          <div class="ac-wrap" id="schoolAcWrap">
-            <div class="input-preview-bubble" id="schoolBubble"></div>
-            <input type="text" id="signupSchool" autocomplete="off" placeholder="Enter place first"
-              disabled
-              oninput="filterSchoolSuggestions(this.value);showInputBubble('schoolBubble',this.value)"
-              onfocus="showSchoolSuggestions();showInputBubble('schoolBubble',this.value)"
-              onblur="setTimeout(()=>{hideSuggestions('schoolAcList');hideInputBubble('schoolBubble')},150)">
-            <button type="button" class="ac-ok" id="schoolOkBtn" onmousedown="event.preventDefault();confirmSchoolInput()">OK</button>
-            <div class="ac-list" id="schoolAcList"></div>
-          </div>
+          <input type="text" id="accSchool" list="accSchoolOptions" placeholder="School / college">
+          <datalist id="accSchoolOptions"></datalist>
         </div>
       </div>
-      <div class="auth-field"><label>Create Password</label><div class="pw-wrap"><input type="password" id="signupPassword" placeholder="Enter place &amp; school first" minlength="8" maxlength="16" required disabled oninput="checkSignupPasswordFilled()"><button type="button" class="pw-eye" onclick="togglePwEye('signupPassword',this)" tabindex="-1" title="Show/hide password">👁️</button></div></div>
-      <button class="auth-btn" id="signupContinue" type="button" disabled style="opacity:0.5;cursor:not-allowed;">Create Account</button>
-      <p class="auth-switch">Already have an account? <button type="button" class="auth-link" id="goLogin">Login</button></p>
-    </form>
+      <p style="font-size:12px;color:var(--muted);font-weight:700;margin-top:-4px;">📍 Changes here become your new default location for selling.</p>
+      <button class="auth-btn" id="accSaveBtn" type="button">💾 Save Changes</button>
+      <button class="btn btn-ghost" id="accBackBtn" type="button">Back</button>
+    </div>
   </div>
 </dialog>
 <div id="toast"></div>
@@ -3957,12 +4078,22 @@ let _auth = null;   // Auth instance
 //    lastLoginAt: ISO datetime string
 //  }
 // ═══════════════════════════════════════════════════════════════
+// Fetch a user profile from Firestore by Firebase UID
+async function _getUserFromFirestore(uid) {
+  if (!_db || !uid) return null;
+  try {
+    const snap = await _db.collection('users').doc(uid).get();
+    if (snap.exists) return snap.data();
+  } catch(e) { console.warn('[PKITAAP] _getUserFromFirestore error:', e); }
+  return null;
+}
+
 async function _saveUserToFirestore(userData) {
-  const docId = userData.mobile;
+  const docId = userData.uid || userData.mobile;
   // Mirror to localStorage (offline fallback)
   try {
     const existing = JSON.parse(localStorage.getItem('pkitaap_registered_users') || '[]');
-    const idx = existing.findIndex(function(u){ return u.mobile === userData.mobile; });
+    const idx = existing.findIndex(function(u){ return u.uid === userData.uid || u.mobile === userData.mobile; });
     if (idx >= 0) { existing[idx] = Object.assign({}, existing[idx], userData); }
     else { existing.push(userData); }
     localStorage.setItem('pkitaap_registered_users', JSON.stringify(existing));
@@ -4123,11 +4254,301 @@ function renderSelected() {
   if (b) { box.innerHTML = '<img src="' + imageForBook(b) + '" alt="' + b.title + '"/><strong>' + b.title + '</strong><span>' + bookMeta(b) + ' &mdash; ' + priceText(b) + '</span>'; }
   else { box.innerHTML = '<strong>No subject selected</strong><span>Select class, board, stream, and subject first.</span>'; }
 }
+// ── Sell page catalog render (mirrors buy page) ───────────────
+let sellCatalogStep = "classes";
+function renderSellCatalog() {
+  const sellPage = document.getElementById('sellPage');
+  if (!sellPage || !sellPage.classList.contains('active')) return;
+  const sellSelectedCard = document.getElementById('sellSelectedCard');
+  const sellFormCard     = document.getElementById('sellFormCard');
+  const catalogTitle = document.getElementById('sellCatalogTitle');
+  const backBtn = document.getElementById('sellBackBtn');
+  // Update title and back button
+  if (catalogTitle) catalogTitle.textContent = sellCatalogStep==='classes'?'Select a Book to Sell':sellCatalogStep==='boards'?'Select Board':sellCatalogStep==='streams'?'Select Stream':'Select Subject';
+  if (backBtn) backBtn.style.display = sellCatalogStep==='classes' ? 'none' : 'inline-block';
+  // Show selected + sell form only when a book is picked
+  if (sellSelectedCard) sellSelectedCard.style.display = (selectedBookId && sellCatalogStep==='books') ? '' : 'none';
+  if (sellFormCard) sellFormCard.style.display = (selectedBookId && sellCatalogStep==='books') ? '' : 'none';
+  updateSellPriceControls();
+  // Render class grid
+  const cg = document.getElementById('sellClassGrid');
+  if (cg) {
+    if (sellCatalogStep === 'classes') {
+      const all = state.settings.general ? [...classes,'General'] : classes;
+      cg.style.display = 'grid';
+      cg.innerHTML = all.map(name => '<button class="class-card" data-sellclass="' + name + '"><img src="' + imageForClass(name) + '" alt="' + name + '"/><div class="card-info"><strong>' + name + '</strong><span>' + state.books.filter(b=>b.className===name&&(b.type!=="general"||state.settings.general)).length + ' books</span></div></button>').join('');
+      cg.querySelectorAll('[data-sellclass]').forEach(card => { card.onclick = () => { selectedClass=card.dataset.sellclass; selectedBoard=''; selectedStream=''; selectedBookId=''; sellCatalogStep=selectedClass==='General'?'books':'boards'; renderSellCatalog(); }; });
+    } else { cg.style.display='none'; cg.innerHTML=''; }
+  }
+  // Render board grid
+  const bg = document.getElementById('sellBoardGrid');
+  if (bg) {
+    if (sellCatalogStep === 'boards') {
+      bg.style.display = 'grid';
+      if (!selectedState) { bg.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:24px;color:#888;font-weight:700;font-size:14px;">Please select your state above to see boards.</div>'; }
+      else {
+        const stateBds = getBoardsForState(selectedState);
+        const bds = [...new Set([...stateBds,...[...new Set(state.books.filter(b=>b.type==='school'&&b.className===selectedClass&&b.board&&(!b.state||b.state===selectedState)).map(b=>b.board))].filter(b=>!stateBds.some(sb=>sb.toLowerCase()===b.toLowerCase()))])];
+        if (!bds.length) { bg.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:24px;color:#888;font-weight:700;font-size:14px;">No boards found for '+selectedClass+' in '+selectedState+'.</div>'; }
+        else {
+          bg.innerHTML = bds.map(name=>'<button class="stream-card" data-sellboard="'+name+'"><strong>'+name+'</strong></button>').join('');
+          bg.querySelectorAll('[data-sellboard]').forEach(card=>{ card.onclick=()=>{ selectedBoard=card.dataset.sellboard; if(selectedClass==='Class 11'||selectedClass==='Class 12'){selectedStream='';selectedBookId='';sellCatalogStep='streams';}else{selectedBookId='';sellCatalogStep='books';} renderSellCatalog(); }; });
+        }
+      }
+    } else { bg.style.display='none'; bg.innerHTML=''; }
+  }
+  // Render stream grid
+  const sg = document.getElementById('sellStreamGrid');
+  if (sg) {
+    if (sellCatalogStep === 'streams') {
+      sg.style.display='grid';
+      const activeStreams=[...new Set(state.books.filter(b=>b.type==='school'&&b.className===selectedClass&&(b.board||'').toLowerCase()===(selectedBoard||'').toLowerCase()&&b.stream).map(b=>b.stream))];
+      const toShow=activeStreams.length?activeStreams:streams;
+      sg.innerHTML=toShow.map(name=>'<button class="stream-card" data-sellstream="'+name+'"><strong>'+name+'</strong></button>').join('');
+      sg.querySelectorAll('[data-sellstream]').forEach(card=>{card.onclick=()=>{selectedStream=card.dataset.sellstream;selectedBookId='';sellCatalogStep='books';renderSellCatalog();};});
+    } else { sg.style.display='none'; sg.innerHTML=''; }
+  }
+  // Render book grid
+  const bkg = document.getElementById('sellBookGrid');
+  if (bkg) {
+    if (sellCatalogStep === 'books') {
+      bkg.style.display='grid';
+      const items=shownBooks();
+      bkg.innerHTML=items.length?items.map(item=>'<button class="book-card '+(item.id===selectedBookId?'active':'')+'" data-sellid="'+item.id+'"><img src="'+imageForBook(item)+'" alt="'+item.title+'"/><div class="card-info"><strong>'+item.title+'</strong><small>'+bookMeta(item)+'</small><span class="price">'+priceText(item)+'</span></div></button>').join(''):'<div>No books found</div>';
+      bkg.querySelectorAll('[data-sellid]').forEach(card=>{card.onclick=()=>{selectedBookId=card.dataset.sellid;renderSellCatalog();renderSelected();};});
+    } else { bkg.style.display='none'; }
+  }
+}
+function updateSellPriceControls() {
+  const b = book();
+  const adminPrice = parseInt(b?.price) || 0;
+  const fixedText = document.getElementById('sellFixedPriceText');
+  if (fixedText) fixedText.textContent = b ? ('₹' + adminPrice + ' (admin fixed price)') : 'Select a book';
+  const inp = document.getElementById('sellPrice');
+  const help = document.getElementById('sellPriceHelp');
+  if (inp) {
+    inp.min = adminPrice ? '1' : '';
+    inp.max = adminPrice ? String(adminPrice) : '';
+    inp.placeholder = adminPrice ? ('Optional, max ₹' + adminPrice) : 'Select a book first';
+  }
+  if (help) help.textContent = adminPrice ? ('Optional. You can enter ₹1 to ₹' + adminPrice + ', or leave blank to use ₹' + adminPrice + '.') : 'Select a book first.';
+}
+// ── Account Details helpers ────────────────────────────────────
+function updateAccDistricts() {
+  const st = document.getElementById('accState')?.value;
+  const d = document.getElementById('accDistrict');
+  const sd = document.getElementById('accSubDistrict');
+  const p = document.getElementById('accPlace');
+  const s = document.getElementById('accSchool');
+  if (d) d.innerHTML = '<option value="">— District —</option>' + _getDistricts(st).map(x=>'<option value="'+x.district+'">'+x.district+'</option>').join('');
+  if (sd) sd.innerHTML = '<option value="">— Sub-District —</option>';
+  if (p) p.value = '';
+  if (s) s.value = '';
+  _fillChoiceControl('accPlace', 'accPlaceOptions', '— Place —', [], x=>x.name, '');
+  _fillChoiceControl('accSchool', 'accSchoolOptions', '— School —', [], null, '');
+}
+function updateAccSubDistricts() {
+  const st = document.getElementById('accState')?.value;
+  const d = document.getElementById('accDistrict')?.value;
+  const sd = document.getElementById('accSubDistrict');
+  const p = document.getElementById('accPlace');
+  const s = document.getElementById('accSchool');
+  if (sd) sd.innerHTML = '<option value="">— Sub-District —</option>' + _getSubDistricts(st, d).map(x=>'<option value="'+x.subDistrict+'">'+x.subDistrict+'</option>').join('');
+  if (p) p.value = '';
+  if (s) s.value = '';
+  _fillChoiceControl('accPlace', 'accPlaceOptions', '— Place —', [], x=>x.name, '');
+  _fillChoiceControl('accSchool', 'accSchoolOptions', '— School —', [], null, '');
+}
+function updateAccPlaces() {
+  const st = document.getElementById('accState')?.value;
+  const d = document.getElementById('accDistrict')?.value;
+  const sd = document.getElementById('accSubDistrict')?.value;
+  const p = document.getElementById('accPlace');
+  const s = document.getElementById('accSchool');
+  const selected = p?.value || window._currentUser?.place || '';
+  _fillChoiceControl('accPlace', 'accPlaceOptions', '— Place —', _getPlaces(st, d, sd), x=>x.name, selected);
+  if (s) s.value = '';
+  _fillChoiceControl('accSchool', 'accSchoolOptions', '— School —', [], null, '');
+  _loadCommunityPlaces(st, d, sd).then(() => {
+    const keep = p?.value || selected;
+    _fillChoiceControl('accPlace', 'accPlaceOptions', '— Place —', _getPlaces(st, d, sd), x=>x.name, keep);
+    if (p && keep) p.value = keep;
+    updateAccSchools();
+  });
+}
+function updateAccSchools() {
+  const st = document.getElementById('accState')?.value;
+  const d = document.getElementById('accDistrict')?.value;
+  const sd = document.getElementById('accSubDistrict')?.value;
+  const p = document.getElementById('accPlace')?.value;
+  const s = document.getElementById('accSchool');
+  const selected = s?.value || window._currentUser?.school || '';
+  _fillChoiceControl('accSchool', 'accSchoolOptions', '— School —', _getSchools(st, d, sd, p), null, selected);
+  if (p) _loadCommunitySchools(st, d, sd, p).then(() => {
+    const keep = s?.value || selected;
+    _fillChoiceControl('accSchool', 'accSchoolOptions', '— School —', _getSchools(st, d, sd, p), null, keep);
+    if (keep) s.value = keep;
+  });
+}
+function openAccountDetails() {
+  const u = window._currentUser;
+  if (!u) return;
+  _mergeCommunityLocation(u.state, u.district, u.subDistrict, u.place, u.school);
+  const dialog = document.getElementById('accountDialog');
+  if (!dialog) return;
+  // Fill all fields
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+  set('accName', u.name);
+  set('accMobile', u.mobile);
+  set('accClass', u.className);
+  set('accInsta', u.insta);
+  // Populate state and cascade
+  set('accState', u.state);
+  updateAccDistricts();
+  setTimeout(() => {
+    set('accDistrict', u.district);
+    updateAccSubDistricts();
+    setTimeout(() => {
+      set('accSubDistrict', u.subDistrict);
+      updateAccPlaces();
+      setTimeout(() => {
+        set('accPlace', u.place);
+        updateAccSchools();
+        setTimeout(() => { set('accSchool', u.school); }, 50);
+      }, 50);
+    }, 50);
+  }, 50);
+  dialog.showModal();
+}
+function saveAccountDetails() {
+  const u = window._currentUser;
+  if (!u) return;
+  const g = (id) => (document.getElementById(id)?.value || '').trim();
+  const name = g('accName');
+  if (!name) { toast('Please enter your full name'); return; }
+  u.name       = name;
+  u.mobile     = g('accMobile');
+  u.phone      = '+91' + u.mobile;
+  u.className  = g('accClass');
+  u.insta      = g('accInsta');
+  u.state      = g('accState');
+  u.district   = g('accDistrict');
+  u.subDistrict= g('accSubDistrict');
+  u.place      = g('accPlace');
+  u.school     = g('accSchool');
+  window._currentUser = u;
+  _saveCommunityLocation(u.state, u.district, u.subDistrict, u.place, u.school);
+  // Save to Firestore
+  _saveUserToFirestore(u).then(() => {
+    toast('✅ Account details saved!');
+    document.getElementById('accountDialog')?.close();
+    // Pre-fill sell form with new defaults
+    _prefillSellFromProfile();
+    // Update sell instagram if visible
+    const si = document.getElementById('sellInstagram');
+    if (si) si.value = u.insta || '';
+  }).catch(() => toast('✅ Saved locally.'));
+}
+function _prefillSellFromProfile() {
+  const u = window._currentUser;
+  if (!u) return;
+  _mergeCommunityLocation(u.state, u.district, u.subDistrict, u.place, u.school);
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+  // Pre-fill sell form state/location
+  set('sellState', u.state);
+  if (u.state) {
+    updateSellDistricts();
+    setTimeout(() => {
+      set('sellDistrict', u.district);
+      updateSellSubDistricts();
+      setTimeout(() => {
+        set('sellSubDistrict', u.subDistrict);
+        updateSellPlaces();
+        setTimeout(() => {
+          set('sellPlace', u.place);
+          updateSellSchools();
+          setTimeout(() => { set('sellSchool', u.school); }, 50);
+        }, 50);
+      }, 50);
+    }, 50);
+  }
+  // Pre-fill stateFilter2 with user's state
+  set('stateFilter2', u.state);
+  if (u.state) { onStateFilterChange2(u.state); }
+  // Pre-fill instagram (read-only in sell form)
+  set('sellInstagram', u.insta);
+}
 function renderMatches(bookId) {
   const bId = bookId || selectedBookId;
   const list = document.querySelector("#matchList");
   const matches = state.listings.filter(l => l.bookId === bId);
   list.innerHTML = matches.length ? matches.map(l => '<div class="result-card"><strong>' + l.seller + '</strong><span>' + (l.state?l.state+' · ':'') + l.district + ', ' + l.place + (l.school?' &mdash; '+l.school:'') + '</span><span>Condition: ' + l.condition + '</span><div class="contact-row">' + (state.settings.instagram&&l.instagram?'<a href="https://instagram.com/'+l.instagram+'" target="_blank" class="btn btn-ghost" style="font-size:12px;">Instagram</a>':'') + (state.settings.whatsapp&&l.whatsapp?'<a href="https://wa.me/91'+l.whatsapp+'" target="_blank" class="btn btn-primary" style="font-size:12px;">WhatsApp</a>':'') + '</div></div>') .join("") : '<p style="color:#888;font-size:13px;font-weight:700;padding:8px 0;">No sellers found in your area yet.</p>';
+}
+function _isMineListing(l) {
+  const u = window._currentUser || {};
+  return !!l && (
+    (u.uid && l.userId === u.uid) ||
+    (u.id && l.userId === u.id) ||
+    (u.mobile && l.mobile === u.mobile) ||
+    (u.insta && l.instagram === u.insta)
+  );
+}
+function _listingBook(l) {
+  return state.books.find(b => b.id === l.bookId) || null;
+}
+async function _loadMyListingsFromFirestore() {
+  const u = window._currentUser;
+  if (!_db || !u || !(u.uid || u.id)) return;
+  try {
+    const snap = await _db.collection('listings').where('userId','==',u.uid || u.id).get();
+    let changed = false;
+    snap.docs.forEach(doc => {
+      const data = Object.assign({ id: doc.id }, doc.data());
+      const idx = (state.listings || []).findIndex(x => x.id === data.id);
+      if (idx >= 0) state.listings[idx] = Object.assign({}, state.listings[idx], data);
+      else { state.listings.push(data); changed = true; }
+    });
+    if (changed) save();
+  } catch(e) {}
+}
+async function renderMyListings(skipFetch) {
+  const list = document.getElementById('myListingsList');
+  if (!list) return;
+  if (!window._isLoggedIn) {
+    list.innerHTML = '<p style="color:#888;font-size:13px;font-weight:700;padding:8px 0;">Login to see your listed books.</p>';
+    return;
+  }
+  if (!skipFetch) {
+    _loadMyListingsFromFirestore().then(() => renderMyListings(true));
+  }
+  const mine = (state.listings || []).filter(_isMineListing).sort((a,b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+  if (!mine.length) {
+    list.innerHTML = '<p style="color:#888;font-size:13px;font-weight:700;padding:8px 0;">No books listed yet.</p>';
+    return;
+  }
+  list.innerHTML = mine.map(l => {
+    const b = _listingBook(l);
+    const title = l.title || l.bookTitle || b?.title || 'Book';
+    const meta = [l.className || b?.className, l.board || b?.board, l.stream || b?.stream].filter(Boolean).join(' / ');
+    const price = l.price ? ('₹' + l.price) : (b?.price ? ('₹' + b.price) : 'Price not set');
+    return '<div class="result-card">' +
+      '<strong>' + _acEsc(title) + '</strong>' +
+      '<span>' + _acEsc(meta || 'Subject') + ' · ' + _acEsc(price) + '</span>' +
+      '<span>' + _acEsc([l.state,l.district,l.subDistrict,l.place].filter(Boolean).join(', ') || 'Location not set') + '</span>' +
+      '<span>Condition: ' + _acEsc(l.condition || 'Not set') + (l.createdAt ? ' · Posted ' + _acEsc(String(l.createdAt).slice(0,10)) : '') + '</span>' +
+      '<div class="contact-row"><button class="btn btn-danger" type="button" style="font-size:12px;" onclick="removeMyListing(' + JSON.stringify(l.id) + ')">Remove</button></div>' +
+    '</div>';
+  }).join('');
+}
+async function removeMyListing(id) {
+  if (!id || !confirm('Remove this listed book?')) return;
+  state.listings = (state.listings || []).filter(l => l.id !== id);
+  save();
+  if (_db) {
+    try { await _db.collection('listings').doc(id).delete(); } catch(e) {}
+  }
+  renderMyListings(true);
+  toast('Listing removed.');
 }
 // ── Location helpers (State → District → Place → School) ──────────────────
 function _getLocData() { return state.locations || []; }
@@ -4150,6 +4571,64 @@ function _getPlaces(stateName, districtName, subDistrictName) {
 function _getSchools(stateName, districtName, subDistrictName, placeName) {
   const p = _getPlaces(stateName, districtName, subDistrictName).find(x => x.name === placeName);
   return p?.schools || [];
+}
+function _sameText(a, b) {
+  return String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
+}
+function _mergeCommunityLocation(stateName, districtName, subDistrictName, placeName, schoolName) {
+  if (!stateName || !districtName || !subDistrictName) return;
+  let st = (state.locations || []).find(x => _sameText(x.state, stateName));
+  if (!st) { st = { state: stateName, districts: [] }; (state.locations = state.locations || []).push(st); }
+  let d = (st.districts || []).find(x => _sameText(x.district, districtName));
+  if (!d) { d = { district: districtName, subDistricts: [] }; (st.districts = st.districts || []).push(d); }
+  let sd = (d.subDistricts || []).find(x => _sameText(x.subDistrict, subDistrictName));
+  if (!sd) { sd = { subDistrict: subDistrictName, places: [] }; (d.subDistricts = d.subDistricts || []).push(sd); }
+  if (!placeName) return;
+  let p = (sd.places || []).find(x => _sameText(x.name, placeName));
+  if (!p) { p = { name: placeName, schools: [] }; (sd.places = sd.places || []).push(p); }
+  if (schoolName && !(p.schools || []).some(x => _sameText(x, schoolName))) {
+    (p.schools = p.schools || []).push(schoolName);
+  }
+  save();
+}
+function _optionList(label, items, getValue, selectedValue) {
+  const seen = new Set();
+  const opts = ['<option value="">' + label + '</option>'];
+  (items || []).forEach(item => {
+    const value = getValue ? getValue(item) : item;
+    if (!value) return;
+    const key = String(value).trim().toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    opts.push('<option value="' + _acEsc(value) + '">' + _acEsc(value) + '</option>');
+  });
+  if (selectedValue && !seen.has(String(selectedValue).trim().toLowerCase())) {
+    opts.push('<option value="' + _acEsc(selectedValue) + '">' + _acEsc(selectedValue) + '</option>');
+  }
+  return opts.join('');
+}
+function _fillChoiceControl(controlId, listId, label, items, getValue, selectedValue) {
+  const el = document.getElementById(controlId);
+  if (!el) return;
+  if (el.tagName === 'INPUT') {
+    const list = document.getElementById(listId);
+    if (list) {
+      const seen = new Set();
+      list.innerHTML = (items || []).map(item => {
+        const value = getValue ? getValue(item) : item;
+        if (!value) return '';
+        const key = String(value).trim().toLowerCase();
+        if (seen.has(key)) return '';
+        seen.add(key);
+        return '<option value="' + _acEsc(value) + '"></option>';
+      }).join('');
+    }
+    if (selectedValue && !el.value) el.value = selectedValue;
+    el.placeholder = label.replace(/[—]/g, '').trim();
+    return;
+  }
+  el.innerHTML = _optionList(label, items, getValue, selectedValue);
+  if (selectedValue) el.value = selectedValue;
 }
 function updateBuyDistricts() {
   const stateName = document.getElementById('buyState')?.value;
@@ -4181,8 +4660,14 @@ function updateBuyPlaces() {
   const pSel = document.getElementById('buyPlace');
   const sSel = document.getElementById('buySchool');
   if (!pSel) return;
-  pSel.innerHTML = '<option value="">— Place —</option>' + _getPlaces(stateName, district, subDistrict).map(p => '<option>' + p.name + '</option>').join('');
+  const selected = pSel.value;
+  pSel.innerHTML = _optionList('— Place —', _getPlaces(stateName, district, subDistrict), p => p.name, selected);
   if (sSel) sSel.innerHTML = '<option value="">— School (optional) —</option>';
+  _loadCommunityPlaces(stateName, district, subDistrict).then(() => {
+    const keep = pSel.value || selected;
+    pSel.innerHTML = _optionList('— Place —', _getPlaces(stateName, district, subDistrict), p => p.name, keep);
+    if (keep) pSel.value = keep;
+  });
 }
 function updateBuySchools() {
   const stateName   = document.getElementById('buyState')?.value;
@@ -4190,7 +4675,10 @@ function updateBuySchools() {
   const subDistrict = document.getElementById('buySubDistrict')?.value;
   const place       = document.getElementById('buyPlace')?.value;
   const sSel = document.getElementById('buySchool');
-  if (sSel) sSel.innerHTML = '<option value="">— School (optional) —</option>' + _getSchools(stateName, district, subDistrict, place).map(s => '<option>' + s + '</option>').join('');
+  if (sSel) sSel.innerHTML = _optionList('— School (optional) —', _getSchools(stateName, district, subDistrict, place), null, sSel.value);
+  if (place) _loadCommunitySchools(stateName, district, subDistrict, place).then(() => {
+    if (sSel) sSel.innerHTML = _optionList('— School (optional) —', _getSchools(stateName, district, subDistrict, place), null, sSel.value);
+  });
 }
 function updateSellDistricts() {
   const stateName = document.getElementById('sellState')?.value;
@@ -4201,8 +4689,10 @@ function updateSellDistricts() {
   if (!dSel) return;
   dSel.innerHTML = '<option value="">— District —</option>' + _getDistricts(stateName).map(d => '<option>' + d.district + '</option>').join('');
   if (sdSel) sdSel.innerHTML = '<option value="">— Sub-District —</option>';
-  if (pSel)  pSel.innerHTML  = '<option value="">— Place —</option>';
-  if (sSel)  sSel.innerHTML  = '<option value="">— School (optional) —</option>';
+  if (pSel)  pSel.value = '';
+  if (sSel)  sSel.value = '';
+  _fillChoiceControl('sellPlace', 'sellPlaceOptions', 'Place / town', [], p => p.name, '');
+  _fillChoiceControl('sellSchool', 'sellSchoolOptions', 'School / college', [], null, '');
 }
 function updateSellSubDistricts() {
   const stateName = document.getElementById('sellState')?.value;
@@ -4212,8 +4702,10 @@ function updateSellSubDistricts() {
   const sSel  = document.getElementById('sellSchool');
   if (!sdSel) return;
   sdSel.innerHTML = '<option value="">— Sub-District —</option>' + _getSubDistricts(stateName, district).map(sd => '<option>' + sd.subDistrict + '</option>').join('');
-  if (pSel) pSel.innerHTML = '<option value="">— Place —</option>';
-  if (sSel) sSel.innerHTML = '<option value="">— School (optional) —</option>';
+  if (pSel) pSel.value = '';
+  if (sSel) sSel.value = '';
+  _fillChoiceControl('sellPlace', 'sellPlaceOptions', 'Place / town', [], p => p.name, '');
+  _fillChoiceControl('sellSchool', 'sellSchoolOptions', 'School / college', [], null, '');
 }
 function updateSellPlaces() {
   const stateName   = document.getElementById('sellState')?.value;
@@ -4222,8 +4714,15 @@ function updateSellPlaces() {
   const pSel = document.getElementById('sellPlace');
   const sSel = document.getElementById('sellSchool');
   if (!pSel) return;
-  pSel.innerHTML = '<option value="">— Place —</option>' + _getPlaces(stateName, district, subDistrict).map(p => '<option>' + p.name + '</option>').join('');
-  if (sSel) sSel.innerHTML = '<option value="">— School (optional) —</option>';
+  const selected = pSel.value;
+  _fillChoiceControl('sellPlace', 'sellPlaceOptions', 'Place / town', _getPlaces(stateName, district, subDistrict), p => p.name, selected);
+  if (sSel) sSel.value = '';
+  _fillChoiceControl('sellSchool', 'sellSchoolOptions', 'School / college', [], null, '');
+  _loadCommunityPlaces(stateName, district, subDistrict).then(() => {
+    const keep = pSel.value || selected;
+    _fillChoiceControl('sellPlace', 'sellPlaceOptions', 'Place / town', _getPlaces(stateName, district, subDistrict), p => p.name, keep);
+    if (keep) pSel.value = keep;
+  });
 }
 function updateSellSchools() {
   const stateName   = document.getElementById('sellState')?.value;
@@ -4231,7 +4730,10 @@ function updateSellSchools() {
   const subDistrict = document.getElementById('sellSubDistrict')?.value;
   const place       = document.getElementById('sellPlace')?.value;
   const sSel = document.getElementById('sellSchool');
-  if (sSel) sSel.innerHTML = '<option value="">— School (optional) —</option>' + _getSchools(stateName, district, subDistrict, place).map(s => '<option>' + s + '</option>').join('');
+  _fillChoiceControl('sellSchool', 'sellSchoolOptions', 'School / college', _getSchools(stateName, district, subDistrict, place), null, sSel?.value || '');
+  if (place) _loadCommunitySchools(stateName, district, subDistrict, place).then(() => {
+    _fillChoiceControl('sellSchool', 'sellSchoolOptions', 'School / college', _getSchools(stateName, district, subDistrict, place), null, sSel?.value || '');
+  });
 }
 function updateSignupDistricts() {
   const stateName = document.getElementById('signupState')?.value;
@@ -4298,7 +4800,10 @@ function updateSignupPlaces() {
     sInp.disabled = true;
     sInp.placeholder = 'Enter place first';
   }
-  _loadCommunityPlaces(stateName, district, subDistrict);
+  _loadCommunityPlaces(stateName, district, subDistrict).then(() => {
+    window._placeOptions = _getPlaces(stateName, district, subDistrict).map(p => p.name);
+    filterPlaceSuggestions(pInp?.value || '');
+  });
 }
 
 function updateSignupSchools() {
@@ -4316,7 +4821,10 @@ function updateSignupSchools() {
     sInp.disabled = !place;
     sInp.placeholder = place ? 'Type your school / college' : 'Enter place first';
   }
-  if (place) _loadCommunitySchools(stateName, district, subDistrict, place);
+  if (place) _loadCommunitySchools(stateName, district, subDistrict, place).then(() => {
+    window._schoolOptions = _getSchools(stateName, district, subDistrict, place);
+    filterSchoolSuggestions(sInp?.value || '');
+  });
   // Re-lock password since school was cleared
   _checkUnlockPassword();
 }
@@ -4345,11 +4853,17 @@ function filterSchoolSuggestions(val) {
   _renderAcList(list, filtered, val, 'selectSchoolSuggestion', 'schoolOkBtn');
   // Lazily load community schools when user starts typing school
   const place = (document.getElementById('signupPlace')?.value || '').trim();
-  if (place && window._schoolLoadedForPlace !== place) {
+  if (place) {
     const st = document.getElementById('signupState')?.value;
     const d  = document.getElementById('signupDistrict')?.value;
     const sd = document.getElementById('signupSubDistrict')?.value;
-    _loadCommunitySchools(st, d, sd, place);
+    const schoolKey = [st, d, sd, place].join('__').replace(/[^a-zA-Z0-9]/g,'_');
+    if (window._schoolLoadedForPlace !== schoolKey) {
+      _loadCommunitySchools(st, d, sd, place).then(() => {
+        window._schoolOptions = _getSchools(st, d, sd, place);
+        filterSchoolSuggestions(val);
+      });
+    }
   }
 }
 
@@ -4385,7 +4899,7 @@ window.confirmSchoolInput = function() {
   _checkUnlockPassword();
 };
 
-function _acEsc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function _acEsc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 window.selectPlaceSuggestion = function(val) {
   const inp = document.getElementById('signupPlace');
@@ -4435,99 +4949,80 @@ function showInputBubble(bubbleId, val) { window.showInputBubble(bubbleId, val);
 function hideInputBubble(bubbleId) { window.hideInputBubble(bubbleId); }
 
 // Toggle password visibility (eye icon)
-window.togglePwEye = function(inputId, btn) {
-  const inp = document.getElementById(inputId);
-  if (!inp || inp.disabled) return;
-  const show = inp.type === 'password';
-  inp.type = show ? 'text' : 'password';
-  btn.textContent = show ? '🙈' : '👁️';
-};
-
-// Unlock password field once place AND school are both filled
+// Unlock Create Account button once place AND school are both filled
 function _checkUnlockPassword() {
   const place  = (document.getElementById('signupPlace')?.value  || '').trim();
   const school = (document.getElementById('signupSchool')?.value || '').trim();
-  const pwInp  = document.getElementById('signupPassword');
   const btnContinue = document.getElementById('signupContinue');
-  if (!pwInp) return;
+  if (!btnContinue) return;
   if (place && school) {
-    pwInp.disabled = false;
-    pwInp.placeholder = '8-16 characters';
+    btnContinue.disabled = false; btnContinue.style.opacity=''; btnContinue.style.cursor='';
   } else {
-    pwInp.disabled = true;
-    pwInp.type = 'password'; // reset visibility
-    pwInp.value = '';
-    pwInp.placeholder = 'Enter place & school first';
-    // Reset eye icon
-    const eyeBtn = pwInp.parentElement?.querySelector('.pw-eye');
-    if (eyeBtn) eyeBtn.textContent = '👁️';
-    // Also re-lock create account button
-    if (btnContinue) { btnContinue.disabled = true; btnContinue.style.opacity='0.5'; btnContinue.style.cursor='not-allowed'; }
+    btnContinue.disabled = true; btnContinue.style.opacity='0.5'; btnContinue.style.cursor='not-allowed';
   }
-  checkSignupPasswordFilled();
 }
 
-// Unlock Create Account button once password has at least 8 chars
-function checkSignupPasswordFilled() {
-  const pw  = (document.getElementById('signupPassword')?.value || '');
-  const btn = document.getElementById('signupContinue');
-  if (!btn) return;
-  if (pw.length >= 8) {
-    btn.disabled = false; btn.style.opacity=''; btn.style.cursor='';
-  } else {
-    btn.disabled = true;  btn.style.opacity='0.5'; btn.style.cursor='not-allowed';
-  }
-}
+// (kept as no-op for compatibility)
+function checkSignupPasswordFilled() { _checkUnlockPassword(); }
 
 // ── Community places / schools — Firebase ─────────────────────
 async function _loadCommunityPlaces(state, district, subDistrict) {
-  if (!_db || !state || !district || !subDistrict) return;
+  if (!_db || !state || !district || !subDistrict) return [];
   try {
     const key = [state, district, subDistrict].join('__').replace(/[^a-zA-Z0-9]/g,'_');
     const snap = await _db.collection('community_data').doc('places__' + key).get();
     if (snap.exists) {
       const items = snap.data().items || [];
       const existing = new Set((window._placeOptions || []).map(s => s.toLowerCase()));
-      items.forEach(i => { if (i && !existing.has(i.toLowerCase())) { window._placeOptions.push(i); existing.add(i.toLowerCase()); } });
+      items.forEach(i => {
+        if (!i) return;
+        _mergeCommunityLocation(state, district, subDistrict, i, '');
+        if (!existing.has(i.toLowerCase())) { window._placeOptions.push(i); existing.add(i.toLowerCase()); }
+      });
+      return items;
     }
   } catch(e) {}
+  return [];
 }
 
 async function _loadCommunitySchools(state, district, subDistrict, place) {
-  if (!_db || !state || !district || !subDistrict || !place) return;
-  if (window._schoolLoadedForPlace === place) return;
-  window._schoolLoadedForPlace = place;
+  if (!_db || !state || !district || !subDistrict || !place) return [];
   try {
     const key = [state, district, subDistrict, place].join('__').replace(/[^a-zA-Z0-9]/g,'_');
+    if (window._schoolLoadedForPlace === key) return _getSchools(state, district, subDistrict, place);
+    window._schoolLoadedForPlace = key;
     const snap = await _db.collection('community_data').doc('schools__' + key).get();
     if (snap.exists) {
       const items = snap.data().items || [];
       const existing = new Set((window._schoolOptions || []).map(s => s.toLowerCase()));
-      items.forEach(i => { if (i && !existing.has(i.toLowerCase())) { window._schoolOptions.push(i); existing.add(i.toLowerCase()); } });
+      items.forEach(i => {
+        if (!i) return;
+        _mergeCommunityLocation(state, district, subDistrict, place, i);
+        if (!existing.has(i.toLowerCase())) { window._schoolOptions.push(i); existing.add(i.toLowerCase()); }
+      });
+      return items;
     }
   } catch(e) {}
+  return [];
 }
 
 // Called after successful signup to persist new place/school for future users
 async function _saveCommunityLocation(state, district, subDistrict, place, school) {
-  if (!_db || !state || !district || !subDistrict) return;
+  if (!state || !district || !subDistrict) return;
+  _mergeCommunityLocation(state, district, subDistrict, place, school);
+  if (!_db) return;
   try {
     const placeKey = [state, district, subDistrict].join('__').replace(/[^a-zA-Z0-9]/g,'_');
-    // Only save if it's a genuinely new place (not already in seed data)
-    const seedPlaces = _getPlaces(state, district, subDistrict).map(p => p.toLowerCase());
-    if (place && !seedPlaces.includes(place.toLowerCase())) {
+    if (place) {
       await _db.collection('community_data').doc('places__' + placeKey).set(
         { items: firebase.firestore.FieldValue.arrayUnion(place) }, { merge: true }
       );
     }
     if (school && place) {
       const schoolKey = [state, district, subDistrict, place].join('__').replace(/[^a-zA-Z0-9]/g,'_');
-      const seedSchools = _getSchools(state, district, subDistrict, place).map(s => s.toLowerCase());
-      if (!seedSchools.includes(school.toLowerCase())) {
-        await _db.collection('community_data').doc('schools__' + schoolKey).set(
-          { items: firebase.firestore.FieldValue.arrayUnion(school) }, { merge: true }
-        );
-      }
+      await _db.collection('community_data').doc('schools__' + schoolKey).set(
+        { items: firebase.firestore.FieldValue.arrayUnion(school) }, { merge: true }
+      );
     }
   } catch(e) { console.warn('[PKITAAP] _saveCommunityLocation error:', e); }
 }
@@ -4536,6 +5031,7 @@ function render() {
   document.querySelector("#backBtn").style.display = catalogStep==="classes" ? "none" : "inline-block";
   document.querySelector("#matchCard").style.display = (selectedBookId && catalogStep === "books") ? "block" : "none";
   renderClasses(); renderCategories(); renderBoards(); renderStreams(); renderBooks(); renderSelected();
+  renderSellCatalog();
 }
 function bindMenu() {
   const btn = document.getElementById("menuBtn");
@@ -4571,11 +5067,91 @@ function bindSellForm() {
   if(frm) frm.onsubmit = e => {
     e.preventDefault();
     if(!selectedBookId){ toast("Please select a book first"); return; }
-    const listing = { id:"ls"+Date.now(), bookId:selectedBookId, seller:"You", state:document.getElementById("sellState")?.value||"", district:document.getElementById("sellDistrict").value, subDistrict:document.getElementById("sellSubDistrict")?.value||"", place:document.getElementById("sellPlace").value, school:document.getElementById("sellSchool")?.value||"", condition:document.getElementById("sellCondition").value, instagram:document.getElementById("sellInstagram")?.value||"", whatsapp:document.getElementById("sellWhatsapp")?.value||"" };
-    state.listings.push(listing); save(); toast("Listed for sale!"); };
+    if(!window._isLoggedIn){ toast("Please log in first to list a book"); return; }
+    const u = window._currentUser;
+    const selected = book();
+    const adminPrice = parseInt(selected?.price) || 0;
+    const typedPrice = parseInt(document.getElementById("sellPrice")?.value || "") || 0;
+    let listingPrice = adminPrice;
+    if (state.settings.allowUserPrice === true && typedPrice) {
+      if (!adminPrice) { toast("Admin price is not set for this book"); return; }
+      if (typedPrice < 1 || typedPrice > adminPrice) {
+        toast("Price must be between ₹1 and ₹" + adminPrice);
+        return;
+      }
+      listingPrice = typedPrice;
+    }
+    const listingState = document.getElementById("sellState")?.value || "";
+    const listingDistrict = document.getElementById("sellDistrict")?.value || "";
+    const listingSubDistrict = document.getElementById("sellSubDistrict")?.value || "";
+    const listingPlace = (document.getElementById("sellPlace")?.value || "").trim();
+    const listingSchool = (document.getElementById("sellSchool")?.value || "").trim();
+    if(!listingState || !listingDistrict || !listingSubDistrict || !listingPlace || !listingSchool){
+      toast("Please fill state, district, sub-district, place and school");
+      return;
+    }
+    const listing = {
+      id       : "ls"+Date.now(),
+      bookId   : selectedBookId,
+      title    : selected ? selected.title : "",
+      className: selected ? selected.className : "",
+      board    : selected ? selected.board : "",
+      stream   : selected ? selected.stream : "",
+      seller   : u ? u.name : "You",
+      sellerName: u ? u.name : "You",
+      userId   : u ? (u.uid||u.id) : "",
+      mobile   : u ? (u.mobile || "") : "",
+      state    : listingState,
+      district : listingDistrict,
+      subDistrict: listingSubDistrict,
+      place    : listingPlace,
+      school   : listingSchool,
+      condition: document.getElementById("sellCondition").value,
+      instagram: u ? (u.insta||"") : (document.getElementById("sellInstagram")?.value || ""),
+      whatsapp : document.getElementById("sellWhatsapp")?.value || "",
+      price    : listingPrice,
+      adminPrice: adminPrice,
+      priceMode: state.settings.allowUserPrice === true && typedPrice ? "seller" : "admin",
+      createdAt: new Date().toISOString().slice(0,10)
+    };
+    _saveCommunityLocation(listing.state, listing.district, listing.subDistrict, listing.place, listing.school);
+    state.listings.push(listing);
+    save();
+    // Also save to Firestore
+    if (_db) {
+      _db.collection('listings').doc(listing.id).set(listing).catch(()=>{});
+    }
+    toast("✅ Listed for sale!");
+    // Reset sell page to book selection
+    selectedBookId = '';
+    sellCatalogStep = 'classes';
+    renderSellCatalog();
+    renderMyListings(true);
+  };
 }
 function bindPageNav() {
-  document.querySelectorAll("[data-page]").forEach(btn => { btn.onclick = () => { const pg = btn.dataset.page; document.querySelectorAll(".page").forEach(p=>p.classList.remove("active")); document.getElementById(pg+"Page")?.classList.add("active"); }; });
+  document.querySelectorAll("[data-page]").forEach(btn => {
+    btn.onclick = () => {
+      const pg = btn.dataset.page;
+      document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+      document.getElementById(pg+"Page")?.classList.add("active");
+      // Close menu panel
+      document.getElementById('menuBtn')?.classList.remove('open');
+      document.getElementById('menuPanel')?.classList.remove('open');
+      if (pg === 'sell') {
+        if (window._currentUser?.state) {
+          selectedState = window._currentUser.state;
+          const sf2 = document.getElementById('stateFilter2');
+          if (sf2) sf2.value = selectedState;
+        }
+        sellCatalogStep = 'classes';
+        // Pre-fill sell form with profile defaults
+        _prefillSellFromProfile();
+        renderSellCatalog();
+      }
+      if (pg === 'myListings') renderMyListings();
+    };
+  });
   document.querySelectorAll("[data-go-buy]").forEach(btn => { btn.onclick = () => { document.querySelectorAll(".page").forEach(p=>p.classList.remove("active")); document.getElementById("buyPage").classList.add("active"); }; });
 }
 function bindAdminForms() {
@@ -4651,7 +5227,36 @@ function onStateFilterChange2(stateVal) {
   _updateMediumsForState(stateVal);
   render();
 }
-function init() { fillSignupLocations(); render(); bindMenu(); bindSearch(); bindBuyForm(); bindSellForm(); bindPageNav(); bindAdminForms(); }
+function init() {
+  fillSignupLocations();
+  render();
+  bindMenu();
+  bindSearch();
+  bindBuyForm();
+  bindSellForm();
+  bindPageNav();
+  bindAdminForms();
+  // Sell page back button
+  const sellBack = document.getElementById('sellBackBtn');
+  if (sellBack) sellBack.onclick = () => {
+    if (sellCatalogStep==='books') {
+      if (selectedStream) sellCatalogStep='streams';
+      else if (selectedBoard) sellCatalogStep = selectedClass==='General'?'classes':'boards';
+      else sellCatalogStep='classes';
+      selectedBookId='';
+    } else if (sellCatalogStep==='streams') { sellCatalogStep='boards'; selectedStream=''; selectedBookId=''; }
+    else if (sellCatalogStep==='boards') { sellCatalogStep='classes'; selectedBoard=''; selectedStream=''; selectedBookId=''; }
+    else { sellCatalogStep='classes'; selectedClass=selectedBoard=selectedStream=selectedBookId=''; }
+    renderSellCatalog();
+  };
+  // Account details dialog save + close
+  const accSave = document.getElementById('accSaveBtn');
+  if (accSave) accSave.onclick = saveAccountDetails;
+  const accClose = document.getElementById('accountClose');
+  if (accClose) accClose.onclick = () => document.getElementById('accountDialog')?.close();
+  const accBack = document.getElementById('accBackBtn');
+  if (accBack) accBack.onclick = () => document.getElementById('accountDialog')?.close();
+}
 init();
 // ═══════════════════════════════════════════════════════════════
 //  AUTH MODULE  — Firebase Phone OTP + Firestore user persistence
@@ -4659,27 +5264,59 @@ init();
 (function() {
 
   // ── State ──────────────────────────────────────────────────
-  window._isLoggedIn     = false;
-  window._currentUser    = null;
-  let _confirmationResult = null;   // Firebase confirmationResult
-  let _otpVerified        = false;
-  let _recaptchaVerifier  = null;
+  window._isLoggedIn  = false;
+  window._currentUser = null;
+  let _googleUser     = null;   // Firebase user returned from Google popup
+  let _authStateHandled = false; // Prevents onAuthStateChanged double-firing
+
+  // ── Google SVG (reused in button resets) ──────────────────
+  const GOOGLE_SVG = '<svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>';
 
   // ── Dialog refs ────────────────────────────────────────────
   const loginDialog  = document.getElementById('loginDialog');
   const signupDialog = document.getElementById('signupDialog');
 
-  function openLogin()  { signupDialog.close(); loginDialog.showModal(); }
-  function openSignup() { loginDialog.close();  signupDialog.showModal(); }
+  function openLogin() {
+    // Reset signup to stage 1 whenever login dialog opens
+    _resetSignupToStage1();
+    signupDialog.close();
+    loginDialog.showModal();
+  }
+  function openSignup() {
+    _resetSignupToStage1();
+    loginDialog.close();
+    signupDialog.showModal();
+  }
+  function _resetSignupToStage1() {
+    const s1 = document.getElementById('signupStage1');
+    const s2 = document.getElementById('signupStage2');
+    const tag = document.getElementById('signupTagline');
+    if (s1) s1.style.display = '';
+    if (s2) s2.style.display = 'none';
+    if (tag) tag.textContent = 'Create your account';
+    _googleUser = null;
+    const sgBtn = document.getElementById('signupGoogleBtn');
+    if (sgBtn) { sgBtn.disabled = false; sgBtn.innerHTML = GOOGLE_SVG + ' Sign up with Google'; }
+  }
 
   document.getElementById('loginClose').onclick  = function() { loginDialog.close(); };
-  document.getElementById('signupClose').onclick = function() { signupDialog.close(); };
+  // signupClose removed — user MUST fill the profile form before accessing the app
   loginDialog.addEventListener('click',  function(e) { if (e.target === loginDialog)  loginDialog.close(); });
-  signupDialog.addEventListener('click', function(e) { if (e.target === signupDialog) signupDialog.close(); });
+  // Prevent backdrop-click closing when in stage 2 (profile form must be completed)
+  signupDialog.addEventListener('click', function(e) {
+    if (e.target === signupDialog) {
+      const stage2 = document.getElementById('signupStage2');
+      if (stage2 && stage2.style.display === 'none') {
+        // Stage 1 — allow close
+        signupDialog.close(); _resetSignupToStage1();
+      }
+      // Stage 2 — do NOT close
+    }
+  });
 
-  document.getElementById('goSignup').onclick    = openSignup;
-  document.getElementById('goLogin').onclick     = openLogin;
-  document.getElementById('loginBtn').onclick    = openLogin;
+  document.getElementById('goSignup').onclick     = openSignup;
+  document.getElementById('goLogin').onclick      = openLogin;
+  document.getElementById('loginBtn').onclick     = openLogin;
   document.getElementById('menuGoSignup').onclick = openSignup;
 
   // ── Auth success handler ───────────────────────────────────
@@ -4688,10 +5325,9 @@ init();
     window._currentUser = userData || null;
 
     if (userData) {
-      // Attach Firebase UID if we have it
       if (firebaseUser && firebaseUser.uid) {
         userData.uid   = firebaseUser.uid;
-        userData.phone = firebaseUser.phoneNumber || ('+91' + userData.mobile);
+        userData.email = firebaseUser.email || '';
       }
       await _saveUserToFirestore(userData);
     }
@@ -4701,238 +5337,200 @@ init();
 
     const menuLoginCard = document.getElementById('menuLoginCard');
     const menuSell      = document.getElementById('menuSell');
+    const menuListings  = document.getElementById('menuListings');
     const menuAccount   = document.getElementById('menuAccount');
+    const menuLogout    = document.getElementById('menuLogout');
     if (menuLoginCard) menuLoginCard.style.display = 'none';
     if (menuSell)      menuSell.style.display = '';
+    if (menuListings)  menuListings.style.display = '';
     if (menuAccount)   menuAccount.style.display = '';
+    if (menuLogout)    menuLogout.style.display = '';
+
+    // Wire account details button
+    if (menuAccount) menuAccount.onclick = function() {
+      document.getElementById('menuBtn')?.classList.remove('open');
+      document.getElementById('menuPanel')?.classList.remove('open');
+      openAccountDetails();
+    };
+    // Wire logout button
+    if (menuLogout) menuLogout.onclick = function() {
+      if (!confirm('Are you sure you want to log out?')) return;
+      if (_auth) _auth.signOut().catch(()=>{});
+      window._isLoggedIn = false;
+      window._currentUser = null;
+      if (menuLoginCard) menuLoginCard.style.display = '';
+      if (menuSell)      menuSell.style.display = 'none';
+      if (menuListings)  menuListings.style.display = 'none';
+      if (menuAccount)   menuAccount.style.display = 'none';
+      if (menuLogout)    menuLogout.style.display = 'none';
+      document.getElementById('menuBtn')?.classList.remove('open');
+      document.getElementById('menuPanel')?.classList.remove('open');
+      toast('👋 Logged out successfully.');
+      // Navigate back to buy page
+      document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+      document.getElementById('buyPage')?.classList.add('active');
+    };
+
+    // Pre-fill sell form with user's default location
+    setTimeout(_prefillSellFromProfile, 200);
 
     toast('\u2705 Welcome! You are logged in.');
   }
 
-  // Simple login button (no OTP for returning users in this build)
-  document.getElementById('loginContinue').onclick = function() { onAuthSuccess(null, null); };
+  // ── Google Sign-In (shared by login + signup) ──────────────
+  window.googleSignIn = async function(mode) {
+    _authStateHandled = true; // Manual flow — ignore the onAuthStateChanged re-fire
+    const btnId = mode === 'login' ? 'loginGoogleBtn' : 'signupGoogleBtn';
+    const btn   = document.getElementById(btnId);
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="otp-spinner"></span>Opening Google\u2026'; }
 
-  // ── reCAPTCHA initialisation ───────────────────────────────
-  // Called lazily the first time sendOtp() is triggered.
-  function _initRecaptcha() {
-    if (_recaptchaVerifier) return;          // already set up
-    if (!_auth) {
-      toast('\u26A0\uFE0F Firebase not initialised. Check your config.');
-      return null;
-    }
     try {
-      _recaptchaVerifier = new firebase.auth.RecaptchaVerifier(
-        'recaptcha-container',
-        {
-          size: 'invisible',   // invisible reCAPTCHA — no user interaction needed
-          callback: function() {},
-          'expired-callback': function() {
-            _recaptchaVerifier = null;      // force re-init on next OTP send
-          }
-        }
-      );
-      return _recaptchaVerifier;
+      if (!_auth) throw new Error('Firebase not initialised. Check your config.');
+
+      const provider = new firebase.auth.GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      const result  = await firebase.auth().signInWithPopup(provider);
+      _googleUser   = result.user;
+
+      // Check if this Google UID already has a profile in Firestore
+      const existingData = await _getUserFromFirestore(_googleUser.uid);
+
+      if (existingData) {
+        // ── Returning user ─ log in directly ──────────────
+        await onAuthSuccess(existingData, _googleUser);
+        return;
+      }
+
+      // ── New user ───────────────────────────────────────────
+      if (mode === 'login') {
+        // Came through Login but no profile found — move them to signup stage 2
+        loginDialog.close();
+        toast('\u26A0\uFE0F No account found. Please complete your profile.');
+        await new Promise(r => setTimeout(r, 400));
+        document.getElementById('signupStage1').style.display = 'none';
+        document.getElementById('signupStage2').style.display = '';
+        document.getElementById('signupTagline').textContent  = 'Complete your profile';
+        _prefillNameFromGoogle();
+        signupDialog.showModal();
+      } else {
+        // Signup mode — show profile form
+        document.getElementById('signupStage1').style.display = 'none';
+        document.getElementById('signupStage2').style.display = '';
+        document.getElementById('signupTagline').textContent  = 'Complete your profile';
+        _prefillNameFromGoogle();
+        if (btn) { btn.disabled = false; btn.innerHTML = GOOGLE_SVG + ' Sign up with Google'; }
+      }
+
     } catch (e) {
-      console.error('[PKITAAP] RecaptchaVerifier error:', e);
-      return null;
+      if (btn) { btn.disabled = false; btn.innerHTML = mode === 'login' ? GOOGLE_SVG + ' Continue with Google' : GOOGLE_SVG + ' Sign up with Google'; }
+      let msg = 'Google sign-in failed. Please try again.';
+      if (e.code === 'auth/popup-closed-by-user')  msg = 'Sign-in cancelled.';
+      if (e.code === 'auth/popup-blocked')          msg = 'Popup blocked \u2014 please allow popups for this site.';
+      if (e.code === 'auth/cancelled-popup-request') msg = 'Sign-in cancelled.';
+      if (e.message && !e.code)                     msg = e.message;
+      toast('\u274C ' + msg);
+      console.error('[PKITAAP] Google sign-in error:', e);
     }
+  };
+
+  // Pre-fill name from Google profile
+  function _prefillNameFromGoogle() {
+    if (!_googleUser || !_googleUser.displayName) return;
+    const fn = document.getElementById('signupFullName');
+    if (fn && !fn.value) fn.value = _googleUser.displayName.trim();
   }
 
-  // ── sendOtp ────────────────────────────────────────────────
-  window.sendOtp = async function() {
-    const mobile = (document.getElementById('signupMobile') || {}).value;
-    if (!mobile || !/^[0-9]{10}$/.test(mobile.trim())) {
-      toast('Please enter a valid 10-digit mobile number first');
-      return;
-    }
-    const phoneNumber = '+91' + mobile.trim();  // India country code
-
-    // UI — disable button & show spinner while sending
-    const sendBtn = document.getElementById('sendOtpBtn');
-    const status  = document.getElementById('otpStatus');
-    sendBtn.disabled = true;
-    sendBtn.innerHTML = '<span class=\"otp-spinner\"></span>Sending…';
-    status.style.display = 'none';
-    _otpVerified       = false;
-    _confirmationResult = null;
-
-    // ── Firebase path ──────────────────────────────────────
-    if (_auth && PKITAAP_FB_CONFIG) {
-      try {
-        const verifier = _initRecaptcha();
-        if (!verifier) {
-          sendBtn.disabled = false;
-          sendBtn.textContent = 'Send OTP';
-          toast('\u26A0\uFE0F reCAPTCHA setup failed. Try reloading the page.');
-          return;
-        }
-        _confirmationResult = await firebase.auth().signInWithPhoneNumber(phoneNumber, verifier);
-
-        // Show OTP input box
-        const otpBox = document.getElementById('otpBox');
-        otpBox.style.display = 'flex';
-        document.getElementById('otpInput').value = '';
-        document.getElementById('otpInput').disabled = false;
-        document.getElementById('verifyOtpBtn').textContent = 'Verify';
-        document.getElementById('verifyOtpBtn').style.background = 'var(--red)';
-        sendBtn.disabled = false;
-        sendBtn.textContent = 'Resend OTP';
-        toast('\uD83D\uDCF1 OTP sent to +91 ' + mobile.trim());
-      } catch (e) {
-        sendBtn.disabled = false;
-        sendBtn.textContent = 'Send OTP';
-        // Reset reCAPTCHA on error so it can be re-used
-        if (_recaptchaVerifier) {
-          try { _recaptchaVerifier.clear(); } catch(ignored) {}
-          _recaptchaVerifier = null;
-        }
-        let errMsg = e.message || 'Unknown error';
-        if (e.code === 'auth/invalid-phone-number')  errMsg = 'Invalid phone number. Use a valid Indian number.';
-        if (e.code === 'auth/too-many-requests')     errMsg = 'Too many OTP requests. Please try again later.';
-        if (e.code === 'auth/quota-exceeded')        errMsg = 'SMS quota exceeded. Contact the app owner.';
-        status.style.display  = 'block';
-        status.style.color    = '#dc2626';
-        status.textContent    = '\u274C ' + errMsg;
-        toast('\u274C OTP failed: ' + errMsg);
-        console.error('[PKITAAP] signInWithPhoneNumber error:', e);
-      }
-      return;
-    }
-
-    // ── Fallback: demo mode (no Firebase config) ───────────
-    console.warn('[PKITAAP] Firebase not configured — using demo OTP mode.');
-    window._demoOtp = String(Math.floor(100000 + Math.random() * 900000));
-    const otpBox = document.getElementById('otpBox');
-    otpBox.style.display = 'flex';
-    document.getElementById('otpInput').value = '';
-    document.getElementById('otpInput').disabled = false;
-    document.getElementById('verifyOtpBtn').textContent = 'Verify';
-    document.getElementById('verifyOtpBtn').style.background = 'var(--red)';
-    sendBtn.disabled = false;
-    sendBtn.textContent = 'Resend OTP';
-    toast('\uD83D\uDCF1 [DEMO] OTP: ' + window._demoOtp + ' (Firebase not configured)');
-  };
-
-  // ── verifyOtp ──────────────────────────────────────────────
-  window.verifyOtp = async function() {
-    const entered = ((document.getElementById('otpInput') || {}).value || '').trim();
-    const status  = document.getElementById('otpStatus');
-    if (!entered) { toast('Please enter the OTP'); return; }
-
-    const verifyBtn = document.getElementById('verifyOtpBtn');
-    verifyBtn.disabled = true;
-    verifyBtn.innerHTML = '<span class=\"otp-spinner\"></span>Verifying…';
-
-    // ── Firebase path ──────────────────────────────────────
-    if (_confirmationResult) {
-      try {
-        const result = await _confirmationResult.confirm(entered);
-        // result.user is the Firebase User object
-        _otpVerified = true;
-        status.style.display  = 'block';
-        status.style.color    = '#166534';
-        status.textContent    = '\u2705 Mobile number verified!';
-        verifyBtn.disabled    = false;
-        verifyBtn.textContent = '\u2714 Verified';
-        verifyBtn.style.background = '#15803d';
-        document.getElementById('otpInput').disabled = true;
-        // Store Firebase user for use in signupContinue
-        window._fbVerifiedUser = result.user;
-        toast('\u2705 Mobile number verified!');
-      } catch (e) {
-        _otpVerified = false;
-        verifyBtn.disabled    = false;
-        verifyBtn.textContent = 'Verify';
-        let errMsg = 'Incorrect OTP. Please try again.';
-        if (e.code === 'auth/invalid-verification-code') errMsg = 'Incorrect OTP. Please try again.';
-        if (e.code === 'auth/code-expired')              errMsg = 'OTP expired. Click Resend OTP.';
-        if (e.code === 'auth/session-expired')           errMsg = 'Session expired. Click Resend OTP.';
-        status.style.display  = 'block';
-        status.style.color    = '#dc2626';
-        status.textContent    = '\u274C ' + errMsg;
-        toast('\u274C ' + errMsg);
-        console.error('[PKITAAP] OTP confirm error:', e);
-      }
-      return;
-    }
-
-    // ── Fallback: demo mode ────────────────────────────────
-    if (entered === window._demoOtp) {
-      _otpVerified = true;
-      status.style.display  = 'block';
-      status.style.color    = '#166534';
-      status.textContent    = '\u2705 Mobile number verified! (demo mode)';
-      verifyBtn.disabled    = false;
-      verifyBtn.textContent = '\u2714 Verified';
-      verifyBtn.style.background = '#15803d';
-      document.getElementById('otpInput').disabled = true;
-      window._fbVerifiedUser = null;
-      toast('\u2705 Mobile number verified! (demo mode)');
-    } else {
-      _otpVerified = false;
-      verifyBtn.disabled    = false;
-      verifyBtn.textContent = 'Verify';
-      status.style.display  = 'block';
-      status.style.color    = '#dc2626';
-      status.textContent    = '\u274C Incorrect OTP. Please try again.';
-    }
-  };
-
-  // ── signupContinue ─────────────────────────────────────────
+  // ── Profile form submit ────────────────────────────────────
   document.getElementById('signupContinue').onclick = async function() {
-    const mobile      = (document.getElementById('signupMobile')  || {}).value;
-    const cls         = (document.getElementById('signupClass')    || {}).value;
-    const district    = (document.getElementById('signupDistrict') || {}).value;
-    const subDistrict = (document.getElementById('signupSubDistrict') || {}).value;
-    const place  = ((document.getElementById('signupPlace')  || {}).value || '').trim();
-    const school = ((document.getElementById('signupSchool') || {}).value || '').trim();
-    const pwd = document.getElementById('signupPassword');
+    if (!_googleUser) { toast('\u26A0\uFE0F Please sign in with Google first.'); openSignup(); return; }
 
-    if (!mobile || !/^[0-9]{10}$/.test(mobile.trim())) { toast('Please enter a valid 10-digit mobile number'); return; }
-    if (!_otpVerified)   { toast('Please verify your mobile number with OTP first'); return; }
+    const mobile      = ((document.getElementById('signupMobile')      || {}).value || '').trim();
+    const cls         = (document.getElementById('signupClass')         || {}).value;
+    const stateVal    = (document.getElementById('signupState')         || {}).value;
+    const district    = (document.getElementById('signupDistrict')      || {}).value;
+    const subDistrict = (document.getElementById('signupSubDistrict')   || {}).value;
+    const place       = ((document.getElementById('signupPlace')        || {}).value || '').trim();
+    const school      = ((document.getElementById('signupSchool')       || {}).value || '').trim();
+    const firstName   = ((document.getElementById('signupFullName')     || {}).value || '').trim();
+    const insta       = ((document.getElementById('signupInsta')        || {}).value || '').trim().replace(/^@+/, '');
+
+    if (!firstName)       { toast('Please enter your full name'); return; }
+    if (!mobile || !/^[0-9]{10}$/.test(mobile)) { toast('Please enter a valid 10-digit mobile number'); return; }
     if (!cls)            { toast('Please select your class'); return; }
+    if (!insta)          { toast('Please enter your Instagram ID'); return; }
+    if (!stateVal)       { toast('Please select your state'); return; }
     if (!district)       { toast('Please select your district'); return; }
     if (!subDistrict)    { toast('Please select your sub-district'); return; }
     if (!place)          { toast('Please enter your place / town'); return; }
     if (!school)         { toast('Please enter your school / college'); return; }
-    if (pwd && pwd.value.length < 8) { toast('Password must be at least 8 characters'); return; }
 
-    const firstName = ((document.getElementById('signupFirstName') || {}).value || '').trim();
-    const lastName  = ((document.getElementById('signupLastName')  || {}).value || '').trim();
-    const insta     = ((document.getElementById('signupInsta')     || {}).value || '').trim();
-    const stateVal  = (document.getElementById('signupState')      || {}).value;
+    const lastName  = '';
+    const passport  = ((document.getElementById('signupPassport')   || {}).value || '').trim();
+    if (state.settings.passport && !passport) { toast('Please enter your Passport / ID number'); return; }
 
     const userData = {
-      id         : 'u' + Date.now(),
-      name       : (firstName + ' ' + lastName).trim(),
-      mobile     : mobile.trim(),
-      phone      : '+91' + mobile.trim(),
-      insta      : insta || '',
-      className  : cls,
-      state      : stateVal || '',
+      id          : 'u' + Date.now(),
+      uid         : _googleUser.uid,
+      email       : _googleUser.email || '',
+      name        : firstName,
+      mobile      : mobile,
+      phone       : '+91' + mobile,
+      insta       : insta || '',
+      className   : cls,
+      state       : stateVal || '',
       district,
       subDistrict,
       place,
-      school     : school || '',
-      status     : 'active',
-      role       : 'user',
-      joinedAt   : new Date().toISOString().slice(0, 10)
+      school      : school || '',
+      passport    : passport || '',
+      status      : 'active',
+      role        : 'user',
+      joinedAt    : new Date().toISOString().slice(0, 10)
     };
 
-    // Disable button during save
     const continueBtn = document.getElementById('signupContinue');
     continueBtn.disabled = true;
-    continueBtn.innerHTML = '<span class=\"otp-spinner\"></span>Creating account…';
+    continueBtn.innerHTML = '<span class="otp-spinner"></span>Creating account\u2026';
 
     try {
-      // Save new place/school to community data for future autocomplete suggestions
-      _saveCommunityLocation(stateVal, district, subDistrict, place, school);
-      await onAuthSuccess(userData, window._fbVerifiedUser || null);
+      await _saveCommunityLocation(stateVal, district, subDistrict, place, school);
+      await onAuthSuccess(userData, _googleUser);
     } finally {
       continueBtn.disabled  = false;
       continueBtn.textContent = 'Create Account';
     }
   };
+
+  // ── Session persistence — restore login on page reload ──────────
+  // Firebase Auth automatically restores the session. We listen here
+  // so the user never has to log in again after refreshing the page.
+  if (_auth) {
+    _auth.onAuthStateChanged(async function(firebaseUser) {
+      // onAuthStateChanged fires once on load. After that we ignore it
+      // to avoid double-handling the login popup flow.
+      if (_authStateHandled) return;
+      _authStateHandled = true;
+
+      if (!firebaseUser) return; // Not logged in — show normal UI
+
+      // Firebase says user is signed in — check if they have a profile
+      const existingData = await _getUserFromFirestore(firebaseUser.uid);
+
+      if (existingData) {
+        // Returning user with complete profile — restore session silently
+        await onAuthSuccess(existingData, firebaseUser);
+      } else {
+        // Firebase session exists but no Firestore profile yet
+        // (e.g. user signed in but closed browser before completing form)
+        _googleUser = firebaseUser;
+        document.getElementById('signupStage1').style.display = 'none';
+        document.getElementById('signupStage2').style.display = '';
+        document.getElementById('signupTagline').textContent  = 'Complete your profile';
+        _prefillNameFromGoogle();
+        signupDialog.showModal();
+      }
+    });
+  }
 
 })();
 <\/script>
@@ -4951,6 +5549,37 @@ function exportHTML(){
   document.body.removeChild(a);
   setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
   toast('🌐 HTML exported with Firebase auth!');
+}
+
+// ══════════════════════════════════════════════════
+//  COPY EXPORT CODE
+// ══════════════════════════════════════════════════
+function copyExportCode(){
+  const btn = document.getElementById('copyExportBtn');
+  const html = buildPkitaapHTML();
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(html).then(()=>{
+      if(btn){ btn.textContent='✅ Copied!'; btn.style.background='#dcfce7'; btn.style.color='#166534'; }
+      toast('📋 Export code copied! Paste it into any .html file.');
+      setTimeout(()=>{ if(btn){ btn.innerHTML='📋 Copy Export Code'; btn.style.background=''; btn.style.color=''; } }, 2800);
+    }).catch(()=>_copyExportFallback(html, btn));
+  } else {
+    _copyExportFallback(html, btn);
+  }
+}
+function _copyExportFallback(text, btn){
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0;';
+  document.body.appendChild(ta);
+  ta.select(); ta.setSelectionRange(0, ta.value.length);
+  try{
+    document.execCommand('copy');
+    if(btn){ btn.textContent='✅ Copied!'; btn.style.background='#dcfce7'; btn.style.color='#166534'; }
+    toast('📋 Export code copied! Paste it into any .html file.');
+    setTimeout(()=>{ if(btn){ btn.innerHTML='📋 Copy Export Code'; btn.style.background=''; btn.style.color=''; } }, 2800);
+  } catch(e){ toast('⚠️ Copy failed — use ⬇️ Export instead.'); }
+  document.body.removeChild(ta);
 }
 
 // ══════════════════════════════════════════════════
@@ -4982,8 +5611,36 @@ function _statusPill(status){
   const [bg,col] = (STATUS_COLORS[status]||'#f3f4f6|#555').split('|');
   return `<span style="background:${bg};color:${col};border-radius:20px;padding:2px 10px;font-size:11px;font-weight:800;">${status.charAt(0).toUpperCase()+status.slice(1)}</span>`;
 }
+function _normalizeAdminUser(u){
+  const mobile = u.mobile || (u.phone ? String(u.phone).replace(/\D/g,'').slice(-10) : '');
+  return {
+    ...u,
+    id: u.id || u.uid || mobile || ('u' + Date.now()),
+    uid: u.uid || u.id || '',
+    name: u.name || u.fullName || u.displayName || '',
+    mobile,
+    phone: u.phone || (mobile ? '+91' + mobile : ''),
+    className: u.className || u.class || '',
+    status: u.status || 'active',
+    joinedAt: u.joinedAt || (u.createdAt ? String(u.createdAt).slice(0,10) : '')
+  };
+}
+function _setAppUsers(users){
+  const map = new Map();
+  (users || []).map(_normalizeAdminUser).forEach(u => {
+    const key = u.uid || u.mobile || u.id;
+    map.set(key, {...(map.get(key)||{}), ...u});
+  });
+  const arr = Array.from(map.values());
+  S.users = arr;
+  _saveAppUsers(arr);
+  updateCounts();
+  return arr;
+}
 function _getAppUsers(){
-  try { return JSON.parse(localStorage.getItem('pkitaap_registered_users')||'[]'); } catch(e){ return []; }
+  let local = [];
+  try { local = JSON.parse(localStorage.getItem('pkitaap_registered_users')||'[]'); } catch(e){ local = []; }
+  return _setAppUsers([...(S.users || []), ...local]);
 }
 function _saveAppUsers(users){
   try { localStorage.setItem('pkitaap_registered_users', JSON.stringify(users)); } catch(e){}
@@ -5021,15 +5678,20 @@ function saveUser(){
   u.school = document.getElementById('eu-school').value.trim();
   u.insta = document.getElementById('eu-insta').value.trim();
   u.status = document.getElementById('eu-status').value;
-  _saveAppUsers(users);
+  _setAppUsers(users);
+  if(_fbDb) _fbDb.collection('users').doc(u.uid || u.id).set(u, {merge:true}).catch(()=>{});
   closeModal('editUserModal');
   renderUsers();
   toast('✅ User updated!');
 }
 function deleteUser(id){
-  showConfirm('Remove this user? This cannot be undone.', ()=>{
+  showConfirm('Remove this user? This cannot be undone.', async ()=>{
     const users = _getAppUsers().filter(u=>u.id!==id);
-    _saveAppUsers(users);
+    const deleted = _getAppUsers().find(u=>u.id===id);
+    if(_fbDb && deleted) {
+      try { await _fbDb.collection('users').doc(deleted.uid || deleted.id).delete(); } catch(e) {}
+    }
+    _setAppUsers(users);
     updateCounts();
     renderUsers();
     toast('🗑️ User removed.');
@@ -5225,6 +5887,37 @@ updateCounts();
 renderDash();
 _initAutoSave();
 
+var _fbApp = null, _fbDb = null, _fbUnsubUsers = null, _fbUsers = [], _fbListings = [];
+
+// ── Auto-connect Firebase on admin load ─────────────────────────
+setTimeout(async function adminAutoConnect() {
+  if (typeof firebase === 'undefined') return;
+  if (_fbDb) return; // already connected
+  const cfg = PKITAAP_BAKED_FB_CONFIG;
+  if (!cfg || !cfg.apiKey) return;
+  try {
+    if (firebase.apps.length > 0) {
+      try { await Promise.all(firebase.apps.map(a => a.delete())); } catch(e) {}
+    }
+    firebase.initializeApp(cfg);
+    _fbApp = firebase.app();
+    _fbDb  = firebase.firestore();
+    // Update status badge
+    const ncBadge = document.getElementById('nc-firebase');
+    if (ncBadge) { ncBadge.textContent = 'ON'; ncBadge.style.background = '#dcfce7'; ncBadge.style.color = '#15803d'; }
+    const statusPill = document.getElementById('fb-status-pill');
+    if (statusPill) { statusPill.innerText = '● Connected'; statusPill.style.background = '#dcfce7'; statusPill.style.color = '#15803d'; }
+    const syncSection = document.getElementById('fb-sync-section');
+    if (syncSection) syncSection.style.display = '';
+    const discBtn = document.getElementById('fb-disconnect-btn');
+    if (discBtn) discBtn.style.display = '';
+    // Auto-watch users
+    fbWatchUsers();
+  } catch(e) {
+    console.warn('[PKITAAP Admin] Auto-connect failed:', e.message);
+  }
+}, 0);
+
 // Load saved state marker (for auto-save patching)
 // ◆PKITAAP_ADMIN_STATE◆ null
 
@@ -5258,7 +5951,7 @@ const PKITAAP_BAKED_FB_CONFIG = {
 })();
 // ─────────────────────────────────────────────────────────────────────────────
 
-let _fbApp = null, _fbDb = null, _fbUnsubUsers = null, _fbUsers = [], _fbListings = [];
+// Firebase runtime state is declared before adminAutoConnect.
 
 function fbSaveConfig(cfg){
   try { localStorage.setItem('pkitaap_fb_config', JSON.stringify(cfg)); } catch(e){}
@@ -5561,18 +6254,27 @@ async function fbPushData(){
 }
 
 // ── PULL USERS ───────────────────────────────────
-async function fbPullUsers(){
-  if(!_fbDb){ toast('⚠️ Connect to Firebase first.'); return; }
+async function fbPullUsers(options){
+  options = options || {};
+  if(!_fbDb){ if(!options.silent) toast('⚠️ Connect to Firebase first.'); return; }
   try {
     fbUpdateUsersInfo();
-    const snap = await _fbDb.collection('users').orderBy('joinedAt','desc').limit(500).get();
+    let snap;
+    try {
+      snap = await _fbDb.collection('users').orderBy('joinedAt','desc').limit(500).get();
+    } catch(orderErr) {
+      snap = await _fbDb.collection('users').limit(500).get();
+    }
     _fbUsers = snap.docs.map(d=>({id:d.id,...d.data()}));
+    _fbUsers = _setAppUsers(_fbUsers);
     fbUpdateUsersInfo(_fbUsers.length);
-    document.getElementById('fb-users-table-card').style.display='';
+    const card = document.getElementById('fb-users-table-card');
+    if(card) card.style.display='';
     fbRenderUsers();
-    toast('✅ '+_fbUsers.length+' users pulled from Firebase!');
+    renderUsers();
+    if(!options.silent) toast('✅ '+_fbUsers.length+' users pulled from Firebase!');
   } catch(e){
-    toast('❌ Pull users failed: '+e.message);
+    if(!options.silent) toast('❌ Pull users failed: '+e.message);
   }
 }
 function fbWatchUsers(){
@@ -5588,9 +6290,11 @@ function fbWatchUsers(){
   _fbUnsubUsers = _fbDb.collection('users').orderBy('joinedAt','desc').limit(500)
     .onSnapshot(snap=>{
       _fbUsers = snap.docs.map(d=>({id:d.id,...d.data()}));
+      _fbUsers = _setAppUsers(_fbUsers);
       fbUpdateUsersInfo(_fbUsers.length);
       document.getElementById('fb-users-table-card').style.display='';
       fbRenderUsers();
+      renderUsers();
       const nc = document.getElementById('nc-firebase');
       if(nc) nc.textContent=_fbUsers.length+'u';
     }, e=>toast('❌ Watch error: '+e.message));
