@@ -336,8 +336,8 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
               </select>
             </label>
             <label class="wide">Instagram ID<div style="display:flex;align-items:center;background:#f9fafb;border:2px solid var(--line);border-radius:10px;overflow:hidden;"><span style="background:var(--red-light);color:var(--red);font-weight:900;padding:0 10px;min-height:40px;display:flex;align-items:center;">@</span><input type="text" id="sellInstagram" placeholder="your_instagram" style="border:none;border-radius:0;flex:1;min-height:40px;background:transparent;" readonly></div></label>
-            
-            <div class="wide" id="sellFixedPriceInfo" style="background:var(--red-light);border:2px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:900;color:var(--red);">Price: <strong id="sellFixedPriceText">Select a book</strong></div>
+            <label class="wide">WhatsApp Number<input type="tel" id="sellWhatsapp" placeholder="10-digit number" maxlength="10"/></label>
+            <label class="wide" id="sellPriceWrap">Price Expectation (₹)<input type="number" id="sellPrice" placeholder="Leave blank to use admin price"/><span id="sellPriceHelp" style="color:var(--muted);font-size:11px;font-weight:800;margin-top:4px;"></span></label>
             <button class="btn btn-primary wide" type="submit">List for Sale</button>
           </form>
         </div>
@@ -702,7 +702,9 @@ const seed = {
   "settings": {
     "general": false,
     "instagram": true,
-    "whatsapp": false
+    "whatsapp": true,
+    "passport": false,
+    "allowUserPrice": true
   },
   "categories": [],
   "books": [
