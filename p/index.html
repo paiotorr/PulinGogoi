@@ -290,9 +290,9 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
       </div>
     </section>
     <section class="page" id="sellPage">
-      <div class="page-head" style="display:flex;align-items:center;gap:12px;">
-        <button type="button" onclick="document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('buyPage').classList.add('active');" style="background:var(--red-light,#fef2f2);color:var(--red,#e53e3e);border:2px solid currentColor;border-radius:10px;padding:6px 14px;font-size:13px;font-weight:800;cursor:pointer;">← Back</button>
+      <div class="page-head">
         <h1>Sell Books</h1>
+        <button class="btn btn-ghost" type="button" data-go-buy>Back</button>
       </div>
       <div class="location-lock">
         <div><span>Country</span><strong>India</strong></div>
@@ -327,21 +327,8 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
             <label class="wide">State <select id="sellState" onchange="updateSellDistricts()"><option value="">— Select Your State —</option><option value="Assam">Assam</option></select></label>
             <label>District <select id="sellDistrict" onchange="updateSellSubDistricts()"></select></label>
             <label>Sub-District <select id="sellSubDistrict" onchange="updateSellPlaces()"></select></label>
-            <label>Place
-              <select id="sellPlace" onchange="updateSellSchools()"></select>
-              <div id="sellNewPlaceRow" style="display:none;margin-top:6px;">
-                <input type="text" id="sellNewPlaceInput" placeholder="Type new place name" style="font-size:13px;padding:7px 10px;margin-bottom:4px;"/>
-                <button type="button" onclick="addSellNewPlace()" style="background:var(--red);color:white;border:none;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:800;cursor:pointer;width:100%;">+ Add Place</button>
-              </div>
-              <button type="button" id="sellAddPlaceBtn" onclick="toggleSellNewPlace()" style="background:none;border:none;color:var(--red);font-size:12px;font-weight:800;cursor:pointer;margin-top:4px;display:none;">＋ My place is not listed</button>
-            </label>
-            <label class="wide">School <select id="sellSchool"></select>
-              <div id="sellNewSchoolRow" style="display:none;margin-top:6px;">
-                <input type="text" id="sellNewSchoolInput" placeholder="Type new school name" style="font-size:13px;padding:7px 10px;margin-bottom:4px;"/>
-                <button type="button" onclick="addSellNewSchool()" style="background:var(--red);color:white;border:none;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:800;cursor:pointer;width:100%;">+ Add School</button>
-              </div>
-              <button type="button" id="sellAddSchoolBtn" onclick="toggleSellNewSchool()" style="background:none;border:none;color:var(--red);font-size:12px;font-weight:800;cursor:pointer;margin-top:4px;display:none;">＋ My school is not listed</button>
-            </label>
+            <label>Place <input id="sellPlace" list="sellPlaceOptions" onchange="updateSellSchools()" placeholder="Place / town"><datalist id="sellPlaceOptions"></datalist></label>
+            <label class="wide">School <input id="sellSchool" list="sellSchoolOptions" placeholder="School / college"><datalist id="sellSchoolOptions"></datalist></label>
             <label class="wide">Condition
               <select id="sellCondition">
                 <option>Like new</option><option>Good</option><option>Usable</option>
@@ -565,19 +552,18 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
       <div class="auth-row">
         <div class="auth-field">
           <label>Place / Town</label>
-          <select id="accPlace" onchange="updateAccSchools()">
-            <option value="">— Place —</option>
-          </select>
+          <input type="text" id="accPlace" list="accPlaceOptions" onchange="updateAccSchools()" placeholder="Place / town">
+          <datalist id="accPlaceOptions"></datalist>
         </div>
         <div class="auth-field">
           <label>School / College</label>
-          <select id="accSchool">
-            <option value="">— School —</option>
-          </select>
+          <input type="text" id="accSchool" list="accSchoolOptions" placeholder="School / college">
+          <datalist id="accSchoolOptions"></datalist>
         </div>
       </div>
       <p style="font-size:12px;color:var(--muted);font-weight:700;margin-top:-4px;">📍 Changes here become your new default location for selling.</p>
       <button class="auth-btn" id="accSaveBtn" type="button">💾 Save Changes</button>
+      <button class="btn btn-ghost" id="accBackBtn" type="button">Back</button>
     </div>
   </div>
 </dialog>
@@ -643,10 +629,6 @@ async function _getUserFromFirestore(uid) {
 
 async function _saveUserToFirestore(userData) {
   const docId = userData.uid || userData.mobile;
-  // Ensure mobile is always stored
-  if (!userData.mobile && userData.phone) {
-    userData.mobile = userData.phone.replace(/^+91/, '');
-  }
   // Mirror to localStorage (offline fallback)
   try {
     const existing = JSON.parse(localStorage.getItem('pkitaap_registered_users') || '[]');
@@ -658,20 +640,10 @@ async function _saveUserToFirestore(userData) {
   // Write to Firestore
   if (_db) {
     try {
-      const dataToSave = Object.assign({}, userData, {
-        lastLoginAt: new Date().toISOString(),
-        mobile: userData.mobile || '',
-        phone: userData.phone || (userData.mobile ? '+91' + userData.mobile : ''),
-        name: userData.name || '',
-        place: userData.place || '',
-        school: userData.school || '',
-        state: userData.state || '',
-        district: userData.district || '',
-        subDistrict: userData.subDistrict || '',
-        status: userData.status || 'active',
-        role: userData.role || 'user'
-      });
-      await _db.collection('users').doc(docId).set(dataToSave, { merge: true });
+      await _db.collection('users').doc(docId).set(
+        Object.assign({}, userData, { lastLoginAt: new Date().toISOString() }),
+        { merge: true }
+      );
     } catch (e) {
       console.warn('[PKITAAP] Firestore write failed (localStorage used):', e);
     }
@@ -1868,8 +1840,10 @@ function updateAccDistricts() {
   const s = document.getElementById('accSchool');
   if (d) d.innerHTML = '<option value="">— District —</option>' + _getDistricts(st).map(x=>'<option value="'+x.district+'">'+x.district+'</option>').join('');
   if (sd) sd.innerHTML = '<option value="">— Sub-District —</option>';
-  if (p) p.innerHTML = '<option value="">— Place —</option>';
-  if (s) s.innerHTML = '<option value="">— School —</option>';
+  if (p) p.value = '';
+  if (s) s.value = '';
+  _fillChoiceControl('accPlace', 'accPlaceOptions', '— Place —', [], x=>x.name, '');
+  _fillChoiceControl('accSchool', 'accSchoolOptions', '— School —', [], null, '');
 }
 function updateAccSubDistricts() {
   const st = document.getElementById('accState')?.value;
@@ -1878,8 +1852,10 @@ function updateAccSubDistricts() {
   const p = document.getElementById('accPlace');
   const s = document.getElementById('accSchool');
   if (sd) sd.innerHTML = '<option value="">— Sub-District —</option>' + _getSubDistricts(st, d).map(x=>'<option value="'+x.subDistrict+'">'+x.subDistrict+'</option>').join('');
-  if (p) p.innerHTML = '<option value="">— Place —</option>';
-  if (s) s.innerHTML = '<option value="">— School —</option>';
+  if (p) p.value = '';
+  if (s) s.value = '';
+  _fillChoiceControl('accPlace', 'accPlaceOptions', '— Place —', [], x=>x.name, '');
+  _fillChoiceControl('accSchool', 'accSchoolOptions', '— School —', [], null, '');
 }
 function updateAccPlaces() {
   const st = document.getElementById('accState')?.value;
@@ -1887,10 +1863,16 @@ function updateAccPlaces() {
   const sd = document.getElementById('accSubDistrict')?.value;
   const p = document.getElementById('accPlace');
   const s = document.getElementById('accSchool');
-  const staticPlaces = _getPlaces(st, d, sd).map(x => x.name);
-  if (p) p.innerHTML = '<option value="">— Place —</option>' + staticPlaces.map(x=>'<option value="'+x+'">'+x+'</option>').join('');
-  if (s) s.innerHTML = '<option value="">— School —</option>';
-  if (st && d && sd) _loadCommunityPlacesIntoSelect('accPlace', st, d, sd, staticPlaces);
+  const selected = p?.value || window._currentUser?.place || '';
+  _fillChoiceControl('accPlace', 'accPlaceOptions', '— Place —', _getPlaces(st, d, sd), x=>x.name, selected);
+  if (s) s.value = '';
+  _fillChoiceControl('accSchool', 'accSchoolOptions', '— School —', [], null, '');
+  _loadCommunityPlaces(st, d, sd).then(() => {
+    const keep = p?.value || selected;
+    _fillChoiceControl('accPlace', 'accPlaceOptions', '— Place —', _getPlaces(st, d, sd), x=>x.name, keep);
+    if (p && keep) p.value = keep;
+    updateAccSchools();
+  });
 }
 function updateAccSchools() {
   const st = document.getElementById('accState')?.value;
@@ -1898,13 +1880,18 @@ function updateAccSchools() {
   const sd = document.getElementById('accSubDistrict')?.value;
   const p = document.getElementById('accPlace')?.value;
   const s = document.getElementById('accSchool');
-  const staticSchools = p ? _getSchools(st, d, sd, p) : [];
-  if (s) s.innerHTML = '<option value="">— School —</option>' + staticSchools.map(x=>'<option value="'+x+'">'+x+'</option>').join('');
-  if (p) _loadCommunitySchoolsIntoSelect('accSchool', st, d, sd, p, staticSchools);
+  const selected = s?.value || window._currentUser?.school || '';
+  _fillChoiceControl('accSchool', 'accSchoolOptions', '— School —', _getSchools(st, d, sd, p), null, selected);
+  if (p) _loadCommunitySchools(st, d, sd, p).then(() => {
+    const keep = s?.value || selected;
+    _fillChoiceControl('accSchool', 'accSchoolOptions', '— School —', _getSchools(st, d, sd, p), null, keep);
+    if (keep) s.value = keep;
+  });
 }
 function openAccountDetails() {
   const u = window._currentUser;
   if (!u) return;
+  _mergeCommunityLocation(u.state, u.district, u.subDistrict, u.place, u.school);
   const dialog = document.getElementById('accountDialog');
   if (!dialog) return;
   // Fill all fields
@@ -1922,30 +1909,11 @@ function openAccountDetails() {
     setTimeout(() => {
       set('accSubDistrict', u.subDistrict);
       updateAccPlaces();
-      // Wait for community places to load then set value
       setTimeout(() => {
         set('accPlace', u.place);
-        // If user's place isn't in list, add it
-        const pSel = document.getElementById('accPlace');
-        if (pSel && u.place && !Array.from(pSel.options).some(o => o.value === u.place)) {
-          const opt = document.createElement('option');
-          opt.value = u.place; opt.textContent = u.place;
-          pSel.appendChild(opt);
-          pSel.value = u.place;
-        }
         updateAccSchools();
-        setTimeout(() => {
-          set('accSchool', u.school);
-          // If user's school isn't in list, add it
-          const sSel = document.getElementById('accSchool');
-          if (sSel && u.school && !Array.from(sSel.options).some(o => o.value === u.school)) {
-            const opt = document.createElement('option');
-            opt.value = u.school; opt.textContent = u.school;
-            sSel.appendChild(opt);
-            sSel.value = u.school;
-          }
-        }, 600);
-      }, 600);
+        setTimeout(() => { set('accSchool', u.school); }, 50);
+      }, 50);
     }, 50);
   }, 50);
   dialog.showModal();
@@ -1967,10 +1935,7 @@ function saveAccountDetails() {
   u.place      = g('accPlace');
   u.school     = g('accSchool');
   window._currentUser = u;
-  // Save new community place/school if applicable
-  if (u.state && u.district && u.subDistrict && u.place) {
-    _saveCommunityLocation(u.state, u.district, u.subDistrict, u.place, u.school);
-  }
+  _saveCommunityLocation(u.state, u.district, u.subDistrict, u.place, u.school);
   // Save to Firestore
   _saveUserToFirestore(u).then(() => {
     toast('✅ Account details saved!');
@@ -1985,6 +1950,7 @@ function saveAccountDetails() {
 function _prefillSellFromProfile() {
   const u = window._currentUser;
   if (!u) return;
+  _mergeCommunityLocation(u.state, u.district, u.subDistrict, u.place, u.school);
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
   // Pre-fill sell form state/location
   set('sellState', u.state);
@@ -1996,31 +1962,11 @@ function _prefillSellFromProfile() {
       setTimeout(() => {
         set('sellSubDistrict', u.subDistrict);
         updateSellPlaces();
-        // Wait longer for community places to load from Firebase
         setTimeout(() => {
-          const pSel = document.getElementById('sellPlace');
-          if (pSel && u.place) {
-            // If user's saved place isn't in dropdown, add it
-            if (!Array.from(pSel.options).some(o => o.value === u.place)) {
-              const opt = document.createElement('option');
-              opt.value = u.place; opt.textContent = u.place;
-              pSel.appendChild(opt);
-            }
-            pSel.value = u.place;
-          }
+          set('sellPlace', u.place);
           updateSellSchools();
-          setTimeout(() => {
-            const sSel = document.getElementById('sellSchool');
-            if (sSel && u.school) {
-              if (!Array.from(sSel.options).some(o => o.value === u.school)) {
-                const opt = document.createElement('option');
-                opt.value = u.school; opt.textContent = u.school;
-                sSel.appendChild(opt);
-              }
-              sSel.value = u.school;
-            }
-          }, 600);
-        }, 600);
+          setTimeout(() => { set('sellSchool', u.school); }, 50);
+        }, 50);
       }, 50);
     }, 50);
   }
@@ -2058,6 +2004,64 @@ function _getSchools(stateName, districtName, subDistrictName, placeName) {
   const p = _getPlaces(stateName, districtName, subDistrictName).find(x => x.name === placeName);
   return p?.schools || [];
 }
+function _sameText(a, b) {
+  return String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
+}
+function _mergeCommunityLocation(stateName, districtName, subDistrictName, placeName, schoolName) {
+  if (!stateName || !districtName || !subDistrictName) return;
+  let st = (state.locations || []).find(x => _sameText(x.state, stateName));
+  if (!st) { st = { state: stateName, districts: [] }; (state.locations = state.locations || []).push(st); }
+  let d = (st.districts || []).find(x => _sameText(x.district, districtName));
+  if (!d) { d = { district: districtName, subDistricts: [] }; (st.districts = st.districts || []).push(d); }
+  let sd = (d.subDistricts || []).find(x => _sameText(x.subDistrict, subDistrictName));
+  if (!sd) { sd = { subDistrict: subDistrictName, places: [] }; (d.subDistricts = d.subDistricts || []).push(sd); }
+  if (!placeName) return;
+  let p = (sd.places || []).find(x => _sameText(x.name, placeName));
+  if (!p) { p = { name: placeName, schools: [] }; (sd.places = sd.places || []).push(p); }
+  if (schoolName && !(p.schools || []).some(x => _sameText(x, schoolName))) {
+    (p.schools = p.schools || []).push(schoolName);
+  }
+  save();
+}
+function _optionList(label, items, getValue, selectedValue) {
+  const seen = new Set();
+  const opts = ['<option value="">' + label + '</option>'];
+  (items || []).forEach(item => {
+    const value = getValue ? getValue(item) : item;
+    if (!value) return;
+    const key = String(value).trim().toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    opts.push('<option value="' + _acEsc(value) + '">' + _acEsc(value) + '</option>');
+  });
+  if (selectedValue && !seen.has(String(selectedValue).trim().toLowerCase())) {
+    opts.push('<option value="' + _acEsc(selectedValue) + '">' + _acEsc(selectedValue) + '</option>');
+  }
+  return opts.join('');
+}
+function _fillChoiceControl(controlId, listId, label, items, getValue, selectedValue) {
+  const el = document.getElementById(controlId);
+  if (!el) return;
+  if (el.tagName === 'INPUT') {
+    const list = document.getElementById(listId);
+    if (list) {
+      const seen = new Set();
+      list.innerHTML = (items || []).map(item => {
+        const value = getValue ? getValue(item) : item;
+        if (!value) return '';
+        const key = String(value).trim().toLowerCase();
+        if (seen.has(key)) return '';
+        seen.add(key);
+        return '<option value="' + _acEsc(value) + '"></option>';
+      }).join('');
+    }
+    if (selectedValue && !el.value) el.value = selectedValue;
+    el.placeholder = label.replace(/[—]/g, '').trim();
+    return;
+  }
+  el.innerHTML = _optionList(label, items, getValue, selectedValue);
+  if (selectedValue) el.value = selectedValue;
+}
 function updateBuyDistricts() {
   const stateName = document.getElementById('buyState')?.value;
   const dSel  = document.getElementById('buyDistrict');
@@ -2088,8 +2092,14 @@ function updateBuyPlaces() {
   const pSel = document.getElementById('buyPlace');
   const sSel = document.getElementById('buySchool');
   if (!pSel) return;
-  pSel.innerHTML = '<option value="">— Place —</option>' + _getPlaces(stateName, district, subDistrict).map(p => '<option>' + p.name + '</option>').join('');
+  const selected = pSel.value;
+  pSel.innerHTML = _optionList('— Place —', _getPlaces(stateName, district, subDistrict), p => p.name, selected);
   if (sSel) sSel.innerHTML = '<option value="">— School (optional) —</option>';
+  _loadCommunityPlaces(stateName, district, subDistrict).then(() => {
+    const keep = pSel.value || selected;
+    pSel.innerHTML = _optionList('— Place —', _getPlaces(stateName, district, subDistrict), p => p.name, keep);
+    if (keep) pSel.value = keep;
+  });
 }
 function updateBuySchools() {
   const stateName   = document.getElementById('buyState')?.value;
@@ -2097,7 +2107,10 @@ function updateBuySchools() {
   const subDistrict = document.getElementById('buySubDistrict')?.value;
   const place       = document.getElementById('buyPlace')?.value;
   const sSel = document.getElementById('buySchool');
-  if (sSel) sSel.innerHTML = '<option value="">— School (optional) —</option>' + _getSchools(stateName, district, subDistrict, place).map(s => '<option>' + s + '</option>').join('');
+  if (sSel) sSel.innerHTML = _optionList('— School (optional) —', _getSchools(stateName, district, subDistrict, place), null, sSel.value);
+  if (place) _loadCommunitySchools(stateName, district, subDistrict, place).then(() => {
+    if (sSel) sSel.innerHTML = _optionList('— School (optional) —', _getSchools(stateName, district, subDistrict, place), null, sSel.value);
+  });
 }
 function updateSellDistricts() {
   const stateName = document.getElementById('sellState')?.value;
@@ -2108,8 +2121,10 @@ function updateSellDistricts() {
   if (!dSel) return;
   dSel.innerHTML = '<option value="">— District —</option>' + _getDistricts(stateName).map(d => '<option>' + d.district + '</option>').join('');
   if (sdSel) sdSel.innerHTML = '<option value="">— Sub-District —</option>';
-  if (pSel)  pSel.innerHTML  = '<option value="">— Place —</option>';
-  if (sSel)  sSel.innerHTML  = '<option value="">— School (optional) —</option>';
+  if (pSel)  pSel.value = '';
+  if (sSel)  sSel.value = '';
+  _fillChoiceControl('sellPlace', 'sellPlaceOptions', 'Place / town', [], p => p.name, '');
+  _fillChoiceControl('sellSchool', 'sellSchoolOptions', 'School / college', [], null, '');
 }
 function updateSellSubDistricts() {
   const stateName = document.getElementById('sellState')?.value;
@@ -2119,8 +2134,10 @@ function updateSellSubDistricts() {
   const sSel  = document.getElementById('sellSchool');
   if (!sdSel) return;
   sdSel.innerHTML = '<option value="">— Sub-District —</option>' + _getSubDistricts(stateName, district).map(sd => '<option>' + sd.subDistrict + '</option>').join('');
-  if (pSel) pSel.innerHTML = '<option value="">— Place —</option>';
-  if (sSel) sSel.innerHTML = '<option value="">— School (optional) —</option>';
+  if (pSel) pSel.value = '';
+  if (sSel) sSel.value = '';
+  _fillChoiceControl('sellPlace', 'sellPlaceOptions', 'Place / town', [], p => p.name, '');
+  _fillChoiceControl('sellSchool', 'sellSchoolOptions', 'School / college', [], null, '');
 }
 function updateSellPlaces() {
   const stateName   = document.getElementById('sellState')?.value;
@@ -2129,20 +2146,15 @@ function updateSellPlaces() {
   const pSel = document.getElementById('sellPlace');
   const sSel = document.getElementById('sellSchool');
   if (!pSel) return;
-  const staticPlaces = _getPlaces(stateName, district, subDistrict).map(p => p.name);
-  pSel.innerHTML = '<option value="">— Place —</option>' + staticPlaces.map(p => '<option>' + p + '</option>').join('');
-  if (sSel) sSel.innerHTML = '<option value="">— School (optional) —</option>';
-  // Show/hide add-place button
-  const addBtn = document.getElementById('sellAddPlaceBtn');
-  const addSchBtn = document.getElementById('sellAddSchoolBtn');
-  if (addBtn) addBtn.style.display = (stateName && district && subDistrict) ? '' : 'none';
-  if (addSchBtn) addSchBtn.style.display = 'none';
-  // Hide new-place row if it was open
-  const nr = document.getElementById('sellNewPlaceRow'); if (nr) nr.style.display = 'none';
-  const nsr = document.getElementById('sellNewSchoolRow'); if (nsr) nsr.style.display = 'none';
-  if (stateName && district && subDistrict) {
-    _loadCommunityPlacesIntoSelect('sellPlace', stateName, district, subDistrict, staticPlaces);
-  }
+  const selected = pSel.value;
+  _fillChoiceControl('sellPlace', 'sellPlaceOptions', 'Place / town', _getPlaces(stateName, district, subDistrict), p => p.name, selected);
+  if (sSel) sSel.value = '';
+  _fillChoiceControl('sellSchool', 'sellSchoolOptions', 'School / college', [], null, '');
+  _loadCommunityPlaces(stateName, district, subDistrict).then(() => {
+    const keep = pSel.value || selected;
+    _fillChoiceControl('sellPlace', 'sellPlaceOptions', 'Place / town', _getPlaces(stateName, district, subDistrict), p => p.name, keep);
+    if (keep) pSel.value = keep;
+  });
 }
 function updateSellSchools() {
   const stateName   = document.getElementById('sellState')?.value;
@@ -2150,126 +2162,10 @@ function updateSellSchools() {
   const subDistrict = document.getElementById('sellSubDistrict')?.value;
   const place       = document.getElementById('sellPlace')?.value;
   const sSel = document.getElementById('sellSchool');
-  const staticSchools = place ? _getSchools(stateName, district, subDistrict, place) : [];
-  if (sSel) sSel.innerHTML = '<option value="">— School (optional) —</option>' + staticSchools.map(s => '<option>' + s + '</option>').join('');
-  const addSchBtn = document.getElementById('sellAddSchoolBtn');
-  if (addSchBtn) addSchBtn.style.display = place ? '' : 'none';
-  const nsr = document.getElementById('sellNewSchoolRow'); if (nsr) nsr.style.display = 'none';
-  if (place) _loadCommunitySchoolsIntoSelect('sellSchool', stateName, district, subDistrict, place, staticSchools);
-}
-async function _loadCommunityPlacesIntoSelect(selectId, state, district, subDistrict, existing) {
-  if (!_db) return;
-  try {
-    const key = [state, district, subDistrict].join('__').replace(/[^a-zA-Z0-9]/g,'_');
-    const snap = await _db.collection('community_data').doc('places__' + key).get();
-    if (snap.exists) {
-      const items = snap.data().items || [];
-      const sel = document.getElementById(selectId);
-      if (!sel) return;
-      const existingSet = new Set((existing || []).map(s => s.toLowerCase()));
-      items.forEach(p => {
-        if (p && !existingSet.has(p.toLowerCase())) {
-          existingSet.add(p.toLowerCase());
-          const opt = document.createElement('option');
-          opt.value = p; opt.textContent = p;
-          sel.appendChild(opt);
-        }
-      });
-    }
-  } catch(e) {}
-}
-async function _loadCommunitySchoolsIntoSelect(selectId, state, district, subDistrict, place, existing) {
-  if (!_db) return;
-  try {
-    const key = [state, district, subDistrict, place].join('__').replace(/[^a-zA-Z0-9]/g,'_');
-    const snap = await _db.collection('community_data').doc('schools__' + key).get();
-    if (snap.exists) {
-      const items = snap.data().items || [];
-      const sel = document.getElementById(selectId);
-      if (!sel) return;
-      const existingSet = new Set((existing || []).map(s => s.toLowerCase()));
-      items.forEach(s => {
-        if (s && !existingSet.has(s.toLowerCase())) {
-          existingSet.add(s.toLowerCase());
-          const opt = document.createElement('option');
-          opt.value = s; opt.textContent = s;
-          sel.appendChild(opt);
-        }
-      });
-    }
-  } catch(e) {}
-}
-function toggleSellNewPlace() {
-  const row = document.getElementById('sellNewPlaceRow');
-  const btn = document.getElementById('sellAddPlaceBtn');
-  if (!row) return;
-  const visible = row.style.display !== 'none';
-  row.style.display = visible ? 'none' : '';
-  if (btn) btn.textContent = visible ? '＋ My place is not listed' : '✕ Cancel';
-}
-function toggleSellNewSchool() {
-  const row = document.getElementById('sellNewSchoolRow');
-  const btn = document.getElementById('sellAddSchoolBtn');
-  if (!row) return;
-  const visible = row.style.display !== 'none';
-  row.style.display = visible ? 'none' : '';
-  if (btn) btn.textContent = visible ? '＋ My school is not listed' : '✕ Cancel';
-}
-function addSellNewPlace() {
-  const inp = document.getElementById('sellNewPlaceInput');
-  const place = (inp?.value || '').trim();
-  if (!place) { toast('Enter a place name'); return; }
-  const pSel = document.getElementById('sellPlace');
-  if (!pSel) return;
-  // Check if already exists
-  if (Array.from(pSel.options).some(o => o.value.toLowerCase() === place.toLowerCase())) {
-    pSel.value = Array.from(pSel.options).find(o => o.value.toLowerCase() === place.toLowerCase()).value;
-    updateSellSchools();
-    toggleSellNewPlace(); if (inp) inp.value = '';
-    return;
-  }
-  const opt = document.createElement('option');
-  opt.value = place; opt.textContent = place;
-  pSel.appendChild(opt);
-  pSel.value = place;
-  // Save to community_data
-  const st = document.getElementById('sellState')?.value;
-  const d  = document.getElementById('sellDistrict')?.value;
-  const sd = document.getElementById('sellSubDistrict')?.value;
-  if (st && d && sd && _db) {
-    const key = [st, d, sd].join('__').replace(/[^a-zA-Z0-9]/g,'_');
-    _db.collection('community_data').doc('places__' + key).set({ items: firebase.firestore.FieldValue.arrayUnion(place) }, { merge: true }).catch(() => {});
-  }
-  updateSellSchools();
-  toggleSellNewPlace(); if (inp) inp.value = '';
-  toast('✅ Place "' + place + '" added!');
-}
-function addSellNewSchool() {
-  const inp = document.getElementById('sellNewSchoolInput');
-  const school = (inp?.value || '').trim();
-  if (!school) { toast('Enter a school name'); return; }
-  const sSel = document.getElementById('sellSchool');
-  if (!sSel) return;
-  if (Array.from(sSel.options).some(o => o.value.toLowerCase() === school.toLowerCase())) {
-    sSel.value = Array.from(sSel.options).find(o => o.value.toLowerCase() === school.toLowerCase()).value;
-    toggleSellNewSchool(); if (inp) inp.value = '';
-    return;
-  }
-  const opt = document.createElement('option');
-  opt.value = school; opt.textContent = school;
-  sSel.appendChild(opt);
-  sSel.value = school;
-  // Save to community_data
-  const st    = document.getElementById('sellState')?.value;
-  const d     = document.getElementById('sellDistrict')?.value;
-  const sd    = document.getElementById('sellSubDistrict')?.value;
-  const place = document.getElementById('sellPlace')?.value;
-  if (st && d && sd && place && _db) {
-    const key = [st, d, sd, place].join('__').replace(/[^a-zA-Z0-9]/g,'_');
-    _db.collection('community_data').doc('schools__' + key).set({ items: firebase.firestore.FieldValue.arrayUnion(school) }, { merge: true }).catch(() => {});
-  }
-  toggleSellNewSchool(); if (inp) inp.value = '';
-  toast('✅ School "' + school + '" added!');
+  _fillChoiceControl('sellSchool', 'sellSchoolOptions', 'School / college', _getSchools(stateName, district, subDistrict, place), null, sSel?.value || '');
+  if (place) _loadCommunitySchools(stateName, district, subDistrict, place).then(() => {
+    _fillChoiceControl('sellSchool', 'sellSchoolOptions', 'School / college', _getSchools(stateName, district, subDistrict, place), null, sSel?.value || '');
+  });
 }
 function updateSignupDistricts() {
   const stateName = document.getElementById('signupState')?.value;
@@ -2336,7 +2232,10 @@ function updateSignupPlaces() {
     sInp.disabled = true;
     sInp.placeholder = 'Enter place first';
   }
-  _loadCommunityPlaces(stateName, district, subDistrict);
+  _loadCommunityPlaces(stateName, district, subDistrict).then(() => {
+    window._placeOptions = _getPlaces(stateName, district, subDistrict).map(p => p.name);
+    filterPlaceSuggestions(pInp?.value || '');
+  });
 }
 
 function updateSignupSchools() {
@@ -2354,7 +2253,10 @@ function updateSignupSchools() {
     sInp.disabled = !place;
     sInp.placeholder = place ? 'Type your school / college' : 'Enter place first';
   }
-  if (place) _loadCommunitySchools(stateName, district, subDistrict, place);
+  if (place) _loadCommunitySchools(stateName, district, subDistrict, place).then(() => {
+    window._schoolOptions = _getSchools(stateName, district, subDistrict, place);
+    filterSchoolSuggestions(sInp?.value || '');
+  });
   // Re-lock password since school was cleared
   _checkUnlockPassword();
 }
@@ -2383,11 +2285,17 @@ function filterSchoolSuggestions(val) {
   _renderAcList(list, filtered, val, 'selectSchoolSuggestion', 'schoolOkBtn');
   // Lazily load community schools when user starts typing school
   const place = (document.getElementById('signupPlace')?.value || '').trim();
-  if (place && window._schoolLoadedForPlace !== place) {
+  if (place) {
     const st = document.getElementById('signupState')?.value;
     const d  = document.getElementById('signupDistrict')?.value;
     const sd = document.getElementById('signupSubDistrict')?.value;
-    _loadCommunitySchools(st, d, sd, place);
+    const schoolKey = [st, d, sd, place].join('__').replace(/[^a-zA-Z0-9]/g,'_');
+    if (window._schoolLoadedForPlace !== schoolKey) {
+      _loadCommunitySchools(st, d, sd, place).then(() => {
+        window._schoolOptions = _getSchools(st, d, sd, place);
+        filterSchoolSuggestions(val);
+      });
+    }
   }
 }
 
@@ -2423,7 +2331,7 @@ window.confirmSchoolInput = function() {
   _checkUnlockPassword();
 };
 
-function _acEsc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function _acEsc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 window.selectPlaceSuggestion = function(val) {
   const inp = document.getElementById('signupPlace');
@@ -2491,53 +2399,62 @@ function checkSignupPasswordFilled() { _checkUnlockPassword(); }
 
 // ── Community places / schools — Firebase ─────────────────────
 async function _loadCommunityPlaces(state, district, subDistrict) {
-  if (!_db || !state || !district || !subDistrict) return;
+  if (!_db || !state || !district || !subDistrict) return [];
   try {
     const key = [state, district, subDistrict].join('__').replace(/[^a-zA-Z0-9]/g,'_');
     const snap = await _db.collection('community_data').doc('places__' + key).get();
     if (snap.exists) {
       const items = snap.data().items || [];
       const existing = new Set((window._placeOptions || []).map(s => s.toLowerCase()));
-      items.forEach(i => { if (i && !existing.has(i.toLowerCase())) { window._placeOptions.push(i); existing.add(i.toLowerCase()); } });
+      items.forEach(i => {
+        if (!i) return;
+        _mergeCommunityLocation(state, district, subDistrict, i, '');
+        if (!existing.has(i.toLowerCase())) { window._placeOptions.push(i); existing.add(i.toLowerCase()); }
+      });
+      return items;
     }
   } catch(e) {}
+  return [];
 }
 
 async function _loadCommunitySchools(state, district, subDistrict, place) {
-  if (!_db || !state || !district || !subDistrict || !place) return;
-  if (window._schoolLoadedForPlace === place) return;
-  window._schoolLoadedForPlace = place;
+  if (!_db || !state || !district || !subDistrict || !place) return [];
   try {
     const key = [state, district, subDistrict, place].join('__').replace(/[^a-zA-Z0-9]/g,'_');
+    if (window._schoolLoadedForPlace === key) return _getSchools(state, district, subDistrict, place);
+    window._schoolLoadedForPlace = key;
     const snap = await _db.collection('community_data').doc('schools__' + key).get();
     if (snap.exists) {
       const items = snap.data().items || [];
       const existing = new Set((window._schoolOptions || []).map(s => s.toLowerCase()));
-      items.forEach(i => { if (i && !existing.has(i.toLowerCase())) { window._schoolOptions.push(i); existing.add(i.toLowerCase()); } });
+      items.forEach(i => {
+        if (!i) return;
+        _mergeCommunityLocation(state, district, subDistrict, place, i);
+        if (!existing.has(i.toLowerCase())) { window._schoolOptions.push(i); existing.add(i.toLowerCase()); }
+      });
+      return items;
     }
   } catch(e) {}
+  return [];
 }
 
 // Called after successful signup to persist new place/school for future users
 async function _saveCommunityLocation(state, district, subDistrict, place, school) {
-  if (!_db || !state || !district || !subDistrict) return;
+  if (!state || !district || !subDistrict) return;
+  _mergeCommunityLocation(state, district, subDistrict, place, school);
+  if (!_db) return;
   try {
     const placeKey = [state, district, subDistrict].join('__').replace(/[^a-zA-Z0-9]/g,'_');
-    // Only save if it's a genuinely new place (not already in seed data)
-    const seedPlaces = _getPlaces(state, district, subDistrict).map(p => p.toLowerCase());
-    if (place && !seedPlaces.includes(place.toLowerCase())) {
+    if (place) {
       await _db.collection('community_data').doc('places__' + placeKey).set(
         { items: firebase.firestore.FieldValue.arrayUnion(place) }, { merge: true }
       );
     }
     if (school && place) {
       const schoolKey = [state, district, subDistrict, place].join('__').replace(/[^a-zA-Z0-9]/g,'_');
-      const seedSchools = _getSchools(state, district, subDistrict, place).map(s => s.toLowerCase());
-      if (!seedSchools.includes(school.toLowerCase())) {
-        await _db.collection('community_data').doc('schools__' + schoolKey).set(
-          { items: firebase.firestore.FieldValue.arrayUnion(school) }, { merge: true }
-        );
-      }
+      await _db.collection('community_data').doc('schools__' + schoolKey).set(
+        { items: firebase.firestore.FieldValue.arrayUnion(school) }, { merge: true }
+      );
     }
   } catch(e) { console.warn('[PKITAAP] _saveCommunityLocation error:', e); }
 }
@@ -2584,10 +2501,16 @@ function bindSellForm() {
     if(!selectedBookId){ toast("Please select a book first"); return; }
     if(!window._isLoggedIn){ toast("Please log in first to list a book"); return; }
     const u = window._currentUser;
+    const selected = book();
     const listing = {
       id       : "ls"+Date.now(),
       bookId   : selectedBookId,
+      title    : selected ? selected.title : "",
+      className: selected ? selected.className : "",
+      board    : selected ? selected.board : "",
+      stream   : selected ? selected.stream : "",
       seller   : u ? u.name : "You",
+      sellerName: u ? u.name : "You",
       userId   : u ? (u.uid||u.id) : "",
       state    : document.getElementById("sellState")?.value || "",
       district : document.getElementById("sellDistrict").value,
@@ -2600,6 +2523,7 @@ function bindSellForm() {
       price    : document.getElementById("sellPrice")?.value || "",
       createdAt: new Date().toISOString().slice(0,10)
     };
+    _saveCommunityLocation(listing.state, listing.district, listing.subDistrict, listing.place, listing.school);
     state.listings.push(listing);
     save();
     // Also save to Firestore
@@ -2623,10 +2547,15 @@ function bindPageNav() {
       document.getElementById('menuBtn')?.classList.remove('open');
       document.getElementById('menuPanel')?.classList.remove('open');
       if (pg === 'sell') {
+        if (window._currentUser?.state) {
+          selectedState = window._currentUser.state;
+          const sf2 = document.getElementById('stateFilter2');
+          if (sf2) sf2.value = selectedState;
+        }
         sellCatalogStep = 'classes';
-        renderSellCatalog();
         // Pre-fill sell form with profile defaults
         _prefillSellFromProfile();
+        renderSellCatalog();
       }
     };
   });
@@ -2732,6 +2661,8 @@ function init() {
   if (accSave) accSave.onclick = saveAccountDetails;
   const accClose = document.getElementById('accountClose');
   if (accClose) accClose.onclick = () => document.getElementById('accountDialog')?.close();
+  const accBack = document.getElementById('accBackBtn');
+  if (accBack) accBack.onclick = () => document.getElementById('accountDialog')?.close();
 }
 init();
 // ═══════════════════════════════════════════════════════════════
@@ -2964,7 +2895,7 @@ init();
     continueBtn.innerHTML = '<span class="otp-spinner"></span>Creating account…';
 
     try {
-      _saveCommunityLocation(stateVal, district, subDistrict, place, school);
+      await _saveCommunityLocation(stateVal, district, subDistrict, place, school);
       await onAuthSuccess(userData, _googleUser);
     } finally {
       continueBtn.disabled  = false;
