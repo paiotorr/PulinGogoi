@@ -290,7 +290,8 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
       </div>
     </section>
     <section class="page" id="sellPage">
-      <div class="page-head">
+      <div class="page-head" style="display:flex;align-items:center;gap:12px;">
+        <button type="button" onclick="document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('buyPage').classList.add('active');" style="background:var(--red-light,#fef2f2);color:var(--red,#e53e3e);border:2px solid currentColor;border-radius:10px;padding:6px 14px;font-size:13px;font-weight:800;cursor:pointer;">← Back</button>
         <h1>Sell Books</h1>
       </div>
       <div class="location-lock">
@@ -326,8 +327,21 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
             <label class="wide">State <select id="sellState" onchange="updateSellDistricts()"><option value="">— Select Your State —</option><option value="Assam">Assam</option></select></label>
             <label>District <select id="sellDistrict" onchange="updateSellSubDistricts()"></select></label>
             <label>Sub-District <select id="sellSubDistrict" onchange="updateSellPlaces()"></select></label>
-            <label>Place <select id="sellPlace" onchange="updateSellSchools()"></select></label>
-            <label class="wide">School <select id="sellSchool"></select></label>
+            <label>Place
+              <select id="sellPlace" onchange="updateSellSchools()"></select>
+              <div id="sellNewPlaceRow" style="display:none;margin-top:6px;">
+                <input type="text" id="sellNewPlaceInput" placeholder="Type new place name" style="font-size:13px;padding:7px 10px;margin-bottom:4px;"/>
+                <button type="button" onclick="addSellNewPlace()" style="background:var(--red);color:white;border:none;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:800;cursor:pointer;width:100%;">+ Add Place</button>
+              </div>
+              <button type="button" id="sellAddPlaceBtn" onclick="toggleSellNewPlace()" style="background:none;border:none;color:var(--red);font-size:12px;font-weight:800;cursor:pointer;margin-top:4px;display:none;">＋ My place is not listed</button>
+            </label>
+            <label class="wide">School <select id="sellSchool"></select>
+              <div id="sellNewSchoolRow" style="display:none;margin-top:6px;">
+                <input type="text" id="sellNewSchoolInput" placeholder="Type new school name" style="font-size:13px;padding:7px 10px;margin-bottom:4px;"/>
+                <button type="button" onclick="addSellNewSchool()" style="background:var(--red);color:white;border:none;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:800;cursor:pointer;width:100%;">+ Add School</button>
+              </div>
+              <button type="button" id="sellAddSchoolBtn" onclick="toggleSellNewSchool()" style="background:none;border:none;color:var(--red);font-size:12px;font-weight:800;cursor:pointer;margin-top:4px;display:none;">＋ My school is not listed</button>
+            </label>
             <label class="wide">Condition
               <select id="sellCondition">
                 <option>Like new</option><option>Good</option><option>Usable</option>
@@ -629,6 +643,10 @@ async function _getUserFromFirestore(uid) {
 
 async function _saveUserToFirestore(userData) {
   const docId = userData.uid || userData.mobile;
+  // Ensure mobile is always stored
+  if (!userData.mobile && userData.phone) {
+    userData.mobile = userData.phone.replace(/^+91/, '');
+  }
   // Mirror to localStorage (offline fallback)
   try {
     const existing = JSON.parse(localStorage.getItem('pkitaap_registered_users') || '[]');
@@ -640,10 +658,20 @@ async function _saveUserToFirestore(userData) {
   // Write to Firestore
   if (_db) {
     try {
-      await _db.collection('users').doc(docId).set(
-        Object.assign({}, userData, { lastLoginAt: new Date().toISOString() }),
-        { merge: true }
-      );
+      const dataToSave = Object.assign({}, userData, {
+        lastLoginAt: new Date().toISOString(),
+        mobile: userData.mobile || '',
+        phone: userData.phone || (userData.mobile ? '+91' + userData.mobile : ''),
+        name: userData.name || '',
+        place: userData.place || '',
+        school: userData.school || '',
+        state: userData.state || '',
+        district: userData.district || '',
+        subDistrict: userData.subDistrict || '',
+        status: userData.status || 'active',
+        role: userData.role || 'user'
+      });
+      await _db.collection('users').doc(docId).set(dataToSave, { merge: true });
     } catch (e) {
       console.warn('[PKITAAP] Firestore write failed (localStorage used):', e);
     }
@@ -1859,8 +1887,10 @@ function updateAccPlaces() {
   const sd = document.getElementById('accSubDistrict')?.value;
   const p = document.getElementById('accPlace');
   const s = document.getElementById('accSchool');
-  if (p) p.innerHTML = '<option value="">— Place —</option>' + _getPlaces(st, d, sd).map(x=>'<option value="'+x.name+'">'+x.name+'</option>').join('');
+  const staticPlaces = _getPlaces(st, d, sd).map(x => x.name);
+  if (p) p.innerHTML = '<option value="">— Place —</option>' + staticPlaces.map(x=>'<option value="'+x+'">'+x+'</option>').join('');
   if (s) s.innerHTML = '<option value="">— School —</option>';
+  if (st && d && sd) _loadCommunityPlacesIntoSelect('accPlace', st, d, sd, staticPlaces);
 }
 function updateAccSchools() {
   const st = document.getElementById('accState')?.value;
@@ -1868,7 +1898,9 @@ function updateAccSchools() {
   const sd = document.getElementById('accSubDistrict')?.value;
   const p = document.getElementById('accPlace')?.value;
   const s = document.getElementById('accSchool');
-  if (s) s.innerHTML = '<option value="">— School —</option>' + _getSchools(st, d, sd, p).map(x=>'<option value="'+x+'">'+x+'</option>').join('');
+  const staticSchools = p ? _getSchools(st, d, sd, p) : [];
+  if (s) s.innerHTML = '<option value="">— School —</option>' + staticSchools.map(x=>'<option value="'+x+'">'+x+'</option>').join('');
+  if (p) _loadCommunitySchoolsIntoSelect('accSchool', st, d, sd, p, staticSchools);
 }
 function openAccountDetails() {
   const u = window._currentUser;
@@ -1890,11 +1922,30 @@ function openAccountDetails() {
     setTimeout(() => {
       set('accSubDistrict', u.subDistrict);
       updateAccPlaces();
+      // Wait for community places to load then set value
       setTimeout(() => {
         set('accPlace', u.place);
+        // If user's place isn't in list, add it
+        const pSel = document.getElementById('accPlace');
+        if (pSel && u.place && !Array.from(pSel.options).some(o => o.value === u.place)) {
+          const opt = document.createElement('option');
+          opt.value = u.place; opt.textContent = u.place;
+          pSel.appendChild(opt);
+          pSel.value = u.place;
+        }
         updateAccSchools();
-        setTimeout(() => { set('accSchool', u.school); }, 50);
-      }, 50);
+        setTimeout(() => {
+          set('accSchool', u.school);
+          // If user's school isn't in list, add it
+          const sSel = document.getElementById('accSchool');
+          if (sSel && u.school && !Array.from(sSel.options).some(o => o.value === u.school)) {
+            const opt = document.createElement('option');
+            opt.value = u.school; opt.textContent = u.school;
+            sSel.appendChild(opt);
+            sSel.value = u.school;
+          }
+        }, 600);
+      }, 600);
     }, 50);
   }, 50);
   dialog.showModal();
@@ -1916,6 +1967,10 @@ function saveAccountDetails() {
   u.place      = g('accPlace');
   u.school     = g('accSchool');
   window._currentUser = u;
+  // Save new community place/school if applicable
+  if (u.state && u.district && u.subDistrict && u.place) {
+    _saveCommunityLocation(u.state, u.district, u.subDistrict, u.place, u.school);
+  }
   // Save to Firestore
   _saveUserToFirestore(u).then(() => {
     toast('✅ Account details saved!');
@@ -1941,11 +1996,31 @@ function _prefillSellFromProfile() {
       setTimeout(() => {
         set('sellSubDistrict', u.subDistrict);
         updateSellPlaces();
+        // Wait longer for community places to load from Firebase
         setTimeout(() => {
-          set('sellPlace', u.place);
+          const pSel = document.getElementById('sellPlace');
+          if (pSel && u.place) {
+            // If user's saved place isn't in dropdown, add it
+            if (!Array.from(pSel.options).some(o => o.value === u.place)) {
+              const opt = document.createElement('option');
+              opt.value = u.place; opt.textContent = u.place;
+              pSel.appendChild(opt);
+            }
+            pSel.value = u.place;
+          }
           updateSellSchools();
-          setTimeout(() => { set('sellSchool', u.school); }, 50);
-        }, 50);
+          setTimeout(() => {
+            const sSel = document.getElementById('sellSchool');
+            if (sSel && u.school) {
+              if (!Array.from(sSel.options).some(o => o.value === u.school)) {
+                const opt = document.createElement('option');
+                opt.value = u.school; opt.textContent = u.school;
+                sSel.appendChild(opt);
+              }
+              sSel.value = u.school;
+            }
+          }, 600);
+        }, 600);
       }, 50);
     }, 50);
   }
@@ -2054,8 +2129,20 @@ function updateSellPlaces() {
   const pSel = document.getElementById('sellPlace');
   const sSel = document.getElementById('sellSchool');
   if (!pSel) return;
-  pSel.innerHTML = '<option value="">— Place —</option>' + _getPlaces(stateName, district, subDistrict).map(p => '<option>' + p.name + '</option>').join('');
+  const staticPlaces = _getPlaces(stateName, district, subDistrict).map(p => p.name);
+  pSel.innerHTML = '<option value="">— Place —</option>' + staticPlaces.map(p => '<option>' + p + '</option>').join('');
   if (sSel) sSel.innerHTML = '<option value="">— School (optional) —</option>';
+  // Show/hide add-place button
+  const addBtn = document.getElementById('sellAddPlaceBtn');
+  const addSchBtn = document.getElementById('sellAddSchoolBtn');
+  if (addBtn) addBtn.style.display = (stateName && district && subDistrict) ? '' : 'none';
+  if (addSchBtn) addSchBtn.style.display = 'none';
+  // Hide new-place row if it was open
+  const nr = document.getElementById('sellNewPlaceRow'); if (nr) nr.style.display = 'none';
+  const nsr = document.getElementById('sellNewSchoolRow'); if (nsr) nsr.style.display = 'none';
+  if (stateName && district && subDistrict) {
+    _loadCommunityPlacesIntoSelect('sellPlace', stateName, district, subDistrict, staticPlaces);
+  }
 }
 function updateSellSchools() {
   const stateName   = document.getElementById('sellState')?.value;
@@ -2063,7 +2150,126 @@ function updateSellSchools() {
   const subDistrict = document.getElementById('sellSubDistrict')?.value;
   const place       = document.getElementById('sellPlace')?.value;
   const sSel = document.getElementById('sellSchool');
-  if (sSel) sSel.innerHTML = '<option value="">— School (optional) —</option>' + _getSchools(stateName, district, subDistrict, place).map(s => '<option>' + s + '</option>').join('');
+  const staticSchools = place ? _getSchools(stateName, district, subDistrict, place) : [];
+  if (sSel) sSel.innerHTML = '<option value="">— School (optional) —</option>' + staticSchools.map(s => '<option>' + s + '</option>').join('');
+  const addSchBtn = document.getElementById('sellAddSchoolBtn');
+  if (addSchBtn) addSchBtn.style.display = place ? '' : 'none';
+  const nsr = document.getElementById('sellNewSchoolRow'); if (nsr) nsr.style.display = 'none';
+  if (place) _loadCommunitySchoolsIntoSelect('sellSchool', stateName, district, subDistrict, place, staticSchools);
+}
+async function _loadCommunityPlacesIntoSelect(selectId, state, district, subDistrict, existing) {
+  if (!_db) return;
+  try {
+    const key = [state, district, subDistrict].join('__').replace(/[^a-zA-Z0-9]/g,'_');
+    const snap = await _db.collection('community_data').doc('places__' + key).get();
+    if (snap.exists) {
+      const items = snap.data().items || [];
+      const sel = document.getElementById(selectId);
+      if (!sel) return;
+      const existingSet = new Set((existing || []).map(s => s.toLowerCase()));
+      items.forEach(p => {
+        if (p && !existingSet.has(p.toLowerCase())) {
+          existingSet.add(p.toLowerCase());
+          const opt = document.createElement('option');
+          opt.value = p; opt.textContent = p;
+          sel.appendChild(opt);
+        }
+      });
+    }
+  } catch(e) {}
+}
+async function _loadCommunitySchoolsIntoSelect(selectId, state, district, subDistrict, place, existing) {
+  if (!_db) return;
+  try {
+    const key = [state, district, subDistrict, place].join('__').replace(/[^a-zA-Z0-9]/g,'_');
+    const snap = await _db.collection('community_data').doc('schools__' + key).get();
+    if (snap.exists) {
+      const items = snap.data().items || [];
+      const sel = document.getElementById(selectId);
+      if (!sel) return;
+      const existingSet = new Set((existing || []).map(s => s.toLowerCase()));
+      items.forEach(s => {
+        if (s && !existingSet.has(s.toLowerCase())) {
+          existingSet.add(s.toLowerCase());
+          const opt = document.createElement('option');
+          opt.value = s; opt.textContent = s;
+          sel.appendChild(opt);
+        }
+      });
+    }
+  } catch(e) {}
+}
+function toggleSellNewPlace() {
+  const row = document.getElementById('sellNewPlaceRow');
+  const btn = document.getElementById('sellAddPlaceBtn');
+  if (!row) return;
+  const visible = row.style.display !== 'none';
+  row.style.display = visible ? 'none' : '';
+  if (btn) btn.textContent = visible ? '＋ My place is not listed' : '✕ Cancel';
+}
+function toggleSellNewSchool() {
+  const row = document.getElementById('sellNewSchoolRow');
+  const btn = document.getElementById('sellAddSchoolBtn');
+  if (!row) return;
+  const visible = row.style.display !== 'none';
+  row.style.display = visible ? 'none' : '';
+  if (btn) btn.textContent = visible ? '＋ My school is not listed' : '✕ Cancel';
+}
+function addSellNewPlace() {
+  const inp = document.getElementById('sellNewPlaceInput');
+  const place = (inp?.value || '').trim();
+  if (!place) { toast('Enter a place name'); return; }
+  const pSel = document.getElementById('sellPlace');
+  if (!pSel) return;
+  // Check if already exists
+  if (Array.from(pSel.options).some(o => o.value.toLowerCase() === place.toLowerCase())) {
+    pSel.value = Array.from(pSel.options).find(o => o.value.toLowerCase() === place.toLowerCase()).value;
+    updateSellSchools();
+    toggleSellNewPlace(); if (inp) inp.value = '';
+    return;
+  }
+  const opt = document.createElement('option');
+  opt.value = place; opt.textContent = place;
+  pSel.appendChild(opt);
+  pSel.value = place;
+  // Save to community_data
+  const st = document.getElementById('sellState')?.value;
+  const d  = document.getElementById('sellDistrict')?.value;
+  const sd = document.getElementById('sellSubDistrict')?.value;
+  if (st && d && sd && _db) {
+    const key = [st, d, sd].join('__').replace(/[^a-zA-Z0-9]/g,'_');
+    _db.collection('community_data').doc('places__' + key).set({ items: firebase.firestore.FieldValue.arrayUnion(place) }, { merge: true }).catch(() => {});
+  }
+  updateSellSchools();
+  toggleSellNewPlace(); if (inp) inp.value = '';
+  toast('✅ Place "' + place + '" added!');
+}
+function addSellNewSchool() {
+  const inp = document.getElementById('sellNewSchoolInput');
+  const school = (inp?.value || '').trim();
+  if (!school) { toast('Enter a school name'); return; }
+  const sSel = document.getElementById('sellSchool');
+  if (!sSel) return;
+  if (Array.from(sSel.options).some(o => o.value.toLowerCase() === school.toLowerCase())) {
+    sSel.value = Array.from(sSel.options).find(o => o.value.toLowerCase() === school.toLowerCase()).value;
+    toggleSellNewSchool(); if (inp) inp.value = '';
+    return;
+  }
+  const opt = document.createElement('option');
+  opt.value = school; opt.textContent = school;
+  sSel.appendChild(opt);
+  sSel.value = school;
+  // Save to community_data
+  const st    = document.getElementById('sellState')?.value;
+  const d     = document.getElementById('sellDistrict')?.value;
+  const sd    = document.getElementById('sellSubDistrict')?.value;
+  const place = document.getElementById('sellPlace')?.value;
+  if (st && d && sd && place && _db) {
+    const key = [st, d, sd, place].join('__').replace(/[^a-zA-Z0-9]/g,'_');
+    _db.collection('community_data').doc('schools__' + key).set({ items: firebase.firestore.FieldValue.arrayUnion(school) }, { merge: true }).catch(() => {});
+  }
+  toggleSellNewSchool(); if (inp) inp.value = '';
+  toast('✅ School "' + school + '" added!');
 }
 function updateSignupDistricts() {
   const stateName = document.getElementById('signupState')?.value;
