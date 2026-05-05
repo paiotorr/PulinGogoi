@@ -236,6 +236,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
       <button class="menu-create-btn" id="menuGoSignup" type="button">Create Account</button>
     </div>
     <button data-page="sell" id="menuSell" style="display:none;">📦 Sell Books</button>
+    <button data-page="myListings" id="menuListings" style="display:none;">📚 My Listings</button>
     <button type="button" id="menuAccount" style="display:none;">👤 Account Details</button>
     <button type="button" id="menuLogout" style="display:none;color:#dc2626;">🚪 Log Out</button>
   </div>
@@ -336,9 +337,23 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
             </label>
             <label class="wide">Instagram ID<div style="display:flex;align-items:center;background:#f9fafb;border:2px solid var(--line);border-radius:10px;overflow:hidden;"><span style="background:var(--red-light);color:var(--red);font-weight:900;padding:0 10px;min-height:40px;display:flex;align-items:center;">@</span><input type="text" id="sellInstagram" placeholder="your_instagram" style="border:none;border-radius:0;flex:1;min-height:40px;background:transparent;" readonly></div></label>
             
-            <label class="wide">Price Expectation (₹)<input type="number" id="sellPrice" placeholder="How much do you want?"/></label>
+            <div class="wide" id="sellFixedPriceInfo" style="background:var(--red-light);border:2px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:900;color:var(--red);">Price: <strong id="sellFixedPriceText">Select a book</strong></div>
             <button class="btn btn-primary wide" type="submit">List for Sale</button>
           </form>
+        </div>
+      </div>
+    </section>
+    <section class="page" id="myListingsPage">
+      <div class="page-head">
+        <h1>My Listings</h1>
+        <button class="btn btn-ghost" type="button" data-go-buy>Back</button>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>Your Listed Books</h2></div>
+        <div class="card-body">
+          <div class="result-list" id="myListingsList">
+            <p style="color:#888;font-size:13px;font-weight:700;padding:8px 0;">No books listed yet.</p>
+          </div>
         </div>
       </div>
     </section>
@@ -445,7 +460,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
           </select>
         </div>
         <div class="auth-field"><label>Instagram ID</label>
-          <div class="auth-insta-wrap"><span class="auth-insta-at">@</span><input type="text" id="signupInsta" placeholder="your_instagram_id" class="auth-insta-input"></div>
+          <div class="auth-insta-wrap"><span class="auth-insta-at">@</span><input type="text" id="signupInsta" placeholder="your_instagram_id" class="auth-insta-input" required></div>
         </div>
         <div class="auth-row">
           <div class="auth-field">
@@ -1782,6 +1797,7 @@ function renderSellCatalog() {
   // Show selected + sell form only when a book is picked
   if (sellSelectedCard) sellSelectedCard.style.display = (selectedBookId && sellCatalogStep==='books') ? '' : 'none';
   if (sellFormCard) sellFormCard.style.display = (selectedBookId && sellCatalogStep==='books') ? '' : 'none';
+  updateSellPriceControls();
   // Render class grid
   const cg = document.getElementById('sellClassGrid');
   if (cg) {
@@ -1830,6 +1846,20 @@ function renderSellCatalog() {
       bkg.querySelectorAll('[data-sellid]').forEach(card=>{card.onclick=()=>{selectedBookId=card.dataset.sellid;renderSellCatalog();renderSelected();};});
     } else { bkg.style.display='none'; }
   }
+}
+function updateSellPriceControls() {
+  const b = book();
+  const adminPrice = parseInt(b?.price) || 0;
+  const fixedText = document.getElementById('sellFixedPriceText');
+  if (fixedText) fixedText.textContent = b ? ('₹' + adminPrice + ' (admin fixed price)') : 'Select a book';
+  const inp = document.getElementById('sellPrice');
+  const help = document.getElementById('sellPriceHelp');
+  if (inp) {
+    inp.min = adminPrice ? '1' : '';
+    inp.max = adminPrice ? String(adminPrice) : '';
+    inp.placeholder = adminPrice ? ('Optional, max ₹' + adminPrice) : 'Select a book first';
+  }
+  if (help) help.textContent = adminPrice ? ('Optional. You can enter ₹1 to ₹' + adminPrice + ', or leave blank to use ₹' + adminPrice + '.') : 'Select a book first.';
 }
 // ── Account Details helpers ────────────────────────────────────
 function updateAccDistricts() {
@@ -1981,6 +2011,72 @@ function renderMatches(bookId) {
   const list = document.querySelector("#matchList");
   const matches = state.listings.filter(l => l.bookId === bId);
   list.innerHTML = matches.length ? matches.map(l => '<div class="result-card"><strong>' + l.seller + '</strong><span>' + (l.state?l.state+' · ':'') + l.district + ', ' + l.place + (l.school?' &mdash; '+l.school:'') + '</span><span>Condition: ' + l.condition + '</span><div class="contact-row">' + (state.settings.instagram&&l.instagram?'<a href="https://instagram.com/'+l.instagram+'" target="_blank" class="btn btn-ghost" style="font-size:12px;">Instagram</a>':'') + (state.settings.whatsapp&&l.whatsapp?'<a href="https://wa.me/91'+l.whatsapp+'" target="_blank" class="btn btn-primary" style="font-size:12px;">WhatsApp</a>':'') + '</div></div>') .join("") : '<p style="color:#888;font-size:13px;font-weight:700;padding:8px 0;">No sellers found in your area yet.</p>';
+}
+function _isMineListing(l) {
+  const u = window._currentUser || {};
+  return !!l && (
+    (u.uid && l.userId === u.uid) ||
+    (u.id && l.userId === u.id) ||
+    (u.mobile && l.mobile === u.mobile) ||
+    (u.insta && l.instagram === u.insta)
+  );
+}
+function _listingBook(l) {
+  return state.books.find(b => b.id === l.bookId) || null;
+}
+async function _loadMyListingsFromFirestore() {
+  const u = window._currentUser;
+  if (!_db || !u || !(u.uid || u.id)) return;
+  try {
+    const snap = await _db.collection('listings').where('userId','==',u.uid || u.id).get();
+    let changed = false;
+    snap.docs.forEach(doc => {
+      const data = Object.assign({ id: doc.id }, doc.data());
+      const idx = (state.listings || []).findIndex(x => x.id === data.id);
+      if (idx >= 0) state.listings[idx] = Object.assign({}, state.listings[idx], data);
+      else { state.listings.push(data); changed = true; }
+    });
+    if (changed) save();
+  } catch(e) {}
+}
+async function renderMyListings(skipFetch) {
+  const list = document.getElementById('myListingsList');
+  if (!list) return;
+  if (!window._isLoggedIn) {
+    list.innerHTML = '<p style="color:#888;font-size:13px;font-weight:700;padding:8px 0;">Login to see your listed books.</p>';
+    return;
+  }
+  if (!skipFetch) {
+    _loadMyListingsFromFirestore().then(() => renderMyListings(true));
+  }
+  const mine = (state.listings || []).filter(_isMineListing).sort((a,b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+  if (!mine.length) {
+    list.innerHTML = '<p style="color:#888;font-size:13px;font-weight:700;padding:8px 0;">No books listed yet.</p>';
+    return;
+  }
+  list.innerHTML = mine.map(l => {
+    const b = _listingBook(l);
+    const title = l.title || l.bookTitle || b?.title || 'Book';
+    const meta = [l.className || b?.className, l.board || b?.board, l.stream || b?.stream].filter(Boolean).join(' / ');
+    const price = l.price ? ('₹' + l.price) : (b?.price ? ('₹' + b.price) : 'Price not set');
+    return '<div class="result-card">' +
+      '<strong>' + _acEsc(title) + '</strong>' +
+      '<span>' + _acEsc(meta || 'Subject') + ' · ' + _acEsc(price) + '</span>' +
+      '<span>' + _acEsc([l.state,l.district,l.subDistrict,l.place].filter(Boolean).join(', ') || 'Location not set') + '</span>' +
+      '<span>Condition: ' + _acEsc(l.condition || 'Not set') + (l.createdAt ? ' · Posted ' + _acEsc(String(l.createdAt).slice(0,10)) : '') + '</span>' +
+      '<div class="contact-row"><button class="btn btn-danger" type="button" style="font-size:12px;" onclick="removeMyListing(' + JSON.stringify(l.id) + ')">Remove</button></div>' +
+    '</div>';
+  }).join('');
+}
+async function removeMyListing(id) {
+  if (!id || !confirm('Remove this listed book?')) return;
+  state.listings = (state.listings || []).filter(l => l.id !== id);
+  save();
+  if (_db) {
+    try { await _db.collection('listings').doc(id).delete(); } catch(e) {}
+  }
+  renderMyListings(true);
+  toast('Listing removed.');
 }
 // ── Location helpers (State → District → Place → School) ──────────────────
 function _getLocData() { return state.locations || []; }
@@ -2502,6 +2598,26 @@ function bindSellForm() {
     if(!window._isLoggedIn){ toast("Please log in first to list a book"); return; }
     const u = window._currentUser;
     const selected = book();
+    const adminPrice = parseInt(selected?.price) || 0;
+    const typedPrice = parseInt(document.getElementById("sellPrice")?.value || "") || 0;
+    let listingPrice = adminPrice;
+    if (state.settings.allowUserPrice === true && typedPrice) {
+      if (!adminPrice) { toast("Admin price is not set for this book"); return; }
+      if (typedPrice < 1 || typedPrice > adminPrice) {
+        toast("Price must be between ₹1 and ₹" + adminPrice);
+        return;
+      }
+      listingPrice = typedPrice;
+    }
+    const listingState = document.getElementById("sellState")?.value || "";
+    const listingDistrict = document.getElementById("sellDistrict")?.value || "";
+    const listingSubDistrict = document.getElementById("sellSubDistrict")?.value || "";
+    const listingPlace = (document.getElementById("sellPlace")?.value || "").trim();
+    const listingSchool = (document.getElementById("sellSchool")?.value || "").trim();
+    if(!listingState || !listingDistrict || !listingSubDistrict || !listingPlace || !listingSchool){
+      toast("Please fill state, district, sub-district, place and school");
+      return;
+    }
     const listing = {
       id       : "ls"+Date.now(),
       bookId   : selectedBookId,
@@ -2512,15 +2628,18 @@ function bindSellForm() {
       seller   : u ? u.name : "You",
       sellerName: u ? u.name : "You",
       userId   : u ? (u.uid||u.id) : "",
-      state    : document.getElementById("sellState")?.value || "",
-      district : document.getElementById("sellDistrict").value,
-      subDistrict: document.getElementById("sellSubDistrict")?.value || "",
-      place    : document.getElementById("sellPlace").value,
-      school   : document.getElementById("sellSchool")?.value || "",
+      mobile   : u ? (u.mobile || "") : "",
+      state    : listingState,
+      district : listingDistrict,
+      subDistrict: listingSubDistrict,
+      place    : listingPlace,
+      school   : listingSchool,
       condition: document.getElementById("sellCondition").value,
       instagram: u ? (u.insta||"") : (document.getElementById("sellInstagram")?.value || ""),
       whatsapp : document.getElementById("sellWhatsapp")?.value || "",
-      price    : document.getElementById("sellPrice")?.value || "",
+      price    : listingPrice,
+      adminPrice: adminPrice,
+      priceMode: state.settings.allowUserPrice === true && typedPrice ? "seller" : "admin",
       createdAt: new Date().toISOString().slice(0,10)
     };
     _saveCommunityLocation(listing.state, listing.district, listing.subDistrict, listing.place, listing.school);
@@ -2535,6 +2654,7 @@ function bindSellForm() {
     selectedBookId = '';
     sellCatalogStep = 'classes';
     renderSellCatalog();
+    renderMyListings(true);
   };
 }
 function bindPageNav() {
@@ -2557,6 +2677,7 @@ function bindPageNav() {
         _prefillSellFromProfile();
         renderSellCatalog();
       }
+      if (pg === 'myListings') renderMyListings();
     };
   });
   document.querySelectorAll("[data-go-buy]").forEach(btn => { btn.onclick = () => { document.querySelectorAll(".page").forEach(p=>p.classList.remove("active")); document.getElementById("buyPage").classList.add("active"); }; });
@@ -2744,10 +2865,12 @@ init();
 
     const menuLoginCard = document.getElementById('menuLoginCard');
     const menuSell      = document.getElementById('menuSell');
+    const menuListings  = document.getElementById('menuListings');
     const menuAccount   = document.getElementById('menuAccount');
     const menuLogout    = document.getElementById('menuLogout');
     if (menuLoginCard) menuLoginCard.style.display = 'none';
     if (menuSell)      menuSell.style.display = '';
+    if (menuListings)  menuListings.style.display = '';
     if (menuAccount)   menuAccount.style.display = '';
     if (menuLogout)    menuLogout.style.display = '';
 
@@ -2765,6 +2888,7 @@ init();
       window._currentUser = null;
       if (menuLoginCard) menuLoginCard.style.display = '';
       if (menuSell)      menuSell.style.display = 'none';
+      if (menuListings)  menuListings.style.display = 'none';
       if (menuAccount)   menuAccount.style.display = 'none';
       if (menuLogout)    menuLogout.style.display = 'none';
       document.getElementById('menuBtn')?.classList.remove('open');
@@ -2850,25 +2974,27 @@ init();
 
     const mobile      = ((document.getElementById('signupMobile')      || {}).value || '').trim();
     const cls         = (document.getElementById('signupClass')         || {}).value;
+    const stateVal    = (document.getElementById('signupState')         || {}).value;
     const district    = (document.getElementById('signupDistrict')      || {}).value;
     const subDistrict = (document.getElementById('signupSubDistrict')   || {}).value;
     const place       = ((document.getElementById('signupPlace')        || {}).value || '').trim();
     const school      = ((document.getElementById('signupSchool')       || {}).value || '').trim();
+    const firstName   = ((document.getElementById('signupFullName')     || {}).value || '').trim();
+    const insta       = ((document.getElementById('signupInsta')        || {}).value || '').trim().replace(/^@+/, '');
 
+    if (!firstName)       { toast('Please enter your full name'); return; }
     if (!mobile || !/^[0-9]{10}$/.test(mobile)) { toast('Please enter a valid 10-digit mobile number'); return; }
     if (!cls)            { toast('Please select your class'); return; }
+    if (!insta)          { toast('Please enter your Instagram ID'); return; }
+    if (!stateVal)       { toast('Please select your state'); return; }
     if (!district)       { toast('Please select your district'); return; }
     if (!subDistrict)    { toast('Please select your sub-district'); return; }
     if (!place)          { toast('Please enter your place / town'); return; }
     if (!school)         { toast('Please enter your school / college'); return; }
 
-    const firstName = ((document.getElementById('signupFullName') || {}).value || '').trim();
     const lastName  = '';
-    const insta     = ((document.getElementById('signupInsta')     || {}).value || '').trim();
-    const stateVal  = (document.getElementById('signupState')       || {}).value;
     const passport  = ((document.getElementById('signupPassport')   || {}).value || '').trim();
-
-    if (!firstName) { toast('Please enter your full name'); return; }
+    if (state.settings.passport && !passport) { toast('Please enter your Passport / ID number'); return; }
 
     const userData = {
       id          : 'u' + Date.now(),
