@@ -215,6 +215,8 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 .ac-item { padding: 11px 14px; font-size: 14px; font-weight: 700; cursor: pointer; border-bottom: 1px solid var(--line); color: var(--text); transition: background 0.1s; }
 .ac-item:last-child { border-bottom: none; }
 .ac-item:hover { background: var(--red-light); color: var(--red); }
+.locked-control { opacity: 0.5; pointer-events: none; }
+.home-link { color: var(--red) !important; font-weight: 900 !important; }
 </style>
 </head>
 <body>
@@ -235,6 +237,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
       <button class="menu-login-btn" id="loginBtn" type="button">Login</button>
       <button class="menu-create-btn" id="menuGoSignup" type="button">Create Account</button>
     </div>
+    <button type="button" id="menuHome" class="home-link" style="display:none;">🏠 Home</button>
     <button data-page="sell" id="menuSell" style="display:none;">📦 Sell Books</button>
     <button data-page="myListings" id="menuListings" style="display:none;">📚 My Listings</button>
     <button type="button" id="menuAccount" style="display:none;">👤 Account Details</button>
@@ -246,13 +249,13 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
     <section class="page active" id="buyPage">
       <div class="page-head">
         <div class="search-wrap">
-          <input id="searchInput" placeholder="Search books">
+          <input id="searchInput" placeholder="Search books" disabled>
           <button id="clearSearch" type="button" aria-label="Clear">x</button>
         </div>
       </div>
       <div class="location-lock">
         <div><span>Country</span><strong>India</strong></div>
-        <div><span>States</span><select id="stateFilter" class="location-select" onchange="onStateFilterChange(this.value)"><option value="">— Select State —</option><option value="Assam">Assam</option></select></div>
+        <div><span>States</span><select id="stateFilter" class="location-select" onchange="onStateFilterChange(this.value)" disabled><option value="">— Select State —</option><option value="Assam">Assam</option></select></div>
       </div>
       <div class="card">
         <div class="card-head">
@@ -293,6 +296,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
     <section class="page" id="sellPage">
       <div class="page-head">
         <h1>Sell Books</h1>
+        <button class="btn btn-primary" type="button" data-go-buy>Home</button>
         <button class="btn btn-ghost" type="button" data-go-buy>Back</button>
       </div>
       <div class="location-lock">
@@ -328,8 +332,8 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
             <label class="wide">State <select id="sellState" onchange="updateSellDistricts()"><option value="">— Select Your State —</option><option value="Assam">Assam</option></select></label>
             <label>District <select id="sellDistrict" onchange="updateSellSubDistricts()"></select></label>
             <label>Sub-District <select id="sellSubDistrict" onchange="updateSellPlaces()"></select></label>
-            <label>Place <input id="sellPlace" list="sellPlaceOptions" onchange="updateSellSchools()" placeholder="Place / town"><datalist id="sellPlaceOptions"></datalist></label>
-            <label class="wide">School <input id="sellSchool" list="sellSchoolOptions" placeholder="School / college"><datalist id="sellSchoolOptions"></datalist></label>
+            <label>Place <input id="sellPlace" list="sellPlaceOptions" onchange="updateSellSchools()" placeholder="Place / town"><datalist id="sellPlaceOptions"></datalist><select id="sellPlaceFallback" onchange="document.getElementById('sellPlace').value=this.value;updateSellSchools()" style="margin-top:6px;"><option value="">— Select Place —</option></select></label>
+            <label class="wide">School <input id="sellSchool" list="sellSchoolOptions" placeholder="School / college"><datalist id="sellSchoolOptions"></datalist><select id="sellSchoolFallback" onchange="document.getElementById('sellSchool').value=this.value" style="margin-top:6px;"><option value="">— Select School —</option></select></label>
             <label class="wide">Condition
               <select id="sellCondition">
                 <option>Like new</option><option>Good</option><option>Usable</option>
@@ -346,6 +350,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
     <section class="page" id="myListingsPage">
       <div class="page-head">
         <h1>My Listings</h1>
+        <button class="btn btn-primary" type="button" data-go-buy>Home</button>
         <button class="btn btn-ghost" type="button" data-go-buy>Back</button>
       </div>
       <div class="card">
@@ -1648,6 +1653,70 @@ const seed = {
 let state = normalizeState(JSON.parse(localStorage.getItem("pkitaap-simple") || "null") || structuredClone(seed));
 let selectedClass = "", selectedBoard = "", selectedStream = "", selectedBookId = "", selectedCategory = "";
 let search = "", catalogStep = "classes";
+let _remoteDataLoaded = false;
+
+function requireLogin() {
+  if (window._isLoggedIn) return true;
+  if (typeof openSignup === 'function') openSignup();
+  else document.getElementById('signupDialog')?.showModal();
+  toast('Please login or create an account first.');
+  return false;
+}
+
+function goHome() {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('buyPage')?.classList.add('active');
+  document.getElementById('menuBtn')?.classList.remove('open');
+  document.getElementById('menuPanel')?.classList.remove('open');
+  selectedClass = selectedBoard = selectedStream = selectedBookId = selectedCategory = '';
+  catalogStep = 'classes';
+  render();
+}
+
+function updateAccessControls() {
+  const locked = !window._isLoggedIn;
+  ['searchInput','stateFilter','buyState','buyDistrict','buySubDistrict','buyPlace','buySchool','buyMedium'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.disabled = locked;
+      el.classList.toggle('locked-control', locked);
+    }
+  });
+}
+
+async function loadRemoteAppData() {
+  if (!_db || _remoteDataLoaded) return;
+  try {
+    const ref = _db.collection('app_data');
+    const docs = await Promise.all([
+      ref.doc('settings').get(),
+      ref.doc('classes').get(),
+      ref.doc('locations').get(),
+      ref.doc('categories').get()
+    ]);
+    const settingsDoc = docs[0].exists ? docs[0].data() : {};
+    const classesDoc = docs[1].exists ? docs[1].data() : {};
+    const locationsDoc = docs[2].exists ? docs[2].data() : {};
+    const categoriesDoc = docs[3].exists ? docs[3].data() : {};
+    if (settingsDoc.settings) state.settings = Object.assign({}, state.settings || {}, settingsDoc.settings);
+    if (settingsDoc.streams) state.streams = settingsDoc.streams;
+    if (classesDoc.classes) state.classes = classesDoc.classes;
+    if (classesDoc.classThumbs) state.classThumbs = classesDoc.classThumbs;
+    if (classesDoc.boardsByState) state.boardsByState = classesDoc.boardsByState;
+    if (classesDoc.mediumsByState) state.mediumsByState = classesDoc.mediumsByState;
+    if (locationsDoc.locations) state.locations = locationsDoc.locations;
+    if (categoriesDoc.categories) state.categories = categoriesDoc.categories;
+    try {
+      const bookSnap = await ref.doc('books').collection('items').limit(1000).get();
+      if (!bookSnap.empty) state.books = bookSnap.docs.map(doc => Object.assign({id: doc.id}, doc.data()));
+    } catch(e) {}
+    _remoteDataLoaded = true;
+    save();
+    render();
+  } catch(e) {
+    console.warn('[PKITAAP] Remote app data load failed:', e);
+  }
+}
 
 function normalizeState(input) {
   const next = input || structuredClone(seed);
@@ -1710,7 +1779,7 @@ function renderClasses() {
   grid.style.display = catalogStep === "classes" ? "grid" : "none";
   grid.innerHTML = all.map(name => '<button class="class-card ' + (name===selectedClass?"active":"") + '" data-class="' + name + '"><img src="' + imageForClass(name) + '" alt="' + name + '"/><div class="card-info"><strong>' + name + '</strong><span>' + state.books.filter(b=>b.className===name&&(b.type!=="general"||state.settings.general)).length + ' books</span></div></button>').join("");
   document.querySelectorAll(".class-card").forEach(card => {
-    card.onclick = () => { selectedClass = card.dataset.class; selectedBoard=""; selectedStream=""; selectedBookId=""; selectedCategory=""; catalogStep = selectedClass === "General" ? "books" : "boards"; render(); };
+    card.onclick = () => { if(!requireLogin()) return; selectedClass = card.dataset.class; selectedBoard=""; selectedStream=""; selectedBookId=""; selectedCategory=""; catalogStep = selectedClass === "General" ? "books" : "boards"; render(); };
   });
 }
 function renderCategories() {
@@ -1721,7 +1790,7 @@ function renderCategories() {
   if (!show) return;
   grid.innerHTML = (state.categories||[]).map(cat => '<button class="class-card" data-catid="' + cat.id + '"><img src="' + (cat.image||placeholder(cat.name)) + '" alt="' + cat.name + '"/><div class="card-info"><strong>' + cat.name + '</strong><span>' + state.books.filter(b=>b.categoryId===cat.id).length + ' books</span></div></button>').join("");
   document.querySelectorAll("[data-catid]").forEach(card => {
-    card.onclick = () => { selectedClass = "General"; selectedCategory = card.dataset.catid; search = ""; document.querySelector("#searchInput").value = ""; document.querySelector("#clearSearch").style.display = "none"; catalogStep = "books"; render(); };
+    card.onclick = () => { if(!requireLogin()) return; selectedClass = "General"; selectedCategory = card.dataset.catid; search = ""; document.querySelector("#searchInput").value = ""; document.querySelector("#clearSearch").style.display = "none"; catalogStep = "books"; render(); };
   });
 }
 function renderBoards() {
@@ -2008,11 +2077,85 @@ function _prefillSellFromProfile() {
   // Pre-fill instagram (read-only in sell form)
   set('sellInstagram', u.insta);
 }
+function _prefillBuyFromProfile() {
+  const u = window._currentUser;
+  if (!u) return;
+  _mergeCommunityLocation(u.state, u.district, u.subDistrict, u.place, u.school);
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+  set('stateFilter', u.state);
+  selectedState = u.state || selectedState;
+  set('buyState', u.state);
+  if (u.state) {
+    updateBuyDistricts();
+    setTimeout(() => {
+      set('buyDistrict', u.district);
+      updateBuySubDistricts();
+      setTimeout(() => {
+        set('buySubDistrict', u.subDistrict);
+        updateBuyPlaces();
+        setTimeout(() => {
+          set('buyPlace', u.place);
+          updateBuySchools();
+          setTimeout(() => { set('buySchool', u.school); }, 50);
+        }, 50);
+      }, 50);
+    }, 50);
+    _updateMediumsForState(u.state);
+  }
+}
 function renderMatches(bookId) {
   const bId = bookId || selectedBookId;
   const list = document.querySelector("#matchList");
-  const matches = state.listings.filter(l => l.bookId === bId);
-  list.innerHTML = matches.length ? matches.map(l => '<div class="result-card"><strong>' + l.seller + '</strong><span>' + (l.state?l.state+' · ':'') + l.district + ', ' + l.place + (l.school?' &mdash; '+l.school:'') + '</span><span>Condition: ' + l.condition + '</span><div class="contact-row">' + (state.settings.instagram&&l.instagram?'<a href="https://instagram.com/'+l.instagram+'" target="_blank" class="btn btn-ghost" style="font-size:12px;">Instagram</a>':'') + (state.settings.whatsapp&&l.whatsapp?'<a href="https://wa.me/91'+l.whatsapp+'" target="_blank" class="btn btn-primary" style="font-size:12px;">WhatsApp</a>':'') + '</div></div>') .join("") : '<p style="color:#888;font-size:13px;font-weight:700;padding:8px 0;">No sellers found in your area yet.</p>';
+  const query = {
+    state: document.getElementById('buyState')?.value || '',
+    district: document.getElementById('buyDistrict')?.value || '',
+    subDistrict: document.getElementById('buySubDistrict')?.value || '',
+    place: document.getElementById('buyPlace')?.value || '',
+    school: document.getElementById('buySchool')?.value || ''
+  };
+  if (_db) {
+    _db.collection('listings').where('bookId','==',bId).get().then(snap => {
+      let changed = false;
+      snap.docs.forEach(doc => {
+        const data = Object.assign({id:doc.id}, doc.data());
+        const idx = (state.listings || []).findIndex(x => x.id === data.id);
+        if (idx >= 0) state.listings[idx] = Object.assign({}, state.listings[idx], data);
+        else { state.listings.push(data); changed = true; }
+      });
+      if (changed) save();
+      _renderMatchList(bId, query);
+    }).catch(()=>{});
+  }
+  _renderMatchList(bId, query);
+}
+function _locScore(l, q) {
+  let score = 0;
+  if (_sameText(l.place, q.place)) score += 100;
+  if (_sameText(l.subDistrict, q.subDistrict)) score += 60;
+  if (_sameText(l.district, q.district)) score += 30;
+  if (_sameText(l.state, q.state)) score += 10;
+  if (q.school && _sameText(l.school, q.school)) score += 5;
+  return score;
+}
+function _renderMatchList(bId, query) {
+  const list = document.querySelector("#matchList");
+  if (!list) return;
+  const matches = (state.listings || [])
+    .filter(l => l.bookId === bId)
+    .map(l => Object.assign({_score:_locScore(l, query)}, l))
+    .sort((a,b) => (b._score - a._score) || String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+  list.innerHTML = matches.length ? matches.map(l => {
+    const location = [l.place,l.subDistrict,l.district,l.state].filter(Boolean).join(', ');
+    return '<div class="result-card"><strong>' + _acEsc(l.seller || l.sellerName || 'Seller') + '</strong>' +
+      '<span>School/College: ' + _acEsc(l.school || 'Not added') + '</span>' +
+      '<span>Place: ' + _acEsc(l.place || 'Not added') + '</span>' +
+      '<span>' + _acEsc(location || 'Location not added') + '</span>' +
+      '<span>Condition: ' + _acEsc(l.condition || 'Not set') + (l.price ? ' · ₹' + _acEsc(l.price) : '') + '</span>' +
+      '<div class="contact-row">' +
+      (state.settings.instagram&&l.instagram?'<a href="https://instagram.com/'+encodeURIComponent(l.instagram)+'" target="_blank" class="btn btn-ghost" style="font-size:12px;">Instagram</a>':'') +
+      (state.settings.whatsapp&&l.whatsapp?'<a href="https://wa.me/91'+encodeURIComponent(l.whatsapp)+'" target="_blank" class="btn btn-primary" style="font-size:12px;">WhatsApp</a>':'') +
+      '</div></div>';
+  }).join("") : '<p style="color:#888;font-size:13px;font-weight:700;padding:8px 0;">No sellers found for this book yet.</p>';
 }
 function _isMineListing(l) {
   const u = window._currentUser || {};
@@ -2160,6 +2303,22 @@ function _fillChoiceControl(controlId, listId, label, items, getValue, selectedV
   el.innerHTML = _optionList(label, items, getValue, selectedValue);
   if (selectedValue) el.value = selectedValue;
 }
+function _selectOptionsToDatalist(selectId, datalistId) {
+  const sel = document.getElementById(selectId);
+  const list = document.getElementById(datalistId);
+  if (!sel || !list) return;
+  list.innerHTML = Array.from(sel.options || [])
+    .map(o => o.value)
+    .filter(Boolean)
+    .map(v => '<option value="' + _acEsc(v) + '"></option>')
+    .join('');
+}
+function _fillFallbackSelect(selectId, label, items, getValue, selectedValue) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  sel.innerHTML = _optionList(label, items, getValue, selectedValue);
+  if (selectedValue) sel.value = selectedValue;
+}
 function updateBuyDistricts() {
   const stateName = document.getElementById('buyState')?.value;
   const dSel  = document.getElementById('buyDistrict');
@@ -2223,6 +2382,8 @@ function updateSellDistricts() {
   if (sSel)  sSel.value = '';
   _fillChoiceControl('sellPlace', 'sellPlaceOptions', 'Place / town', [], p => p.name, '');
   _fillChoiceControl('sellSchool', 'sellSchoolOptions', 'School / college', [], null, '');
+  _fillFallbackSelect('sellPlaceFallback', '— Select Place —', [], p => p.name, '');
+  _fillFallbackSelect('sellSchoolFallback', '— Select School —', [], null, '');
 }
 function updateSellSubDistricts() {
   const stateName = document.getElementById('sellState')?.value;
@@ -2236,6 +2397,8 @@ function updateSellSubDistricts() {
   if (sSel) sSel.value = '';
   _fillChoiceControl('sellPlace', 'sellPlaceOptions', 'Place / town', [], p => p.name, '');
   _fillChoiceControl('sellSchool', 'sellSchoolOptions', 'School / college', [], null, '');
+  _fillFallbackSelect('sellPlaceFallback', '— Select Place —', [], p => p.name, '');
+  _fillFallbackSelect('sellSchoolFallback', '— Select School —', [], null, '');
 }
 function updateSellPlaces() {
   const stateName   = document.getElementById('sellState')?.value;
@@ -2246,11 +2409,14 @@ function updateSellPlaces() {
   if (!pSel) return;
   const selected = pSel.value;
   _fillChoiceControl('sellPlace', 'sellPlaceOptions', 'Place / town', _getPlaces(stateName, district, subDistrict), p => p.name, selected);
+  _fillFallbackSelect('sellPlaceFallback', '— Select Place —', _getPlaces(stateName, district, subDistrict), p => p.name, selected);
   if (sSel) sSel.value = '';
   _fillChoiceControl('sellSchool', 'sellSchoolOptions', 'School / college', [], null, '');
+  _fillFallbackSelect('sellSchoolFallback', '— Select School —', [], null, '');
   _loadCommunityPlaces(stateName, district, subDistrict).then(() => {
     const keep = pSel.value || selected;
     _fillChoiceControl('sellPlace', 'sellPlaceOptions', 'Place / town', _getPlaces(stateName, district, subDistrict), p => p.name, keep);
+    _fillFallbackSelect('sellPlaceFallback', '— Select Place —', _getPlaces(stateName, district, subDistrict), p => p.name, keep);
     if (keep) pSel.value = keep;
   });
 }
@@ -2261,8 +2427,10 @@ function updateSellSchools() {
   const place       = document.getElementById('sellPlace')?.value;
   const sSel = document.getElementById('sellSchool');
   _fillChoiceControl('sellSchool', 'sellSchoolOptions', 'School / college', _getSchools(stateName, district, subDistrict, place), null, sSel?.value || '');
+  _fillFallbackSelect('sellSchoolFallback', '— Select School —', _getSchools(stateName, district, subDistrict, place), null, sSel?.value || '');
   if (place) _loadCommunitySchools(stateName, district, subDistrict, place).then(() => {
     _fillChoiceControl('sellSchool', 'sellSchoolOptions', 'School / college', _getSchools(stateName, district, subDistrict, place), null, sSel?.value || '');
+    _fillFallbackSelect('sellSchoolFallback', '— Select School —', _getSchools(stateName, district, subDistrict, place), null, sSel?.value || '');
   });
 }
 function updateSignupDistricts() {
@@ -2557,6 +2725,7 @@ async function _saveCommunityLocation(state, district, subDistrict, place, schoo
   } catch(e) { console.warn('[PKITAAP] _saveCommunityLocation error:', e); }
 }
 function render() {
+  updateAccessControls();
   document.querySelector("#catalogTitle").textContent = catalogStep==="classes"?"Classes":catalogStep==="boards"?"Boards":catalogStep==="streams"?"Streams":"Subjects";
   document.querySelector("#backBtn").style.display = catalogStep==="classes" ? "none" : "inline-block";
   document.querySelector("#matchCard").style.display = (selectedBookId && catalogStep === "books") ? "block" : "none";
@@ -2585,12 +2754,12 @@ function bindSearch() {
     else { catalogStep = "classes"; selectedClass = selectedBoard = selectedStream = selectedBookId = ""; }
     render();
   };
-  inp.oninput = () => { search = inp.value; clr.style.display = search ? "grid" : "none"; if(search) catalogStep="books"; else catalogStep="classes"; render(); };
+  inp.oninput = () => { if(!requireLogin()){ inp.value=''; return; } search = inp.value; clr.style.display = search ? "grid" : "none"; if(search) catalogStep="books"; else catalogStep="classes"; render(); };
   clr.onclick = () => { inp.value=""; search=""; selectedCategory=""; clr.style.display="none"; catalogStep="classes"; selectedClass=selectedBoard=selectedStream=selectedBookId=""; render(); };
 }
 function bindBuyForm() {
   const frm = document.querySelector("#buyForm");
-  if(frm) frm.onsubmit = e => { e.preventDefault(); if(!selectedBookId) return; renderMatches(); };
+  if(frm) frm.onsubmit = e => { e.preventDefault(); if(!requireLogin()) return; if(!selectedBookId) return; renderMatches(); };
 }
 function bindSellForm() {
   const frm = document.querySelector("#sellForm");
@@ -2682,7 +2851,9 @@ function bindPageNav() {
       if (pg === 'myListings') renderMyListings();
     };
   });
-  document.querySelectorAll("[data-go-buy]").forEach(btn => { btn.onclick = () => { document.querySelectorAll(".page").forEach(p=>p.classList.remove("active")); document.getElementById("buyPage").classList.add("active"); }; });
+  document.querySelectorAll("[data-go-buy]").forEach(btn => { btn.onclick = goHome; });
+  const homeBtn = document.getElementById('menuHome');
+  if (homeBtn) homeBtn.onclick = goHome;
 }
 function bindAdminForms() {
   const bookForm = document.getElementById("bookForm");
@@ -2728,6 +2899,11 @@ function _updateMediumsForState(stateVal) {
       '<option value="English Medium">English Medium</option>');
 }
 function onStateFilterChange(stateVal) {
+  if(!requireLogin()) {
+    const sf = document.getElementById('stateFilter');
+    if (sf) sf.value = window._currentUser?.state || '';
+    return;
+  }
   selectedState = stateVal;
   // Reset board/stream selection when state changes
   selectedBoard = ""; selectedStream = ""; selectedBookId = "";
@@ -2745,6 +2921,11 @@ function onStateFilterChange(stateVal) {
   render();
 }
 function onStateFilterChange2(stateVal) {
+  if(!requireLogin()) {
+    const sf = document.getElementById('stateFilter2');
+    if (sf) sf.value = window._currentUser?.state || '';
+    return;
+  }
   selectedState = stateVal;
   selectedBoard = ""; selectedStream = ""; selectedBookId = "";
   if (catalogStep === "boards" || catalogStep === "streams" || catalogStep === "books") {
@@ -2817,6 +2998,8 @@ init();
     loginDialog.close();
     signupDialog.showModal();
   }
+  window.openSignup = openSignup;
+  window.openLogin = openLogin;
   function _resetSignupToStage1() {
     const s1 = document.getElementById('signupStage1');
     const s2 = document.getElementById('signupStage2');
@@ -2866,11 +3049,13 @@ init();
     signupDialog.close();
 
     const menuLoginCard = document.getElementById('menuLoginCard');
+    const menuHome      = document.getElementById('menuHome');
     const menuSell      = document.getElementById('menuSell');
     const menuListings  = document.getElementById('menuListings');
     const menuAccount   = document.getElementById('menuAccount');
     const menuLogout    = document.getElementById('menuLogout');
     if (menuLoginCard) menuLoginCard.style.display = 'none';
+    if (menuHome)      menuHome.style.display = '';
     if (menuSell)      menuSell.style.display = '';
     if (menuListings)  menuListings.style.display = '';
     if (menuAccount)   menuAccount.style.display = '';
@@ -2888,7 +3073,9 @@ init();
       if (_auth) _auth.signOut().catch(()=>{});
       window._isLoggedIn = false;
       window._currentUser = null;
+      updateAccessControls();
       if (menuLoginCard) menuLoginCard.style.display = '';
+      if (menuHome)      menuHome.style.display = 'none';
       if (menuSell)      menuSell.style.display = 'none';
       if (menuListings)  menuListings.style.display = 'none';
       if (menuAccount)   menuAccount.style.display = 'none';
@@ -2902,6 +3089,9 @@ init();
     };
 
     // Pre-fill sell form with user's default location
+    loadRemoteAppData();
+    updateAccessControls();
+    setTimeout(_prefillBuyFromProfile, 150);
     setTimeout(_prefillSellFromProfile, 200);
 
     toast('✅ Welcome! You are logged in.');
