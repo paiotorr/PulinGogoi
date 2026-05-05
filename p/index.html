@@ -206,21 +206,6 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 .pw-eye { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; color: #9ca3af; font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center; transition: color 0.15s; }
 .pw-eye:hover { color: var(--red); }
 .pw-wrap input:disabled ~ .pw-eye { pointer-events: none; color: #d1d5db; }
-/* GUEST LOCK */
-.guest-locked { position: relative; pointer-events: none; opacity: 0.6; }
-.guest-lock-overlay { position: absolute; inset: 0; background: rgba(241,248,243,0.6); display: flex; align-items: center; justify-content: center; border-radius: inherit; z-index: 10; cursor: pointer; pointer-events: all; }
-.guest-lock-badge { background: white; border: 2px solid var(--border); border-radius: 12px; padding: 8px 16px; font-size: 13px; font-weight: 900; color: var(--red); display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(0,0,0,0.1); }
-/* DROPDOWN WRAP for place/school in sell form */
-.dd-wrap { position: relative; display: flex; align-items: center; gap: 0; }
-.dd-wrap input { flex: 1; border-radius: 10px 0 0 10px; }
-.dd-wrap select { width: auto; min-width: 36px; max-width: 36px; border-radius: 0 10px 10px 0; border-left: none; padding: 0 6px; cursor: pointer; background: var(--red-light); color: var(--red); font-weight: 900; appearance: none; -webkit-appearance: none; text-align: center; }
-.dd-wrap .dd-arrow { min-width: 36px; height: 42px; background: var(--red-light); border: 2px solid var(--line); border-left: none; border-radius: 0 10px 10px 0; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--red); font-size: 14px; user-select: none; flex-shrink: 0; }
-.dd-wrap .dd-arrow:hover { background: var(--border); }
-.dd-dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: white; border: 2px solid var(--line); border-radius: 12px; box-shadow: 0 10px 28px rgba(0,0,0,0.13); max-height: 190px; overflow-y: auto; z-index: 200; display: none; }
-.dd-dropdown.open { display: block; }
-.dd-dropdown .dd-item { padding: 11px 14px; font-size: 14px; font-weight: 700; cursor: pointer; border-bottom: 1px solid var(--line); color: var(--text); transition: background 0.1s; }
-.dd-dropdown .dd-item:last-child { border-bottom: none; }
-.dd-dropdown .dd-item:hover { background: var(--red-light); color: var(--red); }
 .ac-wrap { position: relative; }
 .ac-wrap input { padding-right: 52px; }
 .ac-ok { position: absolute; right: 7px; top: 50%; transform: translateY(-50%); background: var(--red); color: white; border: none; border-radius: 8px; font-size: 12px; font-weight: 900; padding: 5px 11px; cursor: pointer; display: none; z-index: 5; transition: background 0.15s; white-space: nowrap; }
@@ -250,7 +235,6 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
       <button class="menu-login-btn" id="loginBtn" type="button">Login</button>
       <button class="menu-create-btn" id="menuGoSignup" type="button">Create Account</button>
     </div>
-    <button data-page="buy" id="menuHome" style="display:none;">🏠 Home</button>
     <button data-page="sell" id="menuSell" style="display:none;">📦 Sell Books</button>
     <button data-page="myListings" id="menuListings" style="display:none;">📚 My Listings</button>
     <button type="button" id="menuAccount" style="display:none;">👤 Account Details</button>
@@ -261,22 +245,14 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
   <main class="main">
     <section class="page active" id="buyPage">
       <div class="page-head">
-        <div class="search-wrap" style="position:relative;">
+        <div class="search-wrap">
           <input id="searchInput" placeholder="Search books">
           <button id="clearSearch" type="button" aria-label="Clear">x</button>
-          <div id="searchLockOverlay" class="guest-lock-overlay" onclick="openSignupFromLock()" style="border-radius:10px;display:none;">
-            <div class="guest-lock-badge">🔒 Login to search</div>
-          </div>
         </div>
       </div>
       <div class="location-lock">
         <div><span>Country</span><strong>India</strong></div>
-        <div style="position:relative;">
-          <span>States</span><select id="stateFilter" class="location-select" onchange="onStateFilterChange(this.value)"><option value="">— Select State —</option><option value="Assam">Assam</option></select>
-          <div id="stateLockOverlay" class="guest-lock-overlay" onclick="openSignupFromLock()" style="border-radius:16px;display:none;">
-            <div class="guest-lock-badge">🔒 Login to select state</div>
-          </div>
-        </div>
+        <div><span>States</span><select id="stateFilter" class="location-select" onchange="onStateFilterChange(this.value)"><option value="">— Select State —</option><option value="Assam">Assam</option></select></div>
       </div>
       <div class="card">
         <div class="card-head">
@@ -317,7 +293,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
     <section class="page" id="sellPage">
       <div class="page-head">
         <h1>Sell Books</h1>
-        <button class="btn btn-ghost" type="button" data-go-buy>🏠 Home</button>
+        <button class="btn btn-ghost" type="button" data-go-buy>Back</button>
       </div>
       <div class="location-lock">
         <div><span>Country</span><strong>India</strong></div>
@@ -352,20 +328,8 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
             <label class="wide">State <select id="sellState" onchange="updateSellDistricts()"><option value="">— Select Your State —</option><option value="Assam">Assam</option></select></label>
             <label>District <select id="sellDistrict" onchange="updateSellSubDistricts()"></select></label>
             <label>Sub-District <select id="sellSubDistrict" onchange="updateSellPlaces()"></select></label>
-            <label>Place <input id="sellPlace" list="sellPlaceOptions" onchange="updateSellSchools()" placeholder="Place / town"><datalist id="sellPlaceOptions"></datalist>
-              <div class="dd-wrap" style="margin-top:4px;display:none;" id="sellPlaceDDWrap">
-                <input type="text" id="sellPlaceInput" placeholder="Type or pick place / town" oninput="onSellPlaceInput(this.value)" autocomplete="off">
-                <div class="dd-arrow" onclick="toggleSellPlaceDD()" title="Show all places">▼</div>
-                <div class="dd-dropdown" id="sellPlaceDD"></div>
-              </div>
-            </label>
-            <label class="wide">School <input id="sellSchool" list="sellSchoolOptions" placeholder="School / college"><datalist id="sellSchoolOptions"></datalist>
-              <div class="dd-wrap" style="margin-top:4px;display:none;" id="sellSchoolDDWrap">
-                <input type="text" id="sellSchoolInput" placeholder="Type or pick school / college" oninput="onSellSchoolInput(this.value)" autocomplete="off">
-                <div class="dd-arrow" onclick="toggleSellSchoolDD()" title="Show all schools">▼</div>
-                <div class="dd-dropdown" id="sellSchoolDD"></div>
-              </div>
-            </label>
+            <label>Place <input id="sellPlace" list="sellPlaceOptions" onchange="updateSellSchools()" placeholder="Place / town"><datalist id="sellPlaceOptions"></datalist></label>
+            <label class="wide">School <input id="sellSchool" list="sellSchoolOptions" placeholder="School / college"><datalist id="sellSchoolOptions"></datalist></label>
             <label class="wide">Condition
               <select id="sellCondition">
                 <option>Like new</option><option>Good</option><option>Usable</option>
@@ -382,7 +346,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
     <section class="page" id="myListingsPage">
       <div class="page-head">
         <h1>My Listings</h1>
-        <button class="btn btn-ghost" type="button" data-go-buy>🏠 Home</button>
+        <button class="btn btn-ghost" type="button" data-go-buy>Back</button>
       </div>
       <div class="card">
         <div class="card-head"><h2>Your Listed Books</h2></div>
@@ -1746,10 +1710,7 @@ function renderClasses() {
   grid.style.display = catalogStep === "classes" ? "grid" : "none";
   grid.innerHTML = all.map(name => '<button class="class-card ' + (name===selectedClass?"active":"") + '" data-class="' + name + '"><img src="' + imageForClass(name) + '" alt="' + name + '"/><div class="card-info"><strong>' + name + '</strong><span>' + state.books.filter(b=>b.className===name&&(b.type!=="general"||state.settings.general)).length + ' books</span></div></button>').join("");
   document.querySelectorAll(".class-card").forEach(card => {
-    card.onclick = () => {
-      if (!window._isLoggedIn) { openSignupFromLock(); return; }
-      selectedClass = card.dataset.class; selectedBoard=""; selectedStream=""; selectedBookId=""; selectedCategory=""; catalogStep = selectedClass === "General" ? "books" : "boards"; render();
-    };
+    card.onclick = () => { selectedClass = card.dataset.class; selectedBoard=""; selectedStream=""; selectedBookId=""; selectedCategory=""; catalogStep = selectedClass === "General" ? "books" : "boards"; render(); };
   });
 }
 function renderCategories() {
@@ -2035,14 +1996,8 @@ function _prefillSellFromProfile() {
         updateSellPlaces();
         setTimeout(() => {
           set('sellPlace', u.place);
-          const pInp = document.getElementById('sellPlaceInput');
-          if (pInp) pInp.value = u.place || '';
           updateSellSchools();
-          setTimeout(() => {
-            set('sellSchool', u.school);
-            const sInp = document.getElementById('sellSchoolInput');
-            if (sInp) sInp.value = u.school || '';
-          }, 50);
+          setTimeout(() => { set('sellSchool', u.school); }, 50);
         }, 50);
       }, 50);
     }, 50);
@@ -2053,94 +2008,11 @@ function _prefillSellFromProfile() {
   // Pre-fill instagram (read-only in sell form)
   set('sellInstagram', u.insta);
 }
-// Pre-fill buy form from user profile
-function _prefillBuyFromProfile() {
-  const u = window._currentUser;
-  if (!u) return;
-  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
-  // Sync state filter
-  const stateVal = u.state || '';
-  if (stateVal) {
-    set('stateFilter', stateVal);
-    onStateFilterChange(stateVal);
-  }
-  set('buyState', stateVal);
-  if (stateVal) {
-    updateBuyDistricts();
-    setTimeout(() => {
-      set('buyDistrict', u.district);
-      updateBuySubDistricts();
-      setTimeout(() => {
-        set('buySubDistrict', u.subDistrict);
-        updateBuyPlaces();
-        setTimeout(() => {
-          set('buyPlace', u.place);
-          updateBuySchools();
-          setTimeout(() => { set('buySchool', u.school); }, 50);
-        }, 50);
-      }, 50);
-    }, 50);
-  }
-}
-// Open signup dialog from lock overlays / class card clicks
-function openSignupFromLock() {
-  const signupDialog = document.getElementById('signupDialog');
-  if (signupDialog) signupDialog.showModal();
-}
+function renderMatches(bookId) {
   const bId = bookId || selectedBookId;
   const list = document.querySelector("#matchList");
-  const buyPlace       = (document.getElementById('buyPlace')?.value       || '').toLowerCase().trim();
-  const buySubDistrict = (document.getElementById('buySubDistrict')?.value || '').toLowerCase().trim();
-  let matches = state.listings.filter(l => l.bookId === bId);
-  // Sort: same place → same sub-district → newest
-  matches = matches.sort((a, b) => {
-    const aPlace = (a.place || '').toLowerCase().trim();
-    const bPlace = (b.place || '').toLowerCase().trim();
-    const aSD    = (a.subDistrict || '').toLowerCase().trim();
-    const bSD    = (b.subDistrict || '').toLowerCase().trim();
-    const aScore = (aPlace === buyPlace ? 2 : 0) + (aSD === buySubDistrict ? 1 : 0);
-    const bScore = (bPlace === buyPlace ? 2 : 0) + (bSD === buySubDistrict ? 1 : 0);
-    if (bScore !== aScore) return bScore - aScore;
-    // Newest first
-    return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
-  });
-  list.innerHTML = matches.length ? matches.map(l => {
-    const locationParts = [l.place, l.subDistrict, l.district, l.state].filter(Boolean);
-    const locationStr = locationParts.join(' → ');
-    const isNearby = buyPlace && (l.place || '').toLowerCase().trim() === buyPlace;
-    const isSameSD = !isNearby && buySubDistrict && (l.subDistrict || '').toLowerCase().trim() === buySubDistrict;
-    const nearBadge = isNearby
-      ? '<span style="background:#dcfce7;color:#166534;border-radius:8px;font-size:11px;font-weight:900;padding:2px 8px;margin-left:6px;">📍 Near you</span>'
-      : (isSameSD ? '<span style="background:#eff6ff;color:#1e40af;border-radius:8px;font-size:11px;font-weight:900;padding:2px 8px;margin-left:6px;">🏙️ Same area</span>' : '');
-    return '<div class="result-card">' +
-      '<strong>' + _acEsc(l.sellerName || l.seller || 'Seller') + nearBadge + '</strong>' +
-      (l.school ? '<span style="color:#444;font-size:13px;font-weight:800;margin-top:2px;">🏫 ' + _acEsc(l.school) + '</span>' : '') +
-      '<span>📍 ' + _acEsc(locationStr || 'Location not set') + '</span>' +
-      '<span>Condition: ' + _acEsc(l.condition || 'Not specified') + (l.price ? ' · ₹' + l.price : '') + '</span>' +
-      '<div class="contact-row">' +
-        (state.settings.instagram && l.instagram
-          ? '<a href="https://ig.me/m/' + encodeURIComponent(l.instagram) + '" target="_blank" class="btn btn-ghost" style="font-size:12px;" onclick="_logContact(' + JSON.stringify(l.id) + ')">📸 Instagram DM</a>'
-          : '') +
-        (state.settings.whatsapp && l.whatsapp
-          ? '<a href="https://wa.me/91' + encodeURIComponent(l.whatsapp) + '?text=' + encodeURIComponent('Hi, I found your book on PKITAAP. I want to get it. Please share current photos and the condition of the book.') + '" target="_blank" class="btn btn-primary" style="font-size:12px;" onclick="_logContact(' + JSON.stringify(l.id) + ')">💬 WhatsApp</a>'
-          : '') +
-      '</div>' +
-    '</div>';
-  }).join("")
-  : '<p style="color:#888;font-size:13px;font-weight:700;padding:8px 0;">No sellers found in your area yet.</p>';
-}
-
-// Log buyer interest in Firestore
-function _logContact(listingId) {
-  if (!_db || !listingId) return;
-  const u = window._currentUser;
-  try {
-    _db.collection('buyer_interests').add({
-      listingId,
-      buyerUserId: u ? (u.uid || u.id || '') : '',
-      timestamp: new Date().toISOString()
-    }).catch(() => {});
-  } catch(e) {}
+  const matches = state.listings.filter(l => l.bookId === bId);
+  list.innerHTML = matches.length ? matches.map(l => '<div class="result-card"><strong>' + l.seller + '</strong><span>' + (l.state?l.state+' · ':'') + l.district + ', ' + l.place + (l.school?' &mdash; '+l.school:'') + '</span><span>Condition: ' + l.condition + '</span><div class="contact-row">' + (state.settings.instagram&&l.instagram?'<a href="https://instagram.com/'+l.instagram+'" target="_blank" class="btn btn-ghost" style="font-size:12px;">Instagram</a>':'') + (state.settings.whatsapp&&l.whatsapp?'<a href="https://wa.me/91'+l.whatsapp+'" target="_blank" class="btn btn-primary" style="font-size:12px;">WhatsApp</a>':'') + '</div></div>') .join("") : '<p style="color:#888;font-size:13px;font-weight:700;padding:8px 0;">No sellers found in your area yet.</p>';
 }
 function _isMineListing(l) {
   const u = window._currentUser || {};
@@ -2371,44 +2243,26 @@ function updateSellPlaces() {
   const subDistrict = document.getElementById('sellSubDistrict')?.value;
   const pSel = document.getElementById('sellPlace');
   const sSel = document.getElementById('sellSchool');
-  const pInp = document.getElementById('sellPlaceInput');
-  const sInp = document.getElementById('sellSchoolInput');
   if (!pSel) return;
   const selected = pSel.value;
   _fillChoiceControl('sellPlace', 'sellPlaceOptions', 'Place / town', _getPlaces(stateName, district, subDistrict), p => p.name, selected);
-  if (sSel)  sSel.value  = '';
-  if (sInp)  sInp.value  = '';
+  if (sSel) sSel.value = '';
   _fillChoiceControl('sellSchool', 'sellSchoolOptions', 'School / college', [], null, '');
-  window._sellPlaceOptions  = _getPlaces(stateName, district, subDistrict).map(p => p.name);
-  window._sellSchoolOptions = [];
-  // Show dd-wrap if sub-district is selected
-  const placeDDWrap  = document.getElementById('sellPlaceDDWrap');
-  if (placeDDWrap) placeDDWrap.style.display = subDistrict ? 'flex' : 'none';
-  const schoolDDWrap = document.getElementById('sellSchoolDDWrap');
-  if (schoolDDWrap) schoolDDWrap.style.display = 'none';
-  // Sync to dd-wrap input
-  if (pInp) pInp.value = selected;
   _loadCommunityPlaces(stateName, district, subDistrict).then(() => {
     const keep = pSel.value || selected;
     _fillChoiceControl('sellPlace', 'sellPlaceOptions', 'Place / town', _getPlaces(stateName, district, subDistrict), p => p.name, keep);
-    window._sellPlaceOptions = _getPlaces(stateName, district, subDistrict).map(p => p.name);
-    if (keep) { pSel.value = keep; if (pInp) pInp.value = keep; }
+    if (keep) pSel.value = keep;
   });
 }
 function updateSellSchools() {
   const stateName   = document.getElementById('sellState')?.value;
   const district    = document.getElementById('sellDistrict')?.value;
   const subDistrict = document.getElementById('sellSubDistrict')?.value;
-  const place       = (document.getElementById('sellPlaceInput')?.value || document.getElementById('sellPlace')?.value || '').trim();
+  const place       = document.getElementById('sellPlace')?.value;
   const sSel = document.getElementById('sellSchool');
-  const sInp = document.getElementById('sellSchoolInput');
   _fillChoiceControl('sellSchool', 'sellSchoolOptions', 'School / college', _getSchools(stateName, district, subDistrict, place), null, sSel?.value || '');
-  window._sellSchoolOptions = _getSchools(stateName, district, subDistrict, place);
-  const schoolDDWrap = document.getElementById('sellSchoolDDWrap');
-  if (schoolDDWrap) schoolDDWrap.style.display = place ? 'flex' : 'none';
   if (place) _loadCommunitySchools(stateName, district, subDistrict, place).then(() => {
     _fillChoiceControl('sellSchool', 'sellSchoolOptions', 'School / college', _getSchools(stateName, district, subDistrict, place), null, sSel?.value || '');
-    window._sellSchoolOptions = _getSchools(stateName, district, subDistrict, place);
   });
 }
 function updateSignupDistricts() {
@@ -2760,8 +2614,8 @@ function bindSellForm() {
     const listingState = document.getElementById("sellState")?.value || "";
     const listingDistrict = document.getElementById("sellDistrict")?.value || "";
     const listingSubDistrict = document.getElementById("sellSubDistrict")?.value || "";
-    const listingPlace = ((document.getElementById("sellPlaceInput")?.value || document.getElementById("sellPlace")?.value || "")).trim();
-    const listingSchool = ((document.getElementById("sellSchoolInput")?.value || document.getElementById("sellSchool")?.value || "")).trim();
+    const listingPlace = (document.getElementById("sellPlace")?.value || "").trim();
+    const listingSchool = (document.getElementById("sellSchool")?.value || "").trim();
     if(!listingState || !listingDistrict || !listingSubDistrict || !listingPlace || !listingSchool){
       toast("Please fill state, district, sub-district, place and school");
       return;
@@ -2912,99 +2766,6 @@ function init() {
   bindSellForm();
   bindPageNav();
   bindAdminForms();
-
-  // ── Initialize guest lock overlays ────────────────────────────
-  if (!window._isLoggedIn) {
-    const searchLock = document.getElementById('searchLockOverlay');
-    const stateLock  = document.getElementById('stateLockOverlay');
-    if (searchLock) searchLock.style.display = '';
-    if (stateLock)  stateLock.style.display  = '';
-  }
-
-  // ── Sell form place & school dropdown helpers ─────────────────
-  window._sellPlaceOptions  = [];
-  window._sellSchoolOptions = [];
-  window.onSellPlaceInput = function(val) {
-    const q = val.trim().toLowerCase();
-    const filtered = q ? window._sellPlaceOptions.filter(p => p.toLowerCase().includes(q)) : window._sellPlaceOptions;
-    const dd = document.getElementById('sellPlaceDD');
-    if (!dd) return;
-    if (!filtered.length) { dd.classList.remove('open'); dd.innerHTML = ''; return; }
-    dd.innerHTML = filtered.map(p => '<div class="dd-item" onmousedown="event.preventDefault();selectSellPlace(' + JSON.stringify(p) + ')">' + _acEsc(p) + '</div>').join('');
-    dd.classList.add('open');
-    // Sync back to legacy input
-    document.getElementById('sellPlace').value = val;
-    updateSellSchools();
-  };
-  window.onSellSchoolInput = function(val) {
-    const q = val.trim().toLowerCase();
-    const filtered = q ? window._sellSchoolOptions.filter(s => s.toLowerCase().includes(q)) : window._sellSchoolOptions;
-    const dd = document.getElementById('sellSchoolDD');
-    if (!dd) return;
-    if (!filtered.length) { dd.classList.remove('open'); dd.innerHTML = ''; return; }
-    dd.innerHTML = filtered.map(s => '<div class="dd-item" onmousedown="event.preventDefault();selectSellSchool(' + JSON.stringify(s) + ')">' + _acEsc(s) + '</div>').join('');
-    dd.classList.add('open');
-    document.getElementById('sellSchool').value = val;
-  };
-  window.selectSellPlace = function(val) {
-    const dd = document.getElementById('sellPlaceDD');
-    if (dd) { dd.classList.remove('open'); dd.innerHTML = ''; }
-    const inp = document.getElementById('sellPlaceInput');
-    if (inp) inp.value = val;
-    document.getElementById('sellPlace').value = val;
-    updateSellSchools();
-    _refreshSellSchoolDD();
-  };
-  window.selectSellSchool = function(val) {
-    const dd = document.getElementById('sellSchoolDD');
-    if (dd) { dd.classList.remove('open'); dd.innerHTML = ''; }
-    const inp = document.getElementById('sellSchoolInput');
-    if (inp) inp.value = val;
-    document.getElementById('sellSchool').value = val;
-  };
-  window.toggleSellPlaceDD = function() {
-    const dd = document.getElementById('sellPlaceDD');
-    if (!dd) return;
-    if (dd.classList.contains('open')) { dd.classList.remove('open'); return; }
-    const opts = window._sellPlaceOptions;
-    if (!opts.length) { toast('No places found. Type your place name.'); return; }
-    dd.innerHTML = opts.map(p => '<div class="dd-item" onmousedown="event.preventDefault();selectSellPlace(' + JSON.stringify(p) + ')">' + _acEsc(p) + '</div>').join('');
-    dd.classList.add('open');
-  };
-  window.toggleSellSchoolDD = function() {
-    const dd = document.getElementById('sellSchoolDD');
-    if (!dd) return;
-    if (dd.classList.contains('open')) { dd.classList.remove('open'); return; }
-    const opts = window._sellSchoolOptions;
-    if (!opts.length) { toast('No schools found. Type your school name.'); return; }
-    dd.innerHTML = opts.map(s => '<div class="dd-item" onmousedown="event.preventDefault();selectSellSchool(' + JSON.stringify(s) + ')">' + _acEsc(s) + '</div>').join('');
-    dd.classList.add('open');
-  };
-  function _refreshSellSchoolDD() {
-    const st = document.getElementById('sellState')?.value;
-    const d  = document.getElementById('sellDistrict')?.value;
-    const sd = document.getElementById('sellSubDistrict')?.value;
-    const pl = (document.getElementById('sellPlaceInput')?.value || document.getElementById('sellPlace')?.value || '').trim();
-    window._sellSchoolOptions = _getSchools(st, d, sd, pl);
-    if (pl) _loadCommunitySchools(st, d, sd, pl).then(() => {
-      window._sellSchoolOptions = _getSchools(st, d, sd, pl);
-    });
-    const inp = document.getElementById('sellSchoolInput');
-    const dd  = document.getElementById('sellSchoolDD');
-    if (inp) inp.value = '';
-    if (dd)  dd.classList.remove('open');
-    document.getElementById('sellSchool').value = '';
-  }
-  // Close dropdowns on outside click
-  document.addEventListener('click', function(e) {
-    ['sellPlaceDD','sellSchoolDD','placeAcList','schoolAcList'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el && !el.parentElement?.contains(e.target)) {
-        if (el.classList) el.classList.remove('open');
-        else el.style.display = 'none';
-      }
-    });
-  });
   // Sell page back button
   const sellBack = document.getElementById('sellBackBtn');
   if (sellBack) sellBack.onclick = () => {
@@ -3105,22 +2866,15 @@ init();
     signupDialog.close();
 
     const menuLoginCard = document.getElementById('menuLoginCard');
-    const menuHome      = document.getElementById('menuHome');
     const menuSell      = document.getElementById('menuSell');
     const menuListings  = document.getElementById('menuListings');
     const menuAccount   = document.getElementById('menuAccount');
     const menuLogout    = document.getElementById('menuLogout');
     if (menuLoginCard) menuLoginCard.style.display = 'none';
-    if (menuHome)      menuHome.style.display = '';
     if (menuSell)      menuSell.style.display = '';
     if (menuListings)  menuListings.style.display = '';
     if (menuAccount)   menuAccount.style.display = '';
     if (menuLogout)    menuLogout.style.display = '';
-    // Remove guest lock overlays
-    const searchLock = document.getElementById('searchLockOverlay');
-    const stateLock  = document.getElementById('stateLockOverlay');
-    if (searchLock) searchLock.style.display = 'none';
-    if (stateLock)  stateLock.style.display  = 'none';
 
     // Wire account details button
     if (menuAccount) menuAccount.onclick = function() {
@@ -3135,16 +2889,10 @@ init();
       window._isLoggedIn = false;
       window._currentUser = null;
       if (menuLoginCard) menuLoginCard.style.display = '';
-      if (menuHome)      menuHome.style.display = 'none';
       if (menuSell)      menuSell.style.display = 'none';
       if (menuListings)  menuListings.style.display = 'none';
       if (menuAccount)   menuAccount.style.display = 'none';
       if (menuLogout)    menuLogout.style.display = 'none';
-      // Re-apply guest lock overlays
-      const searchLock2 = document.getElementById('searchLockOverlay');
-      const stateLock2  = document.getElementById('stateLockOverlay');
-      if (searchLock2) searchLock2.style.display = '';
-      if (stateLock2)  stateLock2.style.display  = '';
       document.getElementById('menuBtn')?.classList.remove('open');
       document.getElementById('menuPanel')?.classList.remove('open');
       toast('👋 Logged out successfully.');
@@ -3155,8 +2903,6 @@ init();
 
     // Pre-fill sell form with user's default location
     setTimeout(_prefillSellFromProfile, 200);
-    // Pre-fill buy form with user's default location
-    setTimeout(_prefillBuyFromProfile, 400);
 
     toast('✅ Welcome! You are logged in.');
   }
