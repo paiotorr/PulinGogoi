@@ -161,14 +161,23 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 .auth-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .auth-row.profile-stack { grid-template-columns: 1fr; gap: 16px; }
 .auth-field.profile-wide { grid-column: 1 / -1; }
-.dob-picker { display: grid; grid-template-columns: 1fr 1.25fr 1fr; gap: 12px; background: #f9fafb; border: 2px solid var(--line); border-radius: 14px; padding: 12px; }
+.dob-summary { align-items: center; background: #f9fafb; border: 2px solid var(--line); border-radius: 12px; color: #111827; cursor: pointer; display: flex; font-size: 15px; font-weight: 900; justify-content: space-between; min-height: 48px; outline: none; padding: 10px 14px; text-align: left; width: 100%; transition: border-color 0.15s, background 0.15s; }
+.dob-summary::after { content: "▾"; color: var(--muted); font-size: 14px; font-weight: 900; margin-left: 10px; }
+.dob-summary:hover, .dob-summary:focus { background: white; border-color: var(--red); }
+.dob-summary.is-empty { color: var(--muted); }
+.dob-summary:disabled { background: #f3f4f6; border-color: #e5e7eb; color: #9ca3af; cursor: not-allowed; }
+.dob-picker { display: grid; grid-template-columns: 1fr 1.25fr 1fr; gap: 12px; background: #f9fafb; border: 2px solid var(--line); border-radius: 14px; margin-top: 8px; padding: 12px; }
+.dob-picker.is-collapsed { display: none; }
 .dob-part { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .dob-part select { appearance: none; background: transparent; border: 0; border-bottom: 3px solid #111827; border-radius: 0; color: #111827; font-size: 17px; font-weight: 900; min-height: 42px; padding: 4px 2px 7px; text-align: center; text-align-last: center; }
 .dob-part span { color: var(--muted); font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.6px; }
+.dob-actions { display: flex; grid-column: 1 / -1; justify-content: flex-end; }
+.dob-ok { background: var(--red); border: 0; border-radius: 10px; color: white; cursor: pointer; font-size: 13px; font-weight: 900; min-height: 36px; padding: 0 18px; }
+.dob-ok:hover { background: var(--red-dark); }
 .dob-picker:focus-within { border-color: var(--red); background: white; }
 .auth-insta-wrap { display: flex; align-items: center; background: #f9fafb; border: 2px solid var(--line); border-radius: 12px; overflow: hidden; transition: border-color 0.15s; }
 .auth-insta-wrap:focus-within { border-color: var(--red); background: white; }
-.auth-field.is-locked .auth-insta-wrap, .auth-field.is-locked .dob-picker { background: #f3f4f6; border-color: #e5e7eb; }
+.auth-field.is-locked .auth-insta-wrap, .auth-field.is-locked .dob-picker, .auth-field.is-locked .dob-summary { background: #f3f4f6; border-color: #e5e7eb; }
 .auth-insta-at { background: var(--red-light); color: var(--red); font-size: 16px; font-weight: 900; padding: 0 12px; min-height: 48px; display: flex; align-items: center; border-right: 2px solid var(--line); }
 .auth-insta-input { background: transparent !important; border: none !important; border-radius: 0 !important; flex: 1; min-height: 48px; outline: none; padding: 10px 12px !important; }
 #toast { background: #222; border-radius: 12px; bottom: 24px; color: white; font-weight: 900; opacity: 0; padding: 12px 18px; pointer-events: none; position: fixed; right: 24px; transform: translateY(12px); transition: 0.2s; z-index: 50; }
@@ -476,10 +485,12 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
         </div>
         <div class="auth-field">
           <label>Date of Birth <span style="color:#ef4444;font-size:11px;"> *required</span></label>
-          <div class="dob-picker">
+          <button type="button" class="dob-summary is-empty" id="signupDobSummary" onclick="toggleDobPicker('signup', true)">Select date of birth</button>
+          <div class="dob-picker is-collapsed" id="signupDobPicker">
             <div class="dob-part"><span>Day</span><select id="signupDobDay" required></select></div>
             <div class="dob-part"><span>Month</span><select id="signupDobMonth" required></select></div>
             <div class="dob-part"><span>Year</span><select id="signupDobYear" required></select></div>
+            <div class="dob-actions"><button type="button" class="dob-ok" onclick="applyDobPicker('signup')">OK</button></div>
           </div>
         </div>
         <!-- passport field is OFF -->
@@ -569,10 +580,12 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
       </div>
       <div class="auth-field">
         <label>Date of Birth</label>
-        <div class="dob-picker">
+        <button type="button" class="dob-summary is-empty" id="accDobSummary" onclick="toggleDobPicker('acc', true)">Select date of birth</button>
+        <div class="dob-picker is-collapsed" id="accDobPicker">
           <div class="dob-part"><span>Day</span><select id="accDobDay"></select></div>
           <div class="dob-part"><span>Month</span><select id="accDobMonth"></select></div>
           <div class="dob-part"><span>Year</span><select id="accDobYear"></select></div>
+          <div class="dob-actions"><button type="button" class="dob-ok" onclick="applyDobPicker('acc')">OK</button></div>
         </div>
       </div>
       <div class="auth-field">
@@ -3153,6 +3166,7 @@ function _setSignupControlEnabled(id, enabled) {
 
 function _setSignupGroupEnabled(ids, enabled) {
   ids.forEach(id => _setSignupControlEnabled(id, enabled));
+  if (ids.includes('signupDobDay')) setDobPickerEnabled('signup', enabled);
 }
 
 function _updateSignupProgressLocks() {
@@ -3500,7 +3514,8 @@ function initDobSelectors(prefix) {
   m.innerHTML = '<option value="">Month</option>' + DOB_MONTHS.map((name,i)=>'<option value="'+String(i+1).padStart(2,'0')+'">'+name+'</option>').join('');
   const nowYear = new Date().getFullYear();
   y.innerHTML = '<option value="">Year</option>' + Array.from({length:80}, (_,i)=>String(nowYear - 5 - i)).map(v=>'<option value="'+v+'">'+v+'</option>').join('');
-  [d,m,y].forEach(el=>el.addEventListener('change', ()=>{ normalizeDobDay(prefix); if(prefix==='signup') _checkUnlockPassword(); }));
+  [d,m,y].forEach(el=>el.addEventListener('change', ()=> onDobChanged(prefix)));
+  updateDobSummary(prefix);
 }
 function normalizeDobDay(prefix) {
   const d = document.getElementById(prefix + 'DobDay');
@@ -3516,6 +3531,53 @@ function getDobValue(prefix) {
   const m = document.getElementById(prefix + 'DobMonth')?.value || '';
   const y = document.getElementById(prefix + 'DobYear')?.value || '';
   return (d && m && y) ? (y + '-' + m + '-' + d) : '';
+}
+function _dobSummaryText(value) {
+  return value ? (formatDob(value) || value) : 'Select date of birth';
+}
+function updateDobSummary(prefix) {
+  const btn = document.getElementById(prefix + 'DobSummary');
+  if (!btn) return;
+  const value = getDobValue(prefix);
+  btn.textContent = _dobSummaryText(value);
+  btn.classList.toggle('is-empty', !value);
+}
+function toggleDobPicker(prefix, open) {
+  const picker = document.getElementById(prefix + 'DobPicker');
+  const btn = document.getElementById(prefix + 'DobSummary');
+  if (!picker || (btn && btn.disabled)) return;
+  const shouldOpen = typeof open === 'boolean' ? open : picker.classList.contains('is-collapsed');
+  picker.classList.toggle('is-collapsed', !shouldOpen);
+  if (shouldOpen) {
+    picker.dataset.openHadValue = getDobValue(prefix) ? '1' : '0';
+    setTimeout(() => {
+      const firstEmpty = ['Day','Month','Year']
+        .map(part => document.getElementById(prefix + 'Dob' + part))
+        .find(el => el && !el.value);
+      (firstEmpty || document.getElementById(prefix + 'DobDay'))?.focus();
+    }, 30);
+  }
+}
+function setDobPickerEnabled(prefix, enabled) {
+  const btn = document.getElementById(prefix + 'DobSummary');
+  if (btn) btn.disabled = !enabled;
+  if (!enabled) toggleDobPicker(prefix, false);
+}
+function onDobChanged(prefix) {
+  normalizeDobDay(prefix);
+  updateDobSummary(prefix);
+  if (prefix === 'signup') _checkUnlockPassword();
+  const picker = document.getElementById(prefix + 'DobPicker');
+  if (getDobValue(prefix) && picker?.dataset.openHadValue !== '1') {
+    setTimeout(() => toggleDobPicker(prefix, false), 140);
+  }
+}
+function applyDobPicker(prefix) {
+  const value = getDobValue(prefix);
+  if (!value) { toast('Please select day, month and year'); return; }
+  updateDobSummary(prefix);
+  toggleDobPicker(prefix, false);
+  if (prefix === 'signup') _checkUnlockPassword();
 }
 function _dobPartsFromValue(value) {
   if (!value) return null;
@@ -3579,6 +3641,8 @@ function setDobValue(prefix, value) {
   m.value = parts ? parts.m : '';
   d.value = parts ? parts.d : '';
   normalizeDobDay(prefix);
+  updateDobSummary(prefix);
+  toggleDobPicker(prefix, false);
 }
 function formatDob(value) {
   const parts = String(value || '').match(/^(d{4})-(d{2})-(d{2})$/);
