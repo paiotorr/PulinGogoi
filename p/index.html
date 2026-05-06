@@ -151,6 +151,8 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 .auth-link { background: none; border: none; color: var(--red); cursor: pointer; font-size: 13px; font-weight: 900; padding: 0; text-decoration: underline; }
 .auth-link:hover { color: var(--red-dark); }
 .auth-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.auth-row.profile-stack { grid-template-columns: 1fr; gap: 16px; }
+.auth-field.profile-wide { grid-column: 1 / -1; }
 .dob-picker { display: grid; grid-template-columns: 1fr 1.25fr 1fr; gap: 12px; background: #f9fafb; border: 2px solid var(--line); border-radius: 14px; padding: 12px; }
 .dob-part { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .dob-part select { appearance: none; background: transparent; border: 0; border-bottom: 3px solid #111827; border-radius: 0; color: #111827; font-size: 17px; font-weight: 900; min-height: 42px; padding: 4px 2px 7px; text-align: center; text-align-last: center; }
@@ -176,13 +178,13 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 /* FLOATING INPUT PREVIEW BUBBLE */
 .input-preview-bubble {
   position: absolute;
-  bottom: calc(100% + 10px);
+  bottom: calc(100% + 12px);
   left: 0; right: 0;
   background: #1f2937;
   color: #f9fafb;
-  border-radius: 12px;
-  padding: 9px 14px;
-  font-size: 14px;
+  border-radius: 14px;
+  padding: 12px 15px;
+  font-size: 15px;
   font-weight: 700;
   word-break: break-word;
   line-height: 1.5;
@@ -212,14 +214,15 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 .pw-eye:hover { color: var(--red); }
 .pw-wrap input:disabled ~ .pw-eye { pointer-events: none; color: #d1d5db; }
 .ac-wrap { position: relative; }
-.ac-wrap input { padding-right: 52px; }
-.ac-ok { position: absolute; right: 7px; top: 50%; transform: translateY(-50%); background: var(--red); color: white; border: none; border-radius: 8px; font-size: 12px; font-weight: 900; padding: 5px 11px; cursor: pointer; display: none; z-index: 5; transition: background 0.15s; white-space: nowrap; }
+.ac-wrap input { min-height: 56px; padding-right: 58px; }
+.ac-ok { position: absolute; right: 8px; top: 28px; transform: translateY(-50%); background: var(--red); color: white; border: none; border-radius: 9px; font-size: 12px; font-weight: 900; padding: 6px 12px; cursor: pointer; display: none; z-index: 5; transition: background 0.15s; white-space: nowrap; }
 .ac-ok:hover { background: var(--red-dark); }
 .ac-wrap input:disabled { background: #f3f4f6; color: #aaa; cursor: not-allowed; border-color: #e5e7eb; }
-.ac-list { position: absolute; bottom: calc(100% + 4px); left: 0; right: 0; background: white; border: 2px solid var(--line); border-radius: 12px; box-shadow: 0 -10px 28px rgba(0,0,0,0.13); max-height: 190px; overflow-y: auto; z-index: 200; display: none; }
-.ac-item { padding: 11px 14px; font-size: 14px; font-weight: 700; cursor: pointer; border-bottom: 1px solid var(--line); color: var(--text); transition: background 0.1s; }
+.ac-list { background: #fff; border: 2px solid var(--line); border-radius: 14px; box-shadow: 0 10px 26px rgba(0,0,0,0.12); display: none; margin-top: 8px; max-height: 230px; overflow-y: auto; position: relative; z-index: 200; }
+.ac-item { padding: 13px 14px; font-size: 15px; font-weight: 800; cursor: pointer; border-bottom: 1px solid var(--line); color: var(--text); line-height: 1.35; transition: background 0.1s; white-space: normal; word-break: break-word; }
 .ac-item:last-child { border-bottom: none; }
 .ac-item:hover { background: var(--red-light); color: var(--red); }
+.ac-empty { color: var(--muted); font-size: 13px; font-weight: 800; line-height: 1.45; padding: 13px 14px; }
 .locked-control { opacity: 0.5; pointer-events: none; }
 .home-link { color: var(--red) !important; font-weight: 900 !important; }
 .page-head { align-items: center; display: flex; gap: 12px; justify-content: space-between; }
@@ -262,7 +265,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
       </div>
       <div class="location-lock">
         <div><span>Country</span><strong>India</strong></div>
-        <div><span>States</span><select id="stateFilter" class="location-select" onchange="onStateFilterChange(this.value)" disabled><option value="">— Select State —</option><option value="Assam">Assam</option></select></div>
+        <div><span>States</span><select id="stateFilter" class="location-select" onchange="onStateFilterChange(this.value)" disabled><option value="">— Select State —</option><option value="Assam">Assam</option><option value="Delhi">Delhi</option></select></div>
       </div>
       <div class="card">
         <div class="card-head">
@@ -284,7 +287,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
         <div class="card-head"><h2>Match</h2></div>
         <div class="card-body">
           <form id="buyForm" class="form-grid">
-            <label class="wide">State <span style="color:#ef4444;font-size:11px;"> *required</span><select id="buyState" required onchange="updateBuyDistricts()"><option value="">— Select Your State —</option><option value="Assam">Assam</option></select></label>
+            <label class="wide">State <span style="color:#ef4444;font-size:11px;"> *required</span><select id="buyState" required onchange="updateBuyDistricts()"><option value="">— Select Your State —</option><option value="Assam">Assam</option><option value="Delhi">Delhi</option></select></label>
             <label>District <span style="color:#ef4444;font-size:11px;"> *required</span><select id="buyDistrict" required onchange="updateBuySubDistricts()"></select></label>
             <label>Sub-District <span style="color:#ef4444;font-size:11px;"> *required</span><select id="buySubDistrict" required onchange="updateBuyPlaces()"></select></label>
             <label>Place <span style="color:#ef4444;font-size:11px;"> *required</span><select id="buyPlace" required onchange="updateBuySchools()"></select></label>
@@ -307,7 +310,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
       </div>
       <div class="location-lock">
         <div><span>Country</span><strong>India</strong></div>
-        <div><span>States</span><select id="stateFilter2" class="location-select" onchange="onStateFilterChange2(this.value)"><option value="">— Select State —</option><option value="Assam">Assam</option></select></div>
+        <div><span>States</span><select id="stateFilter2" class="location-select" onchange="onStateFilterChange2(this.value)"><option value="">— Select State —</option><option value="Assam">Assam</option><option value="Delhi">Delhi</option></select></div>
       </div>
       <!-- Book selector (same as buy page) -->
       <div class="card" id="sellCatalogCard">
@@ -335,7 +338,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
         <div class="card-head"><h2>Seller Details</h2></div>
         <div class="card-body">
           <form id="sellForm" class="form-grid">
-            <label class="wide">State <select id="sellState" onchange="updateSellDistricts()"><option value="">— Select Your State —</option><option value="Assam">Assam</option></select></label>
+            <label class="wide">State <select id="sellState" onchange="updateSellDistricts()"><option value="">— Select Your State —</option><option value="Assam">Assam</option><option value="Delhi">Delhi</option></select></label>
             <label class="wide">Medium <span style="color:#ef4444;font-size:11px;"> *required</span><select id="sellMedium" required><option value="">Select state first</option></select></label>
             <label>District <select id="sellDistrict" onchange="updateSellSubDistricts()"></select></label>
             <label>Sub-District <select id="sellSubDistrict" onchange="updateSellPlaces()"></select></label>
@@ -455,15 +458,15 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
     <div id="signupStage2" style="display:none;">
       <form class="auth-form" id="signupForm">
         <div class="auth-field">
-          <label>Full Name</label>
+          <label>Full Name <span style="color:#ef4444;font-size:11px;"> *required</span></label>
           <input type="text" id="signupFullName" placeholder="Your full name" required autocomplete="name">
         </div>
         <div class="auth-field">
-          <label>Mobile Number</label>
+          <label>Mobile Number <span style="color:#ef4444;font-size:11px;"> *required</span></label>
           <input type="tel" id="signupMobile" placeholder="10-digit number" maxlength="10" required style="width:100%;">
         </div>
         <div class="auth-field">
-          <label>Date of Birth</label>
+          <label>Date of Birth <span style="color:#ef4444;font-size:11px;"> *required</span></label>
           <div class="dob-picker">
             <div class="dob-part"><span>Day</span><select id="signupDobDay" required></select></div>
             <div class="dob-part"><span>Month</span><select id="signupDobMonth" required></select></div>
@@ -472,25 +475,25 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
         </div>
         <!-- passport field is OFF -->
         <div class="auth-field">
-          <label>Currently Studying Class</label>
+          <label>Currently Studying Class <span style="color:#ef4444;font-size:11px;"> *required</span></label>
           <select id="signupClass" required>
             <option value="">— Select Class —</option>
             <option value="Class 9">Class 9</option><option value="Class 10">Class 10</option><option value="Class 11">Class 11</option><option value="Class 12">Class 12</option>
           </select>
         </div>
-        <div class="auth-field"><label>Instagram ID</label>
+        <div class="auth-field"><label>Instagram ID <span style="color:#ef4444;font-size:11px;"> *required</span></label>
           <div class="auth-insta-wrap"><span class="auth-insta-at">@</span><input type="text" id="signupInsta" placeholder="your_instagram_id" class="auth-insta-input" required></div>
         </div>
         <div class="auth-row">
           <div class="auth-field">
-            <label>State</label>
+            <label>State <span style="color:#ef4444;font-size:11px;"> *required</span></label>
             <select id="signupState" required onchange="updateSignupDistricts()">
               <option value="">— Select Your State —</option>
-              <option value="Assam">Assam</option>
+              <option value="Assam">Assam</option><option value="Delhi">Delhi</option>
             </select>
           </div>
           <div class="auth-field">
-            <label>District</label>
+            <label>District <span style="color:#ef4444;font-size:11px;"> *required</span></label>
             <select id="signupDistrict" required onchange="updateSignupSubDistricts()">
               <option value="">— District —</option>
             </select>
@@ -498,32 +501,32 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
         </div>
         <div class="auth-row">
           <div class="auth-field">
-            <label>Sub-District / Block</label>
+            <label>Sub-District / Block <span style="color:#ef4444;font-size:11px;"> *required</span></label>
             <select id="signupSubDistrict" required onchange="updateSignupPlaces()">
               <option value="">— Sub-District —</option>
             </select>
           </div>
         </div>
-        <div class="auth-row">
-          <div class="auth-field">
-            <label>Place / Town</label>
+        <div class="auth-row profile-stack">
+          <div class="auth-field profile-wide">
+            <label>Place / Town <span style="color:#ef4444;font-size:11px;"> *required</span></label>
             <div class="ac-wrap" id="placeAcWrap">
               <div class="input-preview-bubble" id="placeBubble"></div>
               <input type="text" id="signupPlace" autocomplete="off" placeholder="Select sub-district first"
-                disabled
-                oninput="filterPlaceSuggestions(this.value);showInputBubble('placeBubble',this.value)"
+                disabled required
+                oninput="onSignupPlaceTyping(this.value)"
                 onfocus="showPlaceSuggestions();showInputBubble('placeBubble',this.value)"
                 onblur="setTimeout(()=>{hideSuggestions('placeAcList');hideInputBubble('placeBubble')},150)">
               <button type="button" class="ac-ok" id="placeOkBtn" onmousedown="event.preventDefault();confirmPlaceInput()">OK</button>
               <div class="ac-list" id="placeAcList"></div>
             </div>
           </div>
-          <div class="auth-field">
-            <label>School / College</label>
+          <div class="auth-field profile-wide">
+            <label>School / College <span style="color:#ef4444;font-size:11px;"> *required</span></label>
             <div class="ac-wrap" id="schoolAcWrap">
               <div class="input-preview-bubble" id="schoolBubble"></div>
               <input type="text" id="signupSchool" autocomplete="off" placeholder="Enter place first"
-                disabled
+                disabled required
                 oninput="filterSchoolSuggestions(this.value);showInputBubble('schoolBubble',this.value)"
                 onfocus="showSchoolSuggestions();showInputBubble('schoolBubble',this.value)"
                 onblur="setTimeout(()=>{hideSuggestions('schoolAcList');hideInputBubble('schoolBubble')},150)">
@@ -573,7 +576,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
           <label>State</label>
           <select id="accState" onchange="updateAccDistricts()">
             <option value="">— Select State —</option>
-            <option value="Assam">Assam</option>
+            <option value="Assam">Assam</option><option value="Delhi">Delhi</option>
           </select>
         </div>
         <div class="auth-field">
@@ -720,12 +723,14 @@ const seed = {
   "boardsByState": {
     "Assam": [
       "seba"
-    ]
+    ],
+    "Delhi": []
   },
   "mediumsByState": {
     "Assam": [
       "ass"
-    ]
+    ],
+    "Delhi": []
   },
   "settings": {
     "general": false,
@@ -1758,6 +1763,10 @@ const seed = {
           ]
         }
       ]
+    },
+    {
+      "state": "Delhi",
+      "districts": []
     }
   ],
   "listings": []
@@ -2667,6 +2676,22 @@ function showPlaceSuggestions() {
   filterPlaceSuggestions(document.getElementById('signupPlace')?.value || '');
 }
 
+function onSignupPlaceTyping(val) {
+  filterPlaceSuggestions(val);
+  showInputBubble('placeBubble', val);
+  const school = document.getElementById('signupSchool');
+  if (school) {
+    school.value = '';
+    school.disabled = true;
+    school.placeholder = 'Tap OK after place first';
+  }
+  window._schoolOptions = [];
+  const sOk = document.getElementById('schoolOkBtn');
+  if (sOk) sOk.style.display = 'none';
+  hideSuggestions('schoolAcList');
+  _checkUnlockPassword();
+}
+
 function filterSchoolSuggestions(val) {
   const list = document.getElementById('schoolAcList');
   if (!list) return;
@@ -2697,14 +2722,26 @@ function showSchoolSuggestions() {
 
 function _renderAcList(listEl, items, inputVal, selectFn, okBtnId) {
   const typed = (inputVal || '').trim();
+  const isPlace = selectFn === 'selectPlaceSuggestion';
   // Show OK button when user has typed something
   const okBtn = document.getElementById(okBtnId);
   if (okBtn) okBtn.style.display = typed ? 'block' : 'none';
 
-  if (!items.length) { listEl.style.display = 'none'; listEl.innerHTML = ''; return; }
-  listEl.innerHTML = items.map(item =>
-    '<div class="ac-item" data-ac-value="' + _acEsc(item) + '">' + _acEsc(item) + '</div>'
-  ).join('');
+  if (!items.length) {
+    if (typed) {
+      listEl.innerHTML = '<div class="ac-empty">No saved ' + (isPlace ? 'place' : 'school / college') + ' found. Check the spelling, or tap OK to use this new name.</div>';
+      listEl.style.display = 'block';
+    } else {
+      listEl.innerHTML = '<div class="ac-empty">No saved ' + (isPlace ? 'places' : 'schools / colleges') + ' found yet for this selection. Type the full name and tap OK.</div>';
+      listEl.style.display = 'block';
+    }
+    return;
+  }
+  listEl.innerHTML =
+    '<div class="ac-empty">Saved ' + (isPlace ? 'places in this sub-district' : 'schools / colleges for this place') + '</div>' +
+    items.map(item =>
+      '<div class="ac-item" data-ac-value="' + _acEsc(item) + '">' + _acEsc(item) + '</div>'
+    ).join('');
   const okBtnAfterRender = document.getElementById(okBtnId);
   if (okBtnAfterRender && items.length) okBtnAfterRender.style.display = 'none';
   listEl.querySelectorAll('.ac-item').forEach(el => {
@@ -2726,12 +2763,16 @@ function _renderAcList(listEl, items, inputVal, selectFn, okBtnId) {
 
 // OK button handlers
 window.confirmPlaceInput = function() {
+  const inp = document.getElementById('signupPlace');
+  if (!inp || !inp.value.trim()) { toast('Please enter your place / town'); return; }
   hideSuggestions('placeAcList');
   const okBtn = document.getElementById('placeOkBtn');
   if (okBtn) okBtn.style.display = 'none';
   updateSignupSchools();   // this also unlocks school if place is filled
 };
 window.confirmSchoolInput = function() {
+  const inp = document.getElementById('signupSchool');
+  if (!inp || !inp.value.trim()) { toast('Please enter your school / college'); return; }
   hideSuggestions('schoolAcList');
   const okBtn = document.getElementById('schoolOkBtn');
   if (okBtn) okBtn.style.display = 'none';
