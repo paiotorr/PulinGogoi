@@ -486,7 +486,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
           </select>
         </div>
         <div class="auth-field"><label>Instagram ID <span style="color:#ef4444;font-size:11px;"> *required</span></label>
-          <div class="auth-insta-wrap"><span class="auth-insta-at">@</span><input type="text" id="signupInsta" placeholder="your_instagram_id" class="auth-insta-input" required></div>
+          <div class="auth-insta-wrap"><span class="auth-insta-at">@</span><input type="text" id="signupInsta" placeholder="your_instagram_id" class="auth-insta-input" required autocapitalize="none" autocomplete="off" spellcheck="false"></div>
         </div>
         <div class="auth-row">
           <div class="auth-field">
@@ -2737,9 +2737,9 @@ function showSchoolSuggestions() {
 function _renderAcList(listEl, items, inputVal, selectFn, okBtnId) {
   const typed = (inputVal || '').trim();
   const isPlace = selectFn === 'selectPlaceSuggestion';
-  // Show OK button when user has typed something
   const okBtn = document.getElementById(okBtnId);
-  if (okBtn) okBtn.style.display = typed ? 'block' : 'none';
+  const showNewNameOk = !!typed && !items.length;
+  if (okBtn) okBtn.style.display = showNewNameOk ? 'block' : 'none';
 
   if (!items.length) {
     if (typed) {
@@ -2757,7 +2757,7 @@ function _renderAcList(listEl, items, inputVal, selectFn, okBtnId) {
       '<div class="ac-item" data-ac-value="' + _acEsc(item) + '">' + _acEsc(item) + '</div>'
     ).join('');
   const okBtnAfterRender = document.getElementById(okBtnId);
-  if (okBtnAfterRender) okBtnAfterRender.style.display = typed ? 'block' : 'none';
+  if (okBtnAfterRender) okBtnAfterRender.style.display = 'none';
   listEl.querySelectorAll('.ac-item').forEach(el => {
     el.onpointerdown = function(e) {
       e.preventDefault();
@@ -2802,26 +2802,26 @@ function _acEsc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
 window.selectPlaceSuggestion = function(val) {
   const inp = document.getElementById('signupPlace');
   if (inp) inp.value = val;
-  window._signupPlaceConfirmed = false;
+  window._signupPlaceConfirmed = true;
   window._signupSchoolConfirmed = false;
   hideSuggestions('placeAcList');
   hideInputBubble('placeBubble');
   const okBtn = document.getElementById('placeOkBtn');
-  if (okBtn) okBtn.style.display = 'block';
-  const school = document.getElementById('signupSchool');
-  if (school) { school.value = ''; school.disabled = true; school.placeholder = 'Tap OK after place first'; }
-  _checkUnlockPassword();
+  if (okBtn) okBtn.style.display = 'none';
+  updateSignupSchools();
+  setTimeout(() => document.getElementById('signupSchool')?.focus(), 80);
 };
 
 window.selectSchoolSuggestion = function(val) {
   const inp = document.getElementById('signupSchool');
   if (inp) inp.value = val;
-  window._signupSchoolConfirmed = false;
+  window._signupSchoolConfirmed = true;
   hideSuggestions('schoolAcList');
   hideInputBubble('schoolBubble');
   const okBtn = document.getElementById('schoolOkBtn');
-  if (okBtn) okBtn.style.display = 'block';
+  if (okBtn) okBtn.style.display = 'none';
   _checkUnlockPassword();
+  setTimeout(() => document.getElementById('signupContinue')?.focus(), 80);
 };
 
 function hideSuggestions(id) {
@@ -2850,6 +2850,121 @@ window.hideInputBubble = function(bubbleId) {
 };
 function showInputBubble(bubbleId, val) { window.showInputBubble(bubbleId, val); }
 function hideInputBubble(bubbleId) { window.hideInputBubble(bubbleId); }
+
+const SIGNUP_DRAFT_KEY = 'pkitaap_signup_profile_draft_v2';
+window._signupDraftRestoring = false;
+window._signupDraftSaveTimer = null;
+
+function _normalizeSignupInstaValue() {
+  const el = document.getElementById('signupInsta');
+  if (!el) return '';
+  const clean = el.value.replace(/^@+/, '').toLowerCase();
+  if (el.value !== clean) el.value = clean;
+  return clean;
+}
+
+function _isSignupProfileDraftActive() {
+  const dialog = document.getElementById('signupDialog');
+  const stage2 = document.getElementById('signupStage2');
+  return !!(dialog && dialog.open && stage2 && stage2.style.display !== 'none' && !window._currentUser);
+}
+
+function _collectSignupDraft() {
+  return {
+    fullName: (document.getElementById('signupFullName')?.value || '').trim(),
+    mobile: (document.getElementById('signupMobile')?.value || '').trim(),
+    dateOfBirth: getDobValue('signup'),
+    className: (document.getElementById('signupClass')?.value || '').trim(),
+    insta: _normalizeSignupInstaValue(),
+    state: (document.getElementById('signupState')?.value || '').trim(),
+    district: (document.getElementById('signupDistrict')?.value || '').trim(),
+    subDistrict: (document.getElementById('signupSubDistrict')?.value || '').trim(),
+    place: (document.getElementById('signupPlace')?.value || '').trim(),
+    school: (document.getElementById('signupSchool')?.value || '').trim(),
+    passport: (document.getElementById('signupPassport')?.value || '').trim(),
+    placeConfirmed: !!window._signupPlaceConfirmed,
+    schoolConfirmed: !!window._signupSchoolConfirmed,
+    updatedAt: Date.now()
+  };
+}
+
+function _hasSignupDraftValues(draft) {
+  const d = draft || _collectSignupDraft();
+  return !!(d.fullName || d.mobile || d.dateOfBirth || d.className || d.insta || d.state || d.district || d.subDistrict || d.place || d.school || d.passport);
+}
+
+function _isSignupProfileComplete() {
+  const d = _collectSignupDraft();
+  const passportRequired = state.settings && state.settings.passport;
+  return !!(d.fullName && /^[0-9]{10}$/.test(d.mobile) && d.dateOfBirth && d.className && d.insta && d.state && d.district && d.subDistrict && d.place && d.school && d.placeConfirmed && d.schoolConfirmed && (!passportRequired || d.passport));
+}
+
+function _saveSignupDraftNow() {
+  if (window._signupDraftRestoring || !_isSignupProfileDraftActive()) return;
+  const draft = _collectSignupDraft();
+  try {
+    if (_hasSignupDraftValues(draft)) localStorage.setItem(SIGNUP_DRAFT_KEY, JSON.stringify(draft));
+    else localStorage.removeItem(SIGNUP_DRAFT_KEY);
+  } catch(e) {}
+}
+
+function _queueSignupDraftSave() {
+  if (window._signupDraftRestoring || !_isSignupProfileDraftActive()) return;
+  clearTimeout(window._signupDraftSaveTimer);
+  window._signupDraftSaveTimer = setTimeout(_saveSignupDraftNow, 120);
+}
+
+function _clearSignupDraft() {
+  try { localStorage.removeItem(SIGNUP_DRAFT_KEY); } catch(e) {}
+}
+
+function _restoreSignupDraft() {
+  let draft = null;
+  try { draft = JSON.parse(localStorage.getItem(SIGNUP_DRAFT_KEY) || 'null'); } catch(e) { draft = null; }
+  if (!draft || !_hasSignupDraftValues(draft)) return;
+
+  window._signupDraftRestoring = true;
+  try {
+    const setIf = (id, value) => {
+      const el = document.getElementById(id);
+      if (el && value) el.value = value;
+    };
+    setIf('signupFullName', draft.fullName);
+    setIf('signupMobile', draft.mobile);
+    setDobValue('signup', draft.dateOfBirth || '');
+    setIf('signupClass', draft.className);
+    setIf('signupInsta', (draft.insta || '').toLowerCase());
+    setIf('signupPassport', draft.passport);
+
+    const st = document.getElementById('signupState');
+    if (st && draft.state) {
+      st.value = draft.state;
+      updateSignupDistricts();
+    }
+    const d = document.getElementById('signupDistrict');
+    if (d && draft.district) {
+      d.value = draft.district;
+      updateSignupSubDistricts();
+    }
+    const sd = document.getElementById('signupSubDistrict');
+    if (sd && draft.subDistrict) {
+      sd.value = draft.subDistrict;
+      updateSignupPlaces();
+    }
+
+    const placeEl = document.getElementById('signupPlace');
+    if (placeEl && draft.place) placeEl.value = draft.place;
+    window._signupPlaceConfirmed = !!(draft.place && draft.placeConfirmed);
+    if (draft.place && draft.placeConfirmed) updateSignupSchools();
+
+    const schoolEl = document.getElementById('signupSchool');
+    if (schoolEl && draft.school) schoolEl.value = draft.school;
+    window._signupSchoolConfirmed = !!(draft.school && draft.schoolConfirmed);
+  } finally {
+    window._signupDraftRestoring = false;
+    _checkUnlockPassword();
+  }
+}
 
 function _setSignupControlEnabled(id, enabled) {
   const el = document.getElementById(id);
@@ -2885,7 +3000,7 @@ function _updateSignupProgressLocks() {
   const passportRequired = state.settings && state.settings.passport;
   const passport = (document.getElementById('signupPassport')?.value || '').trim();
   const cls = (document.getElementById('signupClass')?.value || '').trim();
-  const insta = (document.getElementById('signupInsta')?.value || '').trim().replace(/^@+/, '');
+  const insta = (document.getElementById('signupInsta')?.value || '').trim().replace(/^@+/, '').toLowerCase();
   const stateVal = (document.getElementById('signupState')?.value || '').trim();
   const district = (document.getElementById('signupDistrict')?.value || '').trim();
   const subDistrict = (document.getElementById('signupSubDistrict')?.value || '').trim();
@@ -2934,7 +3049,7 @@ function _checkUnlockPassword() {
   const mobile = (document.getElementById('signupMobile')?.value || '').trim();
   const dob = getDobValue('signup');
   const cls = (document.getElementById('signupClass')?.value || '').trim();
-  const insta = (document.getElementById('signupInsta')?.value || '').trim().replace(/^@+/, '');
+  const insta = (document.getElementById('signupInsta')?.value || '').trim().replace(/^@+/, '').toLowerCase();
   const stateVal = (document.getElementById('signupState')?.value || '').trim();
   const district = (document.getElementById('signupDistrict')?.value || '').trim();
   const subDistrict = (document.getElementById('signupSubDistrict')?.value || '').trim();
@@ -2951,6 +3066,7 @@ function _checkUnlockPassword() {
   } else {
     btnContinue.disabled = true; btnContinue.style.opacity='0.5'; btnContinue.style.cursor='not-allowed';
   }
+  _queueSignupDraftSave();
 }
 
 // (kept as no-op for compatibility)
@@ -3187,9 +3303,21 @@ function fillSignupLocations() {
   ['signupFullName','signupMobile','signupDobDay','signupDobMonth','signupDobYear','signupClass','signupInsta','signupState','signupDistrict','signupSubDistrict','signupPlace','signupSchool','signupPassport'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
+    if (id === 'signupInsta') el.addEventListener('input', _normalizeSignupInstaValue);
     el.addEventListener('input', _checkUnlockPassword);
     el.addEventListener('change', _checkUnlockPassword);
   });
+  if (!window._signupRefreshGuardBound) {
+    window._signupRefreshGuardBound = true;
+    window.addEventListener('beforeunload', function(e) {
+      if (_isSignupProfileDraftActive() && _hasSignupDraftValues() && !_isSignupProfileComplete()) {
+        _saveSignupDraftNow();
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    });
+  }
   _checkUnlockPassword();
   // Place and School are now text inputs with oninput handlers — no onchange binding needed
 }
@@ -3402,6 +3530,7 @@ init();
   async function onAuthSuccess(userData, firebaseUser) {
     window._isLoggedIn  = true;
     window._currentUser = userData || null;
+    _clearSignupDraft();
 
     if (userData) {
       if (firebaseUser && firebaseUser.uid) {
@@ -3597,9 +3726,11 @@ init();
 
   // Pre-fill name from Google profile
   function _prefillNameFromGoogle() {
-    if (!_googleUser || !_googleUser.displayName) return;
-    const fn = document.getElementById('signupFullName');
-    if (fn && !fn.value) fn.value = _googleUser.displayName.trim();
+    if (_googleUser && _googleUser.displayName) {
+      const fn = document.getElementById('signupFullName');
+      if (fn && !fn.value) fn.value = _googleUser.displayName.trim();
+    }
+    _restoreSignupDraft();
     _checkUnlockPassword();
   }
 
@@ -3616,7 +3747,7 @@ init();
     const place       = ((document.getElementById('signupPlace')        || {}).value || '').trim();
     const school      = ((document.getElementById('signupSchool')       || {}).value || '').trim();
     const firstName   = ((document.getElementById('signupFullName')     || {}).value || '').trim();
-    const insta       = ((document.getElementById('signupInsta')        || {}).value || '').trim().replace(/^@+/, '');
+    const insta       = ((document.getElementById('signupInsta')        || {}).value || '').trim().replace(/^@+/, '').toLowerCase();
 
     if (!firstName)       { toast('Please enter your full name'); return; }
     if (!mobile || !/^[0-9]{10}$/.test(mobile)) { toast('Please enter a valid 10-digit mobile number'); return; }
