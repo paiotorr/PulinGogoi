@@ -722,10 +722,24 @@ async function _getUserFromFirestore(uid) {
   if (!uid) return null;
   if (!_db) return _getLocalSavedUserProfile({ uid });
   try {
+    const authUser = (_auth && _auth.currentUser) || {};
     const snap = await _db.collection('users').doc(uid).get();
     const remoteUser = snap.exists ? snap.data() : null;
-    const localUser = _getLocalSavedUserProfile(Object.assign({ uid }, remoteUser || {}));
-    if (remoteUser || localUser) return _mergeUserProfiles(localUser, remoteUser);
+    let foundUser = remoteUser;
+    if (!getUserDobValue(foundUser)) {
+      try {
+        const qs = await _db.collection('users').where('uid','==',uid).limit(1).get();
+        if (!qs.empty) foundUser = _mergeUserProfiles(foundUser, qs.docs[0].data());
+      } catch(e) {}
+    }
+    if (!getUserDobValue(foundUser) && authUser.email) {
+      try {
+        const qs = await _db.collection('users').where('email','==',authUser.email).limit(1).get();
+        if (!qs.empty) foundUser = _mergeUserProfiles(foundUser, qs.docs[0].data());
+      } catch(e) {}
+    }
+    const localUser = _getLocalSavedUserProfile(Object.assign({ uid, email: authUser.email || '' }, foundUser || {}));
+    if (foundUser || localUser) return _mergeUserProfiles(localUser, foundUser);
   } catch(e) { console.warn('[PKITAAP] _getUserFromFirestore error:', e); }
   return _getLocalSavedUserProfile({ uid });
 }
@@ -767,6 +781,7 @@ async function _saveUserToFirestore(userData) {
       console.warn('[PKITAAP] Firestore write failed (localStorage used):', e);
     }
   }
+  return normalizedUser;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -2183,13 +2198,22 @@ function updateAccSchools() {
     if (keep) s.value = keep;
   });
 }
-function openAccountDetails() {
+async function openAccountDetails() {
   const u = window._currentUser;
   if (!u) return;
   const localUser = _getLocalSavedUserProfile({ uid: u.uid, mobile: u.mobile, email: u.email });
   if (localUser) {
     Object.assign(u, _mergeUserProfiles(localUser, u));
     window._currentUser = u;
+  }
+  if (u.uid && _db) {
+    try {
+      const freshUser = await _getUserFromFirestore(u.uid);
+      if (freshUser) {
+        Object.assign(u, _mergeUserProfiles(u, freshUser));
+        window._currentUser = u;
+      }
+    } catch(e) {}
   }
   _mergeCommunityLocation(u.state, u.district, u.subDistrict, u.place, u.school);
   const dialog = document.getElementById('accountDialog');
@@ -3618,7 +3642,7 @@ function _dobPartsFromValue(value) {
 }
 function getUserDobValue(u) {
   u = u || {};
-  const direct = _dobPartsFromValue(u.dateOfBirth || u.dob || u.birthDate || u.birthdate || u.dobValue);
+  const direct = _dobPartsFromValue(u.dateOfBirth || u.dateofbirth || u.dateOfbirth || u.date_of_birth || u.dob || u.birthDate || u.birthdate || u.birth_date || u.dobValue);
   if (direct) return direct.y + '-' + direct.m + '-' + direct.d;
   const d = String(u.dobDay || u.birthDay || '').padStart(2,'0');
   const m = String(u.dobMonth || u.birthMonth || '').padStart(2,'0');
@@ -3821,7 +3845,8 @@ init();
         userData.uid   = firebaseUser.uid;
         userData.email = firebaseUser.email || '';
       }
-      await _saveUserToFirestore(userData);
+      userData = await _saveUserToFirestore(userData) || userData;
+      window._currentUser = userData;
     }
 
     loginDialog.close();
