@@ -268,6 +268,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
     <button type="button" id="menuHome" class="home-link" style="display:none;">🏠 Home</button>
     <button data-page="sell" id="menuSell" style="display:none;">📦 Sell Books</button>
     <button data-page="myListings" id="menuListings" style="display:none;">📚 My Listings</button>
+    <button data-page="messages" id="menuMessages" style="display:none;">Messages</button>
     <button type="button" id="menuAccount" style="display:none;">👤 Account Details</button>
     <button type="button" id="menuLogout" style="display:none;color:#dc2626;">🚪 Log Out</button>
   </div>
@@ -367,7 +368,6 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
                 <option>Like new</option><option>Good</option><option>Usable</option>
               </select>
             </label>
-            <label class="wide">Instagram ID<div style="display:flex;align-items:center;background:#f9fafb;border:2px solid var(--line);border-radius:10px;overflow:hidden;"><span style="background:var(--red-light);color:var(--red);font-weight:900;padding:0 10px;min-height:40px;display:flex;align-items:center;">@</span><input type="text" id="sellInstagram" placeholder="your_instagram" style="border:none;border-radius:0;flex:1;min-height:40px;background:transparent;" readonly></div></label>
             
             <div class="wide" id="sellFixedPriceInfo" style="background:var(--red-light);border:2px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:900;color:var(--red);">Price: <strong id="sellFixedPriceText">Select a book</strong></div>
             <button class="btn btn-primary wide" type="submit">List for Sale</button>
@@ -389,7 +389,30 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
         </div>
       </div>
     </section>
-    <section class="page" id="adminPage">
+    <section class="page" id="messagesPage">
+      <div class="page-head">
+        <h1>Messages</h1>
+        <button class="btn btn-primary" type="button" data-go-buy>Home</button>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>Your Conversations</h2></div>
+        <div class="card-body">
+          <div class="result-list" id="messageThreadList">
+            <p style="color:#888;font-size:13px;font-weight:700;padding:8px 0;">No messages yet.</p>
+          </div>
+        </div>
+      </div>
+      <div class="card" id="messageChatCard" style="display:none;">
+        <div class="card-head"><h2 id="messageChatTitle">Chat</h2></div>
+        <div class="card-body">
+          <div id="messageChatBody" style="display:flex;flex-direction:column;gap:8px;max-height:330px;overflow:auto;padding:4px;"></div>
+          <form id="messageForm" class="form-grid" style="margin-top:12px;">
+            <label class="wide">Message<textarea id="messageInput" placeholder="Type your message" rows="3" style="resize:vertical;"></textarea></label>
+            <button class="btn btn-primary wide" type="submit">Send Message</button>
+          </form>
+        </div>
+      </div>
+    </section>    <section class="page" id="adminPage">
       <h1>Admin</h1>
       <div class="admin-grid">
         <div class="card">
@@ -495,8 +518,8 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
             <option value="Class 9">Class 9</option><option value="Class 10">Class 10</option><option value="Class 11">Class 11</option><option value="Class 12">Class 12</option>
           </select>
         </div>
-        <div class="auth-field"><label>Instagram ID <span style="color:#ef4444;font-size:11px;"> *required</span></label>
-          <div class="auth-insta-wrap"><span class="auth-insta-at">@</span><input type="text" id="signupInsta" placeholder="your_instagram_id" class="auth-insta-input" required autocapitalize="none" autocomplete="off" spellcheck="false"></div>
+        <div class="auth-field"><label>PKITAAP User ID <span style="color:#ef4444;font-size:11px;"> *required</span></label>
+          <div class="auth-insta-wrap"><span class="auth-insta-at">@</span><input type="text" id="signupInsta" placeholder="choose_your_user_id" class="auth-insta-input" required autocapitalize="none" autocomplete="off" spellcheck="false"></div>
         </div>
         <div class="auth-row">
           <div class="auth-field">
@@ -583,8 +606,8 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
           <option value="Class 9">Class 9</option><option value="Class 10">Class 10</option><option value="Class 11">Class 11</option><option value="Class 12">Class 12</option>
         </select>
       </div>
-      <div class="auth-field"><label>Instagram ID</label>
-        <div class="auth-insta-wrap"><span class="auth-insta-at">@</span><input type="text" id="accInsta" placeholder="your_instagram_id" class="auth-insta-input"></div>
+      <div class="auth-field"><label>PKITAAP User ID</label>
+        <div class="auth-insta-wrap"><span class="auth-insta-at">@</span><input type="text" id="accInsta" placeholder="choose_your_user_id" class="auth-insta-input"></div>
       </div>
       <div class="auth-row">
         <div class="auth-field">
@@ -737,11 +760,16 @@ async function _saveUserToFirestore(userData) {
   const mobile = userData.mobile || (userData.phone ? String(userData.phone).replace(/D/g,'').slice(-10) : '');
   const dobValue = userData.dateOfBirth || userData.dob || userData.birthDate || '';
   const dobParts = _dobPartsFromValue(dobValue);
+  const platformId = _cleanPlatformUserId(userData.platformUserId || userData.publicUserId || userData.userName || userData.insta || '');
   const normalizedUser = Object.assign({}, userData, {
     id: userData.id || userData.uid || (mobile ? 'u' + mobile : ''),
     mobile,
     phone: userData.phone || (mobile ? '+91' + mobile : ''),
     email: userData.email || ((_auth && _auth.currentUser && _auth.currentUser.email) || ''),
+    platformUserId: platformId,
+    publicUserId: platformId,
+    userName: platformId,
+    insta: platformId,
     dateOfBirth: dobValue,
     dob: dobValue,
     birthDate: dobValue,
@@ -2186,6 +2214,28 @@ function updateAccSchools() {
     if (keep) s.value = keep;
   });
 }
+function _cleanPlatformUserId(value) {
+  return String(value || '').trim().replace(/^@+/, '').toLowerCase();
+}
+async function _isPlatformUserIdTaken(value, currentUid) {
+  const clean = _cleanPlatformUserId(value);
+  if (!clean) return false;
+  const sameUser = (u) => String(u.uid || u.id || '').trim() === String(currentUid || '').trim();
+  const hasId = (u) => _cleanPlatformUserId(u.platformUserId || u.publicUserId || u.userName || u.insta) === clean;
+  try {
+    const localUsers = JSON.parse(localStorage.getItem('pkitaap_registered_users') || '[]');
+    if (localUsers.some(u => hasId(u) && !sameUser(u))) return true;
+  } catch(e) {}
+  if (!_db) return false;
+  const fields = ['platformUserId','publicUserId','userName','insta'];
+  for (const field of fields) {
+    try {
+      const snap = await _db.collection('users').where(field,'==',clean).limit(1).get();
+      if (!snap.empty && snap.docs.some(doc => !sameUser(Object.assign({ id: doc.id }, doc.data())))) return true;
+    } catch(e) {}
+  }
+  return false;
+}
 async function openAccountDetails() {
   const u = window._currentUser;
   if (!u) return;
@@ -2242,7 +2292,8 @@ function _accountSnapshot(u) {
     email: u.email || '',
     dateOfBirth: getUserDobValue(u),
     className: u.className || '',
-    insta: (u.insta || '').replace(/^@+/, '').toLowerCase(),
+    insta: (u.platformUserId || u.publicUserId || u.userName || u.insta || '').replace(/^@+/, '').toLowerCase(),
+    platformUserId: (u.platformUserId || u.publicUserId || u.userName || u.insta || '').replace(/^@+/, '').toLowerCase(),
     state: u.state || '',
     district: u.district || '',
     subDistrict: u.subDistrict || '',
@@ -2254,7 +2305,7 @@ function _accountChangeLog(before, after) {
   const labels = {
     name: 'Full Name', mobile: 'Mobile Number', phone: 'Phone',
     email: 'Google Email', dateOfBirth: 'Date of Birth',
-    className: 'Class', insta: 'Instagram ID',
+    className: 'Class', insta: 'PKITAAP User ID', platformUserId: 'PKITAAP User ID',
     state: 'State', district: 'District', subDistrict: 'Sub-District',
     place: 'Place / Town', school: 'School / College'
   };
@@ -2265,7 +2316,7 @@ function _accountChangeLog(before, after) {
     newValue: after[k] || ''
   }));
 }
-function saveAccountDetails() {
+async function saveAccountDetails() {
   const u = window._currentUser;
   if (!u) return;
   const g = (id) => (document.getElementById(id)?.value || '').trim();
@@ -2279,7 +2330,8 @@ function saveAccountDetails() {
   const className = g('accClass');
   if (!className) { toast('Please select your class'); return; }
   const insta = g('accInsta').replace(/^@+/, '').toLowerCase();
-  if (!insta) { toast('Please enter your Instagram ID'); return; }
+  if (!insta) { toast('Please enter your PKITAAP User ID'); return; }
+  if (await _isPlatformUserIdTaken(insta, u.uid || u.id)) { toast('This PKITAAP User ID is already taken.'); return; }
   const accState = g('accState');
   const accDistrict = g('accDistrict');
   const accSubDistrict = g('accSubDistrict');
@@ -2302,6 +2354,9 @@ function saveAccountDetails() {
   u.dobYear    = accDobParts.y || '';
   u.className  = className;
   u.insta      = insta;
+  u.platformUserId = insta;
+  u.publicUserId = insta;
+  u.userName = insta;
   u.state      = accState;
   u.district   = accDistrict;
   u.subDistrict= accSubDistrict;
@@ -2449,10 +2504,13 @@ function _renderMatchList(bId, query) {
       '<span>' + _acEsc(location || 'Location not added') + '</span>' +
       '<span>Condition: ' + _acEsc(l.condition || 'Not set') + (l.price ? ' · ₹' + _acEsc(l.price) : '') + '</span>' +
       '<div class="contact-row">' +
-      (state.settings.instagram&&l.instagram?'<a href="https://instagram.com/'+encodeURIComponent(l.instagram)+'" target="_blank" class="btn btn-ghost" style="font-size:12px;">Instagram</a>':'') +
+      '<button class="btn btn-primary" type="button" style="font-size:12px;" data-message-listing="' + _acEsc(l.id) + '">Message Seller</button>' +
       (state.settings.whatsapp&&l.whatsapp?'<a href="https://wa.me/91'+encodeURIComponent(l.whatsapp)+'" target="_blank" class="btn btn-primary" style="font-size:12px;">WhatsApp</a>':'') +
       '</div></div>';
   }).join("") : '<p style="color:#888;font-size:13px;font-weight:700;padding:8px 0;">No sellers found for this book yet.</p>';
+  list.querySelectorAll('[data-message-listing]').forEach(btn => {
+    btn.onclick = () => startListingChat(btn.getAttribute('data-message-listing'));
+  });
 }
 function _isMineListing(l) {
   const u = window._currentUser || {};
@@ -2528,6 +2586,181 @@ async function removeMyListing(id) {
   toast('Listing removed.');
 }
 // ── Location helpers (State → District → Place → School) ──────────────────
+const CHAT_STORE_KEY = 'pkitaap_chats_v1';
+let _activeChatId = '';
+function _myChatUid() {
+  const u = window._currentUser || {};
+  return String(u.uid || u.id || u.mobile || u.email || '').trim();
+}
+function _platformUserId(u) {
+  u = u || {};
+  return String(u.platformUserId || u.publicUserId || u.userName || u.insta || '').replace(/^@+/, '').toLowerCase();
+}
+function _chatDisplayName(u) {
+  u = u || {};
+  const pid = _platformUserId(u);
+  return u.name || (pid ? '@' + pid : 'User');
+}
+function _getLocalChats() {
+  try { return JSON.parse(localStorage.getItem(CHAT_STORE_KEY) || '[]'); } catch(e) { return []; }
+}
+function _saveLocalChats(chats) {
+  try { localStorage.setItem(CHAT_STORE_KEY, JSON.stringify(chats || [])); } catch(e) {}
+}
+function _upsertLocalChat(chat) {
+  const chats = _getLocalChats();
+  const idx = chats.findIndex(c => c.id === chat.id);
+  if (idx >= 0) chats[idx] = Object.assign({}, chats[idx], chat);
+  else chats.push(chat);
+  _saveLocalChats(chats);
+  return chat;
+}
+function _chatIdFor(listing, buyerUid) {
+  const sellerUid = String(listing.userId || listing.sellerUserId || listing.ownerId || '').trim();
+  return ['chat', listing.id || listing.bookId || 'book', buyerUid, sellerUid].map(v => String(v || '').replace(/[^a-zA-Z0-9_-]/g,'_')).join('__');
+}
+async function _saveChatToFirestore(chat) {
+  if (!_db || !chat || !chat.id) return;
+  try { await _db.collection('chats').doc(chat.id).set(chat, { merge: true }); } catch(e) {}
+}
+async function _loadMyChatsFromFirestore() {
+  const me = _myChatUid();
+  if (!_db || !me) return _getLocalChats();
+  try {
+    const snap = await _db.collection('chats').where('participants','array-contains',me).get();
+    snap.docs.forEach(doc => _upsertLocalChat(Object.assign({ id: doc.id }, doc.data())));
+  } catch(e) {}
+  return _getLocalChats();
+}
+function _myChats() {
+  const me = _myChatUid();
+  return _getLocalChats()
+    .filter(c => !me || (Array.isArray(c.participants) && c.participants.includes(me)))
+    .sort((a,b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
+}
+function _showMessagesPage() {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('messagesPage')?.classList.add('active');
+  document.getElementById('menuBtn')?.classList.remove('open');
+  document.getElementById('menuPanel')?.classList.remove('open');
+}
+async function startListingChat(listingId) {
+  if (!requireLogin()) return;
+  const listing = (state.listings || []).find(l => String(l.id) === String(listingId));
+  if (!listing) { toast('Listing not found.'); return; }
+  if (_isMineListing(listing)) { toast('This is your own listed book.'); return; }
+  const me = _myChatUid();
+  const sellerUid = String(listing.userId || listing.sellerUserId || listing.ownerId || '').trim();
+  if (!me || !sellerUid) { toast('Could not open chat for this seller.'); return; }
+  const chatId = _chatIdFor(listing, me);
+  const existing = _getLocalChats().find(c => c.id === chatId) || {};
+  const bookTitle = listing.title || listing.bookTitle || 'book';
+  const chat = Object.assign({}, existing, {
+    id: chatId,
+    listingId: listing.id || '',
+    bookId: listing.bookId || '',
+    bookTitle: bookTitle,
+    participants: [me, sellerUid],
+    buyerUid: me,
+    sellerUid: sellerUid,
+    buyerName: window._currentUser?.name || 'Buyer',
+    buyerPlatformId: _platformUserId(window._currentUser),
+    sellerName: listing.sellerName || listing.seller || 'Seller',
+    sellerPlatformId: listing.sellerPlatformId || listing.platformUserId || listing.instagram || '',
+    updatedAt: new Date().toISOString(),
+    messages: Array.isArray(existing.messages) ? existing.messages : []
+  });
+  _upsertLocalChat(chat);
+  await _saveChatToFirestore(chat);
+  _showMessagesPage();
+  renderMessages(true);
+  openChat(chatId);
+  const input = document.getElementById('messageInput');
+  if (input && !input.value) input.value = 'Hi, I found your ' + bookTitle + ' on PKITAAP. Is it still available?';
+}
+async function renderMessages(skipFetch) {
+  if (!window._isLoggedIn) { requireLogin(); return; }
+  if (!skipFetch) _loadMyChatsFromFirestore().then(() => renderMessages(true));
+  const list = document.getElementById('messageThreadList');
+  if (!list) return;
+  const me = _myChatUid();
+  const chats = _myChats();
+  if (!chats.length) {
+    list.innerHTML = '<p style="color:#888;font-size:13px;font-weight:700;padding:8px 0;">No messages yet.</p>';
+    const card = document.getElementById('messageChatCard');
+    if (card) card.style.display = 'none';
+    return;
+  }
+  list.innerHTML = chats.map(c => {
+    const otherName = c.sellerUid === me ? (c.buyerName || 'Buyer') : (c.sellerName || 'Seller');
+    const otherPid = c.sellerUid === me ? c.buyerPlatformId : c.sellerPlatformId;
+    const msgs = Array.isArray(c.messages) ? c.messages : [];
+    const last = msgs.length ? msgs[msgs.length - 1].text : 'No messages yet';
+    return '<div class="result-card" role="button" data-open-chat="' + _acEsc(c.id) + '">' +
+      '<strong>' + _acEsc(otherName) + (otherPid ? ' @' + _acEsc(otherPid) : '') + '</strong>' +
+      '<span>Book: ' + _acEsc(c.bookTitle || 'Book') + '</span>' +
+      '<span>' + _acEsc(last) + '</span>' +
+      '<span style="font-size:12px;color:#888;">' + _acEsc(String(c.updatedAt || '').slice(0,16).replace('T',' ')) + '</span>' +
+    '</div>';
+  }).join('');
+  list.querySelectorAll('[data-open-chat]').forEach(el => {
+    el.onclick = () => openChat(el.getAttribute('data-open-chat'));
+  });
+  if (_activeChatId) openChat(_activeChatId);
+}
+function openChat(chatId) {
+  const chat = _getLocalChats().find(c => c.id === chatId);
+  if (!chat) return;
+  _activeChatId = chatId;
+  const me = _myChatUid();
+  const title = document.getElementById('messageChatTitle');
+  const body = document.getElementById('messageChatBody');
+  const card = document.getElementById('messageChatCard');
+  if (card) card.style.display = '';
+  if (title) title.textContent = (chat.sellerUid === me ? (chat.buyerName || 'Buyer') : (chat.sellerName || 'Seller')) + ' - ' + (chat.bookTitle || 'Book');
+  if (body) {
+    const msgs = Array.isArray(chat.messages) ? chat.messages : [];
+    body.innerHTML = msgs.length ? msgs.map(m => {
+      const mine = String(m.senderUid || '') === me;
+      return '<div style="align-self:' + (mine ? 'flex-end' : 'flex-start') + ';background:' + (mine ? 'var(--red)' : '#f3f4f6') + ';color:' + (mine ? 'white' : 'var(--text)') + ';border-radius:12px;padding:9px 11px;max-width:82%;font-size:13px;font-weight:800;line-height:1.35;">' +
+        _acEsc(m.text || '') +
+        '<div style="font-size:10px;opacity:.75;margin-top:4px;">' + _acEsc(String(m.createdAt || '').slice(0,16).replace('T',' ')) + '</div>' +
+      '</div>';
+    }).join('') : '<p style="color:#888;font-size:13px;font-weight:700;padding:8px 0;">Start the conversation below.</p>';
+    body.scrollTop = body.scrollHeight;
+  }
+}
+async function sendChatMessage() {
+  if (!_activeChatId) { toast('Select a conversation first.'); return; }
+  const input = document.getElementById('messageInput');
+  const text = (input?.value || '').trim();
+  if (!text) { toast('Please type a message.'); return; }
+  const chats = _getLocalChats();
+  const idx = chats.findIndex(c => c.id === _activeChatId);
+  if (idx < 0) return;
+  const msg = {
+    id: 'm' + Date.now(),
+    senderUid: _myChatUid(),
+    senderName: window._currentUser?.name || '',
+    text: text,
+    createdAt: new Date().toISOString()
+  };
+  chats[idx].messages = Array.isArray(chats[idx].messages) ? chats[idx].messages : [];
+  chats[idx].messages.push(msg);
+  chats[idx].updatedAt = msg.createdAt;
+  _saveLocalChats(chats);
+  input.value = '';
+  openChat(_activeChatId);
+  renderMessages(true);
+  if (_db) {
+    try {
+      await _db.collection('chats').doc(_activeChatId).set({
+        messages: firebase.firestore.FieldValue.arrayUnion(msg),
+        updatedAt: msg.createdAt
+      }, { merge: true });
+    } catch(e) { toast('Message saved locally. Firebase rules may need chats permission.'); }
+  }
+}
 function _getLocData() { return state.locations || []; }
 function _getDistricts(stateName) {
   const st = _getLocData().find(x => x.state === stateName);
@@ -3409,7 +3642,9 @@ function bindSellForm() {
       place    : listingPlace,
       school   : listingSchool,
       condition: document.getElementById("sellCondition").value,
-      instagram: u ? (u.insta||"") : (document.getElementById("sellInstagram")?.value || ""),
+      instagram: '',
+      platformUserId: u ? (u.platformUserId || u.publicUserId || u.userName || u.insta || '') : '',
+      sellerPlatformId: u ? (u.platformUserId || u.publicUserId || u.userName || u.insta || '') : '',
       whatsapp : document.getElementById("sellWhatsapp")?.value || "",
       price    : listingPrice,
       adminPrice: adminPrice,
@@ -3452,6 +3687,7 @@ function bindPageNav() {
         renderSellCatalog();
       }
       if (pg === 'myListings') renderMyListings();
+      if (pg === 'messages') renderMessages();
     };
   });
   document.querySelectorAll("[data-go-buy]").forEach(btn => { btn.onclick = goHome; });
@@ -3773,6 +4009,8 @@ function init() {
   if (accClose) accClose.onclick = () => document.getElementById('accountDialog')?.close();
   const accBack = document.getElementById('accBackBtn');
   if (accBack) accBack.onclick = () => document.getElementById('accountDialog')?.close();
+  const msgForm = document.getElementById('messageForm');
+  if (msgForm) msgForm.onsubmit = e => { e.preventDefault(); sendChatMessage(); };
 }
 init();
 // ═══════════════════════════════════════════════════════════════
@@ -3870,12 +4108,14 @@ init();
     const menuHome      = document.getElementById('menuHome');
     const menuSell      = document.getElementById('menuSell');
     const menuListings  = document.getElementById('menuListings');
+    const menuMessages  = document.getElementById('menuMessages');
     const menuAccount   = document.getElementById('menuAccount');
     const menuLogout    = document.getElementById('menuLogout');
     if (menuLoginCard) menuLoginCard.style.display = 'none';
     if (menuHome)      menuHome.style.display = '';
     if (menuSell)      menuSell.style.display = '';
     if (menuListings)  menuListings.style.display = '';
+    if (menuMessages)  menuMessages.style.display = '';
     if (menuAccount)   menuAccount.style.display = '';
     if (menuLogout)    menuLogout.style.display = '';
 
@@ -3896,6 +4136,7 @@ init();
       if (menuHome)      menuHome.style.display = 'none';
       if (menuSell)      menuSell.style.display = 'none';
       if (menuListings)  menuListings.style.display = 'none';
+      if (menuMessages)  menuMessages.style.display = 'none';
       if (menuAccount)   menuAccount.style.display = 'none';
       if (menuLogout)    menuLogout.style.display = 'none';
       document.getElementById('menuBtn')?.classList.remove('open');
@@ -4077,7 +4318,8 @@ init();
     if (!mobile || !/^[0-9]{10}$/.test(mobile)) { toast('Please enter a valid 10-digit mobile number'); return; }
     if (!dateOfBirth)     { toast('Please select your date of birth'); return; }
     if (!cls)            { toast('Please select your class'); return; }
-    if (!insta)          { toast('Please enter your Instagram ID'); return; }
+    if (!insta)          { toast('Please enter your PKITAAP User ID'); return; }
+    if (await _isPlatformUserIdTaken(insta, _googleUser.uid)) { toast('This PKITAAP User ID is already taken.'); return; }
     if (!stateVal)       { toast('Please select your state'); return; }
     if (!district)       { toast('Please select your district'); return; }
     if (!subDistrict)    { toast('Please select your sub-district'); return; }
@@ -4105,6 +4347,9 @@ init();
       dobMonth    : signupDobParts.m || '',
       dobYear     : signupDobParts.y || '',
       insta       : insta || '',
+      platformUserId: insta || '',
+      publicUserId: insta || '',
+      userName    : insta || '',
       className   : cls,
       state       : stateVal || '',
       district,
