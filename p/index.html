@@ -243,6 +243,27 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 .ac-empty { color: var(--muted); font-size: 13px; font-weight: 800; line-height: 1.45; padding: 13px 14px; }
 .locked-control { opacity: 0.5; pointer-events: none; }
 .home-link { color: var(--red) !important; font-weight: 900 !important; }
+.messages-shell { display: grid; gap: 12px; grid-template-columns: minmax(220px, 0.9fr) minmax(280px, 1.4fr); min-height: 560px; }
+.thread-list-panel, .chat-panel { background: #fff; border: 2px solid var(--line); border-radius: 16px; box-shadow: 0 8px 20px rgba(0,0,0,.05); overflow: hidden; }
+.thread-list-panel { display: flex; flex-direction: column; }
+.thread-head, .chat-head { align-items: center; background: var(--red); color: #fff; display: flex; justify-content: space-between; min-height: 58px; padding: 12px 14px; }
+.thread-head strong, .chat-head strong { font-size: 16px; font-weight: 950; }
+.thread-list { background: #f8fafc; display: flex; flex: 1; flex-direction: column; gap: 8px; max-height: 620px; overflow-y: auto; padding: 10px; }
+.thread-item { background: #fff; border: 2px solid transparent; border-radius: 14px; cursor: pointer; padding: 11px 12px; transition: background .15s, border .15s, transform .15s; }
+.thread-item:hover, .thread-item.active { background: var(--red-light); border-color: var(--line); transform: translateY(-1px); }
+.thread-item strong { color: var(--text); display: block; font-size: 14px; font-weight: 950; }
+.thread-item span { color: var(--muted); display: block; font-size: 12px; font-weight: 800; line-height: 1.35; margin-top: 3px; }
+.chat-panel { display: flex; flex-direction: column; min-height: 560px; }
+.chat-sub { color: rgba(255,255,255,.85); display: block; font-size: 11px; font-weight: 800; margin-top: 2px; }
+.chat-body { background: linear-gradient(180deg,#f0fdf4 0%,#ecfdf5 100%); display: flex; flex: 1; flex-direction: column; gap: 8px; min-height: 380px; overflow-y: auto; padding: 14px; }
+.chat-bubble { border-radius: 16px; box-shadow: 0 4px 10px rgba(0,0,0,.06); font-size: 13px; font-weight: 800; line-height: 1.4; max-width: 82%; padding: 9px 11px; word-break: break-word; }
+.chat-bubble.mine { align-self: flex-end; background: var(--red); border-bottom-right-radius: 5px; color: #fff; }
+.chat-bubble.theirs { align-self: flex-start; background: #fff; border-bottom-left-radius: 5px; color: var(--text); }
+.chat-time { display: block; font-size: 10px; font-weight: 800; margin-top: 4px; opacity: .72; text-align: right; }
+.chat-compose { align-items: end; background: #fff; border-top: 2px solid var(--line); display: grid; gap: 8px; grid-template-columns: 1fr auto; padding: 10px; }
+.chat-compose textarea { border-radius: 16px; min-height: 44px; resize: none; }
+.chat-send { align-items: center; aspect-ratio: 1; border-radius: 50%; display: grid; font-size: 18px; height: 46px; justify-content: center; padding: 0 !important; }
+@media (max-width: 760px) { .messages-shell { grid-template-columns: 1fr; } .chat-panel { min-height: 520px; } .thread-list { max-height: 240px; } }
 .page-head { align-items: center; display: flex; gap: 12px; justify-content: space-between; }
 .page-head .search-wrap { flex: 1; }
 </style>
@@ -394,21 +415,21 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
         <h1>Messages</h1>
         <button class="btn btn-primary" type="button" data-go-buy>Home</button>
       </div>
-      <div class="card">
-        <div class="card-head"><h2>Your Conversations</h2></div>
-        <div class="card-body">
-          <div class="result-list" id="messageThreadList">
+      <div class="messages-shell">
+        <div class="thread-list-panel">
+          <div class="thread-head"><strong>Chats</strong><span id="messageThreadCount">0</span></div>
+          <div class="thread-list" id="messageThreadList">
             <p style="color:#888;font-size:13px;font-weight:700;padding:8px 0;">No messages yet.</p>
           </div>
         </div>
-      </div>
-      <div class="card" id="messageChatCard" style="display:none;">
-        <div class="card-head"><h2 id="messageChatTitle">Chat</h2></div>
-        <div class="card-body">
-          <div id="messageChatBody" style="display:flex;flex-direction:column;gap:8px;max-height:330px;overflow:auto;padding:4px;"></div>
-          <form id="messageForm" class="form-grid" style="margin-top:12px;">
-            <label class="wide">Message<textarea id="messageInput" placeholder="Type your message" rows="3" style="resize:vertical;"></textarea></label>
-            <button class="btn btn-primary wide" type="submit">Send Message</button>
+        <div class="chat-panel" id="messageChatCard">
+          <div class="chat-head"><div><strong id="messageChatTitle">Select a chat</strong><span class="chat-sub" id="messageChatSub">Your book conversations appear here</span></div></div>
+          <div id="messageChatBody" class="chat-body">
+            <p style="color:#64748b;font-size:13px;font-weight:800;padding:8px 0;">Open a conversation to start messaging.</p>
+          </div>
+          <form id="messageForm" class="chat-compose">
+            <textarea id="messageInput" placeholder="Message" rows="1"></textarea>
+            <button class="btn btn-primary chat-send" type="submit" aria-label="Send message">➤</button>
           </form>
         </div>
       </div>
@@ -2462,20 +2483,25 @@ function renderMatches(bookId) {
     school: document.getElementById('buySchool')?.value || '',
     medium: document.getElementById('buyMedium')?.value || ''
   };
+  if (list) list.innerHTML = '<p style="color:#888;font-size:13px;font-weight:800;padding:8px 0;">Searching sellers...</p>';
   if (_db) {
-    _db.collection('listings').where('bookId','==',bId).get().then(snap => {
+    _db.collection('listings').get().then(snap => {
       let changed = false;
       snap.docs.forEach(doc => {
         const data = Object.assign({id:doc.id}, doc.data());
-        const idx = (state.listings || []).findIndex(x => x.id === data.id);
+        const idx = (state.listings || []).findIndex(x => String(x.id) === String(data.id));
         if (idx >= 0) state.listings[idx] = Object.assign({}, state.listings[idx], data);
         else { state.listings.push(data); changed = true; }
       });
       if (changed) save();
       _renderMatchList(bId, query);
-    }).catch(()=>{});
+    }).catch(e=>{
+      console.warn('[PKITAAP] Could not load listings:', e);
+      _renderMatchList(bId, query);
+    });
+  } else {
+    _renderMatchList(bId, query);
   }
-  _renderMatchList(bId, query);
 }
 function _locScore(l, q) {
   let score = 0;
@@ -2487,11 +2513,22 @@ function _locScore(l, q) {
   if (q.school && _sameText(l.school, q.school)) score += 5;
   return score;
 }
+function _selectedBookMatchesListing(l, bId) {
+  const selected = state.books.find(b => String(b.id) === String(bId)) || null;
+  if (!l) return false;
+  if (String(l.bookId || '') === String(bId || '')) return true;
+  if (!selected) return false;
+  const sameTitle = _sameText(l.title || l.bookTitle, selected.title);
+  const sameClass = _sameText(l.className, selected.className);
+  const sameBoard = !selected.board || !l.board || _sameText(l.board, selected.board);
+  const sameStream = !selected.stream || !l.stream || _sameText(l.stream, selected.stream);
+  return sameTitle && sameClass && sameBoard && sameStream;
+}
 function _renderMatchList(bId, query) {
   const list = document.querySelector("#matchList");
   if (!list) return;
   const matches = (state.listings || [])
-    .filter(l => l.bookId === bId)
+    .filter(l => _selectedBookMatchesListing(l, bId))
     .filter(l => !query.medium || !l.medium || _sameText(l.medium, query.medium))
     .map(l => Object.assign({_score:_locScore(l, query)}, l))
     .sort((a,b) => (b._score - a._score) || String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
@@ -2682,13 +2719,15 @@ async function renderMessages(skipFetch) {
   if (!window._isLoggedIn) { requireLogin(); return; }
   if (!skipFetch) _loadMyChatsFromFirestore().then(() => renderMessages(true));
   const list = document.getElementById('messageThreadList');
+  const count = document.getElementById('messageThreadCount');
   if (!list) return;
   const me = _myChatUid();
   const chats = _myChats();
+  if (count) count.textContent = String(chats.length);
   if (!chats.length) {
-    list.innerHTML = '<p style="color:#888;font-size:13px;font-weight:700;padding:8px 0;">No messages yet.</p>';
-    const card = document.getElementById('messageChatCard');
-    if (card) card.style.display = 'none';
+    list.innerHTML = '<p style="color:#64748b;font-size:13px;font-weight:800;padding:8px 0;">No messages yet.</p>';
+    const body = document.getElementById('messageChatBody');
+    if (body) body.innerHTML = '<p style="color:#64748b;font-size:13px;font-weight:800;padding:8px 0;">Open a seller result and tap Message Seller.</p>';
     return;
   }
   list.innerHTML = chats.map(c => {
@@ -2696,11 +2735,12 @@ async function renderMessages(skipFetch) {
     const otherPid = c.sellerUid === me ? c.buyerPlatformId : c.sellerPlatformId;
     const msgs = Array.isArray(c.messages) ? c.messages : [];
     const last = msgs.length ? msgs[msgs.length - 1].text : 'No messages yet';
-    return '<div class="result-card" role="button" data-open-chat="' + _acEsc(c.id) + '">' +
+    const active = c.id === _activeChatId ? ' active' : '';
+    return '<div class="thread-item' + active + '" role="button" data-open-chat="' + _acEsc(c.id) + '">' +
       '<strong>' + _acEsc(otherName) + (otherPid ? ' @' + _acEsc(otherPid) : '') + '</strong>' +
       '<span>Book: ' + _acEsc(c.bookTitle || 'Book') + '</span>' +
       '<span>' + _acEsc(last) + '</span>' +
-      '<span style="font-size:12px;color:#888;">' + _acEsc(String(c.updatedAt || '').slice(0,16).replace('T',' ')) + '</span>' +
+      '<span>' + _acEsc(String(c.updatedAt || '').slice(0,16).replace('T',' ')) + '</span>' +
     '</div>';
   }).join('');
   list.querySelectorAll('[data-open-chat]').forEach(el => {
@@ -2713,20 +2753,22 @@ function openChat(chatId) {
   if (!chat) return;
   _activeChatId = chatId;
   const me = _myChatUid();
+  const otherName = chat.sellerUid === me ? (chat.buyerName || 'Buyer') : (chat.sellerName || 'Seller');
+  const otherPid = chat.sellerUid === me ? chat.buyerPlatformId : chat.sellerPlatformId;
   const title = document.getElementById('messageChatTitle');
+  const sub = document.getElementById('messageChatSub');
   const body = document.getElementById('messageChatBody');
-  const card = document.getElementById('messageChatCard');
-  if (card) card.style.display = '';
-  if (title) title.textContent = (chat.sellerUid === me ? (chat.buyerName || 'Buyer') : (chat.sellerName || 'Seller')) + ' - ' + (chat.bookTitle || 'Book');
+  if (title) title.textContent = otherName + (otherPid ? ' @' + otherPid : '');
+  if (sub) sub.textContent = chat.bookTitle || 'Book conversation';
   if (body) {
     const msgs = Array.isArray(chat.messages) ? chat.messages : [];
     body.innerHTML = msgs.length ? msgs.map(m => {
       const mine = String(m.senderUid || '') === me;
-      return '<div style="align-self:' + (mine ? 'flex-end' : 'flex-start') + ';background:' + (mine ? 'var(--red)' : '#f3f4f6') + ';color:' + (mine ? 'white' : 'var(--text)') + ';border-radius:12px;padding:9px 11px;max-width:82%;font-size:13px;font-weight:800;line-height:1.35;">' +
+      return '<div class="chat-bubble ' + (mine ? 'mine' : 'theirs') + '">' +
         _acEsc(m.text || '') +
-        '<div style="font-size:10px;opacity:.75;margin-top:4px;">' + _acEsc(String(m.createdAt || '').slice(0,16).replace('T',' ')) + '</div>' +
+        '<span class="chat-time">' + _acEsc(String(m.createdAt || '').slice(0,16).replace('T',' ')) + '</span>' +
       '</div>';
-    }).join('') : '<p style="color:#888;font-size:13px;font-weight:700;padding:8px 0;">Start the conversation below.</p>';
+    }).join('') : '<p style="color:#64748b;font-size:13px;font-weight:800;padding:8px 0;">Start the conversation below.</p>';
     body.scrollTop = body.scrollHeight;
   }
 }
@@ -2751,7 +2793,6 @@ async function sendChatMessage() {
   _saveLocalChats(chats);
   input.value = '';
   openChat(_activeChatId);
-  renderMessages(true);
   if (_db) {
     try {
       await _db.collection('chats').doc(_activeChatId).set({
@@ -3590,11 +3631,11 @@ function bindSearch() {
 }
 function bindBuyForm() {
   const frm = document.querySelector("#buyForm");
-  if(frm) frm.onsubmit = e => { e.preventDefault(); if(!requireLogin()) return; if(!selectedBookId) return; renderMatches(); };
+  if(frm) frm.onsubmit = async e => { e.preventDefault(); if(!requireLogin()) return; if(!selectedBookId) return; renderMatches(); };
 }
 function bindSellForm() {
   const frm = document.querySelector("#sellForm");
-  if(frm) frm.onsubmit = e => {
+  if(frm) frm.onsubmit = async e => {
     e.preventDefault();
     if(!selectedBookId){ toast("Please select a book first"); return; }
     if(!window._isLoggedIn){ toast("Please log in first to list a book"); return; }
@@ -3656,7 +3697,8 @@ function bindSellForm() {
     save();
     // Also save to Firestore
     if (_db) {
-      _db.collection('listings').doc(listing.id).set(listing).catch(()=>{});
+      try { await _db.collection('listings').doc(listing.id).set(listing); }
+      catch(e) { toast('Listing saved locally, but Firebase save failed. Check rules/login.'); console.warn('[PKITAAP] Listing save failed:', e); }
     }
     toast("✅ Listed for sale!");
     // Reset sell page to book selection
