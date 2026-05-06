@@ -147,6 +147,8 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 .auth-field.is-locked { opacity: 0.62; }
 .auth-field.is-locked label { color: #9ca3af; }
 .auth-field input:disabled, .auth-field select:disabled { background: #f3f4f6; border-color: #e5e7eb; color: #9ca3af; cursor: not-allowed; }
+.auth-field input[readonly] { background: #eef2f7; border-color: #d7dee8; color: #4b5563; cursor: not-allowed; }
+.auth-note { color: var(--muted); font-size: 11px; font-weight: 800; line-height: 1.35; }
 .auth-btn { background: var(--red); border: none; border-radius: 12px; color: white; cursor: pointer; font-size: 16px; font-weight: 900; margin-top: 4px; min-height: 50px; width: 100%; transition: background 0.15s, transform 0.1s; }
 .auth-btn:hover { background: var(--red-dark); }
 .auth-btn:active { transform: scale(0.98); }
@@ -556,6 +558,11 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
       <div class="auth-field">
         <label>Mobile Number</label>
         <input type="tel" id="accMobile" placeholder="10-digit number" maxlength="10">
+      </div>
+      <div class="auth-field">
+        <label>Google Email</label>
+        <input type="email" id="accEmail" placeholder="Google account email" readonly aria-readonly="true" tabindex="-1">
+        <span class="auth-note">This email is linked with your Google login and cannot be edited here.</span>
       </div>
       <div class="auth-field">
         <label>Date of Birth</label>
@@ -2122,8 +2129,10 @@ function openAccountDetails() {
   if (!dialog) return;
   // Fill all fields
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+  const googleEmail = u.email || (_auth && _auth.currentUser && _auth.currentUser.email) || '';
   set('accName', u.name);
   set('accMobile', u.mobile);
+  set('accEmail', googleEmail);
   setDobValue('acc', u.dateOfBirth || u.dob || u.birthDate || '');
   set('accClass', u.className);
   set('accInsta', u.insta);
@@ -2154,6 +2163,7 @@ function saveAccountDetails() {
   u.name       = name;
   u.mobile     = g('accMobile');
   u.phone      = '+91' + u.mobile;
+  u.email      = u.email || g('accEmail');
   u.dateOfBirth= getDobValue('acc');
   u.className  = g('accClass');
   u.insta      = g('accInsta');
