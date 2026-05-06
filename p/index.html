@@ -47,17 +47,14 @@ button, input, select { font: inherit; }
 .menu-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 .menu-panel {
   background: white; border: 2px solid var(--line);
-  border-radius: 16px; box-shadow: 0 18px 42px rgba(15,23,42,0.18);
-  display: none; gap: 8px; width: min(88vw,300px);
-  padding: 12px; position: fixed; right: 14px; top: 66px; z-index: 80;
-  max-height: calc(100vh - 84px); overflow-y: auto;
+  border-radius: 20px 0 0 20px; box-shadow: 0 14px 34px rgba(0,0,0,0.12);
+  display: none; min-height: 52vh; width: min(78vw,310px);
+  padding: 16px; position: fixed; right: 0; top: 58px; z-index: 40;
 }
-.menu-panel::before { content: ''; position: absolute; right: 18px; top: -9px; width: 16px; height: 16px; background: white; border-left: 2px solid var(--line); border-top: 2px solid var(--line); transform: rotate(45deg); }
 .menu-panel.open { display: flex; flex-direction: column; }
-.menu-panel > button { align-items: center; background: #f9fafb; border: 2px solid transparent; border-radius: 12px; color: var(--text); cursor: pointer; display: flex; font-size: 14px; font-weight: 900; justify-content: flex-start; min-height: 46px; padding: 0 14px; text-align: left; width: 100%; }
-.menu-title { color: var(--muted); font-size: 12px; font-weight: 900; margin: 2px 4px 4px; text-transform: uppercase; }
-.menu-panel > button:hover { background: var(--red-light); border-color: var(--line); color: var(--red); }
-#menuLogout { background: #fef2f2 !important; color: #dc2626 !important; }
+.menu-panel > button { background: transparent; border: 0; border-radius: 10px; color: var(--text); cursor: pointer; font-weight: 900; padding: 14px 12px; text-align: left; }
+.menu-title { color: var(--muted); font-size: 12px; font-weight: 900; margin: 4px 4px 12px; text-transform: uppercase; }
+.menu-panel > button:hover { background: var(--red-light); color: var(--red); }
 .menu-login-card {
   background: linear-gradient(135deg, var(--red-light) 0%, #dcfce7 100%);
   border: 2px solid var(--border); border-radius: 18px;
@@ -147,11 +144,6 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 .auth-field label { color: #374151; font-size: 13px; font-weight: 900; }
 .auth-field input, .auth-field select { background: #f9fafb; border: 2px solid var(--line); border-radius: 12px; font-size: 15px; font-weight: 600; min-height: 48px; outline: none; padding: 10px 14px; width: 100%; transition: border-color 0.15s, background 0.15s; }
 .auth-field input:focus, .auth-field select:focus { border-color: var(--red); background: white; }
-.auth-field.is-locked { opacity: 0.62; }
-.auth-field.is-locked label { color: #9ca3af; }
-.auth-field input:disabled, .auth-field select:disabled { background: #f3f4f6; border-color: #e5e7eb; color: #9ca3af; cursor: not-allowed; }
-.auth-field input[readonly] { background: #eef2f7; border-color: #d7dee8; color: #4b5563; cursor: not-allowed; }
-.auth-note { color: var(--muted); font-size: 11px; font-weight: 800; line-height: 1.35; }
 .auth-btn { background: var(--red); border: none; border-radius: 12px; color: white; cursor: pointer; font-size: 16px; font-weight: 900; margin-top: 4px; min-height: 50px; width: 100%; transition: background 0.15s, transform 0.1s; }
 .auth-btn:hover { background: var(--red-dark); }
 .auth-btn:active { transform: scale(0.98); }
@@ -159,25 +151,13 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 .auth-link { background: none; border: none; color: var(--red); cursor: pointer; font-size: 13px; font-weight: 900; padding: 0; text-decoration: underline; }
 .auth-link:hover { color: var(--red-dark); }
 .auth-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.auth-row.profile-stack { grid-template-columns: 1fr; gap: 16px; }
-.auth-field.profile-wide { grid-column: 1 / -1; }
-.dob-summary { align-items: center; background: #f9fafb; border: 2px solid var(--line); border-radius: 12px; color: #111827; cursor: pointer; display: flex; font-size: 15px; font-weight: 900; justify-content: space-between; min-height: 48px; outline: none; padding: 10px 14px; text-align: left; width: 100%; transition: border-color 0.15s, background 0.15s; }
-.dob-summary::after { content: "▾"; color: var(--muted); font-size: 14px; font-weight: 900; margin-left: 10px; }
-.dob-summary:hover, .dob-summary:focus { background: white; border-color: var(--red); }
-.dob-summary.is-empty { color: var(--muted); }
-.dob-summary:disabled { background: #f3f4f6; border-color: #e5e7eb; color: #9ca3af; cursor: not-allowed; }
-.dob-picker { display: grid; grid-template-columns: 1fr 1.25fr 1fr; gap: 12px; background: #f9fafb; border: 2px solid var(--line); border-radius: 14px; margin-top: 8px; padding: 12px; }
-.dob-picker.is-collapsed { display: none; }
+.dob-picker { display: grid; grid-template-columns: 1fr 1.25fr 1fr; gap: 12px; background: #f9fafb; border: 2px solid var(--line); border-radius: 14px; padding: 12px; }
 .dob-part { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .dob-part select { appearance: none; background: transparent; border: 0; border-bottom: 3px solid #111827; border-radius: 0; color: #111827; font-size: 17px; font-weight: 900; min-height: 42px; padding: 4px 2px 7px; text-align: center; text-align-last: center; }
 .dob-part span { color: var(--muted); font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.6px; }
-.dob-actions { display: flex; grid-column: 1 / -1; justify-content: flex-end; }
-.dob-ok { background: var(--red); border: 0; border-radius: 10px; color: white; cursor: pointer; font-size: 13px; font-weight: 900; min-height: 36px; padding: 0 18px; }
-.dob-ok:hover { background: var(--red-dark); }
 .dob-picker:focus-within { border-color: var(--red); background: white; }
 .auth-insta-wrap { display: flex; align-items: center; background: #f9fafb; border: 2px solid var(--line); border-radius: 12px; overflow: hidden; transition: border-color 0.15s; }
 .auth-insta-wrap:focus-within { border-color: var(--red); background: white; }
-.auth-field.is-locked .auth-insta-wrap, .auth-field.is-locked .dob-picker, .auth-field.is-locked .dob-summary { background: #f3f4f6; border-color: #e5e7eb; }
 .auth-insta-at { background: var(--red-light); color: var(--red); font-size: 16px; font-weight: 900; padding: 0 12px; min-height: 48px; display: flex; align-items: center; border-right: 2px solid var(--line); }
 .auth-insta-input { background: transparent !important; border: none !important; border-radius: 0 !important; flex: 1; min-height: 48px; outline: none; padding: 10px 12px !important; }
 #toast { background: #222; border-radius: 12px; bottom: 24px; color: white; font-weight: 900; opacity: 0; padding: 12px 18px; pointer-events: none; position: fixed; right: 24px; transform: translateY(12px); transition: 0.2s; z-index: 50; }
@@ -196,13 +176,13 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 /* FLOATING INPUT PREVIEW BUBBLE */
 .input-preview-bubble {
   position: absolute;
-  bottom: calc(100% + 12px);
+  bottom: calc(100% + 10px);
   left: 0; right: 0;
   background: #1f2937;
   color: #f9fafb;
-  border-radius: 14px;
-  padding: 12px 15px;
-  font-size: 15px;
+  border-radius: 12px;
+  padding: 9px 14px;
+  font-size: 14px;
   font-weight: 700;
   word-break: break-word;
   line-height: 1.5;
@@ -232,15 +212,14 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 .pw-eye:hover { color: var(--red); }
 .pw-wrap input:disabled ~ .pw-eye { pointer-events: none; color: #d1d5db; }
 .ac-wrap { position: relative; }
-.ac-wrap input { min-height: 56px; padding-right: 58px; }
-.ac-ok { position: absolute; right: 8px; top: 28px; transform: translateY(-50%); background: var(--red); color: white; border: none; border-radius: 9px; font-size: 12px; font-weight: 900; padding: 6px 12px; cursor: pointer; display: none; z-index: 5; transition: background 0.15s; white-space: nowrap; }
+.ac-wrap input { padding-right: 52px; }
+.ac-ok { position: absolute; right: 7px; top: 50%; transform: translateY(-50%); background: var(--red); color: white; border: none; border-radius: 8px; font-size: 12px; font-weight: 900; padding: 5px 11px; cursor: pointer; display: none; z-index: 5; transition: background 0.15s; white-space: nowrap; }
 .ac-ok:hover { background: var(--red-dark); }
 .ac-wrap input:disabled { background: #f3f4f6; color: #aaa; cursor: not-allowed; border-color: #e5e7eb; }
-.ac-list { background: #fff; border: 2px solid var(--line); border-radius: 14px; box-shadow: 0 10px 26px rgba(0,0,0,0.12); display: none; margin-top: 8px; max-height: 230px; overflow-y: auto; position: relative; z-index: 200; }
-.ac-item { padding: 13px 14px; font-size: 15px; font-weight: 800; cursor: pointer; border-bottom: 1px solid var(--line); color: var(--text); line-height: 1.35; transition: background 0.1s; white-space: normal; word-break: break-word; }
+.ac-list { position: absolute; bottom: calc(100% + 4px); left: 0; right: 0; background: white; border: 2px solid var(--line); border-radius: 12px; box-shadow: 0 -10px 28px rgba(0,0,0,0.13); max-height: 190px; overflow-y: auto; z-index: 200; display: none; }
+.ac-item { padding: 11px 14px; font-size: 14px; font-weight: 700; cursor: pointer; border-bottom: 1px solid var(--line); color: var(--text); transition: background 0.1s; }
 .ac-item:last-child { border-bottom: none; }
 .ac-item:hover { background: var(--red-light); color: var(--red); }
-.ac-empty { color: var(--muted); font-size: 13px; font-weight: 800; line-height: 1.45; padding: 13px 14px; }
 .locked-control { opacity: 0.5; pointer-events: none; }
 .home-link { color: var(--red) !important; font-weight: 900 !important; }
 .page-head { align-items: center; display: flex; gap: 12px; justify-content: space-between; }
@@ -357,7 +336,6 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
         <div class="card-body">
           <form id="sellForm" class="form-grid">
             <label class="wide">State <select id="sellState" onchange="updateSellDistricts()"><option value="">— Select Your State —</option><option value="Assam">Assam</option><option value="Delhi">Delhi</option></select></label>
-            <label class="wide">Medium <span style="color:#ef4444;font-size:11px;"> *required</span><select id="sellMedium" required><option value="">Select state first</option></select></label>
             <label>District <select id="sellDistrict" onchange="updateSellSubDistricts()"></select></label>
             <label>Sub-District <select id="sellSubDistrict" onchange="updateSellPlaces()"></select></label>
             <label>Place <input id="sellPlace" list="sellPlaceOptions" onchange="updateSellSchools()" placeholder="Place / town"><datalist id="sellPlaceOptions"></datalist><select id="sellPlaceFallback" onchange="document.getElementById('sellPlace').value=this.value;updateSellSchools()" style="margin-top:6px;"><option value="">— Select Place —</option></select></label>
@@ -476,38 +454,42 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
     <div id="signupStage2" style="display:none;">
       <form class="auth-form" id="signupForm">
         <div class="auth-field">
-          <label>Full Name <span style="color:#ef4444;font-size:11px;"> *required</span></label>
+          <label>Full Name</label>
           <input type="text" id="signupFullName" placeholder="Your full name" required autocomplete="name">
         </div>
         <div class="auth-field">
-          <label>Mobile Number <span style="color:#ef4444;font-size:11px;"> *required</span></label>
+          <label>Mobile Number</label>
           <input type="tel" id="signupMobile" placeholder="10-digit number" maxlength="10" required style="width:100%;">
         </div>
         <div class="auth-field">
-          <label>Date of Birth <span style="color:#ef4444;font-size:11px;"> *required</span></label>
-          <input type="date" id="signupDob" class="dob-date-input" required>
+          <label>Date of Birth</label>
+          <div class="dob-picker">
+            <div class="dob-part"><span>Day</span><select id="signupDobDay" required></select></div>
+            <div class="dob-part"><span>Month</span><select id="signupDobMonth" required></select></div>
+            <div class="dob-part"><span>Year</span><select id="signupDobYear" required></select></div>
+          </div>
         </div>
         <!-- passport field is OFF -->
         <div class="auth-field">
-          <label>Currently Studying Class <span style="color:#ef4444;font-size:11px;"> *required</span></label>
+          <label>Currently Studying Class</label>
           <select id="signupClass" required>
             <option value="">— Select Class —</option>
             <option value="Class 9">Class 9</option><option value="Class 10">Class 10</option><option value="Class 11">Class 11</option><option value="Class 12">Class 12</option>
           </select>
         </div>
-        <div class="auth-field"><label>Instagram ID <span style="color:#ef4444;font-size:11px;"> *required</span></label>
-          <div class="auth-insta-wrap"><span class="auth-insta-at">@</span><input type="text" id="signupInsta" placeholder="your_instagram_id" class="auth-insta-input" required autocapitalize="none" autocomplete="off" spellcheck="false"></div>
+        <div class="auth-field"><label>Instagram ID</label>
+          <div class="auth-insta-wrap"><span class="auth-insta-at">@</span><input type="text" id="signupInsta" placeholder="your_instagram_id" class="auth-insta-input" required></div>
         </div>
         <div class="auth-row">
           <div class="auth-field">
-            <label>State <span style="color:#ef4444;font-size:11px;"> *required</span></label>
+            <label>State</label>
             <select id="signupState" required onchange="updateSignupDistricts()">
               <option value="">— Select Your State —</option>
               <option value="Assam">Assam</option><option value="Delhi">Delhi</option>
             </select>
           </div>
           <div class="auth-field">
-            <label>District <span style="color:#ef4444;font-size:11px;"> *required</span></label>
+            <label>District</label>
             <select id="signupDistrict" required onchange="updateSignupSubDistricts()">
               <option value="">— District —</option>
             </select>
@@ -515,32 +497,32 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
         </div>
         <div class="auth-row">
           <div class="auth-field">
-            <label>Sub-District / Block <span style="color:#ef4444;font-size:11px;"> *required</span></label>
+            <label>Sub-District / Block</label>
             <select id="signupSubDistrict" required onchange="updateSignupPlaces()">
               <option value="">— Sub-District —</option>
             </select>
           </div>
         </div>
-        <div class="auth-row profile-stack">
-          <div class="auth-field profile-wide">
-            <label>Place / Town <span style="color:#ef4444;font-size:11px;"> *required</span></label>
+        <div class="auth-row">
+          <div class="auth-field">
+            <label>Place / Town</label>
             <div class="ac-wrap" id="placeAcWrap">
               <div class="input-preview-bubble" id="placeBubble"></div>
               <input type="text" id="signupPlace" autocomplete="off" placeholder="Select sub-district first"
-                disabled required
-                oninput="onSignupPlaceTyping(this.value)"
+                disabled
+                oninput="filterPlaceSuggestions(this.value);showInputBubble('placeBubble',this.value)"
                 onfocus="showPlaceSuggestions();showInputBubble('placeBubble',this.value)"
                 onblur="setTimeout(()=>{hideSuggestions('placeAcList');hideInputBubble('placeBubble')},150)">
               <button type="button" class="ac-ok" id="placeOkBtn" onmousedown="event.preventDefault();confirmPlaceInput()">OK</button>
               <div class="ac-list" id="placeAcList"></div>
             </div>
           </div>
-          <div class="auth-field profile-wide">
-            <label>School / College <span style="color:#ef4444;font-size:11px;"> *required</span></label>
+          <div class="auth-field">
+            <label>School / College</label>
             <div class="ac-wrap" id="schoolAcWrap">
               <div class="input-preview-bubble" id="schoolBubble"></div>
               <input type="text" id="signupSchool" autocomplete="off" placeholder="Enter place first"
-                disabled required
+                disabled
                 oninput="filterSchoolSuggestions(this.value);showInputBubble('schoolBubble',this.value)"
                 onfocus="showSchoolSuggestions();showInputBubble('schoolBubble',this.value)"
                 onblur="setTimeout(()=>{hideSuggestions('schoolAcList');hideInputBubble('schoolBubble')},150)">
@@ -568,13 +550,12 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
         <input type="tel" id="accMobile" placeholder="10-digit number" maxlength="10">
       </div>
       <div class="auth-field">
-        <label>Google Email</label>
-        <input type="email" id="accEmail" placeholder="Google account email" readonly aria-readonly="true" tabindex="-1">
-        <span class="auth-note">This email is linked with your Google login and cannot be edited here.</span>
-      </div>
-      <div class="auth-field">
         <label>Date of Birth</label>
-        <input type="date" id="accDob" class="dob-date-input">
+        <div class="dob-picker">
+          <div class="dob-part"><span>Day</span><select id="accDobDay"></select></div>
+          <div class="dob-part"><span>Month</span><select id="accDobMonth"></select></div>
+          <div class="dob-part"><span>Year</span><select id="accDobYear"></select></div>
+        </div>
       </div>
       <div class="auth-field">
         <label>Currently Studying Class</label>
@@ -678,98 +659,37 @@ let _auth = null;   // Auth instance
 //    lastLoginAt: ISO datetime string
 //  }
 // ═══════════════════════════════════════════════════════════════
-function _getLocalSavedUserProfile(match) {
-  match = match || {};
-  try {
-    const users = JSON.parse(localStorage.getItem('pkitaap_registered_users') || '[]');
-    return users.find(u =>
-      (match.uid && u.uid === match.uid) ||
-      (match.mobile && u.mobile === match.mobile) ||
-      (match.email && u.email === match.email)
-    ) || null;
-  } catch(e) { return null; }
-}
-function _mergeUserProfiles(localUser, remoteUser) {
-  const merged = Object.assign({}, localUser || {}, remoteUser || {});
-  const dobValue = getUserDobValue(remoteUser) || getUserDobValue(localUser) || getUserDobValue(merged);
-  if (dobValue) {
-    const parts = _dobPartsFromValue(dobValue);
-    merged.dateOfBirth = dobValue;
-    merged.dob = dobValue;
-    merged.birthDate = dobValue;
-    if (parts) {
-      merged.dobDay = parts.d;
-      merged.dobMonth = parts.m;
-      merged.dobYear = parts.y;
-    }
-  }
-  return merged;
-}
 // Fetch a user profile from Firestore by Firebase UID
 async function _getUserFromFirestore(uid) {
-  if (!uid) return null;
-  if (!_db) return _getLocalSavedUserProfile({ uid });
+  if (!_db || !uid) return null;
   try {
-    const authUser = (_auth && _auth.currentUser) || {};
     const snap = await _db.collection('users').doc(uid).get();
-    const remoteUser = snap.exists ? snap.data() : null;
-    let foundUser = remoteUser;
-    if (!getUserDobValue(foundUser)) {
-      try {
-        const qs = await _db.collection('users').where('uid','==',uid).limit(1).get();
-        if (!qs.empty) foundUser = _mergeUserProfiles(foundUser, qs.docs[0].data());
-      } catch(e) {}
-    }
-    if (!getUserDobValue(foundUser) && authUser.email) {
-      try {
-        const qs = await _db.collection('users').where('email','==',authUser.email).limit(1).get();
-        if (!qs.empty) foundUser = _mergeUserProfiles(foundUser, qs.docs[0].data());
-      } catch(e) {}
-    }
-    const localUser = _getLocalSavedUserProfile(Object.assign({ uid, email: authUser.email || '' }, foundUser || {}));
-    if (foundUser || localUser) return _mergeUserProfiles(localUser, foundUser);
+    if (snap.exists) return snap.data();
   } catch(e) { console.warn('[PKITAAP] _getUserFromFirestore error:', e); }
-  return _getLocalSavedUserProfile({ uid });
+  return null;
 }
 
 async function _saveUserToFirestore(userData) {
-  if (!userData) return;
-  const mobile = userData.mobile || (userData.phone ? String(userData.phone).replace(/D/g,'').slice(-10) : '');
-  const dobValue = userData.dateOfBirth || userData.dob || userData.birthDate || '';
-  const dobParts = _dobPartsFromValue(dobValue);
-  const normalizedUser = Object.assign({}, userData, {
-    id: userData.id || userData.uid || (mobile ? 'u' + mobile : ''),
-    mobile,
-    phone: userData.phone || (mobile ? '+91' + mobile : ''),
-    email: userData.email || ((_auth && _auth.currentUser && _auth.currentUser.email) || ''),
-    dateOfBirth: dobValue,
-    dob: dobValue,
-    birthDate: dobValue,
-    dobDay: dobParts ? dobParts.d : (userData.dobDay || ''),
-    dobMonth: dobParts ? dobParts.m : (userData.dobMonth || ''),
-    dobYear: dobParts ? dobParts.y : (userData.dobYear || '')
-  });
-  const docId = normalizedUser.uid || normalizedUser.id || normalizedUser.mobile;
+  const docId = userData.uid || userData.mobile;
   // Mirror to localStorage (offline fallback)
   try {
     const existing = JSON.parse(localStorage.getItem('pkitaap_registered_users') || '[]');
-    const idx = existing.findIndex(function(u){ return (normalizedUser.uid && u.uid === normalizedUser.uid) || (normalizedUser.mobile && u.mobile === normalizedUser.mobile); });
-    if (idx >= 0) { existing[idx] = Object.assign({}, existing[idx], normalizedUser); }
-    else { existing.push(normalizedUser); }
+    const idx = existing.findIndex(function(u){ return u.uid === userData.uid || u.mobile === userData.mobile; });
+    if (idx >= 0) { existing[idx] = Object.assign({}, existing[idx], userData); }
+    else { existing.push(userData); }
     localStorage.setItem('pkitaap_registered_users', JSON.stringify(existing));
   } catch(e) {}
   // Write to Firestore
-  if (_db && docId) {
+  if (_db) {
     try {
       await _db.collection('users').doc(docId).set(
-        Object.assign({}, normalizedUser, { lastLoginAt: new Date().toISOString() }),
+        Object.assign({}, userData, { lastLoginAt: new Date().toISOString() }),
         { merge: true }
       );
     } catch (e) {
       console.warn('[PKITAAP] Firestore write failed (localStorage used):', e);
     }
   }
-  return normalizedUser;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1872,7 +1792,7 @@ function goHome() {
 
 function updateAccessControls() {
   const locked = !window._isLoggedIn;
-  ['searchInput','stateFilter','buyState','buyDistrict','buySubDistrict','buyPlace','buySchool','buyMedium','sellMedium'].forEach(id => {
+  ['searchInput','stateFilter','buyState','buyDistrict','buySubDistrict','buyPlace','buySchool','buyMedium'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.disabled = locked;
@@ -2186,35 +2106,19 @@ function updateAccSchools() {
     if (keep) s.value = keep;
   });
 }
-async function openAccountDetails() {
+function openAccountDetails() {
   const u = window._currentUser;
   if (!u) return;
-  const localUser = _getLocalSavedUserProfile({ uid: u.uid, mobile: u.mobile, email: u.email });
-  if (localUser) {
-    Object.assign(u, _mergeUserProfiles(localUser, u));
-    window._currentUser = u;
-  }
-  if (u.uid && _db) {
-    try {
-      const freshUser = await _getUserFromFirestore(u.uid);
-      if (freshUser) {
-        Object.assign(u, _mergeUserProfiles(u, freshUser));
-        window._currentUser = u;
-      }
-    } catch(e) {}
-  }
   _mergeCommunityLocation(u.state, u.district, u.subDistrict, u.place, u.school);
   const dialog = document.getElementById('accountDialog');
   if (!dialog) return;
   // Fill all fields
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
-  const googleEmail = u.email || (_auth && _auth.currentUser && _auth.currentUser.email) || '';
   set('accName', u.name);
-  set('accMobile', u.mobile || (u.phone ? String(u.phone).replace(/D/g,'').slice(-10) : ''));
-  set('accEmail', googleEmail);
-  setDobValue('acc', getUserDobValue(u));
+  set('accMobile', u.mobile);
+  setDobValue('acc', u.dateOfBirth || u.dob || u.birthDate || '');
   set('accClass', u.className);
-  set('accInsta', (u.insta || '').replace(/^@+/, '').toLowerCase());
+  set('accInsta', u.insta);
   // Populate state and cascade
   set('accState', u.state);
   updateAccDistricts();
@@ -2233,100 +2137,23 @@ async function openAccountDetails() {
   }, 50);
   dialog.showModal();
 }
-function _accountSnapshot(u) {
-  const mobile = u.mobile || (u.phone ? String(u.phone).replace(/D/g,'').slice(-10) : '');
-  return {
-    name: u.name || '',
-    mobile,
-    phone: u.phone || (mobile ? '+91' + mobile : ''),
-    email: u.email || '',
-    dateOfBirth: getUserDobValue(u),
-    className: u.className || '',
-    insta: (u.insta || '').replace(/^@+/, '').toLowerCase(),
-    state: u.state || '',
-    district: u.district || '',
-    subDistrict: u.subDistrict || '',
-    place: u.place || '',
-    school: u.school || ''
-  };
-}
-function _accountChangeLog(before, after) {
-  const labels = {
-    name: 'Full Name', mobile: 'Mobile Number', phone: 'Phone',
-    email: 'Google Email', dateOfBirth: 'Date of Birth',
-    className: 'Class', insta: 'Instagram ID',
-    state: 'State', district: 'District', subDistrict: 'Sub-District',
-    place: 'Place / Town', school: 'School / College'
-  };
-  return Object.keys(labels).filter(k => String(before[k] || '') !== String(after[k] || '')).map(k => ({
-    field: k,
-    label: labels[k],
-    oldValue: before[k] || '',
-    newValue: after[k] || ''
-  }));
-}
 function saveAccountDetails() {
   const u = window._currentUser;
   if (!u) return;
   const g = (id) => (document.getElementById(id)?.value || '').trim();
-  const before = _accountSnapshot(u);
   const name = g('accName');
   if (!name) { toast('Please enter your full name'); return; }
-  const mobile = g('accMobile').replace(/D/g,'');
-  if (!/^[0-9]{10}$/.test(mobile)) { toast('Please enter a valid 10-digit mobile number'); return; }
-  const dobValue = getDobValue('acc');
-  if (!dobValue) { toast('Please select your complete date of birth'); return; }
-  const className = g('accClass');
-  if (!className) { toast('Please select your class'); return; }
-  const insta = g('accInsta').replace(/^@+/, '').toLowerCase();
-  if (!insta) { toast('Please enter your Instagram ID'); return; }
-  const accState = g('accState');
-  const accDistrict = g('accDistrict');
-  const accSubDistrict = g('accSubDistrict');
-  const accPlace = g('accPlace');
-  const accSchool = g('accSchool');
-  if (!accState || !accDistrict || !accSubDistrict || !accPlace || !accSchool) {
-    toast('Please fill state, district, sub-district, place and school');
-    return;
-  }
   u.name       = name;
-  u.mobile     = mobile;
+  u.mobile     = g('accMobile');
   u.phone      = '+91' + u.mobile;
-  u.email      = u.email || g('accEmail') || ((_auth && _auth.currentUser && _auth.currentUser.email) || '');
-  u.dateOfBirth= dobValue;
-  u.dob        = dobValue;
-  u.birthDate  = dobValue;
-  const accDobParts = _dobPartsFromValue(dobValue) || {};
-  u.dobDay     = accDobParts.d || '';
-  u.dobMonth   = accDobParts.m || '';
-  u.dobYear    = accDobParts.y || '';
-  u.className  = className;
-  u.insta      = insta;
-  u.state      = accState;
-  u.district   = accDistrict;
-  u.subDistrict= accSubDistrict;
-  u.place      = accPlace;
-  u.school     = accSchool;
-  const after = _accountSnapshot(u);
-  const changes = _accountChangeLog(before, after);
-  if (changes.length) {
-    const changedAt = new Date().toISOString();
-    u.profileUpdatedAt = changedAt;
-    u.updatedAt = changedAt;
-    u.updatedBy = 'user';
-    u.updatedByUid = u.uid || u.id || '';
-    u.lastProfileUpdate = {
-      changedAt,
-      changedBy: 'user',
-      changedByUid: u.updatedByUid,
-      oldDetails: before,
-      newDetails: after,
-      changes
-    };
-    u.profileUpdateHistory = Array.isArray(u.profileUpdateHistory) ? u.profileUpdateHistory : [];
-    u.profileUpdateHistory.push(u.lastProfileUpdate);
-    u.profileUpdateHistory = u.profileUpdateHistory.slice(-25);
-  }
+  u.dateOfBirth= getDobValue('acc');
+  u.className  = g('accClass');
+  u.insta      = g('accInsta');
+  u.state      = g('accState');
+  u.district   = g('accDistrict');
+  u.subDistrict= g('accSubDistrict');
+  u.place      = g('accPlace');
+  u.school     = g('accSchool');
   window._currentUser = u;
   _saveCommunityLocation(u.state, u.district, u.subDistrict, u.place, u.school);
   // Save to Firestore
@@ -2347,7 +2174,6 @@ function _prefillSellFromProfile() {
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
   // Pre-fill sell form state/location
   set('sellState', u.state);
-  _updateSellMediumsForState(u.state, u.medium || u.defaultMedium || '');
   if (u.state) {
     updateSellDistricts();
     setTimeout(() => {
@@ -2404,8 +2230,7 @@ function renderMatches(bookId) {
     district: document.getElementById('buyDistrict')?.value || '',
     subDistrict: document.getElementById('buySubDistrict')?.value || '',
     place: document.getElementById('buyPlace')?.value || '',
-    school: document.getElementById('buySchool')?.value || '',
-    medium: document.getElementById('buyMedium')?.value || ''
+    school: document.getElementById('buySchool')?.value || ''
   };
   if (_db) {
     _db.collection('listings').where('bookId','==',bId).get().then(snap => {
@@ -2428,7 +2253,6 @@ function _locScore(l, q) {
   if (_sameText(l.subDistrict, q.subDistrict)) score += 60;
   if (_sameText(l.district, q.district)) score += 30;
   if (_sameText(l.state, q.state)) score += 10;
-  if (q.medium && _sameText(l.medium, q.medium)) score += 20;
   if (q.school && _sameText(l.school, q.school)) score += 5;
   return score;
 }
@@ -2437,14 +2261,12 @@ function _renderMatchList(bId, query) {
   if (!list) return;
   const matches = (state.listings || [])
     .filter(l => l.bookId === bId)
-    .filter(l => !query.medium || !l.medium || _sameText(l.medium, query.medium))
     .map(l => Object.assign({_score:_locScore(l, query)}, l))
     .sort((a,b) => (b._score - a._score) || String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
   list.innerHTML = matches.length ? matches.map(l => {
     const location = [l.place,l.subDistrict,l.district,l.state].filter(Boolean).join(', ');
     return '<div class="result-card"><strong>' + _acEsc(l.seller || l.sellerName || 'Seller') + '</strong>' +
       '<span>School/College: ' + _acEsc(l.school || 'Not added') + '</span>' +
-      '<span>Medium: ' + _acEsc(l.medium || 'Not added') + '</span>' +
       '<span>Place: ' + _acEsc(l.place || 'Not added') + '</span>' +
       '<span>' + _acEsc(location || 'Location not added') + '</span>' +
       '<span>Condition: ' + _acEsc(l.condition || 'Not set') + (l.price ? ' · ₹' + _acEsc(l.price) : '') + '</span>' +
@@ -2456,14 +2278,12 @@ function _renderMatchList(bId, query) {
 }
 function _isMineListing(l) {
   const u = window._currentUser || {};
-  if (!l || !u) return false;
-  const myOwnerIds = [u.uid, u.id].map(v => String(v || '').trim()).filter(Boolean);
-  if (!myOwnerIds.length) return false;
-  const listingOwnerIds = [l.userId, l.uid, l.sellerUserId, l.ownerId]
-    .map(v => String(v || '').trim())
-    .filter(Boolean);
-  if (!listingOwnerIds.length) return false;
-  return listingOwnerIds.some(id => myOwnerIds.includes(id));
+  return !!l && (
+    (u.uid && l.userId === u.uid) ||
+    (u.id && l.userId === u.id) ||
+    (u.mobile && l.mobile === u.mobile) ||
+    (u.insta && l.instagram === u.insta)
+  );
 }
 function _listingBook(l) {
   return state.books.find(b => b.id === l.bookId) || null;
@@ -2501,7 +2321,7 @@ async function renderMyListings(skipFetch) {
   list.innerHTML = mine.map(l => {
     const b = _listingBook(l);
     const title = l.title || l.bookTitle || b?.title || 'Book';
-    const meta = [l.className || b?.className, l.board || b?.board, l.stream || b?.stream, l.medium].filter(Boolean).join(' / ');
+    const meta = [l.className || b?.className, l.board || b?.board, l.stream || b?.stream].filter(Boolean).join(' / ');
     const price = l.price ? ('₹' + l.price) : (b?.price ? ('₹' + b.price) : 'Price not set');
     return '<div class="result-card">' +
       '<strong>' + _acEsc(title) + '</strong>' +
@@ -2517,8 +2337,6 @@ async function renderMyListings(skipFetch) {
 }
 async function removeMyListing(id) {
   if (!id || !confirm('Remove this listed book?')) return;
-  const listing = (state.listings || []).find(l => l.id === id);
-  if (listing && !_isMineListing(listing)) { toast('This listing belongs to another user.'); return; }
   state.listings = (state.listings || []).filter(l => l.id !== id);
   save();
   if (_db) {
@@ -2680,7 +2498,6 @@ function updateSellDistricts() {
   const pSel  = document.getElementById('sellPlace');
   const sSel  = document.getElementById('sellSchool');
   if (!dSel) return;
-  _updateSellMediumsForState(stateName);
   dSel.innerHTML = '<option value="">— District —</option>' + _getDistricts(stateName).map(d => '<option>' + d.district + '</option>').join('');
   if (sdSel) sdSel.innerHTML = '<option value="">— Sub-District —</option>';
   if (pSel)  pSel.value = '';
@@ -2750,7 +2567,6 @@ function updateSignupDistricts() {
   if (pInp) { pInp.value = ''; pInp.disabled = true; pInp.placeholder = 'Select sub-district first'; }
   if (sInp) { sInp.value = ''; sInp.disabled = true; sInp.placeholder = 'Enter place first'; }
   window._placeOptions = []; window._schoolOptions = []; window._schoolLoadedForPlace = '';
-  window._signupPlaceConfirmed = false; window._signupSchoolConfirmed = false;
   const pOk = document.getElementById('placeOkBtn'); if (pOk) pOk.style.display='none';
   const sOk = document.getElementById('schoolOkBtn'); if (sOk) sOk.style.display='none';
   hideAllAcSuggestions();
@@ -2770,7 +2586,6 @@ function updateSignupSubDistricts() {
   if (pInp) { pInp.value = ''; pInp.disabled = true; pInp.placeholder = 'Select sub-district first'; }
   if (sInp) { sInp.value = ''; sInp.disabled = true; sInp.placeholder = 'Enter place first'; }
   window._placeOptions = []; window._schoolOptions = []; window._schoolLoadedForPlace = '';
-  window._signupPlaceConfirmed = false; window._signupSchoolConfirmed = false;
   const pOk = document.getElementById('placeOkBtn'); if (pOk) pOk.style.display='none';
   const sOk = document.getElementById('schoolOkBtn'); if (sOk) sOk.style.display='none';
   hideAllAcSuggestions();
@@ -2781,8 +2596,6 @@ function updateSignupSubDistricts() {
 window._placeOptions  = [];   // string[]
 window._schoolOptions = [];   // string[]
 window._schoolLoadedForPlace = '';
-window._signupPlaceConfirmed = false;
-window._signupSchoolConfirmed = false;
 
 function updateSignupPlaces() {
   const stateName   = document.getElementById('signupState')?.value;
@@ -2792,8 +2605,6 @@ function updateSignupPlaces() {
   const sInp = document.getElementById('signupSchool');
   if (pInp) { pInp.value = ''; }
   if (sInp) { sInp.value = ''; }
-  window._signupPlaceConfirmed = false;
-  window._signupSchoolConfirmed = false;
   window._placeOptions  = _getPlaces(stateName, district, subDistrict).map(p => p.name);
   window._schoolOptions = [];
   window._schoolLoadedForPlace = '';
@@ -2813,7 +2624,7 @@ function updateSignupPlaces() {
   }
   _loadCommunityPlaces(stateName, district, subDistrict).then(() => {
     window._placeOptions = _getPlaces(stateName, district, subDistrict).map(p => p.name);
-    if (document.activeElement === pInp) filterPlaceSuggestions(pInp?.value || '');
+    filterPlaceSuggestions(pInp?.value || '');
   });
   _checkUnlockPassword();
 }
@@ -2825,7 +2636,6 @@ function updateSignupSchools() {
   const place       = (document.getElementById('signupPlace')?.value || '').trim();
   const sInp = document.getElementById('signupSchool');
   if (sInp) sInp.value = '';
-  window._signupSchoolConfirmed = false;
   window._schoolOptions = _getSchools(stateName, district, subDistrict, place);
   window._schoolLoadedForPlace = '';
   hideSuggestions('schoolAcList');
@@ -2836,7 +2646,7 @@ function updateSignupSchools() {
   }
   if (place) _loadCommunitySchools(stateName, district, subDistrict, place).then(() => {
     window._schoolOptions = _getSchools(stateName, district, subDistrict, place);
-    if (document.activeElement === sInp) filterSchoolSuggestions(sInp?.value || '');
+    filterSchoolSuggestions(sInp?.value || '');
   });
   // Re-lock password since school was cleared
   _checkUnlockPassword();
@@ -2856,26 +2666,7 @@ function showPlaceSuggestions() {
   filterPlaceSuggestions(document.getElementById('signupPlace')?.value || '');
 }
 
-function onSignupPlaceTyping(val) {
-  window._signupPlaceConfirmed = false;
-  window._signupSchoolConfirmed = false;
-  filterPlaceSuggestions(val);
-  showInputBubble('placeBubble', val);
-  const school = document.getElementById('signupSchool');
-  if (school) {
-    school.value = '';
-    school.disabled = true;
-    school.placeholder = 'Tap OK after place first';
-  }
-  window._schoolOptions = [];
-  const sOk = document.getElementById('schoolOkBtn');
-  if (sOk) sOk.style.display = 'none';
-  hideSuggestions('schoolAcList');
-  _checkUnlockPassword();
-}
-
 function filterSchoolSuggestions(val) {
-  window._signupSchoolConfirmed = false;
   const list = document.getElementById('schoolAcList');
   if (!list) return;
   const q = val.trim().toLowerCase();
@@ -2893,7 +2684,7 @@ function filterSchoolSuggestions(val) {
     if (window._schoolLoadedForPlace !== schoolKey) {
       _loadCommunitySchools(st, d, sd, place).then(() => {
         window._schoolOptions = _getSchools(st, d, sd, place);
-        if (document.activeElement === document.getElementById('signupSchool')) filterSchoolSuggestions(val);
+        filterSchoolSuggestions(val);
       });
     }
   }
@@ -2905,28 +2696,16 @@ function showSchoolSuggestions() {
 
 function _renderAcList(listEl, items, inputVal, selectFn, okBtnId) {
   const typed = (inputVal || '').trim();
-  const isPlace = selectFn === 'selectPlaceSuggestion';
+  // Show OK button when user has typed something
   const okBtn = document.getElementById(okBtnId);
-  const showNewNameOk = !!typed && !items.length;
-  if (okBtn) okBtn.style.display = showNewNameOk ? 'block' : 'none';
+  if (okBtn) okBtn.style.display = typed ? 'block' : 'none';
 
-  if (!items.length) {
-    if (typed) {
-      listEl.innerHTML = '<div class="ac-empty">No saved ' + (isPlace ? 'place' : 'school / college') + ' found. Check the spelling, or tap OK to use this new name.</div>';
-      listEl.style.display = 'block';
-    } else {
-      listEl.innerHTML = '<div class="ac-empty">No saved ' + (isPlace ? 'places' : 'schools / colleges') + ' found yet for this selection. Type the full name and tap OK.</div>';
-      listEl.style.display = 'block';
-    }
-    return;
-  }
-  listEl.innerHTML =
-    '<div class="ac-empty">Saved ' + (isPlace ? 'places in this sub-district' : 'schools / colleges for this place') + '</div>' +
-    items.map(item =>
-      '<div class="ac-item" data-ac-value="' + _acEsc(item) + '">' + _acEsc(item) + '</div>'
-    ).join('');
+  if (!items.length) { listEl.style.display = 'none'; listEl.innerHTML = ''; return; }
+  listEl.innerHTML = items.map(item =>
+    '<div class="ac-item" data-ac-value="' + _acEsc(item) + '">' + _acEsc(item) + '</div>'
+  ).join('');
   const okBtnAfterRender = document.getElementById(okBtnId);
-  if (okBtnAfterRender) okBtnAfterRender.style.display = 'none';
+  if (okBtnAfterRender && items.length) okBtnAfterRender.style.display = 'none';
   listEl.querySelectorAll('.ac-item').forEach(el => {
     el.onpointerdown = function(e) {
       e.preventDefault();
@@ -2946,20 +2725,12 @@ function _renderAcList(listEl, items, inputVal, selectFn, okBtnId) {
 
 // OK button handlers
 window.confirmPlaceInput = function() {
-  const inp = document.getElementById('signupPlace');
-  if (!inp || !inp.value.trim()) { toast('Please enter your place / town'); return; }
-  window._signupPlaceConfirmed = true;
-  window._signupSchoolConfirmed = false;
   hideSuggestions('placeAcList');
   const okBtn = document.getElementById('placeOkBtn');
   if (okBtn) okBtn.style.display = 'none';
   updateSignupSchools();   // this also unlocks school if place is filled
-  setTimeout(() => document.getElementById('signupSchool')?.focus(), 80);
 };
 window.confirmSchoolInput = function() {
-  const inp = document.getElementById('signupSchool');
-  if (!inp || !inp.value.trim()) { toast('Please enter your school / college'); return; }
-  window._signupSchoolConfirmed = true;
   hideSuggestions('schoolAcList');
   const okBtn = document.getElementById('schoolOkBtn');
   if (okBtn) okBtn.style.display = 'none';
@@ -2971,26 +2742,21 @@ function _acEsc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
 window.selectPlaceSuggestion = function(val) {
   const inp = document.getElementById('signupPlace');
   if (inp) inp.value = val;
-  window._signupPlaceConfirmed = true;
-  window._signupSchoolConfirmed = false;
   hideSuggestions('placeAcList');
   hideInputBubble('placeBubble');
   const okBtn = document.getElementById('placeOkBtn');
   if (okBtn) okBtn.style.display = 'none';
   updateSignupSchools();
-  setTimeout(() => document.getElementById('signupSchool')?.focus(), 80);
 };
 
 window.selectSchoolSuggestion = function(val) {
   const inp = document.getElementById('signupSchool');
   if (inp) inp.value = val;
-  window._signupSchoolConfirmed = true;
   hideSuggestions('schoolAcList');
   hideInputBubble('schoolBubble');
   const okBtn = document.getElementById('schoolOkBtn');
   if (okBtn) okBtn.style.display = 'none';
   _checkUnlockPassword();
-  setTimeout(() => document.getElementById('signupContinue')?.focus(), 80);
 };
 
 function hideSuggestions(id) {
@@ -3020,225 +2786,13 @@ window.hideInputBubble = function(bubbleId) {
 function showInputBubble(bubbleId, val) { window.showInputBubble(bubbleId, val); }
 function hideInputBubble(bubbleId) { window.hideInputBubble(bubbleId); }
 
-const SIGNUP_DRAFT_KEY = 'pkitaap_signup_profile_draft_v2';
-window._signupDraftRestoring = false;
-window._signupDraftSaveTimer = null;
-window._signupProfileGuardActive = false;
-
-function _normalizeSignupInstaValue() {
-  const el = document.getElementById('signupInsta');
-  if (!el) return '';
-  const clean = el.value.replace(/^@+/, '').toLowerCase();
-  if (el.value !== clean) el.value = clean;
-  return clean;
-}
-
-function _isSignupProfileDraftActive() {
-  const stage2 = document.getElementById('signupStage2');
-  return !!(window._signupProfileGuardActive && stage2 && stage2.style.display !== 'none' && !window._currentUser);
-}
-
-function _collectSignupDraft() {
-  return {
-    fullName: (document.getElementById('signupFullName')?.value || '').trim(),
-    mobile: (document.getElementById('signupMobile')?.value || '').trim(),
-    dateOfBirth: getDobValue('signup'),
-    dobDay: document.getElementById('signupDobDay')?.value || '',
-    dobMonth: document.getElementById('signupDobMonth')?.value || '',
-    dobYear: document.getElementById('signupDobYear')?.value || '',
-    className: (document.getElementById('signupClass')?.value || '').trim(),
-    insta: _normalizeSignupInstaValue(),
-    state: (document.getElementById('signupState')?.value || '').trim(),
-    district: (document.getElementById('signupDistrict')?.value || '').trim(),
-    subDistrict: (document.getElementById('signupSubDistrict')?.value || '').trim(),
-    place: (document.getElementById('signupPlace')?.value || '').trim(),
-    school: (document.getElementById('signupSchool')?.value || '').trim(),
-    passport: (document.getElementById('signupPassport')?.value || '').trim(),
-    placeConfirmed: !!window._signupPlaceConfirmed,
-    schoolConfirmed: !!window._signupSchoolConfirmed,
-    updatedAt: Date.now()
-  };
-}
-
-function _hasSignupDraftValues(draft) {
-  const d = draft || _collectSignupDraft();
-  return !!(d.fullName || d.mobile || d.dateOfBirth || d.dobDay || d.dobMonth || d.dobYear || d.className || d.insta || d.state || d.district || d.subDistrict || d.place || d.school || d.passport);
-}
-
-function _isSignupProfileComplete() {
-  const d = _collectSignupDraft();
-  const passportRequired = state.settings && state.settings.passport;
-  return !!(d.fullName && /^[0-9]{10}$/.test(d.mobile) && d.dateOfBirth && d.className && d.insta && d.state && d.district && d.subDistrict && d.place && d.school && d.placeConfirmed && d.schoolConfirmed && (!passportRequired || d.passport));
-}
-
-function _saveSignupDraftNow() {
-  if (window._signupDraftRestoring || !_isSignupProfileDraftActive()) return;
-  const draft = _collectSignupDraft();
-  try {
-    if (_hasSignupDraftValues(draft)) localStorage.setItem(SIGNUP_DRAFT_KEY, JSON.stringify(draft));
-    else localStorage.removeItem(SIGNUP_DRAFT_KEY);
-  } catch(e) {}
-}
-
-function _queueSignupDraftSave() {
-  if (window._signupDraftRestoring || !_isSignupProfileDraftActive()) return;
-  clearTimeout(window._signupDraftSaveTimer);
-  window._signupDraftSaveTimer = setTimeout(_saveSignupDraftNow, 120);
-}
-
-function _lockSignupRefreshShortcut(e) {
-  if (!_isSignupProfileDraftActive() || _isSignupProfileComplete()) return;
-  const key = (e.key || '').toLowerCase();
-  const isReloadShortcut = key === 'f5' || ((e.ctrlKey || e.metaKey) && key === 'r');
-  if (!isReloadShortcut) return;
-  _saveSignupDraftNow();
-  e.preventDefault();
-  e.stopPropagation();
-  toast('Please complete your profile first. Your details are saved here.');
-  return false;
-}
-
-function _clearSignupDraft() {
-  try { localStorage.removeItem(SIGNUP_DRAFT_KEY); } catch(e) {}
-}
-
-function _restoreSignupDraft() {
-  let draft = null;
-  try { draft = JSON.parse(localStorage.getItem(SIGNUP_DRAFT_KEY) || 'null'); } catch(e) { draft = null; }
-  if (!draft || !_hasSignupDraftValues(draft)) return;
-
-  window._signupDraftRestoring = true;
-  try {
-    const setIf = (id, value) => {
-      const el = document.getElementById(id);
-      if (el && value) el.value = value;
-    };
-    setIf('signupFullName', draft.fullName);
-    setIf('signupMobile', draft.mobile);
-    setDobValue('signup', draft.dateOfBirth || '');
-    setIf('signupDobDay', draft.dobDay);
-    setIf('signupDobMonth', draft.dobMonth);
-    setIf('signupDobYear', draft.dobYear);
-    normalizeDobDay('signup');
-    setIf('signupClass', draft.className);
-    setIf('signupInsta', (draft.insta || '').toLowerCase());
-    setIf('signupPassport', draft.passport);
-
-    const st = document.getElementById('signupState');
-    if (st && draft.state) {
-      st.value = draft.state;
-      updateSignupDistricts();
-    }
-    const d = document.getElementById('signupDistrict');
-    if (d && draft.district) {
-      d.value = draft.district;
-      updateSignupSubDistricts();
-    }
-    const sd = document.getElementById('signupSubDistrict');
-    if (sd && draft.subDistrict) {
-      sd.value = draft.subDistrict;
-      updateSignupPlaces();
-    }
-
-    const placeEl = document.getElementById('signupPlace');
-    if (placeEl && draft.place) placeEl.value = draft.place;
-    window._signupPlaceConfirmed = !!(draft.place && draft.placeConfirmed);
-    if (draft.place && draft.placeConfirmed) updateSignupSchools();
-
-    const schoolEl = document.getElementById('signupSchool');
-    if (schoolEl && draft.school) schoolEl.value = draft.school;
-    window._signupSchoolConfirmed = !!(draft.school && draft.schoolConfirmed);
-  } finally {
-    window._signupDraftRestoring = false;
-    _checkUnlockPassword();
-  }
-}
-
-function _setSignupControlEnabled(id, enabled) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.disabled = !enabled;
-  el.setAttribute('aria-disabled', enabled ? 'false' : 'true');
-  const field = el.closest('.auth-field');
-  if (field) field.classList.toggle('is-locked', !enabled);
-  if (!enabled) {
-    if (id === 'signupPlace') {
-      hideSuggestions('placeAcList');
-      hideInputBubble('placeBubble');
-      const okBtn = document.getElementById('placeOkBtn');
-      if (okBtn) okBtn.style.display = 'none';
-    }
-    if (id === 'signupSchool') {
-      hideSuggestions('schoolAcList');
-      hideInputBubble('schoolBubble');
-      const okBtn = document.getElementById('schoolOkBtn');
-      if (okBtn) okBtn.style.display = 'none';
-    }
-  }
-}
-
-function _setSignupGroupEnabled(ids, enabled) {
-  ids.forEach(id => _setSignupControlEnabled(id, enabled));
-  if (ids.includes('signupDob') || ids.includes('signupDobDay')) setDobPickerEnabled('signup', enabled);
-}
-
-function _updateSignupProgressLocks() {
-  const fullName = (document.getElementById('signupFullName')?.value || '').trim();
-  const mobile = (document.getElementById('signupMobile')?.value || '').trim();
-  const dob = getDobValue('signup');
-  const passportRequired = state.settings && state.settings.passport;
-  const passport = (document.getElementById('signupPassport')?.value || '').trim();
-  const cls = (document.getElementById('signupClass')?.value || '').trim();
-  const insta = (document.getElementById('signupInsta')?.value || '').trim().replace(/^@+/, '').toLowerCase();
-  const stateVal = (document.getElementById('signupState')?.value || '').trim();
-  const district = (document.getElementById('signupDistrict')?.value || '').trim();
-  const subDistrict = (document.getElementById('signupSubDistrict')?.value || '').trim();
-  const place = (document.getElementById('signupPlace')?.value || '').trim();
-
-  const nameReady = !!fullName;
-  const mobileReady = /^[0-9]{10}$/.test(mobile);
-  const dobReady = !!dob;
-  const passportReady = !passportRequired || !!passport;
-  const classReady = !!cls;
-  const instaReady = !!insta;
-  const stateReady = !!stateVal;
-  const districtReady = !!district;
-  const subDistrictReady = !!subDistrict;
-
-  const canUseDob = nameReady && mobileReady;
-  const canUseClass = canUseDob && dobReady && passportReady;
-  const canUseInsta = canUseClass && classReady;
-  const canUseState = canUseInsta && instaReady;
-  const canUseDistrict = canUseState && stateReady;
-  const canUseSubDistrict = canUseDistrict && districtReady;
-  const canUsePlace = canUseSubDistrict && subDistrictReady;
-  const canUseSchool = canUsePlace && !!place && !!window._signupPlaceConfirmed;
-
-  _setSignupControlEnabled('signupFullName', true);
-  _setSignupControlEnabled('signupMobile', nameReady);
-  _setSignupGroupEnabled(['signupDob'], canUseDob);
-  _setSignupControlEnabled('signupPassport', canUseDob && dobReady);
-  _setSignupControlEnabled('signupClass', canUseClass);
-  _setSignupControlEnabled('signupInsta', canUseInsta);
-  _setSignupControlEnabled('signupState', canUseState);
-  _setSignupControlEnabled('signupDistrict', canUseDistrict);
-  _setSignupControlEnabled('signupSubDistrict', canUseSubDistrict);
-  _setSignupControlEnabled('signupPlace', canUsePlace);
-  _setSignupControlEnabled('signupSchool', canUseSchool);
-
-  const pInp = document.getElementById('signupPlace');
-  if (pInp && !pInp.value) pInp.placeholder = canUsePlace ? 'Type your place / town' : (subDistrictReady ? 'Complete fields above first' : 'Select sub-district first');
-  const sInp = document.getElementById('signupSchool');
-  if (sInp && !sInp.value) sInp.placeholder = canUseSchool ? 'Type your school / college' : (place ? 'Tap OK after place first' : 'Enter place first');
-}
-
 // Unlock Create Account button only after all required profile fields are filled
 function _checkUnlockPassword() {
   const fullName = (document.getElementById('signupFullName')?.value || '').trim();
   const mobile = (document.getElementById('signupMobile')?.value || '').trim();
   const dob = getDobValue('signup');
   const cls = (document.getElementById('signupClass')?.value || '').trim();
-  const insta = (document.getElementById('signupInsta')?.value || '').trim().replace(/^@+/, '').toLowerCase();
+  const insta = (document.getElementById('signupInsta')?.value || '').trim().replace(/^@+/, '');
   const stateVal = (document.getElementById('signupState')?.value || '').trim();
   const district = (document.getElementById('signupDistrict')?.value || '').trim();
   const subDistrict = (document.getElementById('signupSubDistrict')?.value || '').trim();
@@ -3247,15 +2801,13 @@ function _checkUnlockPassword() {
   const passportRequired = state.settings && state.settings.passport;
   const passport = (document.getElementById('signupPassport')?.value || '').trim();
   const btnContinue = document.getElementById('signupContinue');
-  _updateSignupProgressLocks();
   if (!btnContinue) return;
-  const complete = !!(fullName && /^[0-9]{10}$/.test(mobile) && dob && cls && insta && stateVal && district && subDistrict && place && school && window._signupPlaceConfirmed && window._signupSchoolConfirmed && (!passportRequired || passport));
+  const complete = !!(fullName && /^[0-9]{10}$/.test(mobile) && dob && cls && insta && stateVal && district && subDistrict && place && school && (!passportRequired || passport));
   if (complete) {
     btnContinue.disabled = false; btnContinue.style.opacity=''; btnContinue.style.cursor='';
   } else {
     btnContinue.disabled = true; btnContinue.style.opacity='0.5'; btnContinue.style.cursor='not-allowed';
   }
-  _queueSignupDraftSave();
 }
 
 // (kept as no-op for compatibility)
@@ -3383,9 +2935,8 @@ function bindSellForm() {
     const listingSubDistrict = document.getElementById("sellSubDistrict")?.value || "";
     const listingPlace = (document.getElementById("sellPlace")?.value || "").trim();
     const listingSchool = (document.getElementById("sellSchool")?.value || "").trim();
-    const listingMedium = (document.getElementById("sellMedium")?.value || "").trim();
-    if(!listingState || !listingMedium || !listingDistrict || !listingSubDistrict || !listingPlace || !listingSchool){
-      toast("Please fill state, medium, district, sub-district, place and school");
+    if(!listingState || !listingDistrict || !listingSubDistrict || !listingPlace || !listingSchool){
+      toast("Please fill state, district, sub-district, place and school");
       return;
     }
     const listing = {
@@ -3398,12 +2949,8 @@ function bindSellForm() {
       seller   : u ? u.name : "You",
       sellerName: u ? u.name : "You",
       userId   : u ? (u.uid||u.id) : "",
-      sellerUserId: u ? (u.uid||u.id) : "",
-      ownerId  : u ? (u.uid||u.id) : "",
-      sellerEmail: u ? (u.email || "") : "",
       mobile   : u ? (u.mobile || "") : "",
       state    : listingState,
-      medium   : listingMedium,
       district : listingDistrict,
       subDistrict: listingSubDistrict,
       place    : listingPlace,
@@ -3492,42 +3039,17 @@ function fillSignupLocations() {
   if (sdSel) sdSel.onchange = () => { updateSignupPlaces(); _checkUnlockPassword(); };
   initDobSelectors('signup');
   initDobSelectors('acc');
-  ['signupFullName','signupMobile','signupDob','signupClass','signupInsta','signupState','signupDistrict','signupSubDistrict','signupPlace','signupSchool','signupPassport'].forEach(id => {
+  ['signupFullName','signupMobile','signupDobDay','signupDobMonth','signupDobYear','signupClass','signupInsta','signupState','signupDistrict','signupSubDistrict','signupPlace','signupSchool','signupPassport'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
-    if (id === 'signupInsta') el.addEventListener('input', _normalizeSignupInstaValue);
     el.addEventListener('input', _checkUnlockPassword);
     el.addEventListener('change', _checkUnlockPassword);
   });
-  if (!window._signupRefreshGuardBound) {
-    window._signupRefreshGuardBound = true;
-    window.addEventListener('keydown', _lockSignupRefreshShortcut, true);
-    window.addEventListener('pagehide', function() {
-      if (_isSignupProfileDraftActive() && !_isSignupProfileComplete()) {
-        _saveSignupDraftNow();
-      }
-    });
-    document.addEventListener('visibilitychange', function() {
-      if (document.visibilityState === 'hidden' && _isSignupProfileDraftActive() && !_isSignupProfileComplete()) {
-        _saveSignupDraftNow();
-      }
-    });
-  }
   _checkUnlockPassword();
   // Place and School are now text inputs with oninput handlers — no onchange binding needed
 }
 const DOB_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 function initDobSelectors(prefix) {
-  const native = document.getElementById(prefix + 'Dob');
-  if (native) {
-    if (!native.dataset.ready) {
-      native.dataset.ready = '1';
-      native.max = new Date().toISOString().slice(0, 10);
-      native.addEventListener('input', () => { if(prefix === 'signup') _checkUnlockPassword(); });
-      native.addEventListener('change', () => { if(prefix === 'signup') _checkUnlockPassword(); });
-    }
-    return;
-  }
   const d = document.getElementById(prefix + 'DobDay');
   const m = document.getElementById(prefix + 'DobMonth');
   const y = document.getElementById(prefix + 'DobYear');
@@ -3537,8 +3059,7 @@ function initDobSelectors(prefix) {
   m.innerHTML = '<option value="">Month</option>' + DOB_MONTHS.map((name,i)=>'<option value="'+String(i+1).padStart(2,'0')+'">'+name+'</option>').join('');
   const nowYear = new Date().getFullYear();
   y.innerHTML = '<option value="">Year</option>' + Array.from({length:80}, (_,i)=>String(nowYear - 5 - i)).map(v=>'<option value="'+v+'">'+v+'</option>').join('');
-  [d,m,y].forEach(el=>el.addEventListener('change', ()=> onDobChanged(prefix)));
-  updateDobSummary(prefix);
+  [d,m,y].forEach(el=>el.addEventListener('change', ()=>{ normalizeDobDay(prefix); if(prefix==='signup') _checkUnlockPassword(); }));
 }
 function normalizeDobDay(prefix) {
   const d = document.getElementById(prefix + 'DobDay');
@@ -3549,136 +3070,22 @@ function normalizeDobDay(prefix) {
   if (Number(d.value) > last) d.value = String(last).padStart(2,'0');
 }
 function getDobValue(prefix) {
-  const native = document.getElementById(prefix + 'Dob');
-  if (native) return native.value || '';
   normalizeDobDay(prefix);
   const d = document.getElementById(prefix + 'DobDay')?.value || '';
   const m = document.getElementById(prefix + 'DobMonth')?.value || '';
   const y = document.getElementById(prefix + 'DobYear')?.value || '';
   return (d && m && y) ? (y + '-' + m + '-' + d) : '';
 }
-function _dobSummaryText(value) {
-  return value ? (formatDob(value) || value) : 'Select date of birth';
-}
-function updateDobSummary(prefix) {
-  const btn = document.getElementById(prefix + 'DobSummary');
-  if (!btn) return;
-  const value = getDobValue(prefix);
-  btn.textContent = _dobSummaryText(value);
-  btn.classList.toggle('is-empty', !value);
-}
-function toggleDobPicker(prefix, open) {
-  const picker = document.getElementById(prefix + 'DobPicker');
-  const btn = document.getElementById(prefix + 'DobSummary');
-  if (!picker || (btn && btn.disabled)) return;
-  const shouldOpen = typeof open === 'boolean' ? open : picker.classList.contains('is-collapsed');
-  picker.classList.toggle('is-collapsed', !shouldOpen);
-  if (shouldOpen) {
-    setTimeout(() => {
-      const firstEmpty = ['Day','Month','Year']
-        .map(part => document.getElementById(prefix + 'Dob' + part))
-        .find(el => el && !el.value);
-      (firstEmpty || document.getElementById(prefix + 'DobDay'))?.focus();
-    }, 30);
-  }
-}
-function setDobPickerEnabled(prefix, enabled) {
-  const native = document.getElementById(prefix + 'Dob');
-  if (native) {
-    native.disabled = !enabled;
-    native.setAttribute('aria-disabled', enabled ? 'false' : 'true');
-    const field = native.closest('.auth-field');
-    if (field) field.classList.toggle('is-locked', !enabled);
-    return;
-  }
-  const btn = document.getElementById(prefix + 'DobSummary');
-  if (btn) btn.disabled = !enabled;
-  if (!enabled) toggleDobPicker(prefix, false);
-}
-function onDobChanged(prefix) {
-  normalizeDobDay(prefix);
-  updateDobSummary(prefix);
-  if (prefix === 'signup') _checkUnlockPassword();
-  if (getDobValue(prefix)) {
-    setTimeout(() => toggleDobPicker(prefix, false), 140);
-  }
-}
-function applyDobPicker(prefix) {
-  const value = getDobValue(prefix);
-  if (!value) { toast('Please select day, month and year'); return; }
-  updateDobSummary(prefix);
-  toggleDobPicker(prefix, false);
-  if (prefix === 'signup') _checkUnlockPassword();
-}
-function _dobPartsFromValue(value) {
-  if (!value) return null;
-  if (typeof value === 'object') {
-    if (typeof value.toDate === 'function') {
-      const dt = value.toDate();
-      return dt && !isNaN(dt) ? {
-        y: String(dt.getFullYear()),
-        m: String(dt.getMonth() + 1).padStart(2,'0'),
-        d: String(dt.getDate()).padStart(2,'0')
-      } : null;
-    }
-    if (value.year && value.month && value.day) {
-      return {
-        y: String(value.year).padStart(4,'0'),
-        m: String(value.month).padStart(2,'0'),
-        d: String(value.day).padStart(2,'0')
-      };
-    }
-    if (value.seconds) {
-      const dt = new Date(Number(value.seconds) * 1000);
-      return !isNaN(dt) ? {
-        y: String(dt.getFullYear()),
-        m: String(dt.getMonth() + 1).padStart(2,'0'),
-        d: String(dt.getDate()).padStart(2,'0')
-      } : null;
-    }
-  }
-  const raw = String(value || '').trim();
-  let parts = raw.match(/^(d{4})[-/](d{1,2})[-/](d{1,2})(?:[Ts].*)?$/);
-  if (parts) return { y: parts[1], m: parts[2].padStart(2,'0'), d: parts[3].padStart(2,'0') };
-  parts = raw.match(/^(d{1,2})[-/](d{1,2})[-/](d{4})$/);
-  if (parts) return { y: parts[3], m: parts[2].padStart(2,'0'), d: parts[1].padStart(2,'0') };
-  parts = raw.match(/^(d{1,2})s+([A-Za-z]+)s+(d{4})$/);
-  if (parts) {
-    const monthIndex = DOB_MONTHS.findIndex(n => n.toLowerCase().startsWith(parts[2].toLowerCase()));
-    if (monthIndex >= 0) return { y: parts[3], m: String(monthIndex + 1).padStart(2,'0'), d: parts[1].padStart(2,'0') };
-  }
-  return null;
-}
-function getUserDobValue(u) {
-  u = u || {};
-  const direct = _dobPartsFromValue(u.dateOfBirth || u.dateofbirth || u.dateOfbirth || u.date_of_birth || u.dob || u.birthDate || u.birthdate || u.birth_date || u.dobValue);
-  if (direct) return direct.y + '-' + direct.m + '-' + direct.d;
-  const d = String(u.dobDay || u.birthDay || '').padStart(2,'0');
-  const m = String(u.dobMonth || u.birthMonth || '').padStart(2,'0');
-  const y = String(u.dobYear || u.birthYear || '');
-  return (d && m && y && d !== '00' && m !== '00') ? (y + '-' + m + '-' + d) : '';
-}
 function setDobValue(prefix, value) {
   initDobSelectors(prefix);
-  const parts = _dobPartsFromValue(value);
-  const native = document.getElementById(prefix + 'Dob');
-  if (native) {
-    native.value = parts ? (parts.y + '-' + parts.m + '-' + parts.d) : '';
-    return;
-  }
+  const parts = String(value || '').match(/^(d{4})-(d{2})-(d{2})$/);
   const y = document.getElementById(prefix + 'DobYear');
   const m = document.getElementById(prefix + 'DobMonth');
   const d = document.getElementById(prefix + 'DobDay');
   if (!y || !m || !d) return;
-  if (parts && parts.y && !Array.from(y.options).some(opt => opt.value === parts.y)) {
-    y.add(new Option(parts.y, parts.y));
-  }
-  y.value = parts ? parts.y : '';
-  m.value = parts ? parts.m : '';
-  d.value = parts ? parts.d : '';
-  normalizeDobDay(prefix);
-  updateDobSummary(prefix);
-  toggleDobPicker(prefix, false);
+  y.value = parts ? parts[1] : '';
+  m.value = parts ? parts[2] : '';
+  d.value = parts ? parts[3] : '';
 }
 function formatDob(value) {
   const parts = String(value || '').match(/^(d{4})-(d{2})-(d{2})$/);
@@ -3693,16 +3100,6 @@ function _updateMediumsForState(stateVal) {
   sel.innerHTML = '<option value="">— Select Medium —</option>' +
     (meds.length ? meds.map(m=>'<option value="'+m+'">'+m+'</option>').join('') :
       '<option value="English Medium">English Medium</option>');
-}
-function _updateSellMediumsForState(stateVal, selectedValue) {
-  const meds = getMediumsForState(stateVal);
-  const sel = document.getElementById('sellMedium');
-  if (!sel) return;
-  if (!stateVal) { sel.innerHTML = '<option value="">Select state first</option>'; return; }
-  sel.innerHTML = '<option value="">Select Medium</option>' +
-    (meds.length ? meds.map(m=>'<option value="'+m+'">'+m+'</option>').join('') :
-      '<option value="English Medium">English Medium</option>');
-  if (selectedValue) sel.value = selectedValue;
 }
 function onStateFilterChange(stateVal) {
   if(!requireLogin()) {
@@ -3741,7 +3138,7 @@ function onStateFilterChange2(stateVal) {
   if (sf1 && sf1.value !== stateVal) sf1.value = stateVal;
   const sellStateEl = document.getElementById('sellState');
   if (sellStateEl) { sellStateEl.value = stateVal; updateSellDistricts(); }
-  _updateSellMediumsForState(stateVal);
+  _updateMediumsForState(stateVal);
   render();
 }
 function init() {
@@ -3786,14 +3183,6 @@ init();
   let _googleUser     = null;   // Firebase user returned from Google popup
   let _authStateHandled = false; // Prevents onAuthStateChanged double-firing
 
-  async function _pkitaapGoogleProviderSignIn(provider, mode) {
-    // Android WebView uses the native app bridge instead of browser popups.
-    if (window.__androidBeginNativeGoogleSignIn) {
-      return await window.__androidBeginNativeGoogleSignIn(provider, mode);
-    }
-    return await firebase.auth().signInWithPopup(provider);
-  }
-
   // ── Google SVG (reused in button resets) ──────────────────
   const GOOGLE_SVG = '<svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>';
 
@@ -3815,7 +3204,6 @@ init();
   window.openSignup = openSignup;
   window.openLogin = openLogin;
   function _resetSignupToStage1() {
-    window._signupProfileGuardActive = false;
     const s1 = document.getElementById('signupStage1');
     const s2 = document.getElementById('signupStage2');
     const tag = document.getElementById('signupTagline');
@@ -3851,16 +3239,13 @@ init();
   async function onAuthSuccess(userData, firebaseUser) {
     window._isLoggedIn  = true;
     window._currentUser = userData || null;
-    window._signupProfileGuardActive = false;
-    _clearSignupDraft();
 
     if (userData) {
       if (firebaseUser && firebaseUser.uid) {
         userData.uid   = firebaseUser.uid;
         userData.email = firebaseUser.email || '';
       }
-      userData = await _saveUserToFirestore(userData) || userData;
-      window._currentUser = userData;
+      await _saveUserToFirestore(userData);
     }
 
     loginDialog.close();
@@ -3916,76 +3301,7 @@ init();
   }
 
   // ── Google Sign-In (shared by login + signup) ──────────────
-  function _resetGoogleButton(mode) {
-    const btnId = mode === 'login' ? 'loginGoogleBtn' : 'signupGoogleBtn';
-    const btn   = document.getElementById(btnId);
-    if (btn) {
-      btn.disabled = false;
-      btn.innerHTML = mode === 'login' ? GOOGLE_SVG + ' Continue with Google' : GOOGLE_SVG + ' Sign up with Google';
-    }
-  }
-
-  function _handleGoogleLoginError(e, mode) {
-    _authStateHandled = false;
-    _resetGoogleButton(mode);
-    let msg = 'Google sign-in failed. Please try again.';
-    if (e && e.code === 'auth/popup-closed-by-user')  msg = 'Sign-in cancelled.';
-    if (e && e.code === 'auth/popup-blocked')          msg = 'Popup blocked — please allow popups for this site.';
-    if (e && e.code === 'auth/cancelled-popup-request') msg = 'Sign-in cancelled.';
-    if (e && e.message && !e.code)                     msg = e.message;
-    toast('❌ ' + msg);
-    console.error('[PKITAAP] Google sign-in error:', e);
-  }
-
-  async function _finishGoogleUserAfterLogin(mode, firebaseUser) {
-    _googleUser = firebaseUser;
-    if (!_googleUser || !_googleUser.uid) throw new Error('Google login completed but no Firebase user was returned.');
-
-    const existingData = await _getUserFromFirestore(_googleUser.uid);
-    if (existingData) {
-      await onAuthSuccess(existingData, _googleUser);
-      return;
-    }
-
-    if (mode === 'login') {
-      loginDialog.close();
-      toast('⚠️ No account found. Please complete your profile.');
-      await new Promise(r => setTimeout(r, 400));
-      document.getElementById('signupStage1').style.display = 'none';
-      document.getElementById('signupStage2').style.display = '';
-      document.getElementById('signupTagline').textContent  = 'Complete your profile';
-      _prefillNameFromGoogle();
-      signupDialog.showModal();
-    } else {
-      document.getElementById('signupStage1').style.display = 'none';
-      document.getElementById('signupStage2').style.display = '';
-      document.getElementById('signupTagline').textContent  = 'Complete your profile';
-      _prefillNameFromGoogle();
-      _resetGoogleButton('signup');
-    }
-  }
-
-  window.pkitaapAndroidCompleteGoogleLogin = async function(googleIdToken, mode) {
-    mode = mode === 'signup' ? 'signup' : 'login';
-    try {
-      if (!_auth) throw new Error('Firebase not initialised. Check your config.');
-      if (!googleIdToken) throw new Error('Android Google login did not return a token.');
-      const cred = firebase.auth.GoogleAuthProvider.credential(googleIdToken);
-      const result = await firebase.auth().signInWithCredential(cred);
-      await _finishGoogleUserAfterLogin(mode, result.user);
-      return true;
-    } catch(e) {
-      _handleGoogleLoginError(e, mode);
-      return false;
-    }
-  };
-
-  window.pkitaapAndroidGoogleLoginFailed = function(message, mode) {
-    _handleGoogleLoginError(new Error(message || 'Android Google sign-in failed.'), mode === 'signup' ? 'signup' : 'login');
-  };
-
   window.googleSignIn = async function(mode) {
-    mode = mode === 'signup' ? 'signup' : 'login';
     _authStateHandled = true; // Manual flow — ignore the onAuthStateChanged re-fire
     const btnId = mode === 'login' ? 'loginGoogleBtn' : 'signupGoogleBtn';
     const btn   = document.getElementById(btnId);
@@ -3994,16 +3310,10 @@ init();
     try {
       if (!_auth) throw new Error('Firebase not initialised. Check your config.');
 
-      if (window.AndroidAuth && typeof window.AndroidAuth.startGoogleSignInWithMode === 'function') {
-        window.AndroidAuth.startGoogleSignInWithMode(mode);
-        return;
-      }
-
       const provider = new firebase.auth.GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
-      const result  = await _pkitaapGoogleProviderSignIn(provider, mode);
+      const result  = await firebase.auth().signInWithPopup(provider);
       _googleUser   = result.user;
-      if (!_googleUser || !_googleUser.uid) throw new Error('Google login completed but no Firebase user was returned.');
 
       // Check if this Google UID already has a profile in Firestore
       const existingData = await _getUserFromFirestore(_googleUser.uid);
@@ -4035,7 +3345,6 @@ init();
       }
 
     } catch (e) {
-      _authStateHandled = false;
       if (btn) { btn.disabled = false; btn.innerHTML = mode === 'login' ? GOOGLE_SVG + ' Continue with Google' : GOOGLE_SVG + ' Sign up with Google'; }
       let msg = 'Google sign-in failed. Please try again.';
       if (e.code === 'auth/popup-closed-by-user')  msg = 'Sign-in cancelled.';
@@ -4049,13 +3358,9 @@ init();
 
   // Pre-fill name from Google profile
   function _prefillNameFromGoogle() {
-    window._signupProfileGuardActive = true;
-    if (_googleUser && _googleUser.displayName) {
-      const fn = document.getElementById('signupFullName');
-      if (fn && !fn.value) fn.value = _googleUser.displayName.trim();
-    }
-    _restoreSignupDraft();
-    _checkUnlockPassword();
+    if (!_googleUser || !_googleUser.displayName) return;
+    const fn = document.getElementById('signupFullName');
+    if (fn && !fn.value) fn.value = _googleUser.displayName.trim();
   }
 
   // ── Profile form submit ────────────────────────────────────
@@ -4071,7 +3376,7 @@ init();
     const place       = ((document.getElementById('signupPlace')        || {}).value || '').trim();
     const school      = ((document.getElementById('signupSchool')       || {}).value || '').trim();
     const firstName   = ((document.getElementById('signupFullName')     || {}).value || '').trim();
-    const insta       = ((document.getElementById('signupInsta')        || {}).value || '').trim().replace(/^@+/, '').toLowerCase();
+    const insta       = ((document.getElementById('signupInsta')        || {}).value || '').trim().replace(/^@+/, '');
 
     if (!firstName)       { toast('Please enter your full name'); return; }
     if (!mobile || !/^[0-9]{10}$/.test(mobile)) { toast('Please enter a valid 10-digit mobile number'); return; }
@@ -4082,15 +3387,12 @@ init();
     if (!district)       { toast('Please select your district'); return; }
     if (!subDistrict)    { toast('Please select your sub-district'); return; }
     if (!place)          { toast('Please enter your place / town'); return; }
-    if (!window._signupPlaceConfirmed) { toast('Please tap OK after entering your place / town'); return; }
     if (!school)         { toast('Please enter your school / college'); return; }
-    if (!window._signupSchoolConfirmed) { toast('Please tap OK after entering your school / college'); return; }
 
     const lastName  = '';
     const passport  = ((document.getElementById('signupPassport')   || {}).value || '').trim();
     if (state.settings.passport && !passport) { toast('Please enter your Passport / ID number'); return; }
 
-    const signupDobParts = _dobPartsFromValue(dateOfBirth) || {};
     const userData = {
       id          : 'u' + Date.now(),
       uid         : _googleUser.uid,
@@ -4099,11 +3401,6 @@ init();
       mobile      : mobile,
       phone       : '+91' + mobile,
       dateOfBirth : dateOfBirth,
-      dob         : dateOfBirth,
-      birthDate   : dateOfBirth,
-      dobDay      : signupDobParts.d || '',
-      dobMonth    : signupDobParts.m || '',
-      dobYear     : signupDobParts.y || '',
       insta       : insta || '',
       className   : cls,
       state       : stateVal || '',
@@ -4114,10 +3411,7 @@ init();
       passport    : passport || '',
       status      : 'active',
       role        : 'user',
-      joinedAt    : new Date().toISOString().slice(0, 10),
-      createdAt   : new Date().toISOString(),
-      profileUpdatedAt: '',
-      profileUpdateHistory: []
+      joinedAt    : new Date().toISOString().slice(0, 10)
     };
 
     const continueBtn = document.getElementById('signupContinue');
