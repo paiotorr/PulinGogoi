@@ -3612,51 +3612,31 @@ function applyDobPicker(prefix) {
 }
 function _dobPartsFromValue(value) {
   if (!value) return null;
-  if (typeof value === 'object') {
-    if (typeof value.toDate === 'function') {
-      const dt = value.toDate();
-      return dt && !isNaN(dt) ? {
-        y: String(dt.getFullYear()),
-        m: String(dt.getMonth() + 1).padStart(2,'0'),
-        d: String(dt.getDate()).padStart(2,'0')
-      } : null;
-    }
-    if (value.year && value.month && value.day) {
-      return {
-        y: String(value.year).padStart(4,'0'),
-        m: String(value.month).padStart(2,'0'),
-        d: String(value.day).padStart(2,'0')
-      };
-    }
-    if (value.seconds) {
-      const dt = new Date(Number(value.seconds) * 1000);
-      return !isNaN(dt) ? {
-        y: String(dt.getFullYear()),
-        m: String(dt.getMonth() + 1).padStart(2,'0'),
-        d: String(dt.getDate()).padStart(2,'0')
-      } : null;
-    }
+  if (typeof value === 'object' && typeof value.toDate === 'function') {
+    const dt = value.toDate();
+    return dt && !isNaN(dt) ? {
+      y: String(dt.getFullYear()),
+      m: String(dt.getMonth() + 1).padStart(2,'0'),
+      d: String(dt.getDate()).padStart(2,'0')
+    } : null;
   }
   const raw = String(value || '').trim();
-  let parts = raw.match(/^(d{4})[-/](d{1,2})[-/](d{1,2})(?:[Ts].*)?$/);
+  let parts = raw.match(/^(d{4})[-/](d{1,2})[-/](d{1,2})/);
   if (parts) return { y: parts[1], m: parts[2].padStart(2,'0'), d: parts[3].padStart(2,'0') };
-  parts = raw.match(/^(d{1,2})[-/](d{1,2})[-/](d{4})$/);
+  parts = raw.match(/^(d{1,2})[-/](d{1,2})[-/](d{4})/);
   if (parts) return { y: parts[3], m: parts[2].padStart(2,'0'), d: parts[1].padStart(2,'0') };
-  parts = raw.match(/^(d{1,2})s+([A-Za-z]+)s+(d{4})$/);
-  if (parts) {
-    const monthIndex = DOB_MONTHS.findIndex(n => n.toLowerCase().startsWith(parts[2].toLowerCase()));
-    if (monthIndex >= 0) return { y: parts[3], m: String(monthIndex + 1).padStart(2,'0'), d: parts[1].padStart(2,'0') };
-  }
   return null;
 }
+
 function getUserDobValue(u) {
   u = u || {};
-  const direct = _dobPartsFromValue(u.dateOfBirth || u.dateofbirth || u.dateOfbirth || u.date_of_birth || u.dob || u.birthDate || u.birthdate || u.birth_date || u.dobValue);
+  const direct = _dobPartsFromValue(u.dateOfBirth || u.dob || u.birthDate);
   if (direct) return direct.y + '-' + direct.m + '-' + direct.d;
-  const d = String(u.dobDay || u.birthDay || '').padStart(2,'0');
-  const m = String(u.dobMonth || u.birthMonth || '').padStart(2,'0');
-  const y = String(u.dobYear || u.birthYear || '');
-  return (d && m && y && d !== '00' && m !== '00') ? (y + '-' + m + '-' + d) : '';
+  
+  const d = String(u.dobDay || '').padStart(2,'0');
+  const m = String(u.dobMonth || '').padStart(2,'0');
+  const y = String(u.dobYear || '');
+  return (d !== '00' && m !== '00' && y) ? (y + '-' + m + '-' + d) : '';
 }
 function setDobValue(prefix, value) {
   initDobSelectors(prefix);
@@ -4073,65 +4053,29 @@ init();
     const firstName   = ((document.getElementById('signupFullName')     || {}).value || '').trim();
     const insta       = ((document.getElementById('signupInsta')        || {}).value || '').trim().replace(/^@+/, '').toLowerCase();
 
-    if (!firstName)       { toast('Please enter your full name'); return; }
-    if (!mobile || !/^[0-9]{10}$/.test(mobile)) { toast('Please enter a valid 10-digit mobile number'); return; }
-    if (!dateOfBirth)     { toast('Please select your date of birth'); return; }
-    if (!cls)            { toast('Please select your class'); return; }
-    if (!insta)          { toast('Please enter your Instagram ID'); return; }
-    if (!stateVal)       { toast('Please select your state'); return; }
-    if (!district)       { toast('Please select your district'); return; }
-    if (!subDistrict)    { toast('Please select your sub-district'); return; }
-    if (!place)          { toast('Please enter your place / town'); return; }
-    if (!window._signupPlaceConfirmed) { toast('Please tap OK after entering your place / town'); return; }
-    if (!school)         { toast('Please enter your school / college'); return; }
-    if (!window._signupSchoolConfirmed) { toast('Please tap OK after entering your school / college'); return; }
-
-    const lastName  = '';
-    const passport  = ((document.getElementById('signupPassport')   || {}).value || '').trim();
-    if (state.settings.passport && !passport) { toast('Please enter your Passport / ID number'); return; }
-
-    const signupDobParts = _dobPartsFromValue(dateOfBirth) || {};
     const userData = {
-      id          : 'u' + Date.now(),
-      uid         : _googleUser.uid,
-      email       : _googleUser.email || '',
-      name        : firstName,
-      mobile      : mobile,
-      phone       : '+91' + mobile,
-      dateOfBirth : dateOfBirth,
-      dob         : dateOfBirth,
-      birthDate   : dateOfBirth,
-      dobDay      : signupDobParts.d || '',
-      dobMonth    : signupDobParts.m || '',
-      dobYear     : signupDobParts.y || '',
-      insta       : insta || '',
-      className   : cls,
-      state       : stateVal || '',
-      district,
-      subDistrict,
-      place,
-      school      : school || '',
-      passport    : passport || '',
-      status      : 'active',
-      role        : 'user',
-      joinedAt    : new Date().toISOString().slice(0, 10),
-      createdAt   : new Date().toISOString(),
-      profileUpdatedAt: '',
-      profileUpdateHistory: []
+      name: firstName,
+      mobile: mobile,
+      dateOfBirth: dateOfBirth, 
+      dob: dateOfBirth,
+      className: cls,
+      insta: insta,
+      state: stateVal,
+      district: district,
+      subDistrict: subDistrict,
+      place: place,
+      school: school,
+      joinedAt: new Date().toISOString().slice(0, 10)
     };
 
-    const continueBtn = document.getElementById('signupContinue');
-    continueBtn.disabled = true;
-    continueBtn.innerHTML = '<span class="otp-spinner"></span>Creating account…';
-
-    try {
-      await _saveCommunityLocation(stateVal, district, subDistrict, place, school);
-      await onAuthSuccess(userData, _googleUser);
-    } finally {
-      continueBtn.disabled  = false;
-      continueBtn.textContent = 'Create Account';
+    const btn = document.getElementById('signupContinue');
+    if(btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="otp-spinner"></span> Creating Account...';
     }
-  };
+
+    await onAuthSuccess(userData, _googleUser);
+};
 
   // ── Session persistence — restore login on page reload ──────────
   // Firebase Auth automatically restores the session. We listen here
