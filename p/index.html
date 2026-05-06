@@ -144,6 +144,9 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 .auth-field label { color: #374151; font-size: 13px; font-weight: 900; }
 .auth-field input, .auth-field select { background: #f9fafb; border: 2px solid var(--line); border-radius: 12px; font-size: 15px; font-weight: 600; min-height: 48px; outline: none; padding: 10px 14px; width: 100%; transition: border-color 0.15s, background 0.15s; }
 .auth-field input:focus, .auth-field select:focus { border-color: var(--red); background: white; }
+.auth-field.is-locked { opacity: 0.62; }
+.auth-field.is-locked label { color: #9ca3af; }
+.auth-field input:disabled, .auth-field select:disabled { background: #f3f4f6; border-color: #e5e7eb; color: #9ca3af; cursor: not-allowed; }
 .auth-btn { background: var(--red); border: none; border-radius: 12px; color: white; cursor: pointer; font-size: 16px; font-weight: 900; margin-top: 4px; min-height: 50px; width: 100%; transition: background 0.15s, transform 0.1s; }
 .auth-btn:hover { background: var(--red-dark); }
 .auth-btn:active { transform: scale(0.98); }
@@ -160,6 +163,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 .dob-picker:focus-within { border-color: var(--red); background: white; }
 .auth-insta-wrap { display: flex; align-items: center; background: #f9fafb; border: 2px solid var(--line); border-radius: 12px; overflow: hidden; transition: border-color 0.15s; }
 .auth-insta-wrap:focus-within { border-color: var(--red); background: white; }
+.auth-field.is-locked .auth-insta-wrap, .auth-field.is-locked .dob-picker { background: #f3f4f6; border-color: #e5e7eb; }
 .auth-insta-at { background: var(--red-light); color: var(--red); font-size: 16px; font-weight: 900; padding: 0 12px; min-height: 48px; display: flex; align-items: center; border-right: 2px solid var(--line); }
 .auth-insta-input { background: transparent !important; border: none !important; border-radius: 0 !important; flex: 1; min-height: 48px; outline: none; padding: 10px 12px !important; }
 #toast { background: #222; border-radius: 12px; bottom: 24px; color: white; font-weight: 900; opacity: 0; padding: 12px 18px; pointer-events: none; position: fixed; right: 24px; transform: translateY(12px); transition: 0.2s; z-index: 50; }
@@ -2753,7 +2757,7 @@ function _renderAcList(listEl, items, inputVal, selectFn, okBtnId) {
       '<div class="ac-item" data-ac-value="' + _acEsc(item) + '">' + _acEsc(item) + '</div>'
     ).join('');
   const okBtnAfterRender = document.getElementById(okBtnId);
-  if (okBtnAfterRender && items.length) okBtnAfterRender.style.display = 'none';
+  if (okBtnAfterRender) okBtnAfterRender.style.display = typed ? 'block' : 'none';
   listEl.querySelectorAll('.ac-item').forEach(el => {
     el.onpointerdown = function(e) {
       e.preventDefault();
@@ -2847,6 +2851,83 @@ window.hideInputBubble = function(bubbleId) {
 function showInputBubble(bubbleId, val) { window.showInputBubble(bubbleId, val); }
 function hideInputBubble(bubbleId) { window.hideInputBubble(bubbleId); }
 
+function _setSignupControlEnabled(id, enabled) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.disabled = !enabled;
+  el.setAttribute('aria-disabled', enabled ? 'false' : 'true');
+  const field = el.closest('.auth-field');
+  if (field) field.classList.toggle('is-locked', !enabled);
+  if (!enabled) {
+    if (id === 'signupPlace') {
+      hideSuggestions('placeAcList');
+      hideInputBubble('placeBubble');
+      const okBtn = document.getElementById('placeOkBtn');
+      if (okBtn) okBtn.style.display = 'none';
+    }
+    if (id === 'signupSchool') {
+      hideSuggestions('schoolAcList');
+      hideInputBubble('schoolBubble');
+      const okBtn = document.getElementById('schoolOkBtn');
+      if (okBtn) okBtn.style.display = 'none';
+    }
+  }
+}
+
+function _setSignupGroupEnabled(ids, enabled) {
+  ids.forEach(id => _setSignupControlEnabled(id, enabled));
+}
+
+function _updateSignupProgressLocks() {
+  const fullName = (document.getElementById('signupFullName')?.value || '').trim();
+  const mobile = (document.getElementById('signupMobile')?.value || '').trim();
+  const dob = getDobValue('signup');
+  const passportRequired = state.settings && state.settings.passport;
+  const passport = (document.getElementById('signupPassport')?.value || '').trim();
+  const cls = (document.getElementById('signupClass')?.value || '').trim();
+  const insta = (document.getElementById('signupInsta')?.value || '').trim().replace(/^@+/, '');
+  const stateVal = (document.getElementById('signupState')?.value || '').trim();
+  const district = (document.getElementById('signupDistrict')?.value || '').trim();
+  const subDistrict = (document.getElementById('signupSubDistrict')?.value || '').trim();
+  const place = (document.getElementById('signupPlace')?.value || '').trim();
+
+  const nameReady = !!fullName;
+  const mobileReady = /^[0-9]{10}$/.test(mobile);
+  const dobReady = !!dob;
+  const passportReady = !passportRequired || !!passport;
+  const classReady = !!cls;
+  const instaReady = !!insta;
+  const stateReady = !!stateVal;
+  const districtReady = !!district;
+  const subDistrictReady = !!subDistrict;
+
+  const canUseDob = nameReady && mobileReady;
+  const canUseClass = canUseDob && dobReady && passportReady;
+  const canUseInsta = canUseClass && classReady;
+  const canUseState = canUseInsta && instaReady;
+  const canUseDistrict = canUseState && stateReady;
+  const canUseSubDistrict = canUseDistrict && districtReady;
+  const canUsePlace = canUseSubDistrict && subDistrictReady;
+  const canUseSchool = canUsePlace && !!place && !!window._signupPlaceConfirmed;
+
+  _setSignupControlEnabled('signupFullName', true);
+  _setSignupControlEnabled('signupMobile', nameReady);
+  _setSignupGroupEnabled(['signupDobDay','signupDobMonth','signupDobYear'], canUseDob);
+  _setSignupControlEnabled('signupPassport', canUseDob && dobReady);
+  _setSignupControlEnabled('signupClass', canUseClass);
+  _setSignupControlEnabled('signupInsta', canUseInsta);
+  _setSignupControlEnabled('signupState', canUseState);
+  _setSignupControlEnabled('signupDistrict', canUseDistrict);
+  _setSignupControlEnabled('signupSubDistrict', canUseSubDistrict);
+  _setSignupControlEnabled('signupPlace', canUsePlace);
+  _setSignupControlEnabled('signupSchool', canUseSchool);
+
+  const pInp = document.getElementById('signupPlace');
+  if (pInp && !pInp.value) pInp.placeholder = canUsePlace ? 'Type your place / town' : (subDistrictReady ? 'Complete fields above first' : 'Select sub-district first');
+  const sInp = document.getElementById('signupSchool');
+  if (sInp && !sInp.value) sInp.placeholder = canUseSchool ? 'Type your school / college' : (place ? 'Tap OK after place first' : 'Enter place first');
+}
+
 // Unlock Create Account button only after all required profile fields are filled
 function _checkUnlockPassword() {
   const fullName = (document.getElementById('signupFullName')?.value || '').trim();
@@ -2862,6 +2943,7 @@ function _checkUnlockPassword() {
   const passportRequired = state.settings && state.settings.passport;
   const passport = (document.getElementById('signupPassport')?.value || '').trim();
   const btnContinue = document.getElementById('signupContinue');
+  _updateSignupProgressLocks();
   if (!btnContinue) return;
   const complete = !!(fullName && /^[0-9]{10}$/.test(mobile) && dob && cls && insta && stateVal && district && subDistrict && place && school && window._signupPlaceConfirmed && window._signupSchoolConfirmed && (!passportRequired || passport));
   if (complete) {
@@ -3518,6 +3600,7 @@ init();
     if (!_googleUser || !_googleUser.displayName) return;
     const fn = document.getElementById('signupFullName');
     if (fn && !fn.value) fn.value = _googleUser.displayName.trim();
+    _checkUnlockPassword();
   }
 
   // ── Profile form submit ────────────────────────────────────
