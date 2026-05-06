@@ -47,14 +47,17 @@ button, input, select { font: inherit; }
 .menu-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 .menu-panel {
   background: white; border: 2px solid var(--line);
-  border-radius: 20px 0 0 20px; box-shadow: 0 14px 34px rgba(0,0,0,0.12);
-  display: none; min-height: 52vh; width: min(78vw,310px);
-  padding: 16px; position: fixed; right: 0; top: 58px; z-index: 40;
+  border-radius: 16px; box-shadow: 0 18px 42px rgba(15,23,42,0.18);
+  display: none; gap: 8px; width: min(88vw,300px);
+  padding: 12px; position: fixed; right: 14px; top: 66px; z-index: 80;
+  max-height: calc(100vh - 84px); overflow-y: auto;
 }
+.menu-panel::before { content: ''; position: absolute; right: 18px; top: -9px; width: 16px; height: 16px; background: white; border-left: 2px solid var(--line); border-top: 2px solid var(--line); transform: rotate(45deg); }
 .menu-panel.open { display: flex; flex-direction: column; }
-.menu-panel > button { background: transparent; border: 0; border-radius: 10px; color: var(--text); cursor: pointer; font-weight: 900; padding: 14px 12px; text-align: left; }
-.menu-title { color: var(--muted); font-size: 12px; font-weight: 900; margin: 4px 4px 12px; text-transform: uppercase; }
-.menu-panel > button:hover { background: var(--red-light); color: var(--red); }
+.menu-panel > button { align-items: center; background: #f9fafb; border: 2px solid transparent; border-radius: 12px; color: var(--text); cursor: pointer; display: flex; font-size: 14px; font-weight: 900; justify-content: flex-start; min-height: 46px; padding: 0 14px; text-align: left; width: 100%; }
+.menu-title { color: var(--muted); font-size: 12px; font-weight: 900; margin: 2px 4px 4px; text-transform: uppercase; }
+.menu-panel > button:hover { background: var(--red-light); border-color: var(--line); color: var(--red); }
+#menuLogout { background: #fef2f2 !important; color: #dc2626 !important; }
 .menu-login-card {
   background: linear-gradient(135deg, var(--red-light) 0%, #dcfce7 100%);
   border: 2px solid var(--border); border-radius: 18px;
@@ -2154,17 +2157,51 @@ function openAccountDetails() {
   }, 50);
   dialog.showModal();
 }
+function _accountSnapshot(u) {
+  return {
+    name: u.name || '',
+    mobile: u.mobile || '',
+    phone: u.phone || '',
+    email: u.email || '',
+    dateOfBirth: u.dateOfBirth || '',
+    className: u.className || '',
+    insta: u.insta || '',
+    state: u.state || '',
+    district: u.district || '',
+    subDistrict: u.subDistrict || '',
+    place: u.place || '',
+    school: u.school || ''
+  };
+}
+function _accountChangeLog(before, after) {
+  const labels = {
+    name: 'Full Name', mobile: 'Mobile Number', phone: 'Phone',
+    email: 'Google Email', dateOfBirth: 'Date of Birth',
+    className: 'Class', insta: 'Instagram ID',
+    state: 'State', district: 'District', subDistrict: 'Sub-District',
+    place: 'Place / Town', school: 'School / College'
+  };
+  return Object.keys(labels).filter(k => String(before[k] || '') !== String(after[k] || '')).map(k => ({
+    field: k,
+    label: labels[k],
+    oldValue: before[k] || '',
+    newValue: after[k] || ''
+  }));
+}
 function saveAccountDetails() {
   const u = window._currentUser;
   if (!u) return;
   const g = (id) => (document.getElementById(id)?.value || '').trim();
+  const before = _accountSnapshot(u);
   const name = g('accName');
   if (!name) { toast('Please enter your full name'); return; }
+  const dobValue = getDobValue('acc');
+  if (!dobValue) { toast('Please select your complete date of birth'); return; }
   u.name       = name;
   u.mobile     = g('accMobile');
   u.phone      = '+91' + u.mobile;
   u.email      = u.email || g('accEmail');
-  u.dateOfBirth= getDobValue('acc');
+  u.dateOfBirth= dobValue;
   u.className  = g('accClass');
   u.insta      = g('accInsta');
   u.state      = g('accState');
@@ -2172,6 +2209,21 @@ function saveAccountDetails() {
   u.subDistrict= g('accSubDistrict');
   u.place      = g('accPlace');
   u.school     = g('accSchool');
+  const after = _accountSnapshot(u);
+  const changes = _accountChangeLog(before, after);
+  if (changes.length) {
+    const changedAt = new Date().toISOString();
+    u.profileUpdatedAt = changedAt;
+    u.profileUpdateHistory = Array.isArray(u.profileUpdateHistory) ? u.profileUpdateHistory : [];
+    u.profileUpdateHistory.push({
+      changedAt,
+      changedBy: 'user',
+      oldDetails: before,
+      newDetails: after,
+      changes
+    });
+    u.profileUpdateHistory = u.profileUpdateHistory.slice(-25);
+  }
   window._currentUser = u;
   _saveCommunityLocation(u.state, u.district, u.subDistrict, u.place, u.school);
   // Save to Firestore
@@ -2301,12 +2353,13 @@ function _renderMatchList(bId, query) {
 }
 function _isMineListing(l) {
   const u = window._currentUser || {};
-  return !!l && (
-    (u.uid && l.userId === u.uid) ||
-    (u.id && l.userId === u.id) ||
-    (u.mobile && l.mobile === u.mobile) ||
-    (u.insta && l.instagram === u.insta)
-  );
+  if (!l || !u) return false;
+  const listingOwner = String(l.userId || l.uid || l.sellerUserId || '').trim();
+  if (listingOwner) {
+    return !!((u.uid && listingOwner === String(u.uid)) || (u.id && listingOwner === String(u.id)));
+  }
+  // Legacy listings created before userId existed can fall back to mobile/Instagram.
+  return !!((u.mobile && l.mobile === u.mobile) || (u.insta && l.instagram === u.insta));
 }
 function _listingBook(l) {
   return state.books.find(b => b.id === l.bookId) || null;
@@ -2360,6 +2413,8 @@ async function renderMyListings(skipFetch) {
 }
 async function removeMyListing(id) {
   if (!id || !confirm('Remove this listed book?')) return;
+  const listing = (state.listings || []).find(l => l.id === id);
+  if (listing && !_isMineListing(listing)) { toast('This listing belongs to another user.'); return; }
   state.listings = (state.listings || []).filter(l => l.id !== id);
   save();
   if (_db) {
@@ -3238,6 +3293,8 @@ function bindSellForm() {
       seller   : u ? u.name : "You",
       sellerName: u ? u.name : "You",
       userId   : u ? (u.uid||u.id) : "",
+      sellerUserId: u ? (u.uid||u.id) : "",
+      sellerEmail: u ? (u.email || "") : "",
       mobile   : u ? (u.mobile || "") : "",
       state    : listingState,
       medium   : listingMedium,
