@@ -3549,7 +3549,6 @@ function toggleDobPicker(prefix, open) {
   const shouldOpen = typeof open === 'boolean' ? open : picker.classList.contains('is-collapsed');
   picker.classList.toggle('is-collapsed', !shouldOpen);
   if (shouldOpen) {
-    picker.dataset.openHadValue = getDobValue(prefix) ? '1' : '0';
     setTimeout(() => {
       const firstEmpty = ['Day','Month','Year']
         .map(part => document.getElementById(prefix + 'Dob' + part))
@@ -3567,8 +3566,7 @@ function onDobChanged(prefix) {
   normalizeDobDay(prefix);
   updateDobSummary(prefix);
   if (prefix === 'signup') _checkUnlockPassword();
-  const picker = document.getElementById(prefix + 'DobPicker');
-  if (getDobValue(prefix) && picker?.dataset.openHadValue !== '1') {
+  if (getDobValue(prefix)) {
     setTimeout(() => toggleDobPicker(prefix, false), 140);
   }
 }
