@@ -842,6 +842,54 @@ const seed = {
       "price": 100,
       "author": "",
       "image": ""
+    },
+    {
+      "id": "xl9powjm",
+      "type": "school",
+      "state": "",
+      "className": "Class 9",
+      "board": "seba",
+      "stream": "",
+      "title": "English",
+      "price": 20,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "x30teky8",
+      "type": "school",
+      "state": "",
+      "className": "Class 10",
+      "board": "seba",
+      "stream": "",
+      "title": "English",
+      "price": 20,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "xo0zzyda",
+      "type": "school",
+      "state": "",
+      "className": "Class 11",
+      "board": "seba",
+      "stream": "",
+      "title": "English",
+      "price": 20,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "x6u6t50g",
+      "type": "school",
+      "state": "",
+      "className": "Class 12",
+      "board": "seba",
+      "stream": "",
+      "title": "English",
+      "price": 20,
+      "author": "",
+      "image": ""
     }
   ],
   "locations": [
@@ -1112,7 +1160,14 @@ const seed = {
             },
             {
               "subDistrict": "Dibrugarh West",
-              "places": []
+              "places": [
+                {
+                  "name": "Balijan",
+                  "schools": [
+                    "Mg balijan"
+                  ]
+                }
+              ]
             },
             {
               "subDistrict": "Moran",
@@ -3122,6 +3177,14 @@ init();
   let _googleUser     = null;   // Firebase user returned from Google popup
   let _authStateHandled = false; // Prevents onAuthStateChanged double-firing
 
+  async function _pkitaapGoogleProviderSignIn(provider) {
+    // Android WebView uses the native app bridge instead of browser popups.
+    if (window.__androidBeginNativeGoogleSignIn) {
+      return await window.__androidBeginNativeGoogleSignIn(provider);
+    }
+    return await firebase.auth().signInWithPopup(provider);
+  }
+
   // ── Google SVG (reused in button resets) ──────────────────
   const GOOGLE_SVG = '<svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>';
 
@@ -3251,8 +3314,9 @@ init();
 
       const provider = new firebase.auth.GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
-      const result  = await firebase.auth().signInWithPopup(provider);
+      const result  = await _pkitaapGoogleProviderSignIn(provider);
       _googleUser   = result.user;
+      if (!_googleUser || !_googleUser.uid) throw new Error('Google login completed but no Firebase user was returned.');
 
       // Check if this Google UID already has a profile in Firestore
       const existingData = await _getUserFromFirestore(_googleUser.uid);
@@ -3284,6 +3348,7 @@ init();
       }
 
     } catch (e) {
+      _authStateHandled = false;
       if (btn) { btn.disabled = false; btn.innerHTML = mode === 'login' ? GOOGLE_SVG + ' Continue with Google' : GOOGLE_SVG + ' Sign up with Google'; }
       let msg = 'Google sign-in failed. Please try again.';
       if (e.code === 'auth/popup-closed-by-user')  msg = 'Sign-in cancelled.';
