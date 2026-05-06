@@ -3322,12 +3322,14 @@ function fillSignupLocations() {
   if (!window._signupRefreshGuardBound) {
     window._signupRefreshGuardBound = true;
     window.addEventListener('keydown', _lockSignupRefreshShortcut, true);
-    window.addEventListener('beforeunload', function(e) {
+    window.addEventListener('pagehide', function() {
       if (_isSignupProfileDraftActive() && !_isSignupProfileComplete()) {
         _saveSignupDraftNow();
-        e.preventDefault();
-        e.returnValue = '';
-        return '';
+      }
+    });
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'hidden' && _isSignupProfileDraftActive() && !_isSignupProfileComplete()) {
+        _saveSignupDraftNow();
       }
     });
   }
