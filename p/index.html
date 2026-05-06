@@ -2577,6 +2577,7 @@ function updateSignupDistricts() {
   if (pInp) { pInp.value = ''; pInp.disabled = true; pInp.placeholder = 'Select sub-district first'; }
   if (sInp) { sInp.value = ''; sInp.disabled = true; sInp.placeholder = 'Enter place first'; }
   window._placeOptions = []; window._schoolOptions = []; window._schoolLoadedForPlace = '';
+  window._signupPlaceConfirmed = false; window._signupSchoolConfirmed = false;
   const pOk = document.getElementById('placeOkBtn'); if (pOk) pOk.style.display='none';
   const sOk = document.getElementById('schoolOkBtn'); if (sOk) sOk.style.display='none';
   hideAllAcSuggestions();
@@ -2596,6 +2597,7 @@ function updateSignupSubDistricts() {
   if (pInp) { pInp.value = ''; pInp.disabled = true; pInp.placeholder = 'Select sub-district first'; }
   if (sInp) { sInp.value = ''; sInp.disabled = true; sInp.placeholder = 'Enter place first'; }
   window._placeOptions = []; window._schoolOptions = []; window._schoolLoadedForPlace = '';
+  window._signupPlaceConfirmed = false; window._signupSchoolConfirmed = false;
   const pOk = document.getElementById('placeOkBtn'); if (pOk) pOk.style.display='none';
   const sOk = document.getElementById('schoolOkBtn'); if (sOk) sOk.style.display='none';
   hideAllAcSuggestions();
@@ -2606,6 +2608,8 @@ function updateSignupSubDistricts() {
 window._placeOptions  = [];   // string[]
 window._schoolOptions = [];   // string[]
 window._schoolLoadedForPlace = '';
+window._signupPlaceConfirmed = false;
+window._signupSchoolConfirmed = false;
 
 function updateSignupPlaces() {
   const stateName   = document.getElementById('signupState')?.value;
@@ -2615,6 +2619,8 @@ function updateSignupPlaces() {
   const sInp = document.getElementById('signupSchool');
   if (pInp) { pInp.value = ''; }
   if (sInp) { sInp.value = ''; }
+  window._signupPlaceConfirmed = false;
+  window._signupSchoolConfirmed = false;
   window._placeOptions  = _getPlaces(stateName, district, subDistrict).map(p => p.name);
   window._schoolOptions = [];
   window._schoolLoadedForPlace = '';
@@ -2634,7 +2640,7 @@ function updateSignupPlaces() {
   }
   _loadCommunityPlaces(stateName, district, subDistrict).then(() => {
     window._placeOptions = _getPlaces(stateName, district, subDistrict).map(p => p.name);
-    filterPlaceSuggestions(pInp?.value || '');
+    if (document.activeElement === pInp) filterPlaceSuggestions(pInp?.value || '');
   });
   _checkUnlockPassword();
 }
@@ -2646,6 +2652,7 @@ function updateSignupSchools() {
   const place       = (document.getElementById('signupPlace')?.value || '').trim();
   const sInp = document.getElementById('signupSchool');
   if (sInp) sInp.value = '';
+  window._signupSchoolConfirmed = false;
   window._schoolOptions = _getSchools(stateName, district, subDistrict, place);
   window._schoolLoadedForPlace = '';
   hideSuggestions('schoolAcList');
@@ -2656,7 +2663,7 @@ function updateSignupSchools() {
   }
   if (place) _loadCommunitySchools(stateName, district, subDistrict, place).then(() => {
     window._schoolOptions = _getSchools(stateName, district, subDistrict, place);
-    filterSchoolSuggestions(sInp?.value || '');
+    if (document.activeElement === sInp) filterSchoolSuggestions(sInp?.value || '');
   });
   // Re-lock password since school was cleared
   _checkUnlockPassword();
@@ -2677,6 +2684,8 @@ function showPlaceSuggestions() {
 }
 
 function onSignupPlaceTyping(val) {
+  window._signupPlaceConfirmed = false;
+  window._signupSchoolConfirmed = false;
   filterPlaceSuggestions(val);
   showInputBubble('placeBubble', val);
   const school = document.getElementById('signupSchool');
@@ -2693,6 +2702,7 @@ function onSignupPlaceTyping(val) {
 }
 
 function filterSchoolSuggestions(val) {
+  window._signupSchoolConfirmed = false;
   const list = document.getElementById('schoolAcList');
   if (!list) return;
   const q = val.trim().toLowerCase();
@@ -2710,7 +2720,7 @@ function filterSchoolSuggestions(val) {
     if (window._schoolLoadedForPlace !== schoolKey) {
       _loadCommunitySchools(st, d, sd, place).then(() => {
         window._schoolOptions = _getSchools(st, d, sd, place);
-        filterSchoolSuggestions(val);
+        if (document.activeElement === document.getElementById('signupSchool')) filterSchoolSuggestions(val);
       });
     }
   }
@@ -2765,14 +2775,18 @@ function _renderAcList(listEl, items, inputVal, selectFn, okBtnId) {
 window.confirmPlaceInput = function() {
   const inp = document.getElementById('signupPlace');
   if (!inp || !inp.value.trim()) { toast('Please enter your place / town'); return; }
+  window._signupPlaceConfirmed = true;
+  window._signupSchoolConfirmed = false;
   hideSuggestions('placeAcList');
   const okBtn = document.getElementById('placeOkBtn');
   if (okBtn) okBtn.style.display = 'none';
   updateSignupSchools();   // this also unlocks school if place is filled
+  setTimeout(() => document.getElementById('signupSchool')?.focus(), 80);
 };
 window.confirmSchoolInput = function() {
   const inp = document.getElementById('signupSchool');
   if (!inp || !inp.value.trim()) { toast('Please enter your school / college'); return; }
+  window._signupSchoolConfirmed = true;
   hideSuggestions('schoolAcList');
   const okBtn = document.getElementById('schoolOkBtn');
   if (okBtn) okBtn.style.display = 'none';
@@ -2784,20 +2798,25 @@ function _acEsc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
 window.selectPlaceSuggestion = function(val) {
   const inp = document.getElementById('signupPlace');
   if (inp) inp.value = val;
+  window._signupPlaceConfirmed = false;
+  window._signupSchoolConfirmed = false;
   hideSuggestions('placeAcList');
   hideInputBubble('placeBubble');
   const okBtn = document.getElementById('placeOkBtn');
-  if (okBtn) okBtn.style.display = 'none';
-  updateSignupSchools();
+  if (okBtn) okBtn.style.display = 'block';
+  const school = document.getElementById('signupSchool');
+  if (school) { school.value = ''; school.disabled = true; school.placeholder = 'Tap OK after place first'; }
+  _checkUnlockPassword();
 };
 
 window.selectSchoolSuggestion = function(val) {
   const inp = document.getElementById('signupSchool');
   if (inp) inp.value = val;
+  window._signupSchoolConfirmed = false;
   hideSuggestions('schoolAcList');
   hideInputBubble('schoolBubble');
   const okBtn = document.getElementById('schoolOkBtn');
-  if (okBtn) okBtn.style.display = 'none';
+  if (okBtn) okBtn.style.display = 'block';
   _checkUnlockPassword();
 };
 
@@ -2844,7 +2863,7 @@ function _checkUnlockPassword() {
   const passport = (document.getElementById('signupPassport')?.value || '').trim();
   const btnContinue = document.getElementById('signupContinue');
   if (!btnContinue) return;
-  const complete = !!(fullName && /^[0-9]{10}$/.test(mobile) && dob && cls && insta && stateVal && district && subDistrict && place && school && (!passportRequired || passport));
+  const complete = !!(fullName && /^[0-9]{10}$/.test(mobile) && dob && cls && insta && stateVal && district && subDistrict && place && school && window._signupPlaceConfirmed && window._signupSchoolConfirmed && (!passportRequired || passport));
   if (complete) {
     btnContinue.disabled = false; btnContinue.style.opacity=''; btnContinue.style.cursor='';
   } else {
@@ -3525,7 +3544,9 @@ init();
     if (!district)       { toast('Please select your district'); return; }
     if (!subDistrict)    { toast('Please select your sub-district'); return; }
     if (!place)          { toast('Please enter your place / town'); return; }
+    if (!window._signupPlaceConfirmed) { toast('Please tap OK after entering your place / town'); return; }
     if (!school)         { toast('Please enter your school / college'); return; }
+    if (!window._signupSchoolConfirmed) { toast('Please tap OK after entering your school / college'); return; }
 
     const lastName  = '';
     const passport  = ((document.getElementById('signupPassport')   || {}).value || '').trim();
