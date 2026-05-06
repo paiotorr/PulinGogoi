@@ -151,6 +151,11 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 .auth-link { background: none; border: none; color: var(--red); cursor: pointer; font-size: 13px; font-weight: 900; padding: 0; text-decoration: underline; }
 .auth-link:hover { color: var(--red-dark); }
 .auth-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.dob-picker { display: grid; grid-template-columns: 1fr 1.25fr 1fr; gap: 12px; background: #f9fafb; border: 2px solid var(--line); border-radius: 14px; padding: 12px; }
+.dob-part { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.dob-part select { appearance: none; background: transparent; border: 0; border-bottom: 3px solid #111827; border-radius: 0; color: #111827; font-size: 17px; font-weight: 900; min-height: 42px; padding: 4px 2px 7px; text-align: center; text-align-last: center; }
+.dob-part span { color: var(--muted); font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.6px; }
+.dob-picker:focus-within { border-color: var(--red); background: white; }
 .auth-insta-wrap { display: flex; align-items: center; background: #f9fafb; border: 2px solid var(--line); border-radius: 12px; overflow: hidden; transition: border-color 0.15s; }
 .auth-insta-wrap:focus-within { border-color: var(--red); background: white; }
 .auth-insta-at { background: var(--red-light); color: var(--red); font-size: 16px; font-weight: 900; padding: 0 12px; min-height: 48px; display: flex; align-items: center; border-right: 2px solid var(--line); }
@@ -456,6 +461,14 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
           <label>Mobile Number</label>
           <input type="tel" id="signupMobile" placeholder="10-digit number" maxlength="10" required style="width:100%;">
         </div>
+        <div class="auth-field">
+          <label>Date of Birth</label>
+          <div class="dob-picker">
+            <div class="dob-part"><span>Day</span><select id="signupDobDay" required></select></div>
+            <div class="dob-part"><span>Month</span><select id="signupDobMonth" required></select></div>
+            <div class="dob-part"><span>Year</span><select id="signupDobYear" required></select></div>
+          </div>
+        </div>
         <!-- passport field is OFF -->
         <div class="auth-field">
           <label>Currently Studying Class</label>
@@ -535,6 +548,14 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
       <div class="auth-field">
         <label>Mobile Number</label>
         <input type="tel" id="accMobile" placeholder="10-digit number" maxlength="10">
+      </div>
+      <div class="auth-field">
+        <label>Date of Birth</label>
+        <div class="dob-picker">
+          <div class="dob-part"><span>Day</span><select id="accDobDay"></select></div>
+          <div class="dob-part"><span>Month</span><select id="accDobMonth"></select></div>
+          <div class="dob-part"><span>Year</span><select id="accDobYear"></select></div>
+        </div>
       </div>
       <div class="auth-field">
         <label>Currently Studying Class</label>
@@ -624,6 +645,7 @@ let _auth = null;   // Auth instance
 //    name       : string
 //    mobile     : string   (10-digit, no country code)
 //    phone      : string   (E.164, e.g. "+919876543210")
+//    dateOfBirth: string   (YYYY-MM-DD)
 //    insta      : string
 //    className  : string
 //    state      : string
@@ -2033,6 +2055,7 @@ function openAccountDetails() {
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
   set('accName', u.name);
   set('accMobile', u.mobile);
+  setDobValue('acc', u.dateOfBirth || u.dob || u.birthDate || '');
   set('accClass', u.className);
   set('accInsta', u.insta);
   // Populate state and cascade
@@ -2062,6 +2085,7 @@ function saveAccountDetails() {
   u.name       = name;
   u.mobile     = g('accMobile');
   u.phone      = '+91' + u.mobile;
+  u.dateOfBirth= getDobValue('acc');
   u.className  = g('accClass');
   u.insta      = g('accInsta');
   u.state      = g('accState');
@@ -2705,6 +2729,7 @@ function hideInputBubble(bubbleId) { window.hideInputBubble(bubbleId); }
 function _checkUnlockPassword() {
   const fullName = (document.getElementById('signupFullName')?.value || '').trim();
   const mobile = (document.getElementById('signupMobile')?.value || '').trim();
+  const dob = getDobValue('signup');
   const cls = (document.getElementById('signupClass')?.value || '').trim();
   const insta = (document.getElementById('signupInsta')?.value || '').trim().replace(/^@+/, '');
   const stateVal = (document.getElementById('signupState')?.value || '').trim();
@@ -2716,7 +2741,7 @@ function _checkUnlockPassword() {
   const passport = (document.getElementById('signupPassport')?.value || '').trim();
   const btnContinue = document.getElementById('signupContinue');
   if (!btnContinue) return;
-  const complete = !!(fullName && /^[0-9]{10}$/.test(mobile) && cls && insta && stateVal && district && subDistrict && place && school && (!passportRequired || passport));
+  const complete = !!(fullName && /^[0-9]{10}$/.test(mobile) && dob && cls && insta && stateVal && district && subDistrict && place && school && (!passportRequired || passport));
   if (complete) {
     btnContinue.disabled = false; btnContinue.style.opacity=''; btnContinue.style.cursor='';
   } else {
@@ -2951,7 +2976,9 @@ function fillSignupLocations() {
   const sdSel = document.getElementById("signupSubDistrict");
   if (dSel)  dSel.onchange  = () => { updateSignupSubDistricts(); _checkUnlockPassword(); };
   if (sdSel) sdSel.onchange = () => { updateSignupPlaces(); _checkUnlockPassword(); };
-  ['signupFullName','signupMobile','signupClass','signupInsta','signupState','signupDistrict','signupSubDistrict','signupPlace','signupSchool','signupPassport'].forEach(id => {
+  initDobSelectors('signup');
+  initDobSelectors('acc');
+  ['signupFullName','signupMobile','signupDobDay','signupDobMonth','signupDobYear','signupClass','signupInsta','signupState','signupDistrict','signupSubDistrict','signupPlace','signupSchool','signupPassport'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
     el.addEventListener('input', _checkUnlockPassword);
@@ -2959,6 +2986,50 @@ function fillSignupLocations() {
   });
   _checkUnlockPassword();
   // Place and School are now text inputs with oninput handlers — no onchange binding needed
+}
+const DOB_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+function initDobSelectors(prefix) {
+  const d = document.getElementById(prefix + 'DobDay');
+  const m = document.getElementById(prefix + 'DobMonth');
+  const y = document.getElementById(prefix + 'DobYear');
+  if (!d || !m || !y || d.dataset.ready) return;
+  d.dataset.ready = '1';
+  d.innerHTML = '<option value="">Day</option>' + Array.from({length:31}, (_,i)=>String(i+1).padStart(2,'0')).map(v=>'<option value="'+v+'">'+v+'</option>').join('');
+  m.innerHTML = '<option value="">Month</option>' + DOB_MONTHS.map((name,i)=>'<option value="'+String(i+1).padStart(2,'0')+'">'+name+'</option>').join('');
+  const nowYear = new Date().getFullYear();
+  y.innerHTML = '<option value="">Year</option>' + Array.from({length:80}, (_,i)=>String(nowYear - 5 - i)).map(v=>'<option value="'+v+'">'+v+'</option>').join('');
+  [d,m,y].forEach(el=>el.addEventListener('change', ()=>{ normalizeDobDay(prefix); if(prefix==='signup') _checkUnlockPassword(); }));
+}
+function normalizeDobDay(prefix) {
+  const d = document.getElementById(prefix + 'DobDay');
+  const m = document.getElementById(prefix + 'DobMonth');
+  const y = document.getElementById(prefix + 'DobYear');
+  if (!d || !m || !y || !d.value || !m.value || !y.value) return;
+  const last = new Date(Number(y.value), Number(m.value), 0).getDate();
+  if (Number(d.value) > last) d.value = String(last).padStart(2,'0');
+}
+function getDobValue(prefix) {
+  normalizeDobDay(prefix);
+  const d = document.getElementById(prefix + 'DobDay')?.value || '';
+  const m = document.getElementById(prefix + 'DobMonth')?.value || '';
+  const y = document.getElementById(prefix + 'DobYear')?.value || '';
+  return (d && m && y) ? (y + '-' + m + '-' + d) : '';
+}
+function setDobValue(prefix, value) {
+  initDobSelectors(prefix);
+  const parts = String(value || '').match(/^(d{4})-(d{2})-(d{2})$/);
+  const y = document.getElementById(prefix + 'DobYear');
+  const m = document.getElementById(prefix + 'DobMonth');
+  const d = document.getElementById(prefix + 'DobDay');
+  if (!y || !m || !d) return;
+  y.value = parts ? parts[1] : '';
+  m.value = parts ? parts[2] : '';
+  d.value = parts ? parts[3] : '';
+}
+function formatDob(value) {
+  const parts = String(value || '').match(/^(d{4})-(d{2})-(d{2})$/);
+  if (!parts) return value || '';
+  return parts[3] + ' ' + (DOB_MONTHS[Number(parts[2])-1] || parts[2]) + ' ' + parts[1];
 }
 function _updateMediumsForState(stateVal) {
   const meds = getMediumsForState(stateVal);
@@ -3236,6 +3307,7 @@ init();
     if (!_googleUser) { toast('⚠️ Please sign in with Google first.'); openSignup(); return; }
 
     const mobile      = ((document.getElementById('signupMobile')      || {}).value || '').trim();
+    const dateOfBirth = getDobValue('signup');
     const cls         = (document.getElementById('signupClass')         || {}).value;
     const stateVal    = (document.getElementById('signupState')         || {}).value;
     const district    = (document.getElementById('signupDistrict')      || {}).value;
@@ -3247,6 +3319,7 @@ init();
 
     if (!firstName)       { toast('Please enter your full name'); return; }
     if (!mobile || !/^[0-9]{10}$/.test(mobile)) { toast('Please enter a valid 10-digit mobile number'); return; }
+    if (!dateOfBirth)     { toast('Please select your date of birth'); return; }
     if (!cls)            { toast('Please select your class'); return; }
     if (!insta)          { toast('Please enter your Instagram ID'); return; }
     if (!stateVal)       { toast('Please select your state'); return; }
@@ -3266,6 +3339,7 @@ init();
       name        : firstName,
       mobile      : mobile,
       phone       : '+91' + mobile,
+      dateOfBirth : dateOfBirth,
       insta       : insta || '',
       className   : cls,
       state       : stateVal || '',
