@@ -688,20 +688,32 @@ async function _getUserFromFirestore(uid) {
 }
 
 async function _saveUserToFirestore(userData) {
-  const docId = userData.uid || userData.mobile;
+  if (!userData) return;
+  const mobile = userData.mobile || (userData.phone ? String(userData.phone).replace(/D/g,'').slice(-10) : '');
+  const dobValue = userData.dateOfBirth || userData.dob || userData.birthDate || '';
+  const normalizedUser = Object.assign({}, userData, {
+    id: userData.id || userData.uid || (mobile ? 'u' + mobile : ''),
+    mobile,
+    phone: userData.phone || (mobile ? '+91' + mobile : ''),
+    email: userData.email || ((_auth && _auth.currentUser && _auth.currentUser.email) || ''),
+    dateOfBirth: dobValue,
+    dob: dobValue,
+    birthDate: dobValue
+  });
+  const docId = normalizedUser.uid || normalizedUser.id || normalizedUser.mobile;
   // Mirror to localStorage (offline fallback)
   try {
     const existing = JSON.parse(localStorage.getItem('pkitaap_registered_users') || '[]');
-    const idx = existing.findIndex(function(u){ return u.uid === userData.uid || u.mobile === userData.mobile; });
-    if (idx >= 0) { existing[idx] = Object.assign({}, existing[idx], userData); }
-    else { existing.push(userData); }
+    const idx = existing.findIndex(function(u){ return (normalizedUser.uid && u.uid === normalizedUser.uid) || (normalizedUser.mobile && u.mobile === normalizedUser.mobile); });
+    if (idx >= 0) { existing[idx] = Object.assign({}, existing[idx], normalizedUser); }
+    else { existing.push(normalizedUser); }
     localStorage.setItem('pkitaap_registered_users', JSON.stringify(existing));
   } catch(e) {}
   // Write to Firestore
-  if (_db) {
+  if (_db && docId) {
     try {
       await _db.collection('users').doc(docId).set(
-        Object.assign({}, userData, { lastLoginAt: new Date().toISOString() }),
+        Object.assign({}, normalizedUser, { lastLoginAt: new Date().toISOString() }),
         { merge: true }
       );
     } catch (e) {
@@ -2134,11 +2146,11 @@ function openAccountDetails() {
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
   const googleEmail = u.email || (_auth && _auth.currentUser && _auth.currentUser.email) || '';
   set('accName', u.name);
-  set('accMobile', u.mobile);
+  set('accMobile', u.mobile || (u.phone ? String(u.phone).replace(/D/g,'').slice(-10) : ''));
   set('accEmail', googleEmail);
   setDobValue('acc', u.dateOfBirth || u.dob || u.birthDate || '');
   set('accClass', u.className);
-  set('accInsta', u.insta);
+  set('accInsta', (u.insta || '').replace(/^@+/, '').toLowerCase());
   // Populate state and cascade
   set('accState', u.state);
   updateAccDistricts();
@@ -2158,14 +2170,15 @@ function openAccountDetails() {
   dialog.showModal();
 }
 function _accountSnapshot(u) {
+  const mobile = u.mobile || (u.phone ? String(u.phone).replace(/D/g,'').slice(-10) : '');
   return {
     name: u.name || '',
-    mobile: u.mobile || '',
-    phone: u.phone || '',
+    mobile,
+    phone: u.phone || (mobile ? '+91' + mobile : ''),
     email: u.email || '',
-    dateOfBirth: u.dateOfBirth || '',
+    dateOfBirth: u.dateOfBirth || u.dob || u.birthDate || '',
     className: u.className || '',
-    insta: u.insta || '',
+    insta: (u.insta || '').replace(/^@+/, '').toLowerCase(),
     state: u.state || '',
     district: u.district || '',
     subDistrict: u.subDistrict || '',
@@ -2195,33 +2208,55 @@ function saveAccountDetails() {
   const before = _accountSnapshot(u);
   const name = g('accName');
   if (!name) { toast('Please enter your full name'); return; }
+  const mobile = g('accMobile').replace(/D/g,'');
+  if (!/^[0-9]{10}$/.test(mobile)) { toast('Please enter a valid 10-digit mobile number'); return; }
   const dobValue = getDobValue('acc');
   if (!dobValue) { toast('Please select your complete date of birth'); return; }
+  const className = g('accClass');
+  if (!className) { toast('Please select your class'); return; }
+  const insta = g('accInsta').replace(/^@+/, '').toLowerCase();
+  if (!insta) { toast('Please enter your Instagram ID'); return; }
+  const accState = g('accState');
+  const accDistrict = g('accDistrict');
+  const accSubDistrict = g('accSubDistrict');
+  const accPlace = g('accPlace');
+  const accSchool = g('accSchool');
+  if (!accState || !accDistrict || !accSubDistrict || !accPlace || !accSchool) {
+    toast('Please fill state, district, sub-district, place and school');
+    return;
+  }
   u.name       = name;
-  u.mobile     = g('accMobile');
+  u.mobile     = mobile;
   u.phone      = '+91' + u.mobile;
-  u.email      = u.email || g('accEmail');
+  u.email      = u.email || g('accEmail') || ((_auth && _auth.currentUser && _auth.currentUser.email) || '');
   u.dateOfBirth= dobValue;
-  u.className  = g('accClass');
-  u.insta      = g('accInsta');
-  u.state      = g('accState');
-  u.district   = g('accDistrict');
-  u.subDistrict= g('accSubDistrict');
-  u.place      = g('accPlace');
-  u.school     = g('accSchool');
+  u.dob        = dobValue;
+  u.birthDate  = dobValue;
+  u.className  = className;
+  u.insta      = insta;
+  u.state      = accState;
+  u.district   = accDistrict;
+  u.subDistrict= accSubDistrict;
+  u.place      = accPlace;
+  u.school     = accSchool;
   const after = _accountSnapshot(u);
   const changes = _accountChangeLog(before, after);
   if (changes.length) {
     const changedAt = new Date().toISOString();
     u.profileUpdatedAt = changedAt;
-    u.profileUpdateHistory = Array.isArray(u.profileUpdateHistory) ? u.profileUpdateHistory : [];
-    u.profileUpdateHistory.push({
+    u.updatedAt = changedAt;
+    u.updatedBy = 'user';
+    u.updatedByUid = u.uid || u.id || '';
+    u.lastProfileUpdate = {
       changedAt,
       changedBy: 'user',
+      changedByUid: u.updatedByUid,
       oldDetails: before,
       newDetails: after,
       changes
-    });
+    };
+    u.profileUpdateHistory = Array.isArray(u.profileUpdateHistory) ? u.profileUpdateHistory : [];
+    u.profileUpdateHistory.push(u.lastProfileUpdate);
     u.profileUpdateHistory = u.profileUpdateHistory.slice(-25);
   }
   window._currentUser = u;
@@ -2354,12 +2389,13 @@ function _renderMatchList(bId, query) {
 function _isMineListing(l) {
   const u = window._currentUser || {};
   if (!l || !u) return false;
-  const listingOwner = String(l.userId || l.uid || l.sellerUserId || '').trim();
-  if (listingOwner) {
-    return !!((u.uid && listingOwner === String(u.uid)) || (u.id && listingOwner === String(u.id)));
-  }
-  // Legacy listings created before userId existed can fall back to mobile/Instagram.
-  return !!((u.mobile && l.mobile === u.mobile) || (u.insta && l.instagram === u.insta));
+  const myOwnerIds = [u.uid, u.id].map(v => String(v || '').trim()).filter(Boolean);
+  if (!myOwnerIds.length) return false;
+  const listingOwnerIds = [l.userId, l.uid, l.sellerUserId, l.ownerId]
+    .map(v => String(v || '').trim())
+    .filter(Boolean);
+  if (!listingOwnerIds.length) return false;
+  return listingOwnerIds.some(id => myOwnerIds.includes(id));
 }
 function _listingBook(l) {
   return state.books.find(b => b.id === l.bookId) || null;
@@ -3294,6 +3330,7 @@ function bindSellForm() {
       sellerName: u ? u.name : "You",
       userId   : u ? (u.uid||u.id) : "",
       sellerUserId: u ? (u.uid||u.id) : "",
+      ownerId  : u ? (u.uid||u.id) : "",
       sellerEmail: u ? (u.email || "") : "",
       mobile   : u ? (u.mobile || "") : "",
       state    : listingState,
@@ -3866,6 +3903,8 @@ init();
       mobile      : mobile,
       phone       : '+91' + mobile,
       dateOfBirth : dateOfBirth,
+      dob         : dateOfBirth,
+      birthDate   : dateOfBirth,
       insta       : insta || '',
       className   : cls,
       state       : stateVal || '',
@@ -3876,7 +3915,10 @@ init();
       passport    : passport || '',
       status      : 'active',
       role        : 'user',
-      joinedAt    : new Date().toISOString().slice(0, 10)
+      joinedAt    : new Date().toISOString().slice(0, 10),
+      createdAt   : new Date().toISOString(),
+      profileUpdatedAt: '',
+      profileUpdateHistory: []
     };
 
     const continueBtn = document.getElementById('signupContinue');
