@@ -2854,6 +2854,7 @@ function hideInputBubble(bubbleId) { window.hideInputBubble(bubbleId); }
 const SIGNUP_DRAFT_KEY = 'pkitaap_signup_profile_draft_v2';
 window._signupDraftRestoring = false;
 window._signupDraftSaveTimer = null;
+window._signupProfileGuardActive = false;
 
 function _normalizeSignupInstaValue() {
   const el = document.getElementById('signupInsta');
@@ -2864,9 +2865,8 @@ function _normalizeSignupInstaValue() {
 }
 
 function _isSignupProfileDraftActive() {
-  const dialog = document.getElementById('signupDialog');
   const stage2 = document.getElementById('signupStage2');
-  return !!(dialog && dialog.open && stage2 && stage2.style.display !== 'none' && !window._currentUser);
+  return !!(window._signupProfileGuardActive && stage2 && stage2.style.display !== 'none' && !window._currentUser);
 }
 
 function _collectSignupDraft() {
@@ -2912,6 +2912,18 @@ function _queueSignupDraftSave() {
   if (window._signupDraftRestoring || !_isSignupProfileDraftActive()) return;
   clearTimeout(window._signupDraftSaveTimer);
   window._signupDraftSaveTimer = setTimeout(_saveSignupDraftNow, 120);
+}
+
+function _lockSignupRefreshShortcut(e) {
+  if (!_isSignupProfileDraftActive() || _isSignupProfileComplete()) return;
+  const key = (e.key || '').toLowerCase();
+  const isReloadShortcut = key === 'f5' || ((e.ctrlKey || e.metaKey) && key === 'r');
+  if (!isReloadShortcut) return;
+  _saveSignupDraftNow();
+  e.preventDefault();
+  e.stopPropagation();
+  toast('Please complete your profile first. Your details are saved here.');
+  return false;
 }
 
 function _clearSignupDraft() {
@@ -3309,8 +3321,9 @@ function fillSignupLocations() {
   });
   if (!window._signupRefreshGuardBound) {
     window._signupRefreshGuardBound = true;
+    window.addEventListener('keydown', _lockSignupRefreshShortcut, true);
     window.addEventListener('beforeunload', function(e) {
-      if (_isSignupProfileDraftActive() && _hasSignupDraftValues() && !_isSignupProfileComplete()) {
+      if (_isSignupProfileDraftActive() && !_isSignupProfileComplete()) {
         _saveSignupDraftNow();
         e.preventDefault();
         e.returnValue = '';
@@ -3495,6 +3508,7 @@ init();
   window.openSignup = openSignup;
   window.openLogin = openLogin;
   function _resetSignupToStage1() {
+    window._signupProfileGuardActive = false;
     const s1 = document.getElementById('signupStage1');
     const s2 = document.getElementById('signupStage2');
     const tag = document.getElementById('signupTagline');
@@ -3530,6 +3544,7 @@ init();
   async function onAuthSuccess(userData, firebaseUser) {
     window._isLoggedIn  = true;
     window._currentUser = userData || null;
+    window._signupProfileGuardActive = false;
     _clearSignupDraft();
 
     if (userData) {
@@ -3726,6 +3741,7 @@ init();
 
   // Pre-fill name from Google profile
   function _prefillNameFromGoogle() {
+    window._signupProfileGuardActive = true;
     if (_googleUser && _googleUser.displayName) {
       const fn = document.getElementById('signupFullName');
       if (fn && !fn.value) fn.value = _googleUser.displayName.trim();
