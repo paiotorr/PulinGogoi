@@ -336,6 +336,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
         <div class="card-body">
           <form id="sellForm" class="form-grid">
             <label class="wide">State <select id="sellState" onchange="updateSellDistricts()"><option value="">— Select Your State —</option><option value="Assam">Assam</option></select></label>
+            <label class="wide">Medium <span style="color:#ef4444;font-size:11px;"> *required</span><select id="sellMedium" required><option value="">Select state first</option></select></label>
             <label>District <select id="sellDistrict" onchange="updateSellSubDistricts()"></select></label>
             <label>Sub-District <select id="sellSubDistrict" onchange="updateSellPlaces()"></select></label>
             <label>Place <input id="sellPlace" list="sellPlaceOptions" onchange="updateSellSchools()" placeholder="Place / town"><datalist id="sellPlaceOptions"></datalist><select id="sellPlaceFallback" onchange="document.getElementById('sellPlace').value=this.value;updateSellSchools()" style="margin-top:6px;"><option value="">— Select Place —</option></select></label>
@@ -1786,7 +1787,7 @@ function goHome() {
 
 function updateAccessControls() {
   const locked = !window._isLoggedIn;
-  ['searchInput','stateFilter','buyState','buyDistrict','buySubDistrict','buyPlace','buySchool','buyMedium'].forEach(id => {
+  ['searchInput','stateFilter','buyState','buyDistrict','buySubDistrict','buyPlace','buySchool','buyMedium','sellMedium'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.disabled = locked;
@@ -2168,6 +2169,7 @@ function _prefillSellFromProfile() {
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
   // Pre-fill sell form state/location
   set('sellState', u.state);
+  _updateSellMediumsForState(u.state, u.medium || u.defaultMedium || '');
   if (u.state) {
     updateSellDistricts();
     setTimeout(() => {
@@ -2224,7 +2226,8 @@ function renderMatches(bookId) {
     district: document.getElementById('buyDistrict')?.value || '',
     subDistrict: document.getElementById('buySubDistrict')?.value || '',
     place: document.getElementById('buyPlace')?.value || '',
-    school: document.getElementById('buySchool')?.value || ''
+    school: document.getElementById('buySchool')?.value || '',
+    medium: document.getElementById('buyMedium')?.value || ''
   };
   if (_db) {
     _db.collection('listings').where('bookId','==',bId).get().then(snap => {
@@ -2247,6 +2250,7 @@ function _locScore(l, q) {
   if (_sameText(l.subDistrict, q.subDistrict)) score += 60;
   if (_sameText(l.district, q.district)) score += 30;
   if (_sameText(l.state, q.state)) score += 10;
+  if (q.medium && _sameText(l.medium, q.medium)) score += 20;
   if (q.school && _sameText(l.school, q.school)) score += 5;
   return score;
 }
@@ -2255,12 +2259,14 @@ function _renderMatchList(bId, query) {
   if (!list) return;
   const matches = (state.listings || [])
     .filter(l => l.bookId === bId)
+    .filter(l => !query.medium || !l.medium || _sameText(l.medium, query.medium))
     .map(l => Object.assign({_score:_locScore(l, query)}, l))
     .sort((a,b) => (b._score - a._score) || String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
   list.innerHTML = matches.length ? matches.map(l => {
     const location = [l.place,l.subDistrict,l.district,l.state].filter(Boolean).join(', ');
     return '<div class="result-card"><strong>' + _acEsc(l.seller || l.sellerName || 'Seller') + '</strong>' +
       '<span>School/College: ' + _acEsc(l.school || 'Not added') + '</span>' +
+      '<span>Medium: ' + _acEsc(l.medium || 'Not added') + '</span>' +
       '<span>Place: ' + _acEsc(l.place || 'Not added') + '</span>' +
       '<span>' + _acEsc(location || 'Location not added') + '</span>' +
       '<span>Condition: ' + _acEsc(l.condition || 'Not set') + (l.price ? ' · ₹' + _acEsc(l.price) : '') + '</span>' +
@@ -2315,7 +2321,7 @@ async function renderMyListings(skipFetch) {
   list.innerHTML = mine.map(l => {
     const b = _listingBook(l);
     const title = l.title || l.bookTitle || b?.title || 'Book';
-    const meta = [l.className || b?.className, l.board || b?.board, l.stream || b?.stream].filter(Boolean).join(' / ');
+    const meta = [l.className || b?.className, l.board || b?.board, l.stream || b?.stream, l.medium].filter(Boolean).join(' / ');
     const price = l.price ? ('₹' + l.price) : (b?.price ? ('₹' + b.price) : 'Price not set');
     return '<div class="result-card">' +
       '<strong>' + _acEsc(title) + '</strong>' +
@@ -2492,6 +2498,7 @@ function updateSellDistricts() {
   const pSel  = document.getElementById('sellPlace');
   const sSel  = document.getElementById('sellSchool');
   if (!dSel) return;
+  _updateSellMediumsForState(stateName);
   dSel.innerHTML = '<option value="">— District —</option>' + _getDistricts(stateName).map(d => '<option>' + d.district + '</option>').join('');
   if (sdSel) sdSel.innerHTML = '<option value="">— Sub-District —</option>';
   if (pSel)  pSel.value = '';
@@ -2929,8 +2936,9 @@ function bindSellForm() {
     const listingSubDistrict = document.getElementById("sellSubDistrict")?.value || "";
     const listingPlace = (document.getElementById("sellPlace")?.value || "").trim();
     const listingSchool = (document.getElementById("sellSchool")?.value || "").trim();
-    if(!listingState || !listingDistrict || !listingSubDistrict || !listingPlace || !listingSchool){
-      toast("Please fill state, district, sub-district, place and school");
+    const listingMedium = (document.getElementById("sellMedium")?.value || "").trim();
+    if(!listingState || !listingMedium || !listingDistrict || !listingSubDistrict || !listingPlace || !listingSchool){
+      toast("Please fill state, medium, district, sub-district, place and school");
       return;
     }
     const listing = {
@@ -2945,6 +2953,7 @@ function bindSellForm() {
       userId   : u ? (u.uid||u.id) : "",
       mobile   : u ? (u.mobile || "") : "",
       state    : listingState,
+      medium   : listingMedium,
       district : listingDistrict,
       subDistrict: listingSubDistrict,
       place    : listingPlace,
@@ -3095,6 +3104,16 @@ function _updateMediumsForState(stateVal) {
     (meds.length ? meds.map(m=>'<option value="'+m+'">'+m+'</option>').join('') :
       '<option value="English Medium">English Medium</option>');
 }
+function _updateSellMediumsForState(stateVal, selectedValue) {
+  const meds = getMediumsForState(stateVal);
+  const sel = document.getElementById('sellMedium');
+  if (!sel) return;
+  if (!stateVal) { sel.innerHTML = '<option value="">Select state first</option>'; return; }
+  sel.innerHTML = '<option value="">Select Medium</option>' +
+    (meds.length ? meds.map(m=>'<option value="'+m+'">'+m+'</option>').join('') :
+      '<option value="English Medium">English Medium</option>');
+  if (selectedValue) sel.value = selectedValue;
+}
 function onStateFilterChange(stateVal) {
   if(!requireLogin()) {
     const sf = document.getElementById('stateFilter');
@@ -3132,7 +3151,7 @@ function onStateFilterChange2(stateVal) {
   if (sf1 && sf1.value !== stateVal) sf1.value = stateVal;
   const sellStateEl = document.getElementById('sellState');
   if (sellStateEl) { sellStateEl.value = stateVal; updateSellDistricts(); }
-  _updateMediumsForState(stateVal);
+  _updateSellMediumsForState(stateVal);
   render();
 }
 function init() {
