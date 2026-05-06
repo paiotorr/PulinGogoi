@@ -2874,6 +2874,9 @@ function _collectSignupDraft() {
     fullName: (document.getElementById('signupFullName')?.value || '').trim(),
     mobile: (document.getElementById('signupMobile')?.value || '').trim(),
     dateOfBirth: getDobValue('signup'),
+    dobDay: document.getElementById('signupDobDay')?.value || '',
+    dobMonth: document.getElementById('signupDobMonth')?.value || '',
+    dobYear: document.getElementById('signupDobYear')?.value || '',
     className: (document.getElementById('signupClass')?.value || '').trim(),
     insta: _normalizeSignupInstaValue(),
     state: (document.getElementById('signupState')?.value || '').trim(),
@@ -2890,7 +2893,7 @@ function _collectSignupDraft() {
 
 function _hasSignupDraftValues(draft) {
   const d = draft || _collectSignupDraft();
-  return !!(d.fullName || d.mobile || d.dateOfBirth || d.className || d.insta || d.state || d.district || d.subDistrict || d.place || d.school || d.passport);
+  return !!(d.fullName || d.mobile || d.dateOfBirth || d.dobDay || d.dobMonth || d.dobYear || d.className || d.insta || d.state || d.district || d.subDistrict || d.place || d.school || d.passport);
 }
 
 function _isSignupProfileComplete() {
@@ -2944,6 +2947,10 @@ function _restoreSignupDraft() {
     setIf('signupFullName', draft.fullName);
     setIf('signupMobile', draft.mobile);
     setDobValue('signup', draft.dateOfBirth || '');
+    setIf('signupDobDay', draft.dobDay);
+    setIf('signupDobMonth', draft.dobMonth);
+    setIf('signupDobYear', draft.dobYear);
+    normalizeDobDay('signup');
     setIf('signupClass', draft.className);
     setIf('signupInsta', (draft.insta || '').toLowerCase());
     setIf('signupPassport', draft.passport);
