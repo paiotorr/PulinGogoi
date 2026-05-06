@@ -3177,10 +3177,10 @@ init();
   let _googleUser     = null;   // Firebase user returned from Google popup
   let _authStateHandled = false; // Prevents onAuthStateChanged double-firing
 
-  async function _pkitaapGoogleProviderSignIn(provider) {
+  async function _pkitaapGoogleProviderSignIn(provider, mode) {
     // Android WebView uses the native app bridge instead of browser popups.
     if (window.__androidBeginNativeGoogleSignIn) {
-      return await window.__androidBeginNativeGoogleSignIn(provider);
+      return await window.__androidBeginNativeGoogleSignIn(provider, mode);
     }
     return await firebase.auth().signInWithPopup(provider);
   }
@@ -3303,7 +3303,76 @@ init();
   }
 
   // ── Google Sign-In (shared by login + signup) ──────────────
+  function _resetGoogleButton(mode) {
+    const btnId = mode === 'login' ? 'loginGoogleBtn' : 'signupGoogleBtn';
+    const btn   = document.getElementById(btnId);
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = mode === 'login' ? GOOGLE_SVG + ' Continue with Google' : GOOGLE_SVG + ' Sign up with Google';
+    }
+  }
+
+  function _handleGoogleLoginError(e, mode) {
+    _authStateHandled = false;
+    _resetGoogleButton(mode);
+    let msg = 'Google sign-in failed. Please try again.';
+    if (e && e.code === 'auth/popup-closed-by-user')  msg = 'Sign-in cancelled.';
+    if (e && e.code === 'auth/popup-blocked')          msg = 'Popup blocked — please allow popups for this site.';
+    if (e && e.code === 'auth/cancelled-popup-request') msg = 'Sign-in cancelled.';
+    if (e && e.message && !e.code)                     msg = e.message;
+    toast('❌ ' + msg);
+    console.error('[PKITAAP] Google sign-in error:', e);
+  }
+
+  async function _finishGoogleUserAfterLogin(mode, firebaseUser) {
+    _googleUser = firebaseUser;
+    if (!_googleUser || !_googleUser.uid) throw new Error('Google login completed but no Firebase user was returned.');
+
+    const existingData = await _getUserFromFirestore(_googleUser.uid);
+    if (existingData) {
+      await onAuthSuccess(existingData, _googleUser);
+      return;
+    }
+
+    if (mode === 'login') {
+      loginDialog.close();
+      toast('⚠️ No account found. Please complete your profile.');
+      await new Promise(r => setTimeout(r, 400));
+      document.getElementById('signupStage1').style.display = 'none';
+      document.getElementById('signupStage2').style.display = '';
+      document.getElementById('signupTagline').textContent  = 'Complete your profile';
+      _prefillNameFromGoogle();
+      signupDialog.showModal();
+    } else {
+      document.getElementById('signupStage1').style.display = 'none';
+      document.getElementById('signupStage2').style.display = '';
+      document.getElementById('signupTagline').textContent  = 'Complete your profile';
+      _prefillNameFromGoogle();
+      _resetGoogleButton('signup');
+    }
+  }
+
+  window.pkitaapAndroidCompleteGoogleLogin = async function(googleIdToken, mode) {
+    mode = mode === 'signup' ? 'signup' : 'login';
+    try {
+      if (!_auth) throw new Error('Firebase not initialised. Check your config.');
+      if (!googleIdToken) throw new Error('Android Google login did not return a token.');
+      const cred = firebase.auth.GoogleAuthProvider.credential(googleIdToken);
+      const result = await firebase.auth().signInWithCredential(cred);
+      await _finishGoogleUserAfterLogin(mode, result.user);
+      return true;
+    } catch(e) {
+      _handleGoogleLoginError(e, mode);
+      return false;
+    }
+  };
+
+  window.pkitaapAndroidGoogleLoginFailed = function(message, mode) {
+    _handleGoogleLoginError(new Error(message || 'Android Google sign-in failed.'), mode === 'signup' ? 'signup' : 'login');
+  };
+
   window.googleSignIn = async function(mode) {
+    mode = mode === 'signup' ? 'signup' : 'login';
     _authStateHandled = true; // Manual flow — ignore the onAuthStateChanged re-fire
     const btnId = mode === 'login' ? 'loginGoogleBtn' : 'signupGoogleBtn';
     const btn   = document.getElementById(btnId);
@@ -3312,9 +3381,14 @@ init();
     try {
       if (!_auth) throw new Error('Firebase not initialised. Check your config.');
 
+      if (window.AndroidAuth && typeof window.AndroidAuth.startGoogleSignInWithMode === 'function') {
+        window.AndroidAuth.startGoogleSignInWithMode(mode);
+        return;
+      }
+
       const provider = new firebase.auth.GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
-      const result  = await _pkitaapGoogleProviderSignIn(provider);
+      const result  = await _pkitaapGoogleProviderSignIn(provider, mode);
       _googleUser   = result.user;
       if (!_googleUser || !_googleUser.uid) throw new Error('Google login completed but no Firebase user was returned.');
 
