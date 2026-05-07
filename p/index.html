@@ -2538,6 +2538,7 @@ async function saveAccountDetails() {
     if (savedUser) {
       window._currentUser = _mergeUserProfiles(window._currentUser, savedUser);
     }
+    setDobValue('acc', getUserDobValue(window._currentUser));
     toast('✅ Account details saved as new version' + (window._currentUser.profileVersionLabel ? ' ' + window._currentUser.profileVersionLabel : '') + '!');
     _captureAccountSnapshotAndLock();
     // Pre-fill buyer and seller forms with new defaults
@@ -4135,11 +4136,11 @@ function _dobPartsFromValue(value) {
     }
   }
   const raw = String(value || '').trim();
-  let parts = raw.match(/^(d{4})[-/](d{1,2})[-/](d{1,2})(?:[Ts].*)?$/);
+  let parts = raw.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[T\s].*)?$/);
   if (parts) return { y: parts[1], m: parts[2].padStart(2,'0'), d: parts[3].padStart(2,'0') };
-  parts = raw.match(/^(d{1,2})[-/](d{1,2})[-/](d{4})$/);
+  parts = raw.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
   if (parts) return { y: parts[3], m: parts[2].padStart(2,'0'), d: parts[1].padStart(2,'0') };
-  parts = raw.match(/^(d{1,2})s+([A-Za-z]+)s+(d{4})$/);
+  parts = raw.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/);
   if (parts) {
     const monthIndex = DOB_MONTHS.findIndex(n => n.toLowerCase().startsWith(parts[2].toLowerCase()));
     if (monthIndex >= 0) return { y: parts[3], m: String(monthIndex + 1).padStart(2,'0'), d: parts[1].padStart(2,'0') };
@@ -4178,7 +4179,7 @@ function setDobValue(prefix, value) {
   toggleDobPicker(prefix, false);
 }
 function formatDob(value) {
-  const parts = String(value || '').match(/^(d{4})-(d{2})-(d{2})$/);
+  const parts = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!parts) return value || '';
   return parts[3] + ' ' + (DOB_MONTHS[Number(parts[2])-1] || parts[2]) + ' ' + parts[1];
 }
