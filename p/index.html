@@ -2816,20 +2816,40 @@ function _chatMetaForWrite(chat) {
   const messages = Array.isArray(chat.messages) ? chat.messages : [];
   const last = messages.length ? messages[messages.length - 1] : {};
   const updatedAt = chat.updatedAt || last.createdAt || new Date().toISOString();
+  const participants = _dedupeChatParticipants(chat.participants);
+  const buyerUid = String(chat.buyerUid || '').trim();
+  const sellerUid = String(chat.sellerUid || '').trim();
+  if (buyerUid && !participants.includes(buyerUid)) participants.push(buyerUid);
+  if (sellerUid && !participants.includes(sellerUid)) participants.push(sellerUid);
   return {
     id: chat.id || '',
     listingId: chat.listingId || '',
     bookId: chat.bookId || '',
     bookTitle: chat.bookTitle || 'Book',
-    participants: _dedupeChatParticipants(chat.participants),
-    buyerUid: chat.buyerUid || '',
-    sellerUid: chat.sellerUid || '',
+    participants: participants,
+    buyerUid: buyerUid,
+    sellerUid: sellerUid,
     buyerName: chat.buyerName || 'Buyer',
     sellerName: chat.sellerName || 'Seller',
     lastMessage: last.text || chat.lastMessage || '',
     lastMessageAt: last.createdAt || chat.lastMessageAt || updatedAt,
-    updatedAt: updatedAt
+    updatedAt: updatedAt,
+    updatedAtMs: last.createdAtMs || chat.updatedAtMs || Date.parse(updatedAt) || Date.now()
   };
+}
+function _normalizeChatMessage(msg) {
+  msg = msg || {};
+  const createdAt = msg.createdAt || (msg.createdAtMs ? new Date(Number(msg.createdAtMs)).toISOString() : new Date().toISOString());
+  const sender = String(msg.senderUid || msg.senderId || '').trim();
+  return Object.assign({}, msg, {
+    id: msg.id || ('m' + Date.now() + '_' + Math.random().toString(36).slice(2,8)),
+    senderUid: sender,
+    senderId: sender,
+    senderName: msg.senderName || '',
+    text: String(msg.text || ''),
+    createdAt: createdAt,
+    createdAtMs: msg.createdAtMs || Date.parse(createdAt) || Date.now()
+  });
 }
 function _mergeChatMessages(chatId, messages) {
   const chats = _getLocalChats();
@@ -2840,9 +2860,10 @@ function _mergeChatMessages(chatId, messages) {
     if (m && m.id) byId.set(String(m.id), m);
   });
   (Array.isArray(messages) ? messages : []).forEach(m => {
+    m = _normalizeChatMessage(m);
     if (m && m.id) byId.set(String(m.id), m);
   });
-  const merged = Array.from(byId.values()).sort((a,b) => String(a.createdAt || '').localeCompare(String(b.createdAt || '')));
+  const merged = Array.from(byId.values()).sort((a,b) => (Number(a.createdAtMs || Date.parse(a.createdAt || '')) || 0) - (Number(b.createdAtMs || Date.parse(b.createdAt || '')) || 0));
   chats[idx].messages = merged;
   const last = merged.length ? merged[merged.length - 1] : null;
   if (last) {
@@ -2862,6 +2883,19 @@ async function _saveChatToFirestore(chat) {
   try { await _db.collection('chats').doc(chat.id).set(_chatMetaForWrite(chat), { merge: true }); return true; }
   catch(e) { console.warn('[PKITAAP] Chat save failed:', e); return false; }
 }
+async function _syncChatMessageToFirestore(chat, msg) {
+  if (!_db || !chat || !chat.id || !msg) return false;
+  const normalizedMsg = _normalizeChatMessage(msg);
+  const chatForMeta = Object.assign({}, chat, {
+    messages: (Array.isArray(chat.messages) ? chat.messages : []).concat([normalizedMsg]),
+    updatedAt: normalizedMsg.createdAt,
+    updatedAtMs: normalizedMsg.createdAtMs
+  });
+  const chatRef = _db.collection('chats').doc(chat.id);
+  await chatRef.set(_chatMetaForWrite(chatForMeta), { merge: true });
+  await chatRef.collection('messages').doc(normalizedMsg.id).set(normalizedMsg);
+  return true;
+}
 async function _resolveSellerUidForListing(listing) {
   listing = listing || {};
   const direct = String(listing.userId || listing.sellerUserId || listing.ownerId || '').trim();
@@ -2869,6 +2903,14 @@ async function _resolveSellerUidForListing(listing) {
   const mobile = String(listing.mobile || listing.sellerMobile || '').replace(/\D/g,'').slice(-10);
   if (_db) {
     try {
+      const docIds = [direct, mobile, mobile ? 'u' + mobile : ''].filter(Boolean);
+      for (const id of docIds) {
+        const doc = await _db.collection('users').doc(id).get();
+        if (doc.exists) {
+          const u = doc.data() || {};
+          return String(u.uid || doc.id || direct || '').trim();
+        }
+      }
       if (email) {
         const snap = await _db.collection('users').where('email','==',email).limit(1).get();
         if (!snap.empty) {
@@ -2883,6 +2925,13 @@ async function _resolveSellerUidForListing(listing) {
           return String(u.uid || snap.docs[0].id || direct || '').trim();
         }
       }
+      if (mobile) {
+        const snap = await _db.collection('users').where('phone','==','+91' + mobile).limit(1).get();
+        if (!snap.empty) {
+          const u = snap.docs[0].data() || {};
+          return String(u.uid || snap.docs[0].id || direct || '').trim();
+        }
+      }
     } catch(e) { console.warn('[PKITAAP] Seller UID lookup failed:', e); }
   }
   return direct;
@@ -2891,7 +2940,7 @@ async function _loadChatMessagesFromFirestore(chat) {
   if (!_db || !chat || !chat.id) return chat;
   try {
     const snap = await _db.collection('chats').doc(chat.id).collection('messages').orderBy('createdAt','asc').limit(200).get();
-    const messages = snap.docs.map(doc => Object.assign({ id: doc.id }, doc.data()));
+    const messages = snap.docs.map(doc => _normalizeChatMessage(Object.assign({ id: doc.id }, doc.data())));
     if (messages.length) return _mergeChatMessages(chat.id, messages) || chat;
   } catch(e) { console.warn('[PKITAAP] Chat messages load failed:', e); }
   return chat;
@@ -2909,7 +2958,7 @@ function _watchChatMessages(chatId) {
   _activeChatListenId = chatId;
   try {
     _activeChatUnsub = _db.collection('chats').doc(chatId).collection('messages').orderBy('createdAt','asc').onSnapshot(snap => {
-      const messages = snap.docs.map(doc => Object.assign({ id: doc.id }, doc.data()));
+      const messages = snap.docs.map(doc => _normalizeChatMessage(Object.assign({ id: doc.id }, doc.data())));
       _mergeChatMessages(chatId, messages);
       if (_activeChatId === chatId) openChat(chatId, true);
       renderMessages(true);
@@ -3039,7 +3088,7 @@ function openChat(chatId, skipRemote) {
   if (body) {
     const msgs = Array.isArray(chat.messages) ? chat.messages : [];
     body.innerHTML = msgs.length ? msgs.map(m => {
-      const mine = String(m.senderUid || '') === me;
+      const mine = String(m.senderUid || m.senderId || '') === me;
       return '<div class="chat-bubble ' + (mine ? 'mine' : 'theirs') + '">' +
         _acEsc(m.text || '') +
         '<span class="chat-time">' + _acEsc(String(m.createdAt || '').slice(0,16).replace('T',' ')) + '</span>' +
@@ -3065,25 +3114,30 @@ async function sendChatMessage() {
   const msg = {
     id: 'm' + Date.now() + '_' + Math.random().toString(36).slice(2,8),
     senderUid: _myChatUid(),
+    senderId: _myChatUid(),
     senderName: window._currentUser?.name || '',
     text: text,
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    createdAtMs: Date.now()
   };
+  if (_db) {
+    try {
+      await _syncChatMessageToFirestore(chats[idx], msg);
+    } catch(e) {
+      console.warn('[PKITAAP] Message sync failed:', e);
+      toast('Message not sent online. Please publish the latest Firestore chat rules.');
+      return;
+    }
+  }
   chats[idx].messages = Array.isArray(chats[idx].messages) ? chats[idx].messages : [];
-  chats[idx].messages.push(msg);
+  chats[idx].messages.push(_normalizeChatMessage(msg));
   chats[idx].updatedAt = msg.createdAt;
+  chats[idx].updatedAtMs = msg.createdAtMs;
   _saveLocalChats(chats);
   input.value = '';
   _autosizeMessageInput();
   renderMessages(true);
   openChat(_activeChatId);
-  if (_db) {
-    try {
-      const chatRef = _db.collection('chats').doc(_activeChatId);
-      await chatRef.set(_chatMetaForWrite(chats[idx]), { merge: true });
-      await chatRef.collection('messages').doc(msg.id).set(msg);
-    } catch(e) { toast('Message saved on this device, but could not sync online yet.'); }
-  }
 }
 function _getLocData() { return state.locations || []; }
 function _getDistricts(stateName) {
@@ -4479,7 +4533,6 @@ init();
     setTimeout(_prefillBuyFromProfile, 150);
     setTimeout(_prefillSellFromProfile, 200);
 
-    toast('✅ Welcome! You are logged in.');
   }
 
   // ── Google Sign-In (shared by login + signup) ──────────────
