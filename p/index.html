@@ -990,7 +990,7 @@ const seed = {
     {
       "id": "x68h0en9",
       "type": "school",
-      "state": "",
+      "state": "Assam",
       "board": "seba",
       "stream": "",
       "className": "Class 9",
@@ -1002,7 +1002,7 @@ const seed = {
     {
       "id": "xc9ve81t",
       "type": "school",
-      "state": "",
+      "state": "Assam",
       "board": "seba",
       "stream": "",
       "className": "Class 10",
@@ -1014,7 +1014,7 @@ const seed = {
     {
       "id": "xl9powjm",
       "type": "school",
-      "state": "",
+      "state": "Assam",
       "className": "Class 9",
       "board": "seba",
       "stream": "",
@@ -1026,7 +1026,7 @@ const seed = {
     {
       "id": "x30teky8",
       "type": "school",
-      "state": "",
+      "state": "Assam",
       "className": "Class 10",
       "board": "seba",
       "stream": "",
@@ -1038,7 +1038,7 @@ const seed = {
     {
       "id": "xo0zzyda",
       "type": "school",
-      "state": "",
+      "state": "Assam",
       "className": "Class 11",
       "board": "seba",
       "stream": "",
@@ -1050,7 +1050,7 @@ const seed = {
     {
       "id": "x6u6t50g",
       "type": "school",
-      "state": "",
+      "state": "Assam",
       "className": "Class 12",
       "board": "seba",
       "stream": "",
@@ -2054,15 +2054,23 @@ function normalizeState(input) {
   next.adMob       = { ...(seed.adMob || {}), ...(next.adMob || {}) };
   next.classThumbs = { ...seed.classThumbs, ...(next.classThumbs || {}) };
   next.categories  = next.categories || seed.categories;
-  next.books = (next.books || seed.books).map(item => {
-    return { image:"", author:"", ...item, board: item.board || "" };
-  });
   next.locations     = next.locations     || seed.locations;
   next.listings      = next.listings      || seed.listings;
   next.classes       = next.classes       || seed.classes  || ["Class 9","Class 10","Class 11","Class 12"];
   next.streams       = next.streams       || seed.streams  || ["Science","Commerce","Arts"];
   next.boardsByState  = next.boardsByState  || seed.boardsByState  || {};
   next.mediumsByState = next.mediumsByState || seed.mediumsByState || {};
+  next.books = (next.books || seed.books).map(item => {
+    const normalized = { image:"", author:"", ...item, board: item.board || "" };
+    if (normalized.type === "school" && !normalized.state && normalized.board) {
+      const wanted = _normStateBoard(normalized.board);
+      const states = Object.keys(next.boardsByState || {}).filter(st =>
+        ((next.boardsByState || {})[st] || []).some(b => _normStateBoard(b) === wanted)
+      );
+      normalized.state = states.length === 1 ? states[0] : '';
+    }
+    return normalized;
+  });
   return next;
 }
 function save() { localStorage.setItem("pkitaap-simple", JSON.stringify(state)); }
@@ -2072,23 +2080,51 @@ let selectedState = "";
 const classes = state.classes || ["Class 9","Class 10","Class 11","Class 12"];
 const streams  = state.streams || ["Science","Commerce","Arts"];
 function getBoardsForState(st) {
-  return (state.boardsByState||{})[st] || [];
+  const wanted = String(st || '').trim().toLowerCase();
+  const key = Object.keys(state.boardsByState || {}).find(k => String(k || '').trim().toLowerCase() === wanted);
+  return key ? ((state.boardsByState || {})[key] || []) : [];
 }
 function getMediumsForState(st) {
   return (state.mediumsByState||{})[st] || [];
 }
+function _normStateBoard(value) {
+  return String(value || '').trim().toLowerCase();
+}
+function _statesForBoard(board) {
+  const wanted = _normStateBoard(board);
+  if (!wanted) return [];
+  return Object.keys(state.boardsByState || {}).filter(st =>
+    ((state.boardsByState || {})[st] || []).some(b => _normStateBoard(b) === wanted)
+  );
+}
+function _uniqueStateForBoard(board) {
+  const matches = _statesForBoard(board);
+  return matches.length === 1 ? matches[0] : '';
+}
+function _bookStateForFilter(item) {
+  return item && item.state ? item.state : _uniqueStateForBoard(item && item.board);
+}
+function _schoolBookMatchesSelectedState(item) {
+  if (!item || item.type !== "school") return true;
+  if (!selectedState) return false;
+  const boards = getBoardsForState(selectedState);
+  if (!boards.some(b => _normStateBoard(b) === _normStateBoard(item.board))) return false;
+  return _normStateBoard(_bookStateForFilter(item)) === _normStateBoard(selectedState);
+}
 function shownBooks() {
   if (selectedCategory) {
-    return state.books.filter(item => item.categoryId === selectedCategory);
+    return state.books.filter(item => item.categoryId === selectedCategory && _schoolBookMatchesSelectedState(item));
   }
   if (search) {
     return state.books.filter(item => {
       if (item.type === "general" && !state.settings.general) return false;
+      if (!_schoolBookMatchesSelectedState(item)) return false;
       return [item.title,item.className,item.board,item.stream,item.author].join(" ").toLowerCase().includes(search.toLowerCase());
     });
   }
   return state.books.filter(item => {
     if (item.type === "general" && !state.settings.general) return false;
+    if (!_schoolBookMatchesSelectedState(item)) return false;
     if (item.className !== selectedClass) return false;
     if (item.type === "school" && (item.board||"").toLowerCase() !== (selectedBoard||"").toLowerCase()) return false;
     if ((selectedClass === "Class 11" || selectedClass === "Class 12") && item.stream !== selectedStream) return false;
@@ -2133,18 +2169,8 @@ function renderBoards() {
     boardGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#888;font-weight:700;font-size:14px;">Please select your state above to see available boards.</div>';
     return;
   }
-  // Boards configured for this state
-  const stateBds = getBoardsForState(selectedState);
-  // Also include any boards that actually have subjects for this class+state (safety net)
-  const classBds = [...new Set(
-    state.books
-      .filter(b => b.type === "school" && b.className === selectedClass && b.board && (!b.state || b.state === selectedState))
-      .map(b => b.board)
-  )];
-  // Merge: state boards first, then any extra boards that have actual subjects
-  const bds = [...new Set([...stateBds, ...classBds.filter(b => {
-    return !stateBds.some(sb => sb.toLowerCase() === b.toLowerCase());
-  })])];
+  // Boards configured strictly for this selected state only.
+  const bds = getBoardsForState(selectedState);
   if (!bds.length) {
     boardGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#888;font-weight:700;font-size:14px;">No boards found for ' + selectedClass + ' in ' + selectedState + '. Configure boards in the admin panel.</div>';
     return;
@@ -2162,7 +2188,7 @@ function renderStreams() {
   // Only show streams that have at least one subject for this class+board
   const activeStreams = [...new Set(
     state.books
-      .filter(b => b.type === "school" && b.className === selectedClass &&
+      .filter(b => b.type === "school" && _schoolBookMatchesSelectedState(b) && b.className === selectedClass &&
         (b.board||"").toLowerCase() === (selectedBoard||"").toLowerCase() && b.stream)
       .map(b => b.stream)
   )];
@@ -2217,8 +2243,7 @@ function renderSellCatalog() {
       bg.style.display = 'grid';
       if (!selectedState) { bg.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:24px;color:#888;font-weight:700;font-size:14px;">Please select your state above to see boards.</div>'; }
       else {
-        const stateBds = getBoardsForState(selectedState);
-        const bds = [...new Set([...stateBds,...[...new Set(state.books.filter(b=>b.type==='school'&&b.className===selectedClass&&b.board&&(!b.state||b.state===selectedState)).map(b=>b.board))].filter(b=>!stateBds.some(sb=>sb.toLowerCase()===b.toLowerCase()))])];
+        const bds = getBoardsForState(selectedState);
         if (!bds.length) { bg.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:24px;color:#888;font-weight:700;font-size:14px;">No boards found for '+selectedClass+' in '+selectedState+'.</div>'; }
         else {
           bg.innerHTML = bds.map(name=>'<button class="stream-card" data-sellboard="'+name+'"><strong>'+name+'</strong></button>').join('');
@@ -2232,7 +2257,7 @@ function renderSellCatalog() {
   if (sg) {
     if (sellCatalogStep === 'streams') {
       sg.style.display='grid';
-      const activeStreams=[...new Set(state.books.filter(b=>b.type==='school'&&b.className===selectedClass&&(b.board||'').toLowerCase()===(selectedBoard||'').toLowerCase()&&b.stream).map(b=>b.stream))];
+      const activeStreams=[...new Set(state.books.filter(b=>b.type==='school'&&_schoolBookMatchesSelectedState(b)&&b.className===selectedClass&&(b.board||'').toLowerCase()===(selectedBoard||'').toLowerCase()&&b.stream).map(b=>b.stream))];
       const toShow=activeStreams.length?activeStreams:streams;
       sg.innerHTML=toShow.map(name=>'<button class="stream-card" data-sellstream="'+name+'"><strong>'+name+'</strong></button>').join('');
       sg.querySelectorAll('[data-sellstream]').forEach(card=>{card.onclick=()=>{selectedStream=card.dataset.sellstream;selectedBookId='';sellCatalogStep='books';renderSellCatalog();};});
@@ -3959,7 +3984,7 @@ function bindAdminForms() {
     nCls.innerHTML = [...classes,...(state.settings.general?["General"]:[])].map(c=>'<option>'+c+'</option>').join("");
     nCls.onchange = () => { const c=nCls.value; nBrd.innerHTML=(getBoardsForState(selectedState)||[]).map(b=>'<option>'+b+'</option>').join(""); };
     nCls.onchange();
-    bookForm.onsubmit = e => { e.preventDefault(); const cls=nCls.value; const brd=nBrd.value; const str=nStr.value; const title=document.getElementById("newTitle").value.trim(); const price=parseInt(document.getElementById("newPrice").value)||0; const author=document.getElementById("newAuthor").value.trim(); const image=document.getElementById("newImage").value.trim(); if(!title||!price) return; state.books.push({id:"b"+Date.now(),type:cls==="General"?"general":"school",className:cls,board:brd,stream:str,title,price,author,image}); save(); toast("Subject added!"); e.target.reset(); nCls.onchange(); };
+    bookForm.onsubmit = e => { e.preventDefault(); const cls=nCls.value; const brd=nBrd.value; const str=nStr.value; const title=document.getElementById("newTitle").value.trim(); const price=parseInt(document.getElementById("newPrice").value)||0; const author=document.getElementById("newAuthor").value.trim(); const image=document.getElementById("newImage").value.trim(); if(!title||!price) return; state.books.push({id:"b"+Date.now(),type:cls==="General"?"general":"school",state:cls==="General"?"":selectedState,className:cls,board:brd,stream:str,title,price,author,image}); save(); toast("Subject added!"); e.target.reset(); nCls.onchange(); };
   }
   const schoolForm = document.getElementById("schoolForm");
   if(schoolForm){
