@@ -166,6 +166,10 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 .dob-summary:hover, .dob-summary:focus { background: white; border-color: var(--red); }
 .dob-summary.is-empty { color: var(--muted); }
 .dob-summary:disabled { background: #f3f4f6; border-color: #e5e7eb; color: #9ca3af; cursor: not-allowed; }
+.dob-simple-grid { display: grid; grid-template-columns: 1fr 1.35fr 1fr; gap: 10px; }
+.dob-simple-grid select { background: #f9fafb; border: 2px solid var(--line); border-radius: 12px; color: #111827; font-size: 15px; font-weight: 800; min-height: 48px; outline: none; padding: 10px 12px; width: 100%; }
+.dob-simple-grid select:focus { background: white; border-color: var(--red); }
+.auth-field.is-locked .dob-simple-grid select { background: #f3f4f6; border-color: #e5e7eb; color: #9ca3af; cursor: not-allowed; }
 .dob-picker { display: grid; grid-template-columns: 1fr 1.25fr 1fr; gap: 12px; background: #f9fafb; border: 2px solid var(--line); border-radius: 14px; margin-top: 8px; padding: 12px; }
 .dob-picker.is-collapsed { display: none; }
 .dob-part { display: flex; flex-direction: column; align-items: center; gap: 6px; }
@@ -541,7 +545,11 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
         </div>
         <div class="auth-field">
           <label>Date of Birth <span style="color:#ef4444;font-size:11px;"> *required</span></label>
-          <input type="date" id="signupDob" class="dob-date-input" required>
+          <div class="dob-simple-grid">
+            <select id="signupDobDay" required aria-label="Birth day"><option value="">Day</option></select>
+            <select id="signupDobMonth" required aria-label="Birth month"><option value="">Month</option></select>
+            <select id="signupDobYear" required aria-label="Birth year"><option value="">Year</option></select>
+          </div>
         </div>
         <!-- passport field is OFF -->
         <div class="auth-field">
@@ -630,7 +638,11 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
       </div>
       <div class="auth-field">
         <label>Date of Birth</label>
-        <input type="date" id="accDob" class="dob-date-input">
+        <div class="dob-simple-grid">
+          <select id="accDobDay" aria-label="Birth day"><option value="">Day</option></select>
+          <select id="accDobMonth" aria-label="Birth month"><option value="">Month</option></select>
+          <select id="accDobYear" aria-label="Birth year"><option value="">Year</option></select>
+        </div>
       </div>
       <div class="auth-field">
         <label>Currently Studying Class</label>
@@ -2267,6 +2279,10 @@ async function _isPlatformUserIdTaken(value, currentUid) {
       if (!snap.empty && snap.docs.some(doc => !sameUser(Object.assign({ id: doc.id }, doc.data())))) return true;
     } catch(e) {}
   }
+  try {
+    const allUsers = await _db.collection('users').limit(500).get();
+    if (!allUsers.empty && allUsers.docs.some(doc => hasId(Object.assign({ id: doc.id }, doc.data())) && !sameUser(Object.assign({ id: doc.id }, doc.data())))) return true;
+  } catch(e) {}
   return false;
 }
 const _platformUserIdStatus = { signup: { value: '', state: 'empty', confirmed: false }, acc: { value: '', state: 'empty', confirmed: false } };
@@ -2310,7 +2326,7 @@ function _setPlatformUserIdStatus(prefix, stateName, message, value, confirmed) 
 function _isPlatformUserIdReady(prefix, value) {
   const clean = _cleanPlatformUserId(value);
   const st = _platformUserIdStatus[prefix] || {};
-  return !!clean && st.value === clean && st.confirmed && (st.state === 'ok' || st.state === 'current' || st.state === 'available');
+  return !!clean && st.value === clean && (st.state === 'ok' || st.state === 'current' || st.state === 'available');
 }
 async function checkPlatformUserIdAvailability(prefix, immediate) {
   const clean = _sanitizePlatformUserIdInput(prefix);
@@ -3632,6 +3648,7 @@ function _restoreSignupDraft() {
     window._signupSchoolConfirmed = !!(draft.school && draft.schoolConfirmed);
   } finally {
     window._signupDraftRestoring = false;
+    if (document.getElementById('signupInsta')?.value) schedulePlatformUserIdCheck('signup');
     _checkUnlockPassword();
   }
 }
@@ -3698,7 +3715,7 @@ function _updateSignupProgressLocks() {
 
   _setSignupControlEnabled('signupFullName', true);
   _setSignupControlEnabled('signupMobile', nameReady);
-  _setSignupGroupEnabled(['signupDob'], canUseDob);
+  _setSignupGroupEnabled(['signupDobDay','signupDobMonth','signupDobYear'], canUseDob);
   _setSignupControlEnabled('signupPassport', canUseDob && dobReady);
   _setSignupControlEnabled('signupClass', canUseClass);
   _setSignupControlEnabled('signupInsta', canUseInsta);
@@ -3979,10 +3996,14 @@ function fillSignupLocations() {
   if (sdSel) sdSel.onchange = () => { updateSignupPlaces(); _checkUnlockPassword(); };
   initDobSelectors('signup');
   initDobSelectors('acc');
-  ['signupFullName','signupMobile','signupDob','signupClass','signupInsta','signupState','signupDistrict','signupSubDistrict','signupPlace','signupSchool','signupPassport'].forEach(id => {
+  ['signupFullName','signupMobile','signupDobDay','signupDobMonth','signupDobYear','signupClass','signupInsta','signupState','signupDistrict','signupSubDistrict','signupPlace','signupSchool','signupPassport'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
-    if (id === 'signupInsta') el.addEventListener('input', _normalizeSignupInstaValue);
+    if (id === 'signupInsta') {
+      el.addEventListener('input', () => { _normalizeSignupInstaValue(); schedulePlatformUserIdCheck('signup'); _checkUnlockPassword(); });
+      el.addEventListener('change', () => { _normalizeSignupInstaValue(); schedulePlatformUserIdCheck('signup'); _checkUnlockPassword(); });
+      return;
+    }
     el.addEventListener('input', _checkUnlockPassword);
     el.addEventListener('change', _checkUnlockPassword);
   });
@@ -4078,6 +4099,16 @@ function setDobPickerEnabled(prefix, enabled) {
     if (field) field.classList.toggle('is-locked', !enabled);
     return;
   }
+  ['Day','Month','Year'].forEach(part => {
+    const el = document.getElementById(prefix + 'Dob' + part);
+    if (el) {
+      el.disabled = !enabled;
+      el.setAttribute('aria-disabled', enabled ? 'false' : 'true');
+    }
+  });
+  const first = document.getElementById(prefix + 'DobDay');
+  const field = first?.closest('.auth-field');
+  if (field) field.classList.toggle('is-locked', !enabled);
   const btn = document.getElementById(prefix + 'DobSummary');
   if (btn) btn.disabled = !enabled;
   if (!enabled) toggleDobPicker(prefix, false);
@@ -4086,9 +4117,6 @@ function onDobChanged(prefix) {
   normalizeDobDay(prefix);
   updateDobSummary(prefix);
   if (prefix === 'signup') _checkUnlockPassword();
-  if (getDobValue(prefix)) {
-    setTimeout(() => toggleDobPicker(prefix, false), 140);
-  }
 }
 function applyDobPicker(prefix) {
   const value = getDobValue(prefix);
@@ -4256,7 +4284,7 @@ function init() {
   // Account details dialog save + close
   const accSave = document.getElementById('accSaveBtn');
   if (accSave) accSave.onclick = saveAccountDetails;
-  ['accName','accMobile','accDob','accClass','accInsta','accState','accDistrict','accSubDistrict','accPlace','accSchool'].forEach(id => {
+  ['accName','accMobile','accDobDay','accDobMonth','accDobYear','accClass','accInsta','accState','accDistrict','accSubDistrict','accPlace','accSchool'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
     if (id === 'accInsta') {
@@ -4682,4 +4710,4 @@ init();
 })();
 </script>
 </body>
-</html>
+</html>s
