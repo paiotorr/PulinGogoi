@@ -179,20 +179,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 .dob-ok { background: var(--red); border: 0; border-radius: 10px; color: white; cursor: pointer; font-size: 13px; font-weight: 900; min-height: 36px; padding: 0 18px; }
 .dob-ok:hover { background: var(--red-dark); }
 .dob-picker:focus-within { border-color: var(--red); background: white; }
-.auth-insta-wrap { display: flex; align-items: center; background: #f9fafb; border: 2px solid var(--line); border-radius: 12px; overflow: hidden; transition: border-color 0.15s; }
-.auth-insta-wrap:focus-within { border-color: var(--red); background: white; }
-.auth-field.is-locked .auth-insta-wrap, .auth-field.is-locked .dob-picker, .auth-field.is-locked .dob-summary { background: #f3f4f6; border-color: #e5e7eb; }
-.auth-insta-at { background: var(--red-light); color: var(--red); font-size: 16px; font-weight: 900; padding: 0 12px; min-height: 48px; display: flex; align-items: center; border-right: 2px solid var(--line); }
-.auth-insta-input { background: transparent !important; border: none !important; border-radius: 0 !important; flex: 1; min-height: 48px; outline: none; padding: 10px 12px !important; }
-.user-id-ok { align-items: center; align-self: stretch; border: 0; color: white; cursor: pointer; display: none; flex: 0 0 42px; font-size: 20px; font-weight: 900; justify-content: center; line-height: 1; padding: 0; }
-.user-id-ok.show { display: inline-flex; }
-.user-id-ok.available, .user-id-ok.ok, .user-id-ok.current { background: #16a34a; }
-.user-id-ok.taken, .user-id-ok.invalid { background: #dc2626; cursor: not-allowed; }
-.user-id-ok:disabled { cursor: not-allowed; }
-.user-id-status { display: none; font-size: 11px; font-weight: 900; line-height: 1.3; margin-top: 2px; }
-.user-id-status.available, .user-id-status.ok, .user-id-status.current { color: #16a34a; display: block; }
-.user-id-status.taken, .user-id-status.invalid { color: #dc2626; display: block; }
-.user-id-status.checking { color: #6b7280; display: block; }
+.auth-field.is-locked .dob-picker, .auth-field.is-locked .dob-summary { background: #f3f4f6; border-color: #e5e7eb; }
 #toast { background: #222; border-radius: 12px; bottom: 24px; color: white; font-weight: 900; opacity: 0; padding: 12px 18px; pointer-events: none; position: fixed; right: 24px; transform: translateY(12px); transition: 0.2s; z-index: 50; }
 #toast.show { opacity: 1; transform: translateY(0); }
 .otp-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.4); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 5px; }
@@ -561,9 +548,6 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
             <option value="Class 9">Class 9</option><option value="Class 10">Class 10</option><option value="Class 11">Class 11</option><option value="Class 12">Class 12</option>
           </select>
         </div>
-        <div class="auth-field"><label>PKITAAP User ID <span style="color:#ef4444;font-size:11px;"> *required</span></label>
-          <div class="auth-insta-wrap"><span class="auth-insta-at">@</span><input type="text" id="signupInsta" placeholder="choose_your_user_id" class="auth-insta-input" required autocapitalize="none" autocomplete="off" spellcheck="false"><button type="button" class="user-id-ok" id="signupUserIdOk" onclick="confirmPlatformUserId('signup')">OK</button></div><div class="user-id-status" id="signupUserIdStatus"></div>
-        </div>
         <div class="auth-row">
           <div class="auth-field">
             <label>State <span style="color:#ef4444;font-size:11px;"> *required</span></label>
@@ -653,9 +637,6 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
           <option value="Class 9">Class 9</option><option value="Class 10">Class 10</option><option value="Class 11">Class 11</option><option value="Class 12">Class 12</option>
         </select>
       </div>
-      <div class="auth-field"><label>PKITAAP User ID</label>
-        <div class="auth-insta-wrap"><span class="auth-insta-at">@</span><input type="text" id="accInsta" placeholder="choose_your_user_id" class="auth-insta-input" autocapitalize="none" autocomplete="off" spellcheck="false"><button type="button" class="user-id-ok" id="accUserIdOk" onclick="confirmPlatformUserId('acc')">OK</button></div><div class="user-id-status" id="accUserIdStatus"></div>
-      </div>
       <div class="auth-row">
         <div class="auth-field">
           <label>State</label>
@@ -735,7 +716,6 @@ let _auth = null;   // Auth instance
 //    mobile     : string   (10-digit, no country code)
 //    phone      : string   (E.164, e.g. "+919876543210")
 //    dateOfBirth: string   (YYYY-MM-DD)
-//    insta      : string
 //    className  : string
 //    state      : string
 //    district   : string
@@ -807,16 +787,11 @@ async function _saveUserToFirestore(userData) {
   const mobile = userData.mobile || (userData.phone ? String(userData.phone).replace(/D/g,'').slice(-10) : '');
   const dobValue = userData.dateOfBirth || userData.dob || userData.birthDate || '';
   const dobParts = _dobPartsFromValue(dobValue);
-  const platformId = _cleanPlatformUserId(userData.platformUserId || userData.publicUserId || userData.userName || userData.insta || '');
   const normalizedUser = Object.assign({}, userData, {
     id: userData.id || userData.uid || (mobile ? 'u' + mobile : ''),
     mobile,
     phone: userData.phone || (mobile ? '+91' + mobile : ''),
     email: userData.email || ((_auth && _auth.currentUser && _auth.currentUser.email) || ''),
-    platformUserId: platformId,
-    publicUserId: platformId,
-    userName: platformId,
-    insta: platformId,
     dateOfBirth: dobValue,
     dob: dobValue,
     birthDate: dobValue,
@@ -824,6 +799,10 @@ async function _saveUserToFirestore(userData) {
     dobMonth: dobParts ? dobParts.m : (userData.dobMonth || ''),
     dobYear: dobParts ? dobParts.y : (userData.dobYear || '')
   });
+  delete normalizedUser.platformUserId;
+  delete normalizedUser.publicUserId;
+  delete normalizedUser.userName;
+  delete normalizedUser.insta;
   const docId = normalizedUser.uid || normalizedUser.id || normalizedUser.mobile;
   // Mirror to localStorage (offline fallback)
   try {
@@ -836,10 +815,14 @@ async function _saveUserToFirestore(userData) {
   // Write to Firestore
   if (_db && docId) {
     try {
-      await _db.collection('users').doc(docId).set(
-        Object.assign({}, normalizedUser, { lastLoginAt: new Date().toISOString() }),
-        { merge: true }
-      );
+      const writeUser = Object.assign({}, normalizedUser, { lastLoginAt: new Date().toISOString() });
+      if (window.firebase && firebase.firestore && firebase.firestore.FieldValue) {
+        writeUser.platformUserId = firebase.firestore.FieldValue.delete();
+        writeUser.publicUserId = firebase.firestore.FieldValue.delete();
+        writeUser.userName = firebase.firestore.FieldValue.delete();
+        writeUser.insta = firebase.firestore.FieldValue.delete();
+      }
+      await _db.collection('users').doc(docId).set(writeUser, { merge: true });
     } catch (e) {
       console.warn('[PKITAAP] Firestore write failed (localStorage used):', e);
     }
@@ -2261,175 +2244,6 @@ function updateAccSchools() {
     if (keep) s.value = keep;
   });
 }
-function _cleanPlatformUserId(value) {
-  return String(value || '').trim().replace(/^@+/, '').toLowerCase();
-}
-function _withFastTimeout(promise, ms, fallback) {
-  return new Promise(resolve => {
-    let done = false;
-    const finish = (value) => {
-      if (done) return;
-      done = true;
-      resolve(value);
-    };
-    setTimeout(() => finish(fallback), ms);
-    Promise.resolve(promise).then(finish).catch(() => finish(fallback));
-  });
-}
-function _isPlatformUserIdTakenLocal(value, currentUid) {
-  const clean = _cleanPlatformUserId(value);
-  if (!clean) return false;
-  const sameUser = (u) => String(u.uid || u.id || '').trim() === String(currentUid || '').trim();
-  const hasId = (u) => _cleanPlatformUserId(u.platformUserId || u.publicUserId || u.userName || u.insta) === clean;
-  try {
-    const localUsers = JSON.parse(localStorage.getItem('pkitaap_registered_users') || '[]');
-    if (localUsers.some(u => hasId(u) && !sameUser(u))) return true;
-  } catch(e) {}
-  try {
-    const localUsers = JSON.parse(localStorage.getItem('pkitaap_users') || '[]');
-    if (Array.isArray(localUsers) && localUsers.some(u => hasId(u) && !sameUser(u))) return true;
-  } catch(e) {}
-  return false;
-}
-async function _isPlatformUserIdTakenRemote(value, currentUid) {
-  const clean = _cleanPlatformUserId(value);
-  if (!clean) return false;
-  if (_isPlatformUserIdTakenLocal(clean, currentUid)) return true;
-  const sameUser = (u) => String(u.uid || u.id || '').trim() === String(currentUid || '').trim();
-  const hasId = (u) => _cleanPlatformUserId(u.platformUserId || u.publicUserId || u.userName || u.insta) === clean;
-  if (!_db) return false;
-  const fields = ['platformUserId','publicUserId','userName','insta'];
-  try {
-    const snaps = await Promise.all(fields.map(field =>
-      _withFastTimeout(_db.collection('users').where(field,'==',clean).limit(1).get(), 650, null).catch(() => null)
-    ));
-    if (snaps.some(snap => snap && !snap.empty && snap.docs.some(doc => !sameUser(Object.assign({ id: doc.id }, doc.data()))))) return true;
-  } catch(e) {}
-  try {
-    const allUsers = await _withFastTimeout(_db.collection('users').limit(500).get(), 450, null);
-    if (!allUsers.empty && allUsers.docs.some(doc => hasId(Object.assign({ id: doc.id }, doc.data())) && !sameUser(Object.assign({ id: doc.id }, doc.data())))) return true;
-  } catch(e) {}
-  return false;
-}
-async function _isPlatformUserIdTaken(value, currentUid) {
-  if (_isPlatformUserIdTakenLocal(value, currentUid)) return true;
-  return await _withFastTimeout(_isPlatformUserIdTakenRemote(value, currentUid), 900, false);
-}
-const _platformUserIdStatus = { signup: { value: '', state: 'empty', confirmed: false }, acc: { value: '', state: 'empty', confirmed: false } };
-const _platformUserIdCheckTimers = {};
-function _platformUserIdInput(prefix) { return document.getElementById(prefix === 'acc' ? 'accInsta' : 'signupInsta'); }
-function _platformUserIdStatusEl(prefix) { return document.getElementById(prefix === 'acc' ? 'accUserIdStatus' : 'signupUserIdStatus'); }
-function _platformUserIdOkEl(prefix) { return document.getElementById(prefix === 'acc' ? 'accUserIdOk' : 'signupUserIdOk'); }
-function _currentUidForPlatformUserId(prefix) {
-  const u = prefix === 'acc' ? window._currentUser : _googleUser;
-  return (u && (u.uid || u.id)) || '';
-}
-function _originalPlatformUserIdForPrefix(prefix) {
-  if (prefix === 'acc') return _cleanPlatformUserId((_accountOriginalForm && _accountOriginalForm.platformUserId) || _platformUserId(window._currentUser));
-  return '';
-}
-function _sanitizePlatformUserIdInput(prefix) {
-  const input = _platformUserIdInput(prefix);
-  if (!input) return '';
-  const clean = _cleanPlatformUserId(input.value).replace(/[^a-z0-9._-]/g, '');
-  if (input.value !== clean) input.value = clean;
-  return clean;
-}
-function _setPlatformUserIdStatus(prefix, stateName, message, value, confirmed) {
-  const st = _platformUserIdStatus[prefix] || (_platformUserIdStatus[prefix] = {});
-  st.value = _cleanPlatformUserId(value || _platformUserIdInput(prefix)?.value || '');
-  st.state = stateName || 'empty';
-  st.confirmed = !!confirmed;
-  const statusEl = _platformUserIdStatusEl(prefix);
-  if (statusEl) {
-    statusEl.textContent = message || '';
-    statusEl.className = 'user-id-status ' + (stateName || 'empty');
-    statusEl.style.display = message ? 'block' : 'none';
-  }
-  const ok = _platformUserIdOkEl(prefix);
-  if (ok) {
-    const good = stateName === 'available' || stateName === 'ok' || stateName === 'current';
-    const bad = stateName === 'taken' || stateName === 'invalid';
-    ok.className = 'user-id-ok' + (good || bad ? ' show ' + stateName : '');
-    ok.textContent = good ? '✓' : (bad ? '×' : '');
-    ok.title = good ? 'User ID available' : (bad ? 'User ID not available' : '');
-    ok.disabled = !good;
-  }
-}
-function _isPlatformUserIdReady(prefix, value) {
-  const clean = _cleanPlatformUserId(value);
-  const st = _platformUserIdStatus[prefix] || {};
-  return !!clean && st.value === clean && (st.state === 'ok' || st.state === 'current' || st.state === 'available');
-}
-async function checkPlatformUserIdAvailability(prefix, immediate) {
-  const clean = _sanitizePlatformUserIdInput(prefix);
-  const original = _originalPlatformUserIdForPrefix(prefix);
-  if (!clean) {
-    _setPlatformUserIdStatus(prefix, 'empty', '', clean, false);
-    if (prefix === 'signup') _checkUnlockPassword(); else _updateAccountSaveState();
-    return false;
-  }
-  if (clean.length < 3) {
-    _setPlatformUserIdStatus(prefix, 'invalid', 'Use at least 3 characters.', clean, false);
-    if (prefix === 'signup') _checkUnlockPassword(); else _updateAccountSaveState();
-    return false;
-  }
-  if (prefix === 'acc' && original && clean === original) {
-    _setPlatformUserIdStatus(prefix, 'current', '✓ Current User ID', clean, true);
-    _updateAccountSaveState();
-    return true;
-  }
-  const uid = _currentUidForPlatformUserId(prefix);
-  if (_isPlatformUserIdTakenLocal(clean, uid)) {
-    _setPlatformUserIdStatus(prefix, 'taken', '✕ Not available', clean, false);
-    if (prefix === 'signup') _checkUnlockPassword(); else _updateAccountSaveState();
-    return false;
-  }
-  _setPlatformUserIdStatus(prefix, 'available', '✓ Available', clean, false);
-  _isPlatformUserIdTakenRemote(clean, uid).then(taken => {
-    if (_cleanPlatformUserId(_platformUserIdInput(prefix)?.value || '') !== clean) return;
-    if (taken) _setPlatformUserIdStatus(prefix, 'taken', '✕ Not available', clean, false);
-    else _setPlatformUserIdStatus(prefix, 'available', '✓ Available', clean, false);
-    if (prefix === 'signup') _checkUnlockPassword(); else _updateAccountSaveState();
-  }).catch(() => {});
-  if (prefix === 'signup') _checkUnlockPassword(); else _updateAccountSaveState();
-  return true;
-}
-function schedulePlatformUserIdCheck(prefix) {
-  const clean = _sanitizePlatformUserIdInput(prefix);
-  const original = _originalPlatformUserIdForPrefix(prefix);
-  clearTimeout(_platformUserIdCheckTimers[prefix]);
-  if (!clean) {
-    _setPlatformUserIdStatus(prefix, 'empty', '', clean, false);
-    if (prefix === 'signup') _checkUnlockPassword(); else _updateAccountSaveState();
-    return;
-  }
-  if (prefix === 'acc' && original && clean === original) {
-    _setPlatformUserIdStatus(prefix, 'current', '✓ Current User ID', clean, true);
-    _updateAccountSaveState();
-    return;
-  }
-  if (_isPlatformUserIdTakenLocal(clean, _currentUidForPlatformUserId(prefix))) {
-    _setPlatformUserIdStatus(prefix, 'taken', '✕ Not available', clean, false);
-    if (prefix === 'signup') _checkUnlockPassword(); else _updateAccountSaveState();
-    return;
-  }
-  _setPlatformUserIdStatus(prefix, 'available', '✓ Available', clean, false);
-  if (prefix === 'signup') _checkUnlockPassword(); else _updateAccountSaveState();
-  _platformUserIdCheckTimers[prefix] = setTimeout(() => checkPlatformUserIdAvailability(prefix), 100);
-}
-async function confirmPlatformUserId(prefix) {
-  const clean = _sanitizePlatformUserIdInput(prefix);
-  const st = _platformUserIdStatus[prefix] || {};
-  if (st.value !== clean || st.state !== 'available') {
-    await checkPlatformUserIdAvailability(prefix, true);
-  }
-  const latest = _platformUserIdStatus[prefix] || {};
-  if (latest.value === clean && latest.state === 'available') {
-    _setPlatformUserIdStatus(prefix, 'ok', '✓ Available', clean, true);
-    if (prefix === 'signup') _checkUnlockPassword(); else _updateAccountSaveState();
-  }
-}
 async function openAccountDetails() {
   const u = window._currentUser;
   if (!u) return;
@@ -2458,8 +2272,6 @@ async function openAccountDetails() {
   set('accEmail', googleEmail);
   setDobValue('acc', getUserDobValue(u));
   set('accClass', u.className);
-  set('accInsta', _platformUserId(u));
-  _setPlatformUserIdStatus('acc', 'current', '✓ Current User ID', _platformUserId(u), true);
   // Populate state and cascade
   set('accState', u.state);
   updateAccDistricts();
@@ -2488,8 +2300,6 @@ function _accountSnapshot(u) {
     email: u.email || '',
     dateOfBirth: getUserDobValue(u),
     className: u.className || '',
-    insta: (u.platformUserId || u.publicUserId || u.userName || u.insta || '').replace(/^@+/, '').toLowerCase(),
-    platformUserId: (u.platformUserId || u.publicUserId || u.userName || u.insta || '').replace(/^@+/, '').toLowerCase(),
     state: u.state || '',
     district: u.district || '',
     subDistrict: u.subDistrict || '',
@@ -2501,7 +2311,7 @@ function _accountChangeLog(before, after) {
   const labels = {
     name: 'Full Name', mobile: 'Mobile Number', phone: 'Phone',
     email: 'Google Email', dateOfBirth: 'Date of Birth',
-    className: 'Class', insta: 'PKITAAP User ID', platformUserId: 'PKITAAP User ID',
+    className: 'Class',
     state: 'State', district: 'District', subDistrict: 'Sub-District',
     place: 'Place / Town', school: 'School / College'
   };
@@ -2522,7 +2332,6 @@ function _accountFormSnapshot() {
     email: val('accEmail'),
     dateOfBirth: getDobValue('acc'),
     className: val('accClass'),
-    platformUserId: val('accInsta').replace(/^@+/, '').toLowerCase(),
     state: val('accState'),
     district: val('accDistrict'),
     subDistrict: val('accSubDistrict'),
@@ -2532,7 +2341,7 @@ function _accountFormSnapshot() {
 }
 function _sameAccountSnapshot(a, b) {
   a = a || {}; b = b || {};
-  const keys = ['name','mobile','email','dateOfBirth','className','platformUserId','state','district','subDistrict','place','school'];
+  const keys = ['name','mobile','email','dateOfBirth','className','state','district','subDistrict','place','school'];
   return keys.every(k => String(a[k] || '') === String(b[k] || ''));
 }
 function _accountCooldownUntil(u) {
@@ -2562,7 +2371,6 @@ function _setAccountSaveLocked(locked, label) {
 }
 function _captureAccountSnapshotAndLock() {
   _accountOriginalForm = _accountFormSnapshot();
-  if (_accountOriginalForm.platformUserId) _setPlatformUserIdStatus('acc', 'current', '✓ Saved User ID', _accountOriginalForm.platformUserId, true);
   const remaining = _accountCooldownRemainingMs();
   _setAccountSaveLocked(true, remaining ? _accountCooldownText(remaining) : undefined);
 }
@@ -2571,10 +2379,6 @@ function _updateAccountSaveState() {
   const remaining = _accountCooldownRemainingMs();
   if (remaining) { _setAccountSaveLocked(true, _accountCooldownText(remaining)); return; }
   const snap = _accountFormSnapshot();
-  if (!_sameAccountSnapshot(_accountOriginalForm, snap) && snap.platformUserId !== _accountOriginalForm.platformUserId && !_isPlatformUserIdReady('acc', snap.platformUserId)) {
-    _setAccountSaveLocked(true, 'Check User ID');
-    return;
-  }
   _setAccountSaveLocked(_sameAccountSnapshot(_accountOriginalForm, snap));
 }
 async function saveAccountDetails() {
@@ -2592,14 +2396,6 @@ async function saveAccountDetails() {
   if (!dobValue) { toast('Please select your complete date of birth'); return; }
   const className = g('accClass');
   if (!className) { toast('Please select your class'); return; }
-  const insta = _cleanPlatformUserId(g('accInsta'));
-  if (!insta) { toast('Please enter your PKITAAP User ID'); return; }
-  const originalUserId = _cleanPlatformUserId((_accountOriginalForm && _accountOriginalForm.platformUserId) || _platformUserId(u));
-  if (insta !== originalUserId && !_isPlatformUserIdReady('acc', insta)) {
-    await checkPlatformUserIdAvailability('acc', true);
-    if (!_isPlatformUserIdReady('acc', insta)) { toast('Please choose an available PKITAAP User ID.'); return; }
-  }
-  if (await _isPlatformUserIdTaken(insta, u.uid || u.id)) { toast('This PKITAAP User ID is already taken.'); return; }
   const accState = g('accState');
   const accDistrict = g('accDistrict');
   const accSubDistrict = g('accSubDistrict');
@@ -2621,10 +2417,10 @@ async function saveAccountDetails() {
   u.dobMonth   = accDobParts.m || '';
   u.dobYear    = accDobParts.y || '';
   u.className  = className;
-  u.insta      = insta;
-  u.platformUserId = insta;
-  u.publicUserId = insta;
-  u.userName = insta;
+  delete u.insta;
+  delete u.platformUserId;
+  delete u.publicUserId;
+  delete u.userName;
   u.state      = accState;
   u.district   = accDistrict;
   u.subDistrict= accSubDistrict;
@@ -2662,9 +2458,6 @@ async function saveAccountDetails() {
     _captureAccountSnapshotAndLock();
     // Pre-fill sell form with new defaults
     _prefillSellFromProfile();
-    // Update sell instagram if visible
-    const si = document.getElementById('sellInstagram');
-    if (si) si.value = u.insta || '';
   }).catch(() => { _captureAccountSnapshotAndLock(); toast('Saved locally.'); });
 }
 function _prefillSellFromProfile() {
@@ -2694,8 +2487,6 @@ function _prefillSellFromProfile() {
   // Pre-fill stateFilter2 with user's state
   set('stateFilter2', u.state);
   if (u.state) { onStateFilterChange2(u.state); }
-  // Pre-fill instagram (read-only in sell form)
-  set('sellInstagram', u.insta);
 }
 function _prefillBuyFromProfile() {
   const u = window._currentUser;
@@ -2880,14 +2671,9 @@ function _myChatUid() {
   const u = window._currentUser || {};
   return String(u.uid || u.id || u.mobile || u.email || '').trim();
 }
-function _platformUserId(u) {
-  u = u || {};
-  return String(u.platformUserId || u.publicUserId || u.userName || u.insta || '').replace(/^@+/, '').toLowerCase();
-}
 function _chatDisplayName(u) {
   u = u || {};
-  const pid = _platformUserId(u);
-  return u.name || (pid ? '@' + pid : 'User');
+  return u.name || 'User';
 }
 function _getLocalChats() {
   try { return JSON.parse(localStorage.getItem(CHAT_STORE_KEY) || '[]'); } catch(e) { return []; }
@@ -2964,9 +2750,7 @@ async function startListingChat(listingId) {
     buyerUid: me,
     sellerUid: sellerUid,
     buyerName: window._currentUser?.name || 'Buyer',
-    buyerPlatformId: _platformUserId(window._currentUser),
     sellerName: listing.sellerName || listing.seller || 'Seller',
-    sellerPlatformId: listing.sellerPlatformId || listing.platformUserId || listing.instagram || '',
     updatedAt: new Date().toISOString(),
     messages: Array.isArray(existing.messages) ? existing.messages : []
   });
@@ -2997,12 +2781,11 @@ async function renderMessages(skipFetch) {
   }
   list.innerHTML = chats.map(c => {
     const otherName = c.sellerUid === me ? (c.buyerName || 'Buyer') : (c.sellerName || 'Seller');
-    const otherPid = c.sellerUid === me ? c.buyerPlatformId : c.sellerPlatformId;
     const msgs = Array.isArray(c.messages) ? c.messages : [];
     const last = msgs.length ? msgs[msgs.length - 1].text : 'No messages yet';
     const active = c.id === _activeChatId ? ' active' : '';
     return '<div class="thread-item' + active + '" role="button" data-open-chat="' + _acEsc(c.id) + '">' +
-      '<strong>' + _acEsc(otherName) + (otherPid ? ' @' + _acEsc(otherPid) : '') + '</strong>' +
+      '<strong>' + _acEsc(otherName) + '</strong>' +
       '<span>Book: ' + _acEsc(c.bookTitle || 'Book') + '</span>' +
       '<span>' + _acEsc(last) + '</span>' +
       '<span>' + _acEsc(String(c.updatedAt || '').slice(0,16).replace('T',' ')) + '</span>' +
@@ -3018,12 +2801,11 @@ function openChat(chatId) {
   _activeChatId = chatId;
   const me = _myChatUid();
   const otherName = chat.sellerUid === me ? (chat.buyerName || 'Buyer') : (chat.sellerName || 'Seller');
-  const otherPid = chat.sellerUid === me ? chat.buyerPlatformId : chat.sellerPlatformId;
   const title = document.getElementById('messageChatTitle');
   const sub = document.getElementById('messageChatSub');
   const body = document.getElementById('messageChatBody');
   _showChatView();
-  if (title) title.textContent = otherName + (otherPid ? ' @' + otherPid : '');
+  if (title) title.textContent = otherName;
   if (sub) sub.textContent = chat.bookTitle || 'Book conversation';
   if (body) {
     const msgs = Array.isArray(chat.messages) ? chat.messages : [];
@@ -3566,14 +3348,6 @@ window._signupDraftRestoring = false;
 window._signupDraftSaveTimer = null;
 window._signupProfileGuardActive = false;
 
-function _normalizeSignupInstaValue() {
-  const el = document.getElementById('signupInsta');
-  if (!el) return '';
-  const clean = el.value.replace(/^@+/, '').toLowerCase();
-  if (el.value !== clean) el.value = clean;
-  return clean;
-}
-
 function _isSignupProfileDraftActive() {
   const stage2 = document.getElementById('signupStage2');
   return !!(window._signupProfileGuardActive && stage2 && stage2.style.display !== 'none' && !window._currentUser);
@@ -3588,7 +3362,6 @@ function _collectSignupDraft() {
     dobMonth: document.getElementById('signupDobMonth')?.value || '',
     dobYear: document.getElementById('signupDobYear')?.value || '',
     className: (document.getElementById('signupClass')?.value || '').trim(),
-    insta: _normalizeSignupInstaValue(),
     state: (document.getElementById('signupState')?.value || '').trim(),
     district: (document.getElementById('signupDistrict')?.value || '').trim(),
     subDistrict: (document.getElementById('signupSubDistrict')?.value || '').trim(),
@@ -3603,13 +3376,13 @@ function _collectSignupDraft() {
 
 function _hasSignupDraftValues(draft) {
   const d = draft || _collectSignupDraft();
-  return !!(d.fullName || d.mobile || d.dateOfBirth || d.dobDay || d.dobMonth || d.dobYear || d.className || d.insta || d.state || d.district || d.subDistrict || d.place || d.school || d.passport);
+  return !!(d.fullName || d.mobile || d.dateOfBirth || d.dobDay || d.dobMonth || d.dobYear || d.className || d.state || d.district || d.subDistrict || d.place || d.school || d.passport);
 }
 
 function _isSignupProfileComplete() {
   const d = _collectSignupDraft();
   const passportRequired = state.settings && state.settings.passport;
-  return !!(d.fullName && /^[0-9]{10}$/.test(d.mobile) && d.dateOfBirth && d.className && d.insta && d.state && d.district && d.subDistrict && d.place && d.school && d.placeConfirmed && d.schoolConfirmed && (!passportRequired || d.passport));
+  return !!(d.fullName && /^[0-9]{10}$/.test(d.mobile) && d.dateOfBirth && d.className && d.state && d.district && d.subDistrict && d.place && d.school && d.placeConfirmed && d.schoolConfirmed && (!passportRequired || d.passport));
 }
 
 function _saveSignupDraftNow() {
@@ -3662,7 +3435,6 @@ function _restoreSignupDraft() {
     setIf('signupDobYear', draft.dobYear);
     normalizeDobDay('signup');
     setIf('signupClass', draft.className);
-    setIf('signupInsta', (draft.insta || '').toLowerCase());
     setIf('signupPassport', draft.passport);
 
     const st = document.getElementById('signupState');
@@ -3691,7 +3463,6 @@ function _restoreSignupDraft() {
     window._signupSchoolConfirmed = !!(draft.school && draft.schoolConfirmed);
   } finally {
     window._signupDraftRestoring = false;
-    if (document.getElementById('signupInsta')?.value) schedulePlatformUserIdCheck('signup');
     _checkUnlockPassword();
   }
 }
@@ -3731,7 +3502,6 @@ function _updateSignupProgressLocks() {
   const passportRequired = state.settings && state.settings.passport;
   const passport = (document.getElementById('signupPassport')?.value || '').trim();
   const cls = (document.getElementById('signupClass')?.value || '').trim();
-  const insta = (document.getElementById('signupInsta')?.value || '').trim().replace(/^@+/, '').toLowerCase();
   const stateVal = (document.getElementById('signupState')?.value || '').trim();
   const district = (document.getElementById('signupDistrict')?.value || '').trim();
   const subDistrict = (document.getElementById('signupSubDistrict')?.value || '').trim();
@@ -3742,15 +3512,13 @@ function _updateSignupProgressLocks() {
   const dobReady = !!dob;
   const passportReady = !passportRequired || !!passport;
   const classReady = !!cls;
-  const instaReady = !!insta;
   const stateReady = !!stateVal;
   const districtReady = !!district;
   const subDistrictReady = !!subDistrict;
 
   const canUseDob = nameReady && mobileReady;
   const canUseClass = canUseDob && dobReady && passportReady;
-  const canUseInsta = canUseClass && classReady;
-  const canUseState = canUseInsta && instaReady;
+  const canUseState = canUseClass && classReady;
   const canUseDistrict = canUseState && stateReady;
   const canUseSubDistrict = canUseDistrict && districtReady;
   const canUsePlace = canUseSubDistrict && subDistrictReady;
@@ -3761,7 +3529,6 @@ function _updateSignupProgressLocks() {
   _setSignupGroupEnabled(['signupDobDay','signupDobMonth','signupDobYear'], canUseDob);
   _setSignupControlEnabled('signupPassport', canUseDob && dobReady);
   _setSignupControlEnabled('signupClass', canUseClass);
-  _setSignupControlEnabled('signupInsta', canUseInsta);
   _setSignupControlEnabled('signupState', canUseState);
   _setSignupControlEnabled('signupDistrict', canUseDistrict);
   _setSignupControlEnabled('signupSubDistrict', canUseSubDistrict);
@@ -3780,7 +3547,6 @@ function _checkUnlockPassword() {
   const mobile = (document.getElementById('signupMobile')?.value || '').trim();
   const dob = getDobValue('signup');
   const cls = (document.getElementById('signupClass')?.value || '').trim();
-  const insta = (document.getElementById('signupInsta')?.value || '').trim().replace(/^@+/, '').toLowerCase();
   const stateVal = (document.getElementById('signupState')?.value || '').trim();
   const district = (document.getElementById('signupDistrict')?.value || '').trim();
   const subDistrict = (document.getElementById('signupSubDistrict')?.value || '').trim();
@@ -3791,8 +3557,7 @@ function _checkUnlockPassword() {
   const btnContinue = document.getElementById('signupContinue');
   _updateSignupProgressLocks();
   if (!btnContinue) return;
-  const userIdReady = _isPlatformUserIdReady('signup', insta);
-  const complete = !!(fullName && /^[0-9]{10}$/.test(mobile) && dob && cls && userIdReady && stateVal && district && subDistrict && place && school && window._signupPlaceConfirmed && window._signupSchoolConfirmed && (!passportRequired || passport));
+  const complete = !!(fullName && /^[0-9]{10}$/.test(mobile) && dob && cls && stateVal && district && subDistrict && place && school && window._signupPlaceConfirmed && window._signupSchoolConfirmed && (!passportRequired || passport));
   if (complete) {
     btnContinue.disabled = false; btnContinue.style.opacity=''; btnContinue.style.cursor='';
   } else {
@@ -3952,9 +3717,6 @@ function bindSellForm() {
       place    : listingPlace,
       school   : listingSchool,
       condition: document.getElementById("sellCondition").value,
-      instagram: '',
-      platformUserId: u ? (u.platformUserId || u.publicUserId || u.userName || u.insta || '') : '',
-      sellerPlatformId: u ? (u.platformUserId || u.publicUserId || u.userName || u.insta || '') : '',
       whatsapp : document.getElementById("sellWhatsapp")?.value || "",
       price    : listingPrice,
       adminPrice: adminPrice,
@@ -4039,14 +3801,9 @@ function fillSignupLocations() {
   if (sdSel) sdSel.onchange = () => { updateSignupPlaces(); _checkUnlockPassword(); };
   initDobSelectors('signup');
   initDobSelectors('acc');
-  ['signupFullName','signupMobile','signupDobDay','signupDobMonth','signupDobYear','signupClass','signupInsta','signupState','signupDistrict','signupSubDistrict','signupPlace','signupSchool','signupPassport'].forEach(id => {
+  ['signupFullName','signupMobile','signupDobDay','signupDobMonth','signupDobYear','signupClass','signupState','signupDistrict','signupSubDistrict','signupPlace','signupSchool','signupPassport'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
-    if (id === 'signupInsta') {
-      el.addEventListener('input', () => { _normalizeSignupInstaValue(); schedulePlatformUserIdCheck('signup'); _checkUnlockPassword(); });
-      el.addEventListener('change', () => { _normalizeSignupInstaValue(); schedulePlatformUserIdCheck('signup'); _checkUnlockPassword(); });
-      return;
-    }
     el.addEventListener('input', _checkUnlockPassword);
     el.addEventListener('change', _checkUnlockPassword);
   });
@@ -4327,14 +4084,9 @@ function init() {
   // Account details dialog save + close
   const accSave = document.getElementById('accSaveBtn');
   if (accSave) accSave.onclick = saveAccountDetails;
-  ['accName','accMobile','accDobDay','accDobMonth','accDobYear','accClass','accInsta','accState','accDistrict','accSubDistrict','accPlace','accSchool'].forEach(id => {
+  ['accName','accMobile','accDobDay','accDobMonth','accDobYear','accClass','accState','accDistrict','accSubDistrict','accPlace','accSchool'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
-    if (id === 'accInsta') {
-      el.addEventListener('input', () => { schedulePlatformUserIdCheck('acc'); _updateAccountSaveState(); });
-      el.addEventListener('change', () => { schedulePlatformUserIdCheck('acc'); setTimeout(_updateAccountSaveState, 80); });
-      return;
-    }
     el.addEventListener('input', _updateAccountSaveState);
     el.addEventListener('change', () => setTimeout(_updateAccountSaveState, 80));
   });
@@ -4649,18 +4401,11 @@ init();
     const place       = ((document.getElementById('signupPlace')        || {}).value || '').trim();
     const school      = ((document.getElementById('signupSchool')       || {}).value || '').trim();
     const firstName   = ((document.getElementById('signupFullName')     || {}).value || '').trim();
-    const insta       = ((document.getElementById('signupInsta')        || {}).value || '').trim().replace(/^@+/, '').toLowerCase();
 
     if (!firstName)       { toast('Please enter your full name'); return; }
     if (!mobile || !/^[0-9]{10}$/.test(mobile)) { toast('Please enter a valid 10-digit mobile number'); return; }
     if (!dateOfBirth)     { toast('Please select your date of birth'); return; }
     if (!cls)            { toast('Please select your class'); return; }
-    if (!insta)          { toast('Please enter your PKITAAP User ID'); return; }
-    if (!_isPlatformUserIdReady('signup', insta)) {
-      await checkPlatformUserIdAvailability('signup', true);
-      if (!_isPlatformUserIdReady('signup', insta)) { toast('Please choose an available PKITAAP User ID.'); return; }
-    }
-    if (await _isPlatformUserIdTaken(insta, _googleUser.uid)) { toast('This PKITAAP User ID is already taken.'); return; }
     if (!stateVal)       { toast('Please select your state'); return; }
     if (!district)       { toast('Please select your district'); return; }
     if (!subDistrict)    { toast('Please select your sub-district'); return; }
@@ -4687,10 +4432,6 @@ init();
       dobDay      : signupDobParts.d || '',
       dobMonth    : signupDobParts.m || '',
       dobYear     : signupDobParts.y || '',
-      insta       : insta || '',
-      platformUserId: insta || '',
-      publicUserId: insta || '',
-      userName    : insta || '',
       className   : cls,
       state       : stateVal || '',
       district,
