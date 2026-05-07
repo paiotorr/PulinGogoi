@@ -739,9 +739,29 @@ function _getLocalSavedUserProfile(match) {
     ) || null;
   } catch(e) { return null; }
 }
+function _profileUpdatedMs(u) {
+  if (!u) return 0;
+  const values = [
+    u.profileUpdatedAt,
+    u.accountDetailsSavedAt,
+    u.updatedAt,
+    u.lastProfileUpdate && u.lastProfileUpdate.changedAt
+  ];
+  return values.reduce((max, value) => {
+    const ts = value ? new Date(value).getTime() : 0;
+    return !isNaN(ts) && ts > max ? ts : max;
+  }, 0);
+}
 function _mergeUserProfiles(localUser, remoteUser) {
-  const merged = Object.assign({}, localUser || {}, remoteUser || {});
-  const dobValue = getUserDobValue(remoteUser) || getUserDobValue(localUser) || getUserDobValue(merged);
+  const localMs = _profileUpdatedMs(localUser);
+  const remoteMs = _profileUpdatedMs(remoteUser);
+  const preferLocal = localMs > remoteMs;
+  const merged = preferLocal
+    ? Object.assign({}, remoteUser || {}, localUser || {})
+    : Object.assign({}, localUser || {}, remoteUser || {});
+  const primaryUser = preferLocal ? localUser : remoteUser;
+  const secondaryUser = preferLocal ? remoteUser : localUser;
+  const dobValue = getUserDobValue(primaryUser) || getUserDobValue(secondaryUser) || getUserDobValue(merged);
   if (dobValue) {
     const parts = _dobPartsFromValue(dobValue);
     merged.dateOfBirth = dobValue;
@@ -784,7 +804,7 @@ async function _getUserFromFirestore(uid) {
 
 async function _saveUserToFirestore(userData) {
   if (!userData) return;
-  const mobile = userData.mobile || (userData.phone ? String(userData.phone).replace(/D/g,'').slice(-10) : '');
+  const mobile = userData.mobile || (userData.phone ? String(userData.phone).replace(/\D/g,'').slice(-10) : '');
   const dobValue = userData.dateOfBirth || userData.dob || userData.birthDate || '';
   const dobParts = _dobPartsFromValue(dobValue);
   const normalizedUser = Object.assign({}, userData, {
@@ -2324,7 +2344,7 @@ async function openAccountDetails() {
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
   const googleEmail = u.email || (_auth && _auth.currentUser && _auth.currentUser.email) || '';
   set('accName', u.name);
-  set('accMobile', u.mobile || (u.phone ? String(u.phone).replace(/D/g,'').slice(-10) : ''));
+  set('accMobile', u.mobile || (u.phone ? String(u.phone).replace(/\D/g,'').slice(-10) : ''));
   set('accEmail', googleEmail);
   setDobValue('acc', getUserDobValue(u));
   set('accClass', u.className);
@@ -2348,7 +2368,7 @@ async function openAccountDetails() {
   setTimeout(_captureAccountSnapshotAndLock, 260);
 }
 function _accountSnapshot(u) {
-  const mobile = u.mobile || (u.phone ? String(u.phone).replace(/D/g,'').slice(-10) : '');
+  const mobile = u.mobile || (u.phone ? String(u.phone).replace(/\D/g,'').slice(-10) : '');
   return {
     name: u.name || '',
     mobile,
@@ -2384,7 +2404,7 @@ function _accountFormSnapshot() {
   const val = id => (document.getElementById(id)?.value || '').trim();
   return {
     name: val('accName'),
-    mobile: val('accMobile').replace(/D/g,''),
+    mobile: val('accMobile').replace(/\D/g,''),
     email: val('accEmail'),
     dateOfBirth: getDobValue('acc'),
     className: val('accClass'),
@@ -2446,7 +2466,7 @@ async function saveAccountDetails() {
   const before = _accountSnapshot(u);
   const name = g('accName');
   if (!name) { toast('Please enter your full name'); return; }
-  const mobile = g('accMobile').replace(/D/g,'');
+  const mobile = g('accMobile').replace(/\D/g,'');
   if (!/^[0-9]{10}$/.test(mobile)) { toast('Please enter a valid 10-digit mobile number'); return; }
   const dobValue = getDobValue('acc');
   if (!dobValue) { toast('Please select your complete date of birth'); return; }
@@ -2487,6 +2507,9 @@ async function saveAccountDetails() {
   if (changes.length) {
     const changedAt = new Date().toISOString();
     const lockedUntil = new Date(Date.now() + ACCOUNT_SAVE_COOLDOWN_MS).toISOString();
+    const nextVersion = (Number(u.profileVersion || 0) || 0) + 1;
+    u.profileVersion = nextVersion;
+    u.profileVersionLabel = 'v' + nextVersion;
     u.profileUpdatedAt = changedAt;
     u.updatedAt = changedAt;
     u.accountDetailsSavedAt = changedAt;
@@ -2495,6 +2518,8 @@ async function saveAccountDetails() {
     u.updatedBy = 'user';
     u.updatedByUid = u.uid || u.id || '';
     u.lastProfileUpdate = {
+      version: u.profileVersion,
+      versionLabel: u.profileVersionLabel,
       changedAt,
       changedBy: 'user',
       changedByUid: u.updatedByUid,
@@ -2509,10 +2534,14 @@ async function saveAccountDetails() {
   window._currentUser = u;
   _saveCommunityLocation(u.state, u.district, u.subDistrict, u.place, u.school);
   // Save to Firestore
-  _saveUserToFirestore(u).then(() => {
-    toast('✅ Account details saved!');
+  _saveUserToFirestore(u).then((savedUser) => {
+    if (savedUser) {
+      window._currentUser = _mergeUserProfiles(window._currentUser, savedUser);
+    }
+    toast('✅ Account details saved as new version' + (window._currentUser.profileVersionLabel ? ' ' + window._currentUser.profileVersionLabel : '') + '!');
     _captureAccountSnapshotAndLock();
-    // Pre-fill sell form with new defaults
+    // Pre-fill buyer and seller forms with new defaults
+    _prefillBuyFromProfile();
     _prefillSellFromProfile();
   }).catch(() => { _captureAccountSnapshotAndLock(); toast('Saved locally.'); });
 }
