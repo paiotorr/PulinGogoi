@@ -180,6 +180,13 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 .auth-field.is-locked .auth-insta-wrap, .auth-field.is-locked .dob-picker, .auth-field.is-locked .dob-summary { background: #f3f4f6; border-color: #e5e7eb; }
 .auth-insta-at { background: var(--red-light); color: var(--red); font-size: 16px; font-weight: 900; padding: 0 12px; min-height: 48px; display: flex; align-items: center; border-right: 2px solid var(--line); }
 .auth-insta-input { background: transparent !important; border: none !important; border-radius: 0 !important; flex: 1; min-height: 48px; outline: none; padding: 10px 12px !important; }
+.user-id-ok { align-items: center; align-self: stretch; background: #16a34a; border: 0; color: white; cursor: pointer; display: none; font-size: 12px; font-weight: 900; padding: 0 12px; }
+.user-id-ok.show { display: inline-flex; }
+.user-id-ok:disabled { background: #9ca3af; cursor: not-allowed; }
+.user-id-status { display: none; font-size: 11px; font-weight: 900; line-height: 1.3; margin-top: 2px; }
+.user-id-status.available, .user-id-status.ok, .user-id-status.current { color: #16a34a; display: block; }
+.user-id-status.taken, .user-id-status.invalid { color: #dc2626; display: block; }
+.user-id-status.checking { color: #6b7280; display: block; }
 #toast { background: #222; border-radius: 12px; bottom: 24px; color: white; font-weight: 900; opacity: 0; padding: 12px 18px; pointer-events: none; position: fixed; right: 24px; transform: translateY(12px); transition: 0.2s; z-index: 50; }
 #toast.show { opacity: 1; transform: translateY(0); }
 .otp-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.4); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 5px; }
@@ -545,7 +552,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
           </select>
         </div>
         <div class="auth-field"><label>PKITAAP User ID <span style="color:#ef4444;font-size:11px;"> *required</span></label>
-          <div class="auth-insta-wrap"><span class="auth-insta-at">@</span><input type="text" id="signupInsta" placeholder="choose_your_user_id" class="auth-insta-input" required autocapitalize="none" autocomplete="off" spellcheck="false"></div>
+          <div class="auth-insta-wrap"><span class="auth-insta-at">@</span><input type="text" id="signupInsta" placeholder="choose_your_user_id" class="auth-insta-input" required autocapitalize="none" autocomplete="off" spellcheck="false"><button type="button" class="user-id-ok" id="signupUserIdOk" onclick="confirmPlatformUserId('signup')">OK</button></div><div class="user-id-status" id="signupUserIdStatus"></div>
         </div>
         <div class="auth-row">
           <div class="auth-field">
@@ -633,7 +640,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
         </select>
       </div>
       <div class="auth-field"><label>PKITAAP User ID</label>
-        <div class="auth-insta-wrap"><span class="auth-insta-at">@</span><input type="text" id="accInsta" placeholder="choose_your_user_id" class="auth-insta-input"></div>
+        <div class="auth-insta-wrap"><span class="auth-insta-at">@</span><input type="text" id="accInsta" placeholder="choose_your_user_id" class="auth-insta-input" autocapitalize="none" autocomplete="off" spellcheck="false"><button type="button" class="user-id-ok" id="accUserIdOk" onclick="confirmPlatformUserId('acc')">OK</button></div><div class="user-id-status" id="accUserIdStatus"></div>
       </div>
       <div class="auth-row">
         <div class="auth-field">
@@ -2262,6 +2269,108 @@ async function _isPlatformUserIdTaken(value, currentUid) {
   }
   return false;
 }
+const _platformUserIdStatus = { signup: { value: '', state: 'empty', confirmed: false }, acc: { value: '', state: 'empty', confirmed: false } };
+const _platformUserIdCheckTimers = {};
+function _platformUserIdInput(prefix) { return document.getElementById(prefix === 'acc' ? 'accInsta' : 'signupInsta'); }
+function _platformUserIdStatusEl(prefix) { return document.getElementById(prefix === 'acc' ? 'accUserIdStatus' : 'signupUserIdStatus'); }
+function _platformUserIdOkEl(prefix) { return document.getElementById(prefix === 'acc' ? 'accUserIdOk' : 'signupUserIdOk'); }
+function _currentUidForPlatformUserId(prefix) {
+  const u = prefix === 'acc' ? window._currentUser : _googleUser;
+  return (u && (u.uid || u.id)) || '';
+}
+function _originalPlatformUserIdForPrefix(prefix) {
+  if (prefix === 'acc') return _cleanPlatformUserId((_accountOriginalForm && _accountOriginalForm.platformUserId) || _platformUserId(window._currentUser));
+  return '';
+}
+function _sanitizePlatformUserIdInput(prefix) {
+  const input = _platformUserIdInput(prefix);
+  if (!input) return '';
+  const clean = _cleanPlatformUserId(input.value).replace(/[^a-z0-9._-]/g, '');
+  if (input.value !== clean) input.value = clean;
+  return clean;
+}
+function _setPlatformUserIdStatus(prefix, stateName, message, value, confirmed) {
+  const st = _platformUserIdStatus[prefix] || (_platformUserIdStatus[prefix] = {});
+  st.value = _cleanPlatformUserId(value || _platformUserIdInput(prefix)?.value || '');
+  st.state = stateName || 'empty';
+  st.confirmed = !!confirmed;
+  const statusEl = _platformUserIdStatusEl(prefix);
+  if (statusEl) {
+    statusEl.textContent = message || '';
+    statusEl.className = 'user-id-status ' + (stateName || 'empty');
+    statusEl.style.display = message ? 'block' : 'none';
+  }
+  const ok = _platformUserIdOkEl(prefix);
+  if (ok) {
+    const showOk = stateName === 'available';
+    ok.classList.toggle('show', showOk);
+    ok.disabled = !showOk;
+  }
+}
+function _isPlatformUserIdReady(prefix, value) {
+  const clean = _cleanPlatformUserId(value);
+  const st = _platformUserIdStatus[prefix] || {};
+  return !!clean && st.value === clean && st.confirmed && (st.state === 'ok' || st.state === 'current' || st.state === 'available');
+}
+async function checkPlatformUserIdAvailability(prefix, immediate) {
+  const clean = _sanitizePlatformUserIdInput(prefix);
+  const original = _originalPlatformUserIdForPrefix(prefix);
+  if (!clean) {
+    _setPlatformUserIdStatus(prefix, 'empty', '', clean, false);
+    if (prefix === 'signup') _checkUnlockPassword(); else _updateAccountSaveState();
+    return false;
+  }
+  if (clean.length < 3) {
+    _setPlatformUserIdStatus(prefix, 'invalid', 'Use at least 3 characters.', clean, false);
+    if (prefix === 'signup') _checkUnlockPassword(); else _updateAccountSaveState();
+    return false;
+  }
+  if (prefix === 'acc' && original && clean === original) {
+    _setPlatformUserIdStatus(prefix, 'current', '✓ Current User ID', clean, true);
+    _updateAccountSaveState();
+    return true;
+  }
+  _setPlatformUserIdStatus(prefix, 'checking', 'Checking availability...', clean, false);
+  const taken = await _isPlatformUserIdTaken(clean, _currentUidForPlatformUserId(prefix));
+  if (_cleanPlatformUserId(_platformUserIdInput(prefix)?.value || '') !== clean) return false;
+  if (taken) {
+    _setPlatformUserIdStatus(prefix, 'taken', '✕ Not available', clean, false);
+  } else {
+    _setPlatformUserIdStatus(prefix, 'available', '✓ Available - tap OK', clean, false);
+  }
+  if (prefix === 'signup') _checkUnlockPassword(); else _updateAccountSaveState();
+  return !taken;
+}
+function schedulePlatformUserIdCheck(prefix) {
+  const clean = _sanitizePlatformUserIdInput(prefix);
+  const original = _originalPlatformUserIdForPrefix(prefix);
+  clearTimeout(_platformUserIdCheckTimers[prefix]);
+  if (!clean) {
+    _setPlatformUserIdStatus(prefix, 'empty', '', clean, false);
+    if (prefix === 'signup') _checkUnlockPassword(); else _updateAccountSaveState();
+    return;
+  }
+  if (prefix === 'acc' && original && clean === original) {
+    _setPlatformUserIdStatus(prefix, 'current', '✓ Current User ID', clean, true);
+    _updateAccountSaveState();
+    return;
+  }
+  _setPlatformUserIdStatus(prefix, 'checking', 'Checking availability...', clean, false);
+  if (prefix === 'signup') _checkUnlockPassword(); else _updateAccountSaveState();
+  _platformUserIdCheckTimers[prefix] = setTimeout(() => checkPlatformUserIdAvailability(prefix), 450);
+}
+async function confirmPlatformUserId(prefix) {
+  const clean = _sanitizePlatformUserIdInput(prefix);
+  const st = _platformUserIdStatus[prefix] || {};
+  if (st.value !== clean || st.state !== 'available') {
+    await checkPlatformUserIdAvailability(prefix, true);
+  }
+  const latest = _platformUserIdStatus[prefix] || {};
+  if (latest.value === clean && latest.state === 'available') {
+    _setPlatformUserIdStatus(prefix, 'ok', '✓ OK - User ID selected', clean, true);
+    if (prefix === 'signup') _checkUnlockPassword(); else _updateAccountSaveState();
+  }
+}
 async function openAccountDetails() {
   const u = window._currentUser;
   if (!u) return;
@@ -2291,6 +2400,7 @@ async function openAccountDetails() {
   setDobValue('acc', getUserDobValue(u));
   set('accClass', u.className);
   set('accInsta', _platformUserId(u));
+  _setPlatformUserIdStatus('acc', 'current', '✓ Current User ID', _platformUserId(u), true);
   // Populate state and cascade
   set('accState', u.state);
   updateAccDistricts();
@@ -2393,6 +2503,7 @@ function _setAccountSaveLocked(locked, label) {
 }
 function _captureAccountSnapshotAndLock() {
   _accountOriginalForm = _accountFormSnapshot();
+  if (_accountOriginalForm.platformUserId) _setPlatformUserIdStatus('acc', 'current', '✓ Saved User ID', _accountOriginalForm.platformUserId, true);
   const remaining = _accountCooldownRemainingMs();
   _setAccountSaveLocked(true, remaining ? _accountCooldownText(remaining) : undefined);
 }
@@ -2400,7 +2511,12 @@ function _updateAccountSaveState() {
   if (!_accountOriginalForm) return;
   const remaining = _accountCooldownRemainingMs();
   if (remaining) { _setAccountSaveLocked(true, _accountCooldownText(remaining)); return; }
-  _setAccountSaveLocked(_sameAccountSnapshot(_accountOriginalForm, _accountFormSnapshot()));
+  const snap = _accountFormSnapshot();
+  if (!_sameAccountSnapshot(_accountOriginalForm, snap) && snap.platformUserId !== _accountOriginalForm.platformUserId && !_isPlatformUserIdReady('acc', snap.platformUserId)) {
+    _setAccountSaveLocked(true, 'Check User ID');
+    return;
+  }
+  _setAccountSaveLocked(_sameAccountSnapshot(_accountOriginalForm, snap));
 }
 async function saveAccountDetails() {
   const u = window._currentUser;
@@ -2417,8 +2533,13 @@ async function saveAccountDetails() {
   if (!dobValue) { toast('Please select your complete date of birth'); return; }
   const className = g('accClass');
   if (!className) { toast('Please select your class'); return; }
-  const insta = g('accInsta').replace(/^@+/, '').toLowerCase();
+  const insta = _cleanPlatformUserId(g('accInsta'));
   if (!insta) { toast('Please enter your PKITAAP User ID'); return; }
+  const originalUserId = _cleanPlatformUserId((_accountOriginalForm && _accountOriginalForm.platformUserId) || _platformUserId(u));
+  if (insta !== originalUserId && !_isPlatformUserIdReady('acc', insta)) {
+    await checkPlatformUserIdAvailability('acc', true);
+    if (!_isPlatformUserIdReady('acc', insta)) { toast('Please choose an available PKITAAP User ID and tap OK.'); return; }
+  }
   if (await _isPlatformUserIdTaken(insta, u.uid || u.id)) { toast('This PKITAAP User ID is already taken.'); return; }
   const accState = g('accState');
   const accDistrict = g('accDistrict');
@@ -3610,7 +3731,8 @@ function _checkUnlockPassword() {
   const btnContinue = document.getElementById('signupContinue');
   _updateSignupProgressLocks();
   if (!btnContinue) return;
-  const complete = !!(fullName && /^[0-9]{10}$/.test(mobile) && dob && cls && insta && stateVal && district && subDistrict && place && school && window._signupPlaceConfirmed && window._signupSchoolConfirmed && (!passportRequired || passport));
+  const userIdReady = _isPlatformUserIdReady('signup', insta);
+  const complete = !!(fullName && /^[0-9]{10}$/.test(mobile) && dob && cls && userIdReady && stateVal && district && subDistrict && place && school && window._signupPlaceConfirmed && window._signupSchoolConfirmed && (!passportRequired || passport));
   if (complete) {
     btnContinue.disabled = false; btnContinue.style.opacity=''; btnContinue.style.cursor='';
   } else {
@@ -4137,6 +4259,11 @@ function init() {
   ['accName','accMobile','accDob','accClass','accInsta','accState','accDistrict','accSubDistrict','accPlace','accSchool'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
+    if (id === 'accInsta') {
+      el.addEventListener('input', () => { schedulePlatformUserIdCheck('acc'); _updateAccountSaveState(); });
+      el.addEventListener('change', () => { schedulePlatformUserIdCheck('acc'); setTimeout(_updateAccountSaveState, 80); });
+      return;
+    }
     el.addEventListener('input', _updateAccountSaveState);
     el.addEventListener('change', () => setTimeout(_updateAccountSaveState, 80));
   });
@@ -4458,6 +4585,10 @@ init();
     if (!dateOfBirth)     { toast('Please select your date of birth'); return; }
     if (!cls)            { toast('Please select your class'); return; }
     if (!insta)          { toast('Please enter your PKITAAP User ID'); return; }
+    if (!_isPlatformUserIdReady('signup', insta)) {
+      await checkPlatformUserIdAvailability('signup', true);
+      if (!_isPlatformUserIdReady('signup', insta)) { toast('Please choose an available PKITAAP User ID and tap OK.'); return; }
+    }
     if (await _isPlatformUserIdTaken(insta, _googleUser.uid)) { toast('This PKITAAP User ID is already taken.'); return; }
     if (!stateVal)       { toast('Please select your state'); return; }
     if (!district)       { toast('Please select your district'); return; }
