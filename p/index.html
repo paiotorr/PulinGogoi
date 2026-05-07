@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#16a34a"/>
-<title>PKITAAP</title>
+<title>PKiTAAP</title>
 <!-- ═══ Firebase SDKs (compat v10) ═══ -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -276,7 +276,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 <body>
 <!-- Google Sign-In popup auth — no reCAPTCHA needed -->
 <header class="topbar">
-  <div class="topbar-left"><div class="logo">PKITAAP</div></div>
+  <div class="topbar-left"><div class="logo">PKiTAAP</div></div>
   <div class="topbar-right">
     <button class="menu-btn" id="menuBtn" type="button" aria-label="Open menu"><span></span><span></span><span></span></button>
   </div>
@@ -286,7 +286,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
       <div class="menu-login-icon">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
       </div>
-      <div class="menu-login-title">Welcome to PKITAAP</div>
+      <div class="menu-login-title">Welcome to PKiTAAP</div>
       <div class="menu-login-sub">Login or sign up to find sellers and list your books</div>
       <button class="menu-login-btn" id="loginBtn" type="button">Login</button>
       <button class="menu-create-btn" id="menuGoSignup" type="button">Create Account</button>
@@ -494,7 +494,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 <dialog id="loginDialog">
   <div class="auth-modal">
     <button class="auth-close" id="loginClose">&#10005;</button>
-    <div class="auth-brand"><div class="auth-logo">PKITAAP</div><p class="auth-tagline">Welcome back!</p></div>
+    <div class="auth-brand"><div class="auth-logo">PKiTAAP</div><p class="auth-tagline">Welcome back!</p></div>
     <div class="auth-form" id="loginForm">
       <p style="font-size:13px;font-weight:700;color:var(--muted);text-align:center;margin-bottom:2px;">Sign in with your Google account to continue.</p>
       <button class="google-btn" id="loginGoogleBtn" type="button" onclick="googleSignIn('login')">
@@ -507,7 +507,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 </dialog>
 <dialog id="signupDialog">
   <div class="auth-modal">
-    <div class="auth-brand"><div class="auth-logo">PKITAAP</div><p class="auth-tagline" id="signupTagline">Create your account</p></div>
+    <div class="auth-brand"><div class="auth-logo">PKiTAAP</div><p class="auth-tagline" id="signupTagline">Create your account</p></div>
 
     <!-- ── Stage 1: Google Sign-up ─────────────────────────── -->
     <div id="signupStage1">
@@ -607,7 +607,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 <dialog id="accountDialog">
   <div class="auth-modal">
     <button class="auth-close" id="accountClose">&#10005;</button>
-    <div class="auth-brand"><div class="auth-logo">PKITAAP</div><p class="auth-tagline">My Account</p></div>
+    <div class="auth-brand"><div class="auth-logo">PKiTAAP</div><p class="auth-tagline">My Account</p></div>
     <div class="auth-form" id="accountForm">
       <div class="auth-field">
         <label>Full Name</label>
@@ -854,7 +854,7 @@ async function _saveUserToFirestore(userData) {
 //  APP SEED
 // ═══════════════════════════════════════════════════════════════
 const seed = {
-  "appName": "PKITAAP",
+  "appName": "PKiTAAP",
   "appTagline": "Find & sell used school books near you",
   "classes": [
     "Class 9",
@@ -2050,6 +2050,7 @@ async function loadRemoteAppData() {
 
 function normalizeState(input) {
   const next = input || structuredClone(seed);
+  if(!next.appName || next.appName === 'PKITAAP') next.appName = 'PKiTAAP';
   next.settings    = { ...seed.settings,   ...(next.settings    || {}) };
   next.adMob       = { ...(seed.adMob || {}), ...(next.adMob || {}) };
   next.classThumbs = { ...seed.classThumbs, ...(next.classThumbs || {}) };
@@ -2172,7 +2173,7 @@ function renderBoards() {
   // Boards configured strictly for this selected state only.
   const bds = getBoardsForState(selectedState);
   if (!bds.length) {
-    boardGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#888;font-weight:700;font-size:14px;">No boards found for ' + selectedClass + ' in ' + selectedState + '. Configure boards in the admin panel.</div>';
+    boardGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#888;font-weight:700;font-size:14px;">No boards are available for this state yet.</div>';
     return;
   }
   boardGrid.innerHTML = bds.map(name => '<button class="stream-card" data-board="' + name + '"><strong>' + name + '</strong></button>').join("");
@@ -2244,7 +2245,7 @@ function renderSellCatalog() {
       if (!selectedState) { bg.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:24px;color:#888;font-weight:700;font-size:14px;">Please select your state above to see boards.</div>'; }
       else {
         const bds = getBoardsForState(selectedState);
-        if (!bds.length) { bg.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:24px;color:#888;font-weight:700;font-size:14px;">No boards found for '+selectedClass+' in '+selectedState+'.</div>'; }
+        if (!bds.length) { bg.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:24px;color:#888;font-weight:700;font-size:14px;">No boards are available for this state yet.</div>'; }
         else {
           bg.innerHTML = bds.map(name=>'<button class="stream-card" data-sellboard="'+name+'"><strong>'+name+'</strong></button>').join('');
           bg.querySelectorAll('[data-sellboard]').forEach(card=>{ card.onclick=()=>{ selectedBoard=card.dataset.sellboard; if(selectedClass==='Class 11'||selectedClass==='Class 12'){selectedStream='';selectedBookId='';sellCatalogStep='streams';}else{selectedBookId='';sellCatalogStep='books';} renderSellCatalog(); }; });
@@ -2782,7 +2783,7 @@ let _activeChatListenId = '';
 let _activeChatUnsub = null;
 function _myChatUid() {
   const u = window._currentUser || {};
-  return String(u.uid || u.id || u.mobile || u.email || '').trim();
+  return String((_auth && _auth.currentUser && _auth.currentUser.uid) || u.uid || u.id || u.mobile || u.email || '').trim();
 }
 function _chatDisplayName(u) {
   u = u || {};
@@ -2852,14 +2853,39 @@ function _mergeChatMessages(chatId, messages) {
   _saveLocalChats(chats);
   return chats[idx];
 }
-function _chatIdFor(listing, buyerUid) {
-  const sellerUid = String(listing.userId || listing.sellerUserId || listing.ownerId || '').trim();
+function _chatIdFor(listing, buyerUid, sellerUidOverride) {
+  const sellerUid = String(sellerUidOverride || listing.userId || listing.sellerUserId || listing.ownerId || '').trim();
   return ['chat', listing.id || listing.bookId || 'book', buyerUid, sellerUid].map(v => String(v || '').replace(/[^a-zA-Z0-9_-]/g,'_')).join('__');
 }
 async function _saveChatToFirestore(chat) {
-  if (!_db || !chat || !chat.id) return;
-  try { await _db.collection('chats').doc(chat.id).set(_chatMetaForWrite(chat), { merge: true }); }
-  catch(e) { console.warn('[PKITAAP] Chat save failed:', e); }
+  if (!_db || !chat || !chat.id) return false;
+  try { await _db.collection('chats').doc(chat.id).set(_chatMetaForWrite(chat), { merge: true }); return true; }
+  catch(e) { console.warn('[PKITAAP] Chat save failed:', e); return false; }
+}
+async function _resolveSellerUidForListing(listing) {
+  listing = listing || {};
+  const direct = String(listing.userId || listing.sellerUserId || listing.ownerId || '').trim();
+  const email = String(listing.sellerEmail || listing.email || '').trim();
+  const mobile = String(listing.mobile || listing.sellerMobile || '').replace(/\D/g,'').slice(-10);
+  if (_db) {
+    try {
+      if (email) {
+        const snap = await _db.collection('users').where('email','==',email).limit(1).get();
+        if (!snap.empty) {
+          const u = snap.docs[0].data() || {};
+          return String(u.uid || snap.docs[0].id || direct || '').trim();
+        }
+      }
+      if (mobile) {
+        const snap = await _db.collection('users').where('mobile','==',mobile).limit(1).get();
+        if (!snap.empty) {
+          const u = snap.docs[0].data() || {};
+          return String(u.uid || snap.docs[0].id || direct || '').trim();
+        }
+      }
+    } catch(e) { console.warn('[PKITAAP] Seller UID lookup failed:', e); }
+  }
+  return direct;
 }
 async function _loadChatMessagesFromFirestore(chat) {
   if (!_db || !chat || !chat.id) return chat;
@@ -2938,9 +2964,9 @@ async function startListingChat(listingId) {
   if (!listing) { toast('Listing not found.'); return; }
   if (_isMineListing(listing)) { toast('This is your own listed book.'); return; }
   const me = _myChatUid();
-  const sellerUid = String(listing.userId || listing.sellerUserId || listing.ownerId || '').trim();
+  const sellerUid = await _resolveSellerUidForListing(listing);
   if (!me || !sellerUid) { toast('Could not open chat for this seller.'); return; }
-  const chatId = _chatIdFor(listing, me);
+  const chatId = _chatIdFor(listing, me, sellerUid);
   const existing = _getLocalChats().find(c => c.id === chatId) || {};
   const bookTitle = listing.title || listing.bookTitle || 'book';
   const chat = Object.assign({}, existing, {
@@ -2957,12 +2983,13 @@ async function startListingChat(listingId) {
     messages: Array.isArray(existing.messages) ? existing.messages : []
   });
   _upsertLocalChat(chat);
-  await _saveChatToFirestore(chat);
+  const synced = await _saveChatToFirestore(chat);
+  if (!synced && _db) toast('Chat opened locally. Online sync is not enabled yet.');
   _showMessagesPage();
   renderMessages(true);
   openChat(chatId);
   const input = document.getElementById('messageInput');
-  if (input && !input.value) input.value = 'Hi, I found your ' + bookTitle + ' on PKITAAP. Is it still available?';
+  if (input && !input.value) input.value = 'Hi, I found your ' + bookTitle + ' on PKiTAAP. Is it still available?';
   _autosizeMessageInput();
 }
 async function renderMessages(skipFetch) {
@@ -3055,7 +3082,7 @@ async function sendChatMessage() {
       const chatRef = _db.collection('chats').doc(_activeChatId);
       await chatRef.set(_chatMetaForWrite(chats[idx]), { merge: true });
       await chatRef.collection('messages').doc(msg.id).set(msg);
-    } catch(e) { toast('Message saved locally. Firebase rules may need chats permission.'); }
+    } catch(e) { toast('Message saved on this device, but could not sync online yet.'); }
   }
 }
 function _getLocData() { return state.locations || []; }
@@ -3912,9 +3939,9 @@ function bindSellForm() {
       stream   : selected ? selected.stream : "",
       seller   : u ? u.name : "You",
       sellerName: u ? u.name : "You",
-      userId   : u ? (u.uid||u.id) : "",
-      sellerUserId: u ? (u.uid||u.id) : "",
-      ownerId  : u ? (u.uid||u.id) : "",
+      userId   : (_auth && _auth.currentUser && _auth.currentUser.uid) || (u ? (u.uid||u.id) : ""),
+      sellerUserId: (_auth && _auth.currentUser && _auth.currentUser.uid) || (u ? (u.uid||u.id) : ""),
+      ownerId  : (_auth && _auth.currentUser && _auth.currentUser.uid) || (u ? (u.uid||u.id) : ""),
       sellerEmail: u ? (u.email || "") : "",
       mobile   : u ? (u.mobile || "") : "",
       state    : listingState,
