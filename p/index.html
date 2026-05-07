@@ -2262,6 +2262,12 @@ function updateAccSchools() {
 function _cleanPlatformUserId(value) {
   return String(value || '').trim().replace(/^@+/, '').toLowerCase();
 }
+function _withFastTimeout(promise, ms, fallback) {
+  return Promise.race([
+    promise,
+    new Promise(resolve => setTimeout(() => resolve(fallback), ms))
+  ]);
+}
 async function _isPlatformUserIdTaken(value, currentUid) {
   const clean = _cleanPlatformUserId(value);
   if (!clean) return false;
@@ -2273,14 +2279,14 @@ async function _isPlatformUserIdTaken(value, currentUid) {
   } catch(e) {}
   if (!_db) return false;
   const fields = ['platformUserId','publicUserId','userName','insta'];
-  for (const field of fields) {
-    try {
-      const snap = await _db.collection('users').where(field,'==',clean).limit(1).get();
-      if (!snap.empty && snap.docs.some(doc => !sameUser(Object.assign({ id: doc.id }, doc.data())))) return true;
-    } catch(e) {}
-  }
   try {
-    const allUsers = await _db.collection('users').limit(500).get();
+    const snaps = await Promise.all(fields.map(field =>
+      _withFastTimeout(_db.collection('users').where(field,'==',clean).limit(1).get(), 650, null).catch(() => null)
+    ));
+    if (snaps.some(snap => snap && !snap.empty && snap.docs.some(doc => !sameUser(Object.assign({ id: doc.id }, doc.data()))))) return true;
+  } catch(e) {}
+  try {
+    const allUsers = await _withFastTimeout(_db.collection('users').limit(500).get(), 450, null);
     if (!allUsers.empty && allUsers.docs.some(doc => hasId(Object.assign({ id: doc.id }, doc.data())) && !sameUser(Object.assign({ id: doc.id }, doc.data())))) return true;
   } catch(e) {}
   return false;
@@ -2373,7 +2379,7 @@ function schedulePlatformUserIdCheck(prefix) {
   }
   _setPlatformUserIdStatus(prefix, 'checking', 'Checking availability...', clean, false);
   if (prefix === 'signup') _checkUnlockPassword(); else _updateAccountSaveState();
-  _platformUserIdCheckTimers[prefix] = setTimeout(() => checkPlatformUserIdAvailability(prefix), 450);
+  _platformUserIdCheckTimers[prefix] = setTimeout(() => checkPlatformUserIdAvailability(prefix), 100);
 }
 async function confirmPlatformUserId(prefix) {
   const clean = _sanitizePlatformUserIdInput(prefix);
@@ -4710,4 +4716,4 @@ init();
 })();
 </script>
 </body>
-</html>s
+</html>
