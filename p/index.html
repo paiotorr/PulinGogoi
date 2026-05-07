@@ -2263,12 +2263,18 @@ function _cleanPlatformUserId(value) {
   return String(value || '').trim().replace(/^@+/, '').toLowerCase();
 }
 function _withFastTimeout(promise, ms, fallback) {
-  return Promise.race([
-    promise,
-    new Promise(resolve => setTimeout(() => resolve(fallback), ms))
-  ]);
+  return new Promise(resolve => {
+    let done = false;
+    const finish = (value) => {
+      if (done) return;
+      done = true;
+      resolve(value);
+    };
+    setTimeout(() => finish(fallback), ms);
+    Promise.resolve(promise).then(finish).catch(() => finish(fallback));
+  });
 }
-async function _isPlatformUserIdTaken(value, currentUid) {
+function _isPlatformUserIdTakenLocal(value, currentUid) {
   const clean = _cleanPlatformUserId(value);
   if (!clean) return false;
   const sameUser = (u) => String(u.uid || u.id || '').trim() === String(currentUid || '').trim();
@@ -2277,6 +2283,18 @@ async function _isPlatformUserIdTaken(value, currentUid) {
     const localUsers = JSON.parse(localStorage.getItem('pkitaap_registered_users') || '[]');
     if (localUsers.some(u => hasId(u) && !sameUser(u))) return true;
   } catch(e) {}
+  try {
+    const localUsers = JSON.parse(localStorage.getItem('pkitaap_users') || '[]');
+    if (Array.isArray(localUsers) && localUsers.some(u => hasId(u) && !sameUser(u))) return true;
+  } catch(e) {}
+  return false;
+}
+async function _isPlatformUserIdTakenRemote(value, currentUid) {
+  const clean = _cleanPlatformUserId(value);
+  if (!clean) return false;
+  if (_isPlatformUserIdTakenLocal(clean, currentUid)) return true;
+  const sameUser = (u) => String(u.uid || u.id || '').trim() === String(currentUid || '').trim();
+  const hasId = (u) => _cleanPlatformUserId(u.platformUserId || u.publicUserId || u.userName || u.insta) === clean;
   if (!_db) return false;
   const fields = ['platformUserId','publicUserId','userName','insta'];
   try {
@@ -2290,6 +2308,10 @@ async function _isPlatformUserIdTaken(value, currentUid) {
     if (!allUsers.empty && allUsers.docs.some(doc => hasId(Object.assign({ id: doc.id }, doc.data())) && !sameUser(Object.assign({ id: doc.id }, doc.data())))) return true;
   } catch(e) {}
   return false;
+}
+async function _isPlatformUserIdTaken(value, currentUid) {
+  if (_isPlatformUserIdTakenLocal(value, currentUid)) return true;
+  return await _withFastTimeout(_isPlatformUserIdTakenRemote(value, currentUid), 900, false);
 }
 const _platformUserIdStatus = { signup: { value: '', state: 'empty', confirmed: false }, acc: { value: '', state: 'empty', confirmed: false } };
 const _platformUserIdCheckTimers = {};
@@ -2352,16 +2374,21 @@ async function checkPlatformUserIdAvailability(prefix, immediate) {
     _updateAccountSaveState();
     return true;
   }
-  _setPlatformUserIdStatus(prefix, 'checking', 'Checking availability...', clean, false);
-  const taken = await _isPlatformUserIdTaken(clean, _currentUidForPlatformUserId(prefix));
-  if (_cleanPlatformUserId(_platformUserIdInput(prefix)?.value || '') !== clean) return false;
-  if (taken) {
+  const uid = _currentUidForPlatformUserId(prefix);
+  if (_isPlatformUserIdTakenLocal(clean, uid)) {
     _setPlatformUserIdStatus(prefix, 'taken', '✕ Not available', clean, false);
-  } else {
-    _setPlatformUserIdStatus(prefix, 'available', '✓ Available - tap OK', clean, false);
+    if (prefix === 'signup') _checkUnlockPassword(); else _updateAccountSaveState();
+    return false;
   }
+  _setPlatformUserIdStatus(prefix, 'available', '✓ Available - tap OK', clean, false);
+  _isPlatformUserIdTakenRemote(clean, uid).then(taken => {
+    if (_cleanPlatformUserId(_platformUserIdInput(prefix)?.value || '') !== clean) return;
+    if (taken) _setPlatformUserIdStatus(prefix, 'taken', '✕ Not available', clean, false);
+    else _setPlatformUserIdStatus(prefix, 'available', '✓ Available - tap OK', clean, false);
+    if (prefix === 'signup') _checkUnlockPassword(); else _updateAccountSaveState();
+  }).catch(() => {});
   if (prefix === 'signup') _checkUnlockPassword(); else _updateAccountSaveState();
-  return !taken;
+  return true;
 }
 function schedulePlatformUserIdCheck(prefix) {
   const clean = _sanitizePlatformUserIdInput(prefix);
@@ -2377,7 +2404,12 @@ function schedulePlatformUserIdCheck(prefix) {
     _updateAccountSaveState();
     return;
   }
-  _setPlatformUserIdStatus(prefix, 'checking', 'Checking availability...', clean, false);
+  if (_isPlatformUserIdTakenLocal(clean, _currentUidForPlatformUserId(prefix))) {
+    _setPlatformUserIdStatus(prefix, 'taken', '✕ Not available', clean, false);
+    if (prefix === 'signup') _checkUnlockPassword(); else _updateAccountSaveState();
+    return;
+  }
+  _setPlatformUserIdStatus(prefix, 'available', '✓ Available - tap OK', clean, false);
   if (prefix === 'signup') _checkUnlockPassword(); else _updateAccountSaveState();
   _platformUserIdCheckTimers[prefix] = setTimeout(() => checkPlatformUserIdAvailability(prefix), 100);
 }
