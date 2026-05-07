@@ -184,9 +184,11 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 .auth-field.is-locked .auth-insta-wrap, .auth-field.is-locked .dob-picker, .auth-field.is-locked .dob-summary { background: #f3f4f6; border-color: #e5e7eb; }
 .auth-insta-at { background: var(--red-light); color: var(--red); font-size: 16px; font-weight: 900; padding: 0 12px; min-height: 48px; display: flex; align-items: center; border-right: 2px solid var(--line); }
 .auth-insta-input { background: transparent !important; border: none !important; border-radius: 0 !important; flex: 1; min-height: 48px; outline: none; padding: 10px 12px !important; }
-.user-id-ok { align-items: center; align-self: stretch; background: #16a34a; border: 0; color: white; cursor: pointer; display: none; font-size: 12px; font-weight: 900; padding: 0 12px; }
+.user-id-ok { align-items: center; align-self: stretch; border: 0; color: white; cursor: pointer; display: none; flex: 0 0 42px; font-size: 20px; font-weight: 900; justify-content: center; line-height: 1; padding: 0; }
 .user-id-ok.show { display: inline-flex; }
-.user-id-ok:disabled { background: #9ca3af; cursor: not-allowed; }
+.user-id-ok.available, .user-id-ok.ok, .user-id-ok.current { background: #16a34a; }
+.user-id-ok.taken, .user-id-ok.invalid { background: #dc2626; cursor: not-allowed; }
+.user-id-ok:disabled { cursor: not-allowed; }
 .user-id-status { display: none; font-size: 11px; font-weight: 900; line-height: 1.3; margin-top: 2px; }
 .user-id-status.available, .user-id-status.ok, .user-id-status.current { color: #16a34a; display: block; }
 .user-id-status.taken, .user-id-status.invalid { color: #dc2626; display: block; }
@@ -2346,9 +2348,12 @@ function _setPlatformUserIdStatus(prefix, stateName, message, value, confirmed) 
   }
   const ok = _platformUserIdOkEl(prefix);
   if (ok) {
-    const showOk = stateName === 'available';
-    ok.classList.toggle('show', showOk);
-    ok.disabled = !showOk;
+    const good = stateName === 'available' || stateName === 'ok' || stateName === 'current';
+    const bad = stateName === 'taken' || stateName === 'invalid';
+    ok.className = 'user-id-ok' + (good || bad ? ' show ' + stateName : '');
+    ok.textContent = good ? '✓' : (bad ? '×' : '');
+    ok.title = good ? 'User ID available' : (bad ? 'User ID not available' : '');
+    ok.disabled = !good;
   }
 }
 function _isPlatformUserIdReady(prefix, value) {
@@ -2380,11 +2385,11 @@ async function checkPlatformUserIdAvailability(prefix, immediate) {
     if (prefix === 'signup') _checkUnlockPassword(); else _updateAccountSaveState();
     return false;
   }
-  _setPlatformUserIdStatus(prefix, 'available', '✓ Available - tap OK', clean, false);
+  _setPlatformUserIdStatus(prefix, 'available', '✓ Available', clean, false);
   _isPlatformUserIdTakenRemote(clean, uid).then(taken => {
     if (_cleanPlatformUserId(_platformUserIdInput(prefix)?.value || '') !== clean) return;
     if (taken) _setPlatformUserIdStatus(prefix, 'taken', '✕ Not available', clean, false);
-    else _setPlatformUserIdStatus(prefix, 'available', '✓ Available - tap OK', clean, false);
+    else _setPlatformUserIdStatus(prefix, 'available', '✓ Available', clean, false);
     if (prefix === 'signup') _checkUnlockPassword(); else _updateAccountSaveState();
   }).catch(() => {});
   if (prefix === 'signup') _checkUnlockPassword(); else _updateAccountSaveState();
@@ -2409,7 +2414,7 @@ function schedulePlatformUserIdCheck(prefix) {
     if (prefix === 'signup') _checkUnlockPassword(); else _updateAccountSaveState();
     return;
   }
-  _setPlatformUserIdStatus(prefix, 'available', '✓ Available - tap OK', clean, false);
+  _setPlatformUserIdStatus(prefix, 'available', '✓ Available', clean, false);
   if (prefix === 'signup') _checkUnlockPassword(); else _updateAccountSaveState();
   _platformUserIdCheckTimers[prefix] = setTimeout(() => checkPlatformUserIdAvailability(prefix), 100);
 }
@@ -2421,7 +2426,7 @@ async function confirmPlatformUserId(prefix) {
   }
   const latest = _platformUserIdStatus[prefix] || {};
   if (latest.value === clean && latest.state === 'available') {
-    _setPlatformUserIdStatus(prefix, 'ok', '✓ OK - User ID selected', clean, true);
+    _setPlatformUserIdStatus(prefix, 'ok', '✓ Available', clean, true);
     if (prefix === 'signup') _checkUnlockPassword(); else _updateAccountSaveState();
   }
 }
@@ -2592,7 +2597,7 @@ async function saveAccountDetails() {
   const originalUserId = _cleanPlatformUserId((_accountOriginalForm && _accountOriginalForm.platformUserId) || _platformUserId(u));
   if (insta !== originalUserId && !_isPlatformUserIdReady('acc', insta)) {
     await checkPlatformUserIdAvailability('acc', true);
-    if (!_isPlatformUserIdReady('acc', insta)) { toast('Please choose an available PKITAAP User ID and tap OK.'); return; }
+    if (!_isPlatformUserIdReady('acc', insta)) { toast('Please choose an available PKITAAP User ID.'); return; }
   }
   if (await _isPlatformUserIdTaken(insta, u.uid || u.id)) { toast('This PKITAAP User ID is already taken.'); return; }
   const accState = g('accState');
@@ -4653,7 +4658,7 @@ init();
     if (!insta)          { toast('Please enter your PKITAAP User ID'); return; }
     if (!_isPlatformUserIdReady('signup', insta)) {
       await checkPlatformUserIdAvailability('signup', true);
-      if (!_isPlatformUserIdReady('signup', insta)) { toast('Please choose an available PKITAAP User ID and tap OK.'); return; }
+      if (!_isPlatformUserIdReady('signup', insta)) { toast('Please choose an available PKITAAP User ID.'); return; }
     }
     if (await _isPlatformUserIdTaken(insta, _googleUser.uid)) { toast('This PKITAAP User ID is already taken.'); return; }
     if (!stateVal)       { toast('Please select your state'); return; }
