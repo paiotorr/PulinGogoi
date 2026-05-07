@@ -254,6 +254,11 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 .thread-item strong { color: var(--text); display: block; font-size: 14px; font-weight: 950; }
 .thread-item span { color: var(--muted); display: block; font-size: 12px; font-weight: 800; line-height: 1.35; margin-top: 3px; }
 .chat-panel { display: flex; flex-direction: column; min-height: 560px; }
+.messages-shell .chat-panel { display: none; }
+.messages-shell.chat-open { grid-template-columns: 1fr; }
+.messages-shell.chat-open .thread-list-panel { display: none; }
+.messages-shell.chat-open .chat-panel { display: flex; }
+.chat-back { background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.35); border-radius: 999px; color: #fff; cursor: pointer; font-size: 12px; font-weight: 950; padding: 7px 10px; }
 .chat-sub { color: rgba(255,255,255,.85); display: block; font-size: 11px; font-weight: 800; margin-top: 2px; }
 .chat-body { background: linear-gradient(180deg,#f0fdf4 0%,#ecfdf5 100%); display: flex; flex: 1; flex-direction: column; gap: 8px; min-height: 380px; overflow-y: auto; padding: 14px; }
 .chat-bubble { border-radius: 16px; box-shadow: 0 4px 10px rgba(0,0,0,.06); font-size: 13px; font-weight: 800; line-height: 1.4; max-width: 82%; padding: 9px 11px; word-break: break-word; }
@@ -261,7 +266,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 .chat-bubble.theirs { align-self: flex-start; background: #fff; border-bottom-left-radius: 5px; color: var(--text); }
 .chat-time { display: block; font-size: 10px; font-weight: 800; margin-top: 4px; opacity: .72; text-align: right; }
 .chat-compose { align-items: end; background: #fff; border-top: 2px solid var(--line); display: grid; gap: 8px; grid-template-columns: 1fr auto; padding: 10px; }
-.chat-compose textarea { border-radius: 16px; min-height: 44px; resize: none; }
+.chat-compose textarea { border-radius: 16px; line-height: 1.35; max-height: 130px; min-height: 44px; overflow-y: hidden; resize: none; }
 .chat-send { align-items: center; aspect-ratio: 1; border-radius: 50%; display: grid; font-size: 18px; height: 46px; justify-content: center; padding: 0 !important; }
 @media (max-width: 760px) { .messages-shell { grid-template-columns: 1fr; } .chat-panel { min-height: 520px; } .thread-list { max-height: 240px; } }
 .page-head { align-items: center; display: flex; gap: 12px; justify-content: space-between; }
@@ -415,7 +420,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
         <h1>Messages</h1>
         <button class="btn btn-primary" type="button" data-go-buy>Home</button>
       </div>
-      <div class="messages-shell">
+      <div class="messages-shell" id="messagesShell">
         <div class="thread-list-panel">
           <div class="thread-head"><strong>Chats</strong><span id="messageThreadCount">0</span></div>
           <div class="thread-list" id="messageThreadList">
@@ -423,7 +428,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
           </div>
         </div>
         <div class="chat-panel" id="messageChatCard">
-          <div class="chat-head"><div><strong id="messageChatTitle">Select a chat</strong><span class="chat-sub" id="messageChatSub">Your book conversations appear here</span></div></div>
+          <div class="chat-head"><div><strong id="messageChatTitle">Select a chat</strong><span class="chat-sub" id="messageChatSub">Your book conversations appear here</span></div><button class="chat-back" id="messageBackBtn" type="button">Back</button></div>
           <div id="messageChatBody" class="chat-body">
             <p style="color:#64748b;font-size:13px;font-weight:800;padding:8px 0;">Open a conversation to start messaging.</p>
           </div>
@@ -2285,7 +2290,7 @@ async function openAccountDetails() {
   set('accEmail', googleEmail);
   setDobValue('acc', getUserDobValue(u));
   set('accClass', u.className);
-  set('accInsta', (u.insta || '').replace(/^@+/, '').toLowerCase());
+  set('accInsta', _platformUserId(u));
   // Populate state and cascade
   set('accState', u.state);
   updateAccDistricts();
@@ -2298,11 +2303,12 @@ async function openAccountDetails() {
       setTimeout(() => {
         set('accPlace', u.place);
         updateAccSchools();
-        setTimeout(() => { set('accSchool', u.school); }, 50);
+        setTimeout(() => { set('accSchool', u.school); _captureAccountSnapshotAndLock(); }, 50);
       }, 50);
     }, 50);
   }, 50);
   dialog.showModal();
+  setTimeout(_captureAccountSnapshotAndLock, 260);
 }
 function _accountSnapshot(u) {
   const mobile = u.mobile || (u.phone ? String(u.phone).replace(/D/g,'').slice(-10) : '');
@@ -2336,6 +2342,43 @@ function _accountChangeLog(before, after) {
     oldValue: before[k] || '',
     newValue: after[k] || ''
   }));
+}
+let _accountOriginalForm = null;
+function _accountFormSnapshot() {
+  const val = id => (document.getElementById(id)?.value || '').trim();
+  return {
+    name: val('accName'),
+    mobile: val('accMobile').replace(/D/g,''),
+    email: val('accEmail'),
+    dateOfBirth: getDobValue('acc'),
+    className: val('accClass'),
+    platformUserId: val('accInsta').replace(/^@+/, '').toLowerCase(),
+    state: val('accState'),
+    district: val('accDistrict'),
+    subDistrict: val('accSubDistrict'),
+    place: val('accPlace'),
+    school: val('accSchool')
+  };
+}
+function _sameAccountSnapshot(a, b) {
+  a = a || {}; b = b || {};
+  const keys = ['name','mobile','email','dateOfBirth','className','platformUserId','state','district','subDistrict','place','school'];
+  return keys.every(k => String(a[k] || '') === String(b[k] || ''));
+}
+function _setAccountSaveLocked(locked) {
+  const btn = document.getElementById('accSaveBtn');
+  if (!btn) return;
+  btn.disabled = !!locked;
+  btn.style.opacity = locked ? '0.5' : '';
+  btn.style.cursor = locked ? 'not-allowed' : '';
+}
+function _captureAccountSnapshotAndLock() {
+  _accountOriginalForm = _accountFormSnapshot();
+  _setAccountSaveLocked(true);
+}
+function _updateAccountSaveState() {
+  if (!_accountOriginalForm) return;
+  _setAccountSaveLocked(_sameAccountSnapshot(_accountOriginalForm, _accountFormSnapshot()));
 }
 async function saveAccountDetails() {
   const u = window._currentUser;
@@ -2408,13 +2451,13 @@ async function saveAccountDetails() {
   // Save to Firestore
   _saveUserToFirestore(u).then(() => {
     toast('✅ Account details saved!');
-    document.getElementById('accountDialog')?.close();
+    _captureAccountSnapshotAndLock();
     // Pre-fill sell form with new defaults
     _prefillSellFromProfile();
     // Update sell instagram if visible
     const si = document.getElementById('sellInstagram');
     if (si) si.value = u.insta || '';
-  }).catch(() => toast('✅ Saved locally.'));
+  }).catch(() => { _captureAccountSnapshotAndLock(); toast('Saved locally.'); });
 }
 function _prefillSellFromProfile() {
   const u = window._currentUser;
@@ -2681,6 +2724,18 @@ function _showMessagesPage() {
   document.getElementById('menuBtn')?.classList.remove('open');
   document.getElementById('menuPanel')?.classList.remove('open');
 }
+function _showMessageListView() {
+  document.getElementById('messagesShell')?.classList.remove('chat-open');
+}
+function _showChatView() {
+  document.getElementById('messagesShell')?.classList.add('chat-open');
+}
+function _autosizeMessageInput() {
+  const input = document.getElementById('messageInput');
+  if (!input) return;
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 130) + 'px';
+}
 async function startListingChat(listingId) {
   if (!requireLogin()) return;
   const listing = (state.listings || []).find(l => String(l.id) === String(listingId));
@@ -2714,6 +2769,7 @@ async function startListingChat(listingId) {
   openChat(chatId);
   const input = document.getElementById('messageInput');
   if (input && !input.value) input.value = 'Hi, I found your ' + bookTitle + ' on PKITAAP. Is it still available?';
+  _autosizeMessageInput();
 }
 async function renderMessages(skipFetch) {
   if (!window._isLoggedIn) { requireLogin(); return; }
@@ -2728,6 +2784,7 @@ async function renderMessages(skipFetch) {
     list.innerHTML = '<p style="color:#64748b;font-size:13px;font-weight:800;padding:8px 0;">No messages yet.</p>';
     const body = document.getElementById('messageChatBody');
     if (body) body.innerHTML = '<p style="color:#64748b;font-size:13px;font-weight:800;padding:8px 0;">Open a seller result and tap Message Seller.</p>';
+    _showMessageListView();
     return;
   }
   list.innerHTML = chats.map(c => {
@@ -2746,7 +2803,6 @@ async function renderMessages(skipFetch) {
   list.querySelectorAll('[data-open-chat]').forEach(el => {
     el.onclick = () => openChat(el.getAttribute('data-open-chat'));
   });
-  if (_activeChatId) openChat(_activeChatId);
 }
 function openChat(chatId) {
   const chat = _getLocalChats().find(c => c.id === chatId);
@@ -2758,6 +2814,7 @@ function openChat(chatId) {
   const title = document.getElementById('messageChatTitle');
   const sub = document.getElementById('messageChatSub');
   const body = document.getElementById('messageChatBody');
+  _showChatView();
   if (title) title.textContent = otherName + (otherPid ? ' @' + otherPid : '');
   if (sub) sub.textContent = chat.bookTitle || 'Book conversation';
   if (body) {
@@ -2792,6 +2849,8 @@ async function sendChatMessage() {
   chats[idx].updatedAt = msg.createdAt;
   _saveLocalChats(chats);
   input.value = '';
+  _autosizeMessageInput();
+  renderMessages(true);
   openChat(_activeChatId);
   if (_db) {
     try {
@@ -3729,7 +3788,7 @@ function bindPageNav() {
         renderSellCatalog();
       }
       if (pg === 'myListings') renderMyListings();
-      if (pg === 'messages') renderMessages();
+      if (pg === 'messages') { _activeChatId = ''; _showMessageListView(); renderMessages(); }
     };
   });
   document.querySelectorAll("[data-go-buy]").forEach(btn => { btn.onclick = goHome; });
@@ -4047,12 +4106,22 @@ function init() {
   // Account details dialog save + close
   const accSave = document.getElementById('accSaveBtn');
   if (accSave) accSave.onclick = saveAccountDetails;
+  ['accName','accMobile','accDob','accClass','accInsta','accState','accDistrict','accSubDistrict','accPlace','accSchool'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', _updateAccountSaveState);
+    el.addEventListener('change', () => setTimeout(_updateAccountSaveState, 80));
+  });
   const accClose = document.getElementById('accountClose');
   if (accClose) accClose.onclick = () => document.getElementById('accountDialog')?.close();
   const accBack = document.getElementById('accBackBtn');
   if (accBack) accBack.onclick = () => document.getElementById('accountDialog')?.close();
   const msgForm = document.getElementById('messageForm');
   if (msgForm) msgForm.onsubmit = e => { e.preventDefault(); sendChatMessage(); };
+  const msgInput = document.getElementById('messageInput');
+  if (msgInput) msgInput.addEventListener('input', _autosizeMessageInput);
+  const msgBack = document.getElementById('messageBackBtn');
+  if (msgBack) msgBack.onclick = () => { _activeChatId = ''; _showMessageListView(); renderMessages(true); };
 }
 init();
 // ═══════════════════════════════════════════════════════════════
