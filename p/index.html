@@ -1965,6 +1965,22 @@ function goHome() {
   render();
 }
 
+window.pkitaapAndroidBack = function() {
+  const dialog = document.querySelector('dialog[open]');
+  if (dialog) { dialog.close(); return true; }
+  const shell = document.getElementById('messagesShell');
+  if (_activeChatId && shell && shell.classList.contains('chat-open')) {
+    _activeChatId = '';
+    _showMessageListView();
+    renderMessages(true);
+    return true;
+  }
+  const buy = document.getElementById('buyPage');
+  const onHome = !!(buy && buy.classList.contains('active') && catalogStep === 'classes' && !selectedClass && !selectedBoard && !selectedBookId);
+  if (!onHome) { goHome(); return true; }
+  return false;
+};
+
 function updateAccessControls() {
   const locked = !window._isLoggedIn;
   ['searchInput','stateFilter','buyState','buyDistrict','buySubDistrict','buyPlace','buySchool','buyMedium','sellMedium'].forEach(id => {
@@ -2707,6 +2723,8 @@ async function removeMyListing(id) {
 // ── Location helpers (State → District → Place → School) ──────────────────
 const CHAT_STORE_KEY = 'pkitaap_chats_v1';
 let _activeChatId = '';
+let _activeChatListenId = '';
+let _activeChatUnsub = null;
 function _myChatUid() {
   const u = window._currentUser || {};
   return String(u.uid || u.id || u.mobile || u.email || '').trim();
@@ -2729,21 +2747,109 @@ function _upsertLocalChat(chat) {
   _saveLocalChats(chats);
   return chat;
 }
+function _dedupeChatParticipants(list) {
+  const out = [];
+  (Array.isArray(list) ? list : []).forEach(v => {
+    const id = String(v || '').trim();
+    if (id && !out.includes(id)) out.push(id);
+  });
+  return out;
+}
+function _chatMetaForWrite(chat) {
+  chat = chat || {};
+  const messages = Array.isArray(chat.messages) ? chat.messages : [];
+  const last = messages.length ? messages[messages.length - 1] : {};
+  const updatedAt = chat.updatedAt || last.createdAt || new Date().toISOString();
+  return {
+    id: chat.id || '',
+    listingId: chat.listingId || '',
+    bookId: chat.bookId || '',
+    bookTitle: chat.bookTitle || 'Book',
+    participants: _dedupeChatParticipants(chat.participants),
+    buyerUid: chat.buyerUid || '',
+    sellerUid: chat.sellerUid || '',
+    buyerName: chat.buyerName || 'Buyer',
+    sellerName: chat.sellerName || 'Seller',
+    lastMessage: last.text || chat.lastMessage || '',
+    lastMessageAt: last.createdAt || chat.lastMessageAt || updatedAt,
+    updatedAt: updatedAt
+  };
+}
+function _mergeChatMessages(chatId, messages) {
+  const chats = _getLocalChats();
+  const idx = chats.findIndex(c => c.id === chatId);
+  if (idx < 0) return null;
+  const byId = new Map();
+  (Array.isArray(chats[idx].messages) ? chats[idx].messages : []).forEach(m => {
+    if (m && m.id) byId.set(String(m.id), m);
+  });
+  (Array.isArray(messages) ? messages : []).forEach(m => {
+    if (m && m.id) byId.set(String(m.id), m);
+  });
+  const merged = Array.from(byId.values()).sort((a,b) => String(a.createdAt || '').localeCompare(String(b.createdAt || '')));
+  chats[idx].messages = merged;
+  const last = merged.length ? merged[merged.length - 1] : null;
+  if (last) {
+    chats[idx].lastMessage = last.text || '';
+    chats[idx].lastMessageAt = last.createdAt || '';
+    chats[idx].updatedAt = last.createdAt || chats[idx].updatedAt || '';
+  }
+  _saveLocalChats(chats);
+  return chats[idx];
+}
 function _chatIdFor(listing, buyerUid) {
   const sellerUid = String(listing.userId || listing.sellerUserId || listing.ownerId || '').trim();
   return ['chat', listing.id || listing.bookId || 'book', buyerUid, sellerUid].map(v => String(v || '').replace(/[^a-zA-Z0-9_-]/g,'_')).join('__');
 }
 async function _saveChatToFirestore(chat) {
   if (!_db || !chat || !chat.id) return;
-  try { await _db.collection('chats').doc(chat.id).set(chat, { merge: true }); } catch(e) {}
+  try { await _db.collection('chats').doc(chat.id).set(_chatMetaForWrite(chat), { merge: true }); }
+  catch(e) { console.warn('[PKITAAP] Chat save failed:', e); }
+}
+async function _loadChatMessagesFromFirestore(chat) {
+  if (!_db || !chat || !chat.id) return chat;
+  try {
+    const snap = await _db.collection('chats').doc(chat.id).collection('messages').orderBy('createdAt','asc').limit(200).get();
+    const messages = snap.docs.map(doc => Object.assign({ id: doc.id }, doc.data()));
+    if (messages.length) return _mergeChatMessages(chat.id, messages) || chat;
+  } catch(e) { console.warn('[PKITAAP] Chat messages load failed:', e); }
+  return chat;
+}
+function _stopActiveChatListener() {
+  if (_activeChatUnsub) {
+    try { _activeChatUnsub(); } catch(e) {}
+  }
+  _activeChatUnsub = null;
+  _activeChatListenId = '';
+}
+function _watchChatMessages(chatId) {
+  if (!_db || !chatId || _activeChatListenId === chatId) return;
+  _stopActiveChatListener();
+  _activeChatListenId = chatId;
+  try {
+    _activeChatUnsub = _db.collection('chats').doc(chatId).collection('messages').orderBy('createdAt','asc').onSnapshot(snap => {
+      const messages = snap.docs.map(doc => Object.assign({ id: doc.id }, doc.data()));
+      _mergeChatMessages(chatId, messages);
+      if (_activeChatId === chatId) openChat(chatId, true);
+      renderMessages(true);
+    }, err => console.warn('[PKITAAP] Chat listener failed:', err));
+  } catch(e) {
+    console.warn('[PKITAAP] Chat listener setup failed:', e);
+    _stopActiveChatListener();
+  }
 }
 async function _loadMyChatsFromFirestore() {
   const me = _myChatUid();
   if (!_db || !me) return _getLocalChats();
   try {
     const snap = await _db.collection('chats').where('participants','array-contains',me).get();
-    snap.docs.forEach(doc => _upsertLocalChat(Object.assign({ id: doc.id }, doc.data())));
-  } catch(e) {}
+    const remoteChats = [];
+    snap.docs.forEach(doc => {
+      const chat = Object.assign({ id: doc.id, messages: [] }, doc.data());
+      remoteChats.push(_upsertLocalChat(chat));
+    });
+    await Promise.all(remoteChats.map(_loadChatMessagesFromFirestore));
+  } catch(e) { console.warn('[PKITAAP] Chats load failed:', e); }
   return _getLocalChats();
 }
 function _myChats() {
@@ -2760,6 +2866,7 @@ function _showMessagesPage() {
 }
 function _showMessageListView() {
   document.getElementById('messagesShell')?.classList.remove('chat-open');
+  _stopActiveChatListener();
 }
 function _showChatView() {
   document.getElementById('messagesShell')?.classList.add('chat-open');
@@ -2822,7 +2929,7 @@ async function renderMessages(skipFetch) {
   list.innerHTML = chats.map(c => {
     const otherName = c.sellerUid === me ? (c.buyerName || 'Buyer') : (c.sellerName || 'Seller');
     const msgs = Array.isArray(c.messages) ? c.messages : [];
-    const last = msgs.length ? msgs[msgs.length - 1].text : 'No messages yet';
+    const last = msgs.length ? msgs[msgs.length - 1].text : (c.lastMessage || 'No messages yet');
     const active = c.id === _activeChatId ? ' active' : '';
     return '<div class="thread-item' + active + '" role="button" data-open-chat="' + _acEsc(c.id) + '">' +
       '<strong>' + _acEsc(otherName) + '</strong>' +
@@ -2835,7 +2942,7 @@ async function renderMessages(skipFetch) {
     el.onclick = () => openChat(el.getAttribute('data-open-chat'));
   });
 }
-function openChat(chatId) {
+function openChat(chatId, skipRemote) {
   const chat = _getLocalChats().find(c => c.id === chatId);
   if (!chat) return;
   _activeChatId = chatId;
@@ -2858,6 +2965,12 @@ function openChat(chatId) {
     }).join('') : '<p style="color:#64748b;font-size:13px;font-weight:800;padding:8px 0;">Start the conversation below.</p>';
     body.scrollTop = body.scrollHeight;
   }
+  if (!skipRemote) {
+    _loadChatMessagesFromFirestore(chat).then(() => {
+      if (_activeChatId === chatId) openChat(chatId, true);
+    });
+    _watchChatMessages(chatId);
+  }
 }
 async function sendChatMessage() {
   if (!_activeChatId) { toast('Select a conversation first.'); return; }
@@ -2868,7 +2981,7 @@ async function sendChatMessage() {
   const idx = chats.findIndex(c => c.id === _activeChatId);
   if (idx < 0) return;
   const msg = {
-    id: 'm' + Date.now(),
+    id: 'm' + Date.now() + '_' + Math.random().toString(36).slice(2,8),
     senderUid: _myChatUid(),
     senderName: window._currentUser?.name || '',
     text: text,
@@ -2884,10 +2997,9 @@ async function sendChatMessage() {
   openChat(_activeChatId);
   if (_db) {
     try {
-      await _db.collection('chats').doc(_activeChatId).set({
-        messages: firebase.firestore.FieldValue.arrayUnion(msg),
-        updatedAt: msg.createdAt
-      }, { merge: true });
+      const chatRef = _db.collection('chats').doc(_activeChatId);
+      await chatRef.set(_chatMetaForWrite(chats[idx]), { merge: true });
+      await chatRef.collection('messages').doc(msg.id).set(msg);
     } catch(e) { toast('Message saved locally. Firebase rules may need chats permission.'); }
   }
 }
