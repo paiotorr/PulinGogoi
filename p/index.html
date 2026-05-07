@@ -873,6 +873,14 @@ const seed = {
     "passport": false,
     "allowUserPrice": false
   },
+  "adMob": {
+    "appId": "ca-app-pub-2402742761850779~4175768516",
+    "appOpen": "ca-app-pub-2402742761850779/9162399097",
+    "classClick": "",
+    "subjectClick": "",
+    "menuOpen": "",
+    "menuOption": ""
+  },
   "categories": [],
   "books": [
     {
@@ -1910,6 +1918,35 @@ let selectedClass = "", selectedBoard = "", selectedStream = "", selectedBookId 
 let search = "", catalogStep = "classes";
 let _remoteDataLoaded = false;
 
+window.PKITAAP_ADMOB_IDS = state.adMob || {};
+function getAdMobId(place) {
+  return String((state.adMob || {})[place] || '').trim();
+}
+function triggerAdMob(place) {
+  const adUnitId = getAdMobId(place);
+  if (!adUnitId) return true;
+  try {
+    const payload = { place, adUnitId, appId: getAdMobId('appId') };
+    window.dispatchEvent(new CustomEvent('pkitaap:admob', { detail: payload }));
+    if (window.PKITAAP_ADMOB && typeof window.PKITAAP_ADMOB.show === 'function') {
+      window.PKITAAP_ADMOB.show(place, adUnitId, payload.appId);
+    }
+    if (window.AndroidAdMob && typeof window.AndroidAdMob.showAd === 'function') {
+      window.AndroidAdMob.showAd(place, adUnitId, payload.appId);
+    }
+    if (window.AdMobBridge && typeof window.AdMobBridge.showAd === 'function') {
+      window.AdMobBridge.showAd(place, adUnitId, payload.appId);
+    }
+    if (window.Android && typeof window.Android.showAd === 'function') {
+      window.Android.showAd(place, adUnitId, payload.appId);
+    }
+  } catch(e) {
+    console.warn('[PKITAAP] AdMob trigger failed:', place, e);
+  }
+  return true;
+}
+setTimeout(() => triggerAdMob('appOpen'), 0);
+
 function requireLogin() {
   if (window._isLoggedIn) return true;
   if (typeof openSignup === 'function') openSignup();
@@ -1954,6 +1991,8 @@ async function loadRemoteAppData() {
     const locationsDoc = docs[2].exists ? docs[2].data() : {};
     const categoriesDoc = docs[3].exists ? docs[3].data() : {};
     if (settingsDoc.settings) state.settings = Object.assign({}, state.settings || {}, settingsDoc.settings);
+    if (settingsDoc.adMob) state.adMob = Object.assign({}, state.adMob || {}, settingsDoc.adMob);
+    window.PKITAAP_ADMOB_IDS = state.adMob || {};
     if (settingsDoc.streams) state.streams = settingsDoc.streams;
     if (classesDoc.classes) state.classes = classesDoc.classes;
     if (classesDoc.classThumbs) state.classThumbs = classesDoc.classThumbs;
@@ -1976,6 +2015,7 @@ async function loadRemoteAppData() {
 function normalizeState(input) {
   const next = input || structuredClone(seed);
   next.settings    = { ...seed.settings,   ...(next.settings    || {}) };
+  next.adMob       = { ...(seed.adMob || {}), ...(next.adMob || {}) };
   next.classThumbs = { ...seed.classThumbs, ...(next.classThumbs || {}) };
   next.categories  = next.categories || seed.categories;
   next.books = (next.books || seed.books).map(item => {
@@ -2034,7 +2074,7 @@ function renderClasses() {
   grid.style.display = catalogStep === "classes" ? "grid" : "none";
   grid.innerHTML = all.map(name => '<button class="class-card ' + (name===selectedClass?"active":"") + '" data-class="' + name + '"><img src="' + imageForClass(name) + '" alt="' + name + '"/><div class="card-info"><strong>' + name + '</strong><span>' + state.books.filter(b=>b.className===name&&(b.type!=="general"||state.settings.general)).length + ' books</span></div></button>').join("");
   document.querySelectorAll(".class-card").forEach(card => {
-    card.onclick = () => { if(!requireLogin()) return; selectedClass = card.dataset.class; selectedBoard=""; selectedStream=""; selectedBookId=""; selectedCategory=""; catalogStep = selectedClass === "General" ? "books" : "boards"; render(); };
+    card.onclick = () => { if(!requireLogin()) return; triggerAdMob("classClick"); selectedClass = card.dataset.class; selectedBoard=""; selectedStream=""; selectedBookId=""; selectedCategory=""; catalogStep = selectedClass === "General" ? "books" : "boards"; render(); };
   });
 }
 function renderCategories() {
@@ -2100,7 +2140,7 @@ function renderBooks() {
   const grid  = document.querySelector("#bookGrid");
   grid.style.display = catalogStep === "books" ? "grid" : "none";
   grid.innerHTML = items.length ? items.map(item => '<button class="book-card ' + (item.id===selectedBookId?"active":"") + '" data-id="' + item.id + '"><img src="' + imageForBook(item) + '" alt="' + item.title + '"/><div class="card-info"><strong>' + item.title + '</strong><small>' + bookMeta(item) + '</small><span class="price">' + priceText(item) + '</span></div></button>').join("") : '<div>No books found</div>';
-  document.querySelectorAll(".book-card").forEach(card => { card.onclick = () => { selectedBookId=card.dataset.id; render(); }; });
+  document.querySelectorAll(".book-card").forEach(card => { card.onclick = () => { triggerAdMob("subjectClick"); selectedBookId=card.dataset.id; render(); }; });
 }
 function renderSelected() {
   const b = book();
@@ -2131,7 +2171,7 @@ function renderSellCatalog() {
       const all = state.settings.general ? [...classes,'General'] : classes;
       cg.style.display = 'grid';
       cg.innerHTML = all.map(name => '<button class="class-card" data-sellclass="' + name + '"><img src="' + imageForClass(name) + '" alt="' + name + '"/><div class="card-info"><strong>' + name + '</strong><span>' + state.books.filter(b=>b.className===name&&(b.type!=="general"||state.settings.general)).length + ' books</span></div></button>').join('');
-      cg.querySelectorAll('[data-sellclass]').forEach(card => { card.onclick = () => { selectedClass=card.dataset.sellclass; selectedBoard=''; selectedStream=''; selectedBookId=''; sellCatalogStep=selectedClass==='General'?'books':'boards'; renderSellCatalog(); }; });
+      cg.querySelectorAll('[data-sellclass]').forEach(card => { card.onclick = () => { triggerAdMob("classClick"); selectedClass=card.dataset.sellclass; selectedBoard=''; selectedStream=''; selectedBookId=''; sellCatalogStep=selectedClass==='General'?'books':'boards'; renderSellCatalog(); }; });
     } else { cg.style.display='none'; cg.innerHTML=''; }
   }
   // Render board grid
@@ -2169,7 +2209,7 @@ function renderSellCatalog() {
       bkg.style.display='grid';
       const items=shownBooks();
       bkg.innerHTML=items.length?items.map(item=>'<button class="book-card '+(item.id===selectedBookId?'active':'')+'" data-sellid="'+item.id+'"><img src="'+imageForBook(item)+'" alt="'+item.title+'"/><div class="card-info"><strong>'+item.title+'</strong><small>'+bookMeta(item)+'</small><span class="price">'+priceText(item)+'</span></div></button>').join(''):'<div>No books found</div>';
-      bkg.querySelectorAll('[data-sellid]').forEach(card=>{card.onclick=()=>{selectedBookId=card.dataset.sellid;renderSellCatalog();renderSelected();};});
+      bkg.querySelectorAll('[data-sellid]').forEach(card=>{card.onclick=()=>{triggerAdMob("subjectClick");selectedBookId=card.dataset.sellid;renderSellCatalog();renderSelected();};});
     } else { bkg.style.display='none'; }
   }
 }
@@ -3641,7 +3681,7 @@ function render() {
 function bindMenu() {
   const btn = document.getElementById("menuBtn");
   const panel = document.getElementById("menuPanel");
-  btn.onclick = () => { btn.classList.toggle("open"); panel.classList.toggle("open"); };
+  btn.onclick = () => { if (!panel.classList.contains("open")) triggerAdMob("menuOpen"); btn.classList.toggle("open"); panel.classList.toggle("open"); };
   document.addEventListener("click", e => { if (!btn.contains(e.target) && !panel.contains(e.target)) { btn.classList.remove("open"); panel.classList.remove("open"); } });
 }
 function bindSearch() {
@@ -3742,6 +3782,7 @@ function bindSellForm() {
 function bindPageNav() {
   document.querySelectorAll("[data-page]").forEach(btn => {
     btn.onclick = () => {
+      triggerAdMob("menuOption");
       const pg = btn.dataset.page;
       document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
       document.getElementById(pg+"Page")?.classList.add("active");
@@ -3765,7 +3806,7 @@ function bindPageNav() {
   });
   document.querySelectorAll("[data-go-buy]").forEach(btn => { btn.onclick = goHome; });
   const homeBtn = document.getElementById('menuHome');
-  if (homeBtn) homeBtn.onclick = goHome;
+  if (homeBtn) homeBtn.onclick = () => { triggerAdMob("menuOption"); goHome(); };
 }
 function bindAdminForms() {
   const bookForm = document.getElementById("bookForm");
@@ -4171,8 +4212,8 @@ init();
 
   document.getElementById('goSignup').onclick     = openSignup;
   document.getElementById('goLogin').onclick      = openLogin;
-  document.getElementById('loginBtn').onclick     = openLogin;
-  document.getElementById('menuGoSignup').onclick = openSignup;
+  document.getElementById('loginBtn').onclick     = function(){ triggerAdMob("menuOption"); openLogin(); };
+  document.getElementById('menuGoSignup').onclick = function(){ triggerAdMob("menuOption"); openSignup(); };
 
   // ── Auth success handler ───────────────────────────────────
   async function onAuthSuccess(userData, firebaseUser) {
@@ -4210,12 +4251,14 @@ init();
 
     // Wire account details button
     if (menuAccount) menuAccount.onclick = function() {
+      triggerAdMob("menuOption");
       document.getElementById('menuBtn')?.classList.remove('open');
       document.getElementById('menuPanel')?.classList.remove('open');
       openAccountDetails();
     };
     // Wire logout button
     if (menuLogout) menuLogout.onclick = function() {
+      triggerAdMob("menuOption");
       if (!confirm('Are you sure you want to log out?')) return;
       if (_auth) _auth.signOut().catch(()=>{});
       window._isLoggedIn = false;
