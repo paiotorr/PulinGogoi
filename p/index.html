@@ -2719,7 +2719,7 @@ function _renderMatchList(bId, query) {
       '<span>' + _acEsc(location || 'Location not added') + '</span>' +
       '<span>Condition: ' + _acEsc(l.condition || 'Not set') + (l.price ? ' · ₹' + _acEsc(l.price) : '') + '</span>' +
       '<div class="contact-row">' +
-      '<button class="btn btn-primary" type="button" style="font-size:12px;" data-message-listing="' + _acEsc(l.id) + '">Message Seller</button>' +
+      (state.settings.messaging!==false?'<button class="btn btn-primary" type="button" style="font-size:12px;" data-message-listing="' + _acEsc(l.id) + '">Message Seller</button>':'') +
       (state.settings.whatsapp&&l.whatsapp?'<a href="https://wa.me/91'+encodeURIComponent(l.whatsapp)+'" target="_blank" class="btn btn-primary" style="font-size:12px;">WhatsApp</a>':'') +
       '</div></div>';
   }).join("") : '<p style="color:#888;font-size:13px;font-weight:700;padding:8px 0;">No sellers found for this book yet.</p>';
@@ -3149,7 +3149,7 @@ async function sendChatMessage() {
       await _syncChatMessageToFirestore(chats[idx], msg);
     } catch(e) {
       console.warn('[PKITAAP] Message sync failed:', e);
-      toast('Message not sent online. Please publish the latest Firestore chat rules.');
+      toast('❌ Message failed. Your Firebase rules are blocking /chats. Go to Firebase Console → Firestore → Rules and publish the rules from admin panel → Firebase tab.');
       return;
     }
   }
@@ -4517,7 +4517,7 @@ init();
     if (menuHome)      menuHome.style.display = '';
     if (menuSell)      menuSell.style.display = '';
     if (menuListings)  menuListings.style.display = '';
-    if (menuMessages)  menuMessages.style.display = '';
+    if (menuMessages)  menuMessages.style.display = (state.settings.messaging !== false) ? '' : 'none';
     if (menuAccount)   menuAccount.style.display = '';
     if (menuLogout)    menuLogout.style.display = '';
 
