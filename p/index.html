@@ -732,8 +732,10 @@ function _getLocalSavedUserProfile(match) {
   match = match || {};
   try {
     const users = JSON.parse(localStorage.getItem('pkitaap_registered_users') || '[]');
+    if (match.uid) {
+      return users.find(u => String(u.uid || '') === String(match.uid || '')) || null;
+    }
     return users.find(u =>
-      (match.uid && u.uid === match.uid) ||
       (match.mobile && u.mobile === match.mobile) ||
       (match.email && u.email === match.email)
     ) || null;
@@ -787,16 +789,26 @@ async function _getUserFromFirestore(uid) {
     if (!getUserDobValue(foundUser)) {
       try {
         const qs = await _db.collection('users').where('uid','==',uid).limit(1).get();
-        if (!qs.empty) foundUser = _mergeUserProfiles(foundUser, qs.docs[0].data());
+        if (!qs.empty) {
+          const candidate = qs.docs[0].data() || {};
+          if (String(candidate.uid || qs.docs[0].id || '') === String(uid)) {
+            foundUser = _mergeUserProfiles(foundUser, candidate);
+          }
+        }
       } catch(e) {}
     }
     if (!getUserDobValue(foundUser) && authUser.email) {
       try {
         const qs = await _db.collection('users').where('email','==',authUser.email).limit(1).get();
-        if (!qs.empty) foundUser = _mergeUserProfiles(foundUser, qs.docs[0].data());
+        if (!qs.empty) {
+          const candidate = qs.docs[0].data() || {};
+          if (String(candidate.uid || qs.docs[0].id || '') === String(uid)) {
+            foundUser = _mergeUserProfiles(foundUser, candidate);
+          }
+        }
       } catch(e) {}
     }
-    const localUser = _getLocalSavedUserProfile(Object.assign({ uid, email: authUser.email || '' }, foundUser || {}));
+    const localUser = _getLocalSavedUserProfile({ uid });
     if (foundUser || localUser) return _mergeUserProfiles(localUser, foundUser);
   } catch(e) { console.warn('[PKITAAP] _getUserFromFirestore error:', e); }
   return _getLocalSavedUserProfile({ uid });
@@ -804,6 +816,8 @@ async function _getUserFromFirestore(uid) {
 
 async function _saveUserToFirestore(userData) {
   if (!userData) return;
+  const authUid = String((_auth && _auth.currentUser && _auth.currentUser.uid) || userData.uid || '').trim();
+  if (authUid) userData.uid = authUid;
   const mobile = userData.mobile || (userData.phone ? String(userData.phone).replace(/\D/g,'').slice(-10) : '');
   const dobValue = userData.dateOfBirth || userData.dob || userData.birthDate || '';
   const dobParts = _dobPartsFromValue(dobValue);
@@ -827,7 +841,10 @@ async function _saveUserToFirestore(userData) {
   // Mirror to localStorage (offline fallback)
   try {
     const existing = JSON.parse(localStorage.getItem('pkitaap_registered_users') || '[]');
-    const idx = existing.findIndex(function(u){ return (normalizedUser.uid && u.uid === normalizedUser.uid) || (normalizedUser.mobile && u.mobile === normalizedUser.mobile); });
+    const idx = existing.findIndex(function(u){
+      if (normalizedUser.uid) return String(u.uid || '') === String(normalizedUser.uid || '');
+      return (normalizedUser.mobile && u.mobile === normalizedUser.mobile);
+    });
     if (idx >= 0) { existing[idx] = Object.assign({}, existing[idx], normalizedUser); }
     else { existing.push(normalizedUser); }
     localStorage.setItem('pkitaap_registered_users', JSON.stringify(existing));
@@ -2347,18 +2364,22 @@ function updateAccSchools() {
   });
 }
 async function openAccountDetails() {
+  const authUid = String((_auth && _auth.currentUser && _auth.currentUser.uid) || '').trim();
   const u = window._currentUser;
   if (!u) return;
-  const localUser = _getLocalSavedUserProfile({ uid: u.uid, mobile: u.mobile, email: u.email });
+  if (authUid) u.uid = authUid;
+  const localUser = _getLocalSavedUserProfile({ uid: authUid || u.uid });
   if (localUser) {
     Object.assign(u, _mergeUserProfiles(localUser, u));
+    if (authUid) u.uid = authUid;
     window._currentUser = u;
   }
-  if (u.uid && _db) {
+  if ((authUid || u.uid) && _db) {
     try {
-      const freshUser = await _getUserFromFirestore(u.uid);
+      const freshUser = await _getUserFromFirestore(authUid || u.uid);
       if (freshUser) {
         Object.assign(u, _mergeUserProfiles(u, freshUser));
+        if (authUid) u.uid = authUid;
         window._currentUser = u;
       }
     } catch(e) {}
@@ -2484,8 +2505,11 @@ function _updateAccountSaveState() {
   _setAccountSaveLocked(_sameAccountSnapshot(_accountOriginalForm, snap));
 }
 async function saveAccountDetails() {
+  const authUid = String((_auth && _auth.currentUser && _auth.currentUser.uid) || '').trim();
   const u = window._currentUser;
   if (!u) return;
+  if (authUid) u.uid = authUid;
+  if (!u.uid) { toast('Please log in again before saving account details.'); return; }
   const remaining = _accountCooldownRemainingMs(u);
   if (remaining) { toast('Account details can be changed again after ' + _accountCooldownText(remaining).replace('Locked ', '').toLowerCase() + '.'); _captureAccountSnapshotAndLock(); return; }
   const g = (id) => (document.getElementById(id)?.value || '').trim();
@@ -2510,7 +2534,7 @@ async function saveAccountDetails() {
   u.name       = name;
   u.mobile     = mobile;
   u.phone      = '+91' + u.mobile;
-  u.email      = u.email || g('accEmail') || ((_auth && _auth.currentUser && _auth.currentUser.email) || '');
+  u.email      = ((_auth && _auth.currentUser && _auth.currentUser.email) || u.email || g('accEmail') || '').trim();
   u.dateOfBirth= dobValue;
   u.dob        = dobValue;
   u.birthDate  = dobValue;
