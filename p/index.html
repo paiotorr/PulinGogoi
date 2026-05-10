@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#16a34a"/>
 <title>PKiTAAP</title>
-
 <!-- ═══ Firebase SDKs (compat v10) ═══ -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -194,8 +193,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 @media (max-width: 760px) { .main { padding: 14px 10px 28px; } .admin-grid { grid-template-columns: 1fr; } }
 @media (max-width: 420px) { .topbar { padding: 0 12px; } .logo { font-size: 22px; } .class-card, .stream-card, .book-card { min-height: 76px; padding: 12px; } .class-card strong, .book-card strong { font-size: 16px; } }
 .location-select { border: none; background: transparent; font-weight: 800; font-size: 17px; padding: 0; width: 100%; margin-top: 2px; cursor: pointer; outline: none; color: var(--text); min-height: unset; }
-  
-  /* FLOATING INPUT PREVIEW BUBBLE */
+/* FLOATING INPUT PREVIEW BUBBLE */
 .input-preview-bubble {
   position: absolute;
   bottom: calc(100% + 12px);
@@ -2506,6 +2504,37 @@ function _updateAccountSaveState() {
   const snap = _accountFormSnapshot();
   _setAccountSaveLocked(_sameAccountSnapshot(_accountOriginalForm, snap));
 }
+// ── FIX: sync a renamed seller's name into all their existing listings ─────────
+// Called automatically by saveAccountDetails() whenever the user's name changes.
+// Updates both the local state.listings array and every matching Firestore document.
+async function _syncSellerNameInListings(uid, newName) {
+  if (!uid || !newName) return;
+  // 1. Update local cache so UI reflects the new name immediately
+  let localUpdated = 0;
+  (state.listings || []).forEach(l => {
+    const lUid = String(l.userId || l.sellerUserId || l.ownerId || '').trim();
+    if (lUid && lUid === uid) {
+      l.seller     = newName;
+      l.sellerName = newName;
+      localUpdated++;
+    }
+  });
+  if (localUpdated) save();   // persist to localStorage
+  // 2. Update Firebase listings so other users see the new name when they search
+  if (!_db) return;
+  try {
+    const snap = await _db.collection('listings').where('userId', '==', uid).get();
+    if (snap.empty) return;
+    const batch = _db.batch();
+    snap.docs.forEach(doc => {
+      batch.update(doc.ref, { seller: newName, sellerName: newName });
+    });
+    await batch.commit();
+  } catch(e) {
+    console.warn('[PKITAAP] Could not sync seller name in listings:', e);
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
 async function saveAccountDetails() {
   const authUid = String((_auth && _auth.currentUser && _auth.currentUser.uid) || '').trim();
   const u = window._currentUser;
@@ -2585,6 +2614,8 @@ async function saveAccountDetails() {
   }
   window._currentUser = u;
   _saveCommunityLocation(u.state, u.district, u.subDistrict, u.place, u.school);
+  // Capture old name BEFORE save so we can detect a name change below
+  const _oldSellerName = before.name || '';
   // Save to Firestore
   _saveUserToFirestore(u).then((savedUser) => {
     if (savedUser) {
@@ -2596,6 +2627,12 @@ async function saveAccountDetails() {
     // Pre-fill buyer and seller forms with new defaults
     _prefillBuyFromProfile();
     _prefillSellFromProfile();
+    // ── FIX: if the user changed their name, update it in all their listings ──
+    const _newSellerName = (window._currentUser && window._currentUser.name) || name || '';
+    const _sellerUid = (window._currentUser && (window._currentUser.uid || window._currentUser.id)) || u.uid || '';
+    if (_sellerUid && _newSellerName && _newSellerName !== _oldSellerName) {
+      _syncSellerNameInListings(_sellerUid, _newSellerName);
+    }
   }).catch(() => { _captureAccountSnapshotAndLock(); toast('Saved locally.'); });
 }
 function _prefillSellFromProfile() {
