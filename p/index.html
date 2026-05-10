@@ -2702,7 +2702,7 @@ function renderMatches(bookId) {
   };
   if (list) list.innerHTML = '<p style="color:#888;font-size:13px;font-weight:800;padding:8px 0;">Searching sellers...</p>';
   if (_db) {
-    _db.collection('listings').get().then(snap => {
+    _db.collection('listings').get().then(async snap => {
       let changed = false;
       snap.docs.forEach(doc => {
         const data = Object.assign({id:doc.id}, doc.data());
@@ -2711,7 +2711,26 @@ function renderMatches(bookId) {
         else { state.listings.push(data); changed = true; }
       });
       if (changed) save();
-      _renderMatchList(bId, query);
+      // FIX: fetch each seller's CURRENT name live from /users so any
+      // profile name change is reflected immediately without re-listing
+      const sellerNameMap = {};
+      try {
+        const matchedListings = (state.listings || []).filter(l => _selectedBookMatchesListing(l, bId));
+        const uniqueUids = [...new Set(
+          matchedListings
+            .map(l => String(l.userId || l.sellerUserId || '').trim())
+            .filter(Boolean)
+        )];
+        if (uniqueUids.length) {
+          await Promise.all(uniqueUids.map(async uid => {
+            try {
+              const uDoc = await _db.collection('users').doc(uid).get();
+              if (uDoc.exists && uDoc.data().name) sellerNameMap[uid] = uDoc.data().name;
+            } catch(e) {}
+          }));
+        }
+      } catch(e) {}
+      _renderMatchList(bId, query, sellerNameMap);
     }).catch(e=>{
       console.warn('[PKITAAP] Could not load listings:', e);
       _renderMatchList(bId, query);
@@ -2741,7 +2760,7 @@ function _selectedBookMatchesListing(l, bId) {
   const sameStream = !selected.stream || !l.stream || _sameText(l.stream, selected.stream);
   return sameTitle && sameClass && sameBoard && sameStream;
 }
-function _renderMatchList(bId, query) {
+function _renderMatchList(bId, query, sellerNameMap) {
   const list = document.querySelector("#matchList");
   if (!list) return;
   const matches = (state.listings || [])
@@ -2751,7 +2770,10 @@ function _renderMatchList(bId, query) {
     .sort((a,b) => (b._score - a._score) || String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
   list.innerHTML = matches.length ? matches.map(l => {
     const location = [l.place,l.subDistrict,l.district,l.state].filter(Boolean).join(', ');
-    return '<div class="result-card"><strong>' + _acEsc(l.seller || l.sellerName || 'Seller') + '</strong>' +
+    // FIX: prefer the live name fetched from /users over the stale stored name
+    const lUid = String(l.userId || l.sellerUserId || '').trim();
+    const displayName = (sellerNameMap && lUid && sellerNameMap[lUid]) || l.seller || l.sellerName || 'Seller';
+    return '<div class="result-card"><strong>' + _acEsc(displayName) + '</strong>' +
       '<span>School/College: ' + _acEsc(l.school || 'Not added') + '</span>' +
       '<span>Medium: ' + _acEsc(l.medium || 'Not added') + '</span>' +
       '<span>Place: ' + _acEsc(l.place || 'Not added') + '</span>' +
