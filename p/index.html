@@ -4478,6 +4478,53 @@ function init() {
   const msgBack = document.getElementById('messageBackBtn');
   if (msgBack) msgBack.onclick = () => { _activeChatId = ''; _showMessageListView(); renderMessages(true); };
 }
+
+// ═══════════════════════════════════════════════════════════════
+//  INSTANT AUTH RESTORE
+//  Reads the Firebase session + cached profile from localStorage
+//  synchronously — BEFORE init() — so the UI renders in the
+//  correct logged-in state from the very first frame.
+//  Eliminates the 1-2 second "logged-out flash" on refresh.
+// ═══════════════════════════════════════════════════════════════
+(function _instantAuthRestore() {
+  try {
+    // Firebase compat saves auth session here automatically
+    const fbKey = 'firebase:authUser:' + ((PKITAAP_FB_CONFIG && PKITAAP_FB_CONFIG.apiKey) || '') + ':[DEFAULT]';
+    const fbSession = JSON.parse(localStorage.getItem(fbKey) || 'null');
+    if (!fbSession || !fbSession.uid) return; // No saved session — skip
+
+    // Find matching cached profile
+    const cached = JSON.parse(localStorage.getItem('pkitaap_registered_users') || '[]');
+    const profile = cached.find(u =>
+      (u.uid  && u.uid  === fbSession.uid)  ||
+      (u.email && u.email === fbSession.email)
+    ) || null;
+    if (!profile) return; // Profile not cached — onAuthStateChanged will handle it
+
+    // ── Restore session instantly ──────────────────────────────
+    window._isLoggedIn  = true;
+    window._currentUser = profile;
+
+    // Show logged-in menu items right away (same as onAuthSuccess does)
+    // so there is zero flash between page paint and Firebase confirming
+    document.addEventListener('DOMContentLoaded', function _restoreMenu() {
+      document.removeEventListener('DOMContentLoaded', _restoreMenu);
+      const hide = (id) => { const el = document.getElementById(id); if (el) el.style.display = 'none'; };
+      const show = (id, d) => { const el = document.getElementById(id); if (el) el.style.display = (d || ''); };
+      hide('menuLoginCard');
+      show('menuHome');
+      show('menuSell');
+      show('menuListings');
+      show('menuMessages');
+      show('menuAccount');
+      show('menuLogout');
+    });
+    console.log('[PKITAAP] ⚡ Session restored instantly — no flash.');
+  } catch(e) {
+    // Silently ignore — onAuthStateChanged is always the authoritative source
+  }
+})();
+
 init();
 // ═══════════════════════════════════════════════════════════════
 //  AUTH MODULE  — Firebase Phone OTP + Firestore user persistence
