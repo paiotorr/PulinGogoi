@@ -9,6 +9,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<!-- Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -685,6 +687,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 //  Config is baked in at export-time from the Admin Firebase tab.
 // ═══════════════════════════════════════════════════════════════
 const PKITAAP_FB_CONFIG = {"apiKey":"AIzaSyBfddqQmMk0GWChrC-eGFqFCiQA7tEMKUs","authDomain":"pkitaap.firebaseapp.com","projectId":"pkitaap","storageBucket":"pkitaap.firebasestorage.app","messagingSenderId":"8439723706","appId":"1:8439723706:web:2c1e96a447bca698b1b483"};
+const PKITAAP_GOOGLE_CLIENT_ID = "";
 let _db   = null;   // Firestore instance
 let _auth = null;   // Auth instance
 
@@ -4487,11 +4490,59 @@ init();
   let _googleUser     = null;   // Firebase user returned from Google popup
   let _authStateHandled = false; // Prevents onAuthStateChanged double-firing
 
+  // ── GIS (Google Identity Services) state ─────────────────
+  let _gisInitialized = false;
+  let _gisResolve = null;
+  let _gisReject  = null;
+  let _gisPendingMode = 'login';
+
+  function _initGIS() {
+    if (_gisInitialized) return;
+    if (!PKITAAP_GOOGLE_CLIENT_ID || !window.google || !window.google.accounts || !window.google.accounts.id) return;
+    google.accounts.id.initialize({
+      client_id: PKITAAP_GOOGLE_CLIENT_ID,
+      callback: function(response) {
+        if (!_gisResolve) return;
+        try {
+          const cred = firebase.auth.GoogleAuthProvider.credential(response.credential);
+          firebase.auth().signInWithCredential(cred)
+            .then(result => { const r = _gisResolve; _gisResolve = null; _gisReject = null; r(result); })
+            .catch(err  => { const r = _gisReject;  _gisResolve = null; _gisReject = null; r(err); });
+        } catch(e) {
+          const r = _gisReject; _gisResolve = null; _gisReject = null; r(e);
+        }
+      },
+      auto_select: false,
+      cancel_on_tap_outside: true,
+      context: 'signin'
+    });
+    _gisInitialized = true;
+  }
+
   async function _pkitaapGoogleProviderSignIn(provider, mode) {
     // Android WebView uses the native app bridge instead of browser popups.
     if (window.__androidBeginNativeGoogleSignIn) {
       return await window.__androidBeginNativeGoogleSignIn(provider, mode);
     }
+    // ── GIS in-page account chooser (shows all device Google accounts inside the page) ──
+    if (PKITAAP_GOOGLE_CLIENT_ID && window.google && window.google.accounts && window.google.accounts.id) {
+      _initGIS();
+      return new Promise((resolve, reject) => {
+        _gisResolve = resolve;
+        _gisReject  = reject;
+        _gisPendingMode = mode;
+        google.accounts.id.prompt(function(notification) {
+          // If GIS One Tap cannot display (e.g. file:// protocol, origin not whitelisted),
+          // fall back gracefully to the standard Firebase popup so sign-in never breaks.
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            _gisResolve = null;
+            _gisReject  = null;
+            firebase.auth().signInWithPopup(provider).then(resolve).catch(reject);
+          }
+        });
+      });
+    }
+    // Fallback for when GIS script has not loaded yet
     return await firebase.auth().signInWithPopup(provider);
   }
 
