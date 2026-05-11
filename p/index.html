@@ -2167,7 +2167,7 @@ function renderClasses() {
   grid.style.display = catalogStep === "classes" ? "grid" : "none";
   grid.innerHTML = all.map(name => '<button class="class-card ' + (name===selectedClass?"active":"") + '" data-class="' + name + '"><img src="' + imageForClass(name) + '" alt="' + name + '"/><div class="card-info"><strong>' + name + '</strong><span>' + state.books.filter(b=>b.className===name&&(b.type!=="general"||state.settings.general)).length + ' books</span></div></button>').join("");
   document.querySelectorAll(".class-card").forEach(card => {
-    card.onclick = () => { if(!requireLogin()) return; triggerAdMob("classClick"); selectedClass = card.dataset.class; selectedBoard=""; selectedStream=""; selectedBookId=""; selectedCategory=""; catalogStep = selectedClass === "General" ? "books" : "boards"; render(); };
+    card.onclick = () => { if(!requireLogin()) return; triggerAdMob("classClick"); selectedClass = card.dataset.class; selectedBoard=""; selectedStream=""; selectedBookId=""; selectedCategory=""; catalogStep = selectedClass === "General" ? "books" : "boards"; const _ml=document.querySelector("#matchList"); if(_ml) _ml.innerHTML=""; render(); };
   });
 }
 function renderCategories() {
@@ -2223,7 +2223,7 @@ function renderBooks() {
   const grid  = document.querySelector("#bookGrid");
   grid.style.display = catalogStep === "books" ? "grid" : "none";
   grid.innerHTML = items.length ? items.map(item => '<button class="book-card ' + (item.id===selectedBookId?"active":"") + '" data-id="' + item.id + '"><img src="' + imageForBook(item) + '" alt="' + item.title + '"/><div class="card-info"><strong>' + item.title + '</strong><small>' + bookMeta(item) + '</small><span class="price">' + priceText(item) + '</span></div></button>').join("") : '<div>No books found</div>';
-  document.querySelectorAll(".book-card").forEach(card => { card.onclick = () => { triggerAdMob("subjectClick"); selectedBookId=card.dataset.id; render(); }; });
+  document.querySelectorAll(".book-card").forEach(card => { card.onclick = () => { triggerAdMob("subjectClick"); selectedBookId=card.dataset.id; const _ml=document.querySelector("#matchList"); if(_ml) _ml.innerHTML=""; render(); }; });
 }
 function renderSelected() {
   const b = book();
@@ -4034,10 +4034,13 @@ function bindSearch() {
     } else if (catalogStep === "streams") { catalogStep = "boards"; selectedStream = ""; selectedBookId = ""; }
     else if (catalogStep === "boards") { catalogStep = "classes"; selectedBoard = ""; selectedStream = ""; selectedBookId = ""; }
     else { catalogStep = "classes"; selectedClass = selectedBoard = selectedStream = selectedBookId = ""; }
+    // FIX: clear old search results so user must click Find Sellers again
+    const _ml = document.querySelector("#matchList");
+    if (_ml) _ml.innerHTML = "";
     render();
   };
   inp.oninput = () => { if(!requireLogin()){ inp.value=''; return; } search = inp.value; clr.style.display = search ? "grid" : "none"; if(search) catalogStep="books"; else catalogStep="classes"; render(); };
-  clr.onclick = () => { inp.value=""; search=""; selectedCategory=""; clr.style.display="none"; catalogStep="classes"; selectedClass=selectedBoard=selectedStream=selectedBookId=""; render(); };
+  clr.onclick = () => { inp.value=""; search=""; selectedCategory=""; clr.style.display="none"; catalogStep="classes"; selectedClass=selectedBoard=selectedStream=selectedBookId=""; const _ml=document.querySelector("#matchList"); if(_ml) _ml.innerHTML=""; render(); };
 }
 function bindBuyForm() {
   const frm = document.querySelector("#buyForm");
