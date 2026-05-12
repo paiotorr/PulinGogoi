@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7928260464252096"
-     crossorigin="anonymous"></script>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#16a34a"/>
@@ -314,7 +312,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
       </div>
       <div class="location-lock">
         <div><span>Country</span><strong>India</strong></div>
-        <div><span>States</span><select id="stateFilter" class="location-select" onchange="onStateFilterChange(this.value)" disabled><option value="">— Select State —</option><option value="Assam">Assam</option><option value="Delhi">Delhi</option></select></div>
+        <div><span>States</span><select id="stateFilter" class="location-select" onchange="onStateFilterChange(this.value)" disabled><option value="">— Select State —</option><option value="Andhra Pradesh">Andhra Pradesh</option><option value="Assam">Assam</option></select></div>
       </div>
       <div class="card">
         <div class="card-head">
@@ -336,7 +334,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
         <div class="card-head"><h2>Match</h2></div>
         <div class="card-body">
           <form id="buyForm" class="form-grid">
-            <label class="wide">State <span style="color:#ef4444;font-size:11px;"> *required</span><select id="buyState" required onchange="updateBuyDistricts()"><option value="">— Select Your State —</option><option value="Assam">Assam</option><option value="Delhi">Delhi</option></select></label>
+            <label class="wide">State <span style="color:#ef4444;font-size:11px;"> *required</span><select id="buyState" required onchange="updateBuyDistricts()"><option value="">— Select Your State —</option><option value="Andhra Pradesh">Andhra Pradesh</option><option value="Assam">Assam</option></select></label>
             <label>District <span style="color:#ef4444;font-size:11px;"> *required</span><select id="buyDistrict" required onchange="updateBuySubDistricts()"></select></label>
             <label>Sub-District <span style="color:#ef4444;font-size:11px;"> *required</span><select id="buySubDistrict" required onchange="updateBuyPlaces()"></select></label>
             <label>Place <span style="color:#ef4444;font-size:11px;"> *required</span><select id="buyPlace" required onchange="updateBuySchools()"></select></label>
@@ -359,7 +357,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
       </div>
       <div class="location-lock">
         <div><span>Country</span><strong>India</strong></div>
-        <div><span>States</span><select id="stateFilter2" class="location-select" onchange="onStateFilterChange2(this.value)"><option value="">— Select State —</option><option value="Assam">Assam</option><option value="Delhi">Delhi</option></select></div>
+        <div><span>States</span><select id="stateFilter2" class="location-select" onchange="onStateFilterChange2(this.value)"><option value="">— Select State —</option><option value="Andhra Pradesh">Andhra Pradesh</option><option value="Assam">Assam</option></select></div>
       </div>
       <!-- Book selector (same as buy page) -->
       <div class="card" id="sellCatalogCard">
@@ -387,7 +385,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
         <div class="card-head"><h2>Seller Details</h2></div>
         <div class="card-body">
           <form id="sellForm" class="form-grid">
-            <label class="wide">State <select id="sellState" onchange="updateSellDistricts()"><option value="">— Select Your State —</option><option value="Assam">Assam</option><option value="Delhi">Delhi</option></select></label>
+            <label class="wide">State <select id="sellState" onchange="updateSellDistricts()"><option value="">— Select Your State —</option><option value="Andhra Pradesh">Andhra Pradesh</option><option value="Assam">Assam</option></select></label>
             <label class="wide">Medium <span style="color:#ef4444;font-size:11px;"> *required</span><select id="sellMedium" required><option value="">Select state first</option></select></label>
             <label>District <select id="sellDistrict" onchange="updateSellSubDistricts()"></select></label>
             <label>Sub-District <select id="sellSubDistrict" onchange="updateSellPlaces()"></select></label>
@@ -557,7 +555,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
             <label>State <span style="color:#ef4444;font-size:11px;"> *required</span></label>
             <select id="signupState" required onchange="updateSignupDistricts()">
               <option value="">— Select Your State —</option>
-              <option value="Assam">Assam</option><option value="Delhi">Delhi</option>
+              <option value="Andhra Pradesh">Andhra Pradesh</option><option value="Assam">Assam</option>
             </select>
           </div>
           <div class="auth-field">
@@ -646,7 +644,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
           <label>State</label>
           <select id="accState" onchange="updateAccDistricts()">
             <option value="">— Select State —</option>
-            <option value="Assam">Assam</option><option value="Delhi">Delhi</option>
+            <option value="Andhra Pradesh">Andhra Pradesh</option><option value="Assam">Assam</option>
           </select>
         </div>
         <div class="auth-field">
@@ -900,13 +898,13 @@ const seed = {
     "Assam": [
       "seba"
     ],
-    "Delhi": []
+    "Andhra Pradesh": []
   },
   "mediumsByState": {
     "Assam": [
       "ass"
     ],
-    "Delhi": []
+    "Andhra Pradesh": []
   },
   "settings": {
     "general": false,
@@ -1083,6 +1081,2587 @@ const seed = {
     }
   ],
   "locations": [
+    {
+      "state": "Andhra Pradesh",
+      "districts": [
+        {
+          "district": "Alluri Sitharama Raju",
+          "subDistricts": [
+            {
+              "subDistrict": "Ananthagiri",
+              "places": []
+            },
+            {
+              "subDistrict": "Araku Valley",
+              "places": []
+            },
+            {
+              "subDistrict": "Chinthapalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Dumbriguda",
+              "places": []
+            },
+            {
+              "subDistrict": "G.Madugula",
+              "places": []
+            },
+            {
+              "subDistrict": "Gudem Kotha Veedhi",
+              "places": []
+            },
+            {
+              "subDistrict": "Hukumpeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Koyyuru",
+              "places": []
+            },
+            {
+              "subDistrict": "Munchingi Puttu",
+              "places": []
+            },
+            {
+              "subDistrict": "Paderu",
+              "places": []
+            },
+            {
+              "subDistrict": "Peda Bayalu",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Anakapalli",
+          "subDistricts": [
+            {
+              "subDistrict": "Anakapalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Atchuthapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Butchayyapeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Cheedikada",
+              "places": []
+            },
+            {
+              "subDistrict": "Chodavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Devarapalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Golugonda",
+              "places": []
+            },
+            {
+              "subDistrict": "K.Kotapadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Kasimkota",
+              "places": []
+            },
+            {
+              "subDistrict": "Kotauratla",
+              "places": []
+            },
+            {
+              "subDistrict": "Madugula",
+              "places": []
+            },
+            {
+              "subDistrict": "Makavarapalem",
+              "places": []
+            },
+            {
+              "subDistrict": "Munagapaka",
+              "places": []
+            },
+            {
+              "subDistrict": "Nakkapalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Narsipatnam",
+              "places": []
+            },
+            {
+              "subDistrict": "Nathavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Paravada",
+              "places": []
+            },
+            {
+              "subDistrict": "Payakaraopeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Rambilli",
+              "places": []
+            },
+            {
+              "subDistrict": "Ravikamatham",
+              "places": []
+            },
+            {
+              "subDistrict": "Rolugunta",
+              "places": []
+            },
+            {
+              "subDistrict": "S.Rayavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Sabbavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Yelamanchili",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Ananthapuramu",
+          "subDistricts": [
+            {
+              "subDistrict": "Anantapur Rural",
+              "places": []
+            },
+            {
+              "subDistrict": "Anantapur Urban",
+              "places": []
+            },
+            {
+              "subDistrict": "Atmakur",
+              "places": []
+            },
+            {
+              "subDistrict": "Beluguppa",
+              "places": []
+            },
+            {
+              "subDistrict": "Bommanahal",
+              "places": []
+            },
+            {
+              "subDistrict": "Brahmasamudram",
+              "places": []
+            },
+            {
+              "subDistrict": "Bukkaraya Samudram",
+              "places": []
+            },
+            {
+              "subDistrict": "D.Hirehal",
+              "places": []
+            },
+            {
+              "subDistrict": "Garladinne",
+              "places": []
+            },
+            {
+              "subDistrict": "Gooty",
+              "places": []
+            },
+            {
+              "subDistrict": "Gummagatta",
+              "places": []
+            },
+            {
+              "subDistrict": "Guntakal",
+              "places": []
+            },
+            {
+              "subDistrict": "Kalyanadurg",
+              "places": []
+            },
+            {
+              "subDistrict": "Kambadur",
+              "places": []
+            },
+            {
+              "subDistrict": "Kanekal",
+              "places": []
+            },
+            {
+              "subDistrict": "Kudair",
+              "places": []
+            },
+            {
+              "subDistrict": "Kundurpi",
+              "places": []
+            },
+            {
+              "subDistrict": "Narpala",
+              "places": []
+            },
+            {
+              "subDistrict": "Pamidi",
+              "places": []
+            },
+            {
+              "subDistrict": "Peddapappur",
+              "places": []
+            },
+            {
+              "subDistrict": "Peddavaduguru",
+              "places": []
+            },
+            {
+              "subDistrict": "Putlur",
+              "places": []
+            },
+            {
+              "subDistrict": "Rapthadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Rayadurg",
+              "places": []
+            },
+            {
+              "subDistrict": "Settur",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Annamayya",
+          "subDistricts": [
+            {
+              "subDistrict": "Beerongi Kothakota",
+              "places": []
+            },
+            {
+              "subDistrict": "Chinnamandem",
+              "places": []
+            },
+            {
+              "subDistrict": "Chowdepalle",
+              "places": []
+            },
+            {
+              "subDistrict": "Galiveedu",
+              "places": []
+            },
+            {
+              "subDistrict": "Gurramkonda",
+              "places": []
+            },
+            {
+              "subDistrict": "Kalakada",
+              "places": []
+            },
+            {
+              "subDistrict": "Kalikiri",
+              "places": []
+            },
+            {
+              "subDistrict": "Kambhamvaripalle",
+              "places": []
+            },
+            {
+              "subDistrict": "Kurabalakota",
+              "places": []
+            },
+            {
+              "subDistrict": "Lakkireddipalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Madanapalle",
+              "places": []
+            },
+            {
+              "subDistrict": "Mulakalacheruvu",
+              "places": []
+            },
+            {
+              "subDistrict": "Nimmanapalle",
+              "places": []
+            },
+            {
+              "subDistrict": "Pedda Thippasamudram",
+              "places": []
+            },
+            {
+              "subDistrict": "Peddamandyam",
+              "places": []
+            },
+            {
+              "subDistrict": "Pileru",
+              "places": []
+            },
+            {
+              "subDistrict": "Punganuru",
+              "places": []
+            },
+            {
+              "subDistrict": "Ramapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Ramasamudram",
+              "places": []
+            },
+            {
+              "subDistrict": "Rayachoti",
+              "places": []
+            },
+            {
+              "subDistrict": "Sambepalle",
+              "places": []
+            },
+            {
+              "subDistrict": "Sodam",
+              "places": []
+            },
+            {
+              "subDistrict": "Somala",
+              "places": []
+            },
+            {
+              "subDistrict": "Thamballapalle",
+              "places": []
+            },
+            {
+              "subDistrict": "Valmikipuram",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Bapatla",
+          "subDistricts": [
+            {
+              "subDistrict": "Amarthalur",
+              "places": []
+            },
+            {
+              "subDistrict": "Bapatla",
+              "places": []
+            },
+            {
+              "subDistrict": "Bhattiprolu",
+              "places": []
+            },
+            {
+              "subDistrict": "Cherukupalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Chinaganjam",
+              "places": []
+            },
+            {
+              "subDistrict": "Chirala",
+              "places": []
+            },
+            {
+              "subDistrict": "Inkollu",
+              "places": []
+            },
+            {
+              "subDistrict": "Karamchedu",
+              "places": []
+            },
+            {
+              "subDistrict": "Karlapalem",
+              "places": []
+            },
+            {
+              "subDistrict": "Kolluru",
+              "places": []
+            },
+            {
+              "subDistrict": "Martur",
+              "places": []
+            },
+            {
+              "subDistrict": "Nagaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Nizampatnam",
+              "places": []
+            },
+            {
+              "subDistrict": "Parchur",
+              "places": []
+            },
+            {
+              "subDistrict": "Pittalavanipalem",
+              "places": []
+            },
+            {
+              "subDistrict": "Repalle",
+              "places": []
+            },
+            {
+              "subDistrict": "Tsunduru",
+              "places": []
+            },
+            {
+              "subDistrict": "Vemuru",
+              "places": []
+            },
+            {
+              "subDistrict": "Vetapalem",
+              "places": []
+            },
+            {
+              "subDistrict": "Yeddana Pudi",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Chittoor",
+          "subDistricts": [
+            {
+              "subDistrict": "Baireddipalle",
+              "places": []
+            },
+            {
+              "subDistrict": "Bangarupalem",
+              "places": []
+            },
+            {
+              "subDistrict": "Chittoor Rural",
+              "places": []
+            },
+            {
+              "subDistrict": "Chittoor Urban",
+              "places": []
+            },
+            {
+              "subDistrict": "Gangadhara Nellore",
+              "places": []
+            },
+            {
+              "subDistrict": "Gangavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Gudipala",
+              "places": []
+            },
+            {
+              "subDistrict": "Gudupalle",
+              "places": []
+            },
+            {
+              "subDistrict": "Irala",
+              "places": []
+            },
+            {
+              "subDistrict": "Karvetinagar",
+              "places": []
+            },
+            {
+              "subDistrict": "Kuppam",
+              "places": []
+            },
+            {
+              "subDistrict": "Nagari",
+              "places": []
+            },
+            {
+              "subDistrict": "Nindra",
+              "places": []
+            },
+            {
+              "subDistrict": "Palamaner",
+              "places": []
+            },
+            {
+              "subDistrict": "Palasamudram",
+              "places": []
+            },
+            {
+              "subDistrict": "Peddapanjani",
+              "places": []
+            },
+            {
+              "subDistrict": "Penumur",
+              "places": []
+            },
+            {
+              "subDistrict": "Pulicherla",
+              "places": []
+            },
+            {
+              "subDistrict": "Puthalapattu",
+              "places": []
+            },
+            {
+              "subDistrict": "Ramakuppam",
+              "places": []
+            },
+            {
+              "subDistrict": "Rompicherla",
+              "places": []
+            },
+            {
+              "subDistrict": "Santhipuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Srirangarajapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Thavanampalle",
+              "places": []
+            },
+            {
+              "subDistrict": "Vedurukuppam",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Dr. B.R. Ambedkar Konaseema",
+          "subDistricts": [
+            {
+              "subDistrict": "Ainavilli",
+              "places": []
+            },
+            {
+              "subDistrict": "Alamuru",
+              "places": []
+            },
+            {
+              "subDistrict": "Allavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Amalapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Ambajipeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Atreyapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "I. Polavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "K Gangavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Katrenikona",
+              "places": []
+            },
+            {
+              "subDistrict": "Kothapeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Malikipuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Mamidikuduru",
+              "places": []
+            },
+            {
+              "subDistrict": "Mummidivaram",
+              "places": []
+            },
+            {
+              "subDistrict": "P.Gannavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Ramachandrapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Ravulapalem",
+              "places": []
+            },
+            {
+              "subDistrict": "Razole",
+              "places": []
+            },
+            {
+              "subDistrict": "Sakhinetipalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Uppalaguptam",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "East Godavari",
+          "subDistricts": [
+            {
+              "subDistrict": "Anaparthi",
+              "places": []
+            },
+            {
+              "subDistrict": "Biccavolu",
+              "places": []
+            },
+            {
+              "subDistrict": "Chagallu",
+              "places": []
+            },
+            {
+              "subDistrict": "Devarapalle",
+              "places": []
+            },
+            {
+              "subDistrict": "Gokavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Gopalapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Kadiam",
+              "places": []
+            },
+            {
+              "subDistrict": "Kapileswarapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Korukonda",
+              "places": []
+            },
+            {
+              "subDistrict": "Kovvur",
+              "places": []
+            },
+            {
+              "subDistrict": "Mandapeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Nallajerla",
+              "places": []
+            },
+            {
+              "subDistrict": "Nidadavole",
+              "places": []
+            },
+            {
+              "subDistrict": "Peravali",
+              "places": []
+            },
+            {
+              "subDistrict": "Rajamahendravaram Rural",
+              "places": []
+            },
+            {
+              "subDistrict": "Rajamahendravaram Urban",
+              "places": []
+            },
+            {
+              "subDistrict": "Rajanagaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Rangampeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Rayavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Seethanagaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Tallapudi",
+              "places": []
+            },
+            {
+              "subDistrict": "Undrajavaram",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Eluru",
+          "subDistricts": [
+            {
+              "subDistrict": "Agiripalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Bheemadole",
+              "places": []
+            },
+            {
+              "subDistrict": "Buttayagudem",
+              "places": []
+            },
+            {
+              "subDistrict": "Chatrai",
+              "places": []
+            },
+            {
+              "subDistrict": "Chintalapudi",
+              "places": []
+            },
+            {
+              "subDistrict": "Denduluru",
+              "places": []
+            },
+            {
+              "subDistrict": "Dwarakatirumala",
+              "places": []
+            },
+            {
+              "subDistrict": "Eluru Rural",
+              "places": []
+            },
+            {
+              "subDistrict": "Eluru Urban",
+              "places": []
+            },
+            {
+              "subDistrict": "Jangareddigudem",
+              "places": []
+            },
+            {
+              "subDistrict": "Jeelugu Milli",
+              "places": []
+            },
+            {
+              "subDistrict": "Kaikaluru",
+              "places": []
+            },
+            {
+              "subDistrict": "Kalidindi",
+              "places": []
+            },
+            {
+              "subDistrict": "Kamavarapukota",
+              "places": []
+            },
+            {
+              "subDistrict": "Koyyalagudem",
+              "places": []
+            },
+            {
+              "subDistrict": "Kukunoor",
+              "places": []
+            },
+            {
+              "subDistrict": "Lingapalem",
+              "places": []
+            },
+            {
+              "subDistrict": "Mandavalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Mudinepalle",
+              "places": []
+            },
+            {
+              "subDistrict": "Musunuru",
+              "places": []
+            },
+            {
+              "subDistrict": "Nidamarru",
+              "places": []
+            },
+            {
+              "subDistrict": "Nuzividu",
+              "places": []
+            },
+            {
+              "subDistrict": "Pedapadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Pedavegi",
+              "places": []
+            },
+            {
+              "subDistrict": "Polavaram",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Guntur",
+          "subDistricts": [
+            {
+              "subDistrict": "Chebrolu",
+              "places": []
+            },
+            {
+              "subDistrict": "Duggirala",
+              "places": []
+            },
+            {
+              "subDistrict": "Guntur East",
+              "places": []
+            },
+            {
+              "subDistrict": "Guntur West",
+              "places": []
+            },
+            {
+              "subDistrict": "Kakumanu",
+              "places": []
+            },
+            {
+              "subDistrict": "Kollipara",
+              "places": []
+            },
+            {
+              "subDistrict": "Mangalagiri",
+              "places": []
+            },
+            {
+              "subDistrict": "Medikonduru",
+              "places": []
+            },
+            {
+              "subDistrict": "Pedakakani",
+              "places": []
+            },
+            {
+              "subDistrict": "Pedanandipadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Phirangipuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Ponnur",
+              "places": []
+            },
+            {
+              "subDistrict": "Prathipadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Tadepalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Tadikonda",
+              "places": []
+            },
+            {
+              "subDistrict": "Tenali",
+              "places": []
+            },
+            {
+              "subDistrict": "Thulluru",
+              "places": []
+            },
+            {
+              "subDistrict": "Vatticherukuru",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Kakinada",
+          "subDistricts": [
+            {
+              "subDistrict": "Gandepalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Gollaprolu",
+              "places": []
+            },
+            {
+              "subDistrict": "Jaggampeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Kajuluru",
+              "places": []
+            },
+            {
+              "subDistrict": "Kakinada (Rural)",
+              "places": []
+            },
+            {
+              "subDistrict": "Kakinada (Urban)",
+              "places": []
+            },
+            {
+              "subDistrict": "Karapa",
+              "places": []
+            },
+            {
+              "subDistrict": "Kirlampudi",
+              "places": []
+            },
+            {
+              "subDistrict": "Kotananduru",
+              "places": []
+            },
+            {
+              "subDistrict": "Pedapudi",
+              "places": []
+            },
+            {
+              "subDistrict": "Peddapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Pithapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Prathipadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Rowthulapudi",
+              "places": []
+            },
+            {
+              "subDistrict": "Samalkota",
+              "places": []
+            },
+            {
+              "subDistrict": "Sankhavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Tallarevu",
+              "places": []
+            },
+            {
+              "subDistrict": "Thondangi",
+              "places": []
+            },
+            {
+              "subDistrict": "Tuni",
+              "places": []
+            },
+            {
+              "subDistrict": "U.Kothapalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Yeleswaram",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Krishna",
+          "subDistricts": [
+            {
+              "subDistrict": "Avanigadda",
+              "places": []
+            },
+            {
+              "subDistrict": "Bantumilli",
+              "places": []
+            },
+            {
+              "subDistrict": "Bapulapadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Challapalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Gannavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Ghantasala",
+              "places": []
+            },
+            {
+              "subDistrict": "Gudivada",
+              "places": []
+            },
+            {
+              "subDistrict": "Gudlavalleru",
+              "places": []
+            },
+            {
+              "subDistrict": "Guduru",
+              "places": []
+            },
+            {
+              "subDistrict": "Kankipadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Koduru",
+              "places": []
+            },
+            {
+              "subDistrict": "Kruthivennu",
+              "places": []
+            },
+            {
+              "subDistrict": "Machilipatnam North",
+              "places": []
+            },
+            {
+              "subDistrict": "Machilipatnam South",
+              "places": []
+            },
+            {
+              "subDistrict": "Mopidevi",
+              "places": []
+            },
+            {
+              "subDistrict": "Movva",
+              "places": []
+            },
+            {
+              "subDistrict": "Nagayalanka",
+              "places": []
+            },
+            {
+              "subDistrict": "Nandivada",
+              "places": []
+            },
+            {
+              "subDistrict": "Pamarru",
+              "places": []
+            },
+            {
+              "subDistrict": "Pamidimukkala",
+              "places": []
+            },
+            {
+              "subDistrict": "Pedana",
+              "places": []
+            },
+            {
+              "subDistrict": "Pedaparupudi",
+              "places": []
+            },
+            {
+              "subDistrict": "Penamaluru",
+              "places": []
+            },
+            {
+              "subDistrict": "Thotlavalluru",
+              "places": []
+            },
+            {
+              "subDistrict": "Unguturu",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Kurnool",
+          "subDistricts": [
+            {
+              "subDistrict": "Adoni",
+              "places": []
+            },
+            {
+              "subDistrict": "Adoni-2",
+              "places": []
+            },
+            {
+              "subDistrict": "Alur",
+              "places": []
+            },
+            {
+              "subDistrict": "Aspari",
+              "places": []
+            },
+            {
+              "subDistrict": "C.Belagal",
+              "places": []
+            },
+            {
+              "subDistrict": "Chippagiri",
+              "places": []
+            },
+            {
+              "subDistrict": "Devanakonda",
+              "places": []
+            },
+            {
+              "subDistrict": "Gonegandla",
+              "places": []
+            },
+            {
+              "subDistrict": "Gudur",
+              "places": []
+            },
+            {
+              "subDistrict": "Halaharvi",
+              "places": []
+            },
+            {
+              "subDistrict": "Holagunda",
+              "places": []
+            },
+            {
+              "subDistrict": "Kallur",
+              "places": []
+            },
+            {
+              "subDistrict": "Kodumur",
+              "places": []
+            },
+            {
+              "subDistrict": "Kosigi",
+              "places": []
+            },
+            {
+              "subDistrict": "Kowthalam",
+              "places": []
+            },
+            {
+              "subDistrict": "Krishnagiri",
+              "places": []
+            },
+            {
+              "subDistrict": "Kurnool Rural",
+              "places": []
+            },
+            {
+              "subDistrict": "Kurnool Urban",
+              "places": []
+            },
+            {
+              "subDistrict": "Maddikera (East)",
+              "places": []
+            },
+            {
+              "subDistrict": "Mantralayam",
+              "places": []
+            },
+            {
+              "subDistrict": "Nandavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Orvakal",
+              "places": []
+            },
+            {
+              "subDistrict": "Pattikonda",
+              "places": []
+            },
+            {
+              "subDistrict": "Pedda Kadubur",
+              "places": []
+            },
+            {
+              "subDistrict": "Tuggali",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Markapuram",
+          "subDistricts": [
+            {
+              "subDistrict": "Ardhaveedu",
+              "places": []
+            },
+            {
+              "subDistrict": "Bestavaripeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Chandra Sekhara Puram",
+              "places": []
+            },
+            {
+              "subDistrict": "Cumbum",
+              "places": []
+            },
+            {
+              "subDistrict": "Dornala",
+              "places": []
+            },
+            {
+              "subDistrict": "Giddalur",
+              "places": []
+            },
+            {
+              "subDistrict": "Hanumanthuni Padu",
+              "places": []
+            },
+            {
+              "subDistrict": "Kanigiri",
+              "places": []
+            },
+            {
+              "subDistrict": "Komarolu",
+              "places": []
+            },
+            {
+              "subDistrict": "Konakanamitla",
+              "places": []
+            },
+            {
+              "subDistrict": "Markapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Pamur",
+              "places": []
+            },
+            {
+              "subDistrict": "Pedacherlo Palle",
+              "places": []
+            },
+            {
+              "subDistrict": "Peddaaraveedu",
+              "places": []
+            },
+            {
+              "subDistrict": "Podili",
+              "places": []
+            },
+            {
+              "subDistrict": "Pullalacheruvu",
+              "places": []
+            },
+            {
+              "subDistrict": "Racherla",
+              "places": []
+            },
+            {
+              "subDistrict": "Tarlupadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Tripuranthakam",
+              "places": []
+            },
+            {
+              "subDistrict": "Veligandla",
+              "places": []
+            },
+            {
+              "subDistrict": "Yerragondapalem",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Nandyal",
+          "subDistricts": [
+            {
+              "subDistrict": "Allagadda",
+              "places": []
+            },
+            {
+              "subDistrict": "Atmakur",
+              "places": []
+            },
+            {
+              "subDistrict": "Banaganapalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Bandi Atmakur",
+              "places": []
+            },
+            {
+              "subDistrict": "Bethamcherla",
+              "places": []
+            },
+            {
+              "subDistrict": "Chagalamarri",
+              "places": []
+            },
+            {
+              "subDistrict": "Dhone",
+              "places": []
+            },
+            {
+              "subDistrict": "Dornipadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Gadivemula",
+              "places": []
+            },
+            {
+              "subDistrict": "Gospadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Jupadu Bunglow",
+              "places": []
+            },
+            {
+              "subDistrict": "Koilakuntla",
+              "places": []
+            },
+            {
+              "subDistrict": "Kolimigundla",
+              "places": []
+            },
+            {
+              "subDistrict": "Kothapalle",
+              "places": []
+            },
+            {
+              "subDistrict": "Mahanandi",
+              "places": []
+            },
+            {
+              "subDistrict": "Midthur",
+              "places": []
+            },
+            {
+              "subDistrict": "Nandikotkur",
+              "places": []
+            },
+            {
+              "subDistrict": "Nandyal Rural",
+              "places": []
+            },
+            {
+              "subDistrict": "Nandyal Urban",
+              "places": []
+            },
+            {
+              "subDistrict": "Owk",
+              "places": []
+            },
+            {
+              "subDistrict": "Pagidyala",
+              "places": []
+            },
+            {
+              "subDistrict": "Pamulapadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Panyam",
+              "places": []
+            },
+            {
+              "subDistrict": "Peapully",
+              "places": []
+            },
+            {
+              "subDistrict": "Rudravaram",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Ntr",
+          "subDistricts": [
+            {
+              "subDistrict": "Atlapragada Konduru",
+              "places": []
+            },
+            {
+              "subDistrict": "Chandarlapadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Gaddamanugu Konduru",
+              "places": []
+            },
+            {
+              "subDistrict": "Gampalagudem",
+              "places": []
+            },
+            {
+              "subDistrict": "Ibrahimpatnam",
+              "places": []
+            },
+            {
+              "subDistrict": "Jaggaiahpeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Kanchikacherla",
+              "places": []
+            },
+            {
+              "subDistrict": "Mylavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Nandigama",
+              "places": []
+            },
+            {
+              "subDistrict": "Penuganchiprolu",
+              "places": []
+            },
+            {
+              "subDistrict": "Reddigudem",
+              "places": []
+            },
+            {
+              "subDistrict": "Tiruvuru",
+              "places": []
+            },
+            {
+              "subDistrict": "Vatsavai",
+              "places": []
+            },
+            {
+              "subDistrict": "Veerullapadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Vijayawada (Rural)",
+              "places": []
+            },
+            {
+              "subDistrict": "Vijayawada Central",
+              "places": []
+            },
+            {
+              "subDistrict": "Vijayawada East",
+              "places": []
+            },
+            {
+              "subDistrict": "Vijayawada North",
+              "places": []
+            },
+            {
+              "subDistrict": "Vijayawada West",
+              "places": []
+            },
+            {
+              "subDistrict": "Vissannapeta",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Palnadu",
+          "subDistricts": [
+            {
+              "subDistrict": "Amaravathi",
+              "places": []
+            },
+            {
+              "subDistrict": "Atchampet",
+              "places": []
+            },
+            {
+              "subDistrict": "Bellamkonda",
+              "places": []
+            },
+            {
+              "subDistrict": "Bollapalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Chilakaluripet H/O.Purushotha Patnam",
+              "places": []
+            },
+            {
+              "subDistrict": "Dachepalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Durgi",
+              "places": []
+            },
+            {
+              "subDistrict": "Edlapadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Gurajala",
+              "places": []
+            },
+            {
+              "subDistrict": "Ipuru",
+              "places": []
+            },
+            {
+              "subDistrict": "Karempudi",
+              "places": []
+            },
+            {
+              "subDistrict": "Krosuru",
+              "places": []
+            },
+            {
+              "subDistrict": "Machavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Macherla",
+              "places": []
+            },
+            {
+              "subDistrict": "Muppalla",
+              "places": []
+            },
+            {
+              "subDistrict": "Nadendla",
+              "places": []
+            },
+            {
+              "subDistrict": "Narasaraopet",
+              "places": []
+            },
+            {
+              "subDistrict": "Nekarikallu",
+              "places": []
+            },
+            {
+              "subDistrict": "Nuzendla",
+              "places": []
+            },
+            {
+              "subDistrict": "Pedakurapadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Piduguralla",
+              "places": []
+            },
+            {
+              "subDistrict": "Rajupalem",
+              "places": []
+            },
+            {
+              "subDistrict": "Rentachintala",
+              "places": []
+            },
+            {
+              "subDistrict": "Rompicharla",
+              "places": []
+            },
+            {
+              "subDistrict": "Sattenapalli",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Parvathipuram Manyam",
+          "subDistricts": [
+            {
+              "subDistrict": "Balijipeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Bhamini",
+              "places": []
+            },
+            {
+              "subDistrict": "Garugubilli",
+              "places": []
+            },
+            {
+              "subDistrict": "Gummalakshmipuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Jiyyammavalasa",
+              "places": []
+            },
+            {
+              "subDistrict": "Komarada",
+              "places": []
+            },
+            {
+              "subDistrict": "Kurupam",
+              "places": []
+            },
+            {
+              "subDistrict": "Makkuva",
+              "places": []
+            },
+            {
+              "subDistrict": "Pachipenta",
+              "places": []
+            },
+            {
+              "subDistrict": "Palakonda",
+              "places": []
+            },
+            {
+              "subDistrict": "Parvathipuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Salur",
+              "places": []
+            },
+            {
+              "subDistrict": "Seethampeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Seethanagaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Veeraghattam",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Polavaram",
+          "subDistricts": [
+            {
+              "subDistrict": "Addateegala",
+              "places": []
+            },
+            {
+              "subDistrict": "Chinturu",
+              "places": []
+            },
+            {
+              "subDistrict": "Devipatnam",
+              "places": []
+            },
+            {
+              "subDistrict": "Gangavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Gurthedu",
+              "places": []
+            },
+            {
+              "subDistrict": "Kunavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Maredumilli",
+              "places": []
+            },
+            {
+              "subDistrict": "Rajavommangi",
+              "places": []
+            },
+            {
+              "subDistrict": "Rampachodavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Vararamachandrapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Y. Ramavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Yetapaka",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Prakasam",
+          "subDistricts": [
+            {
+              "subDistrict": "Addanki",
+              "places": []
+            },
+            {
+              "subDistrict": "Ballikurava",
+              "places": []
+            },
+            {
+              "subDistrict": "Chimakurthy",
+              "places": []
+            },
+            {
+              "subDistrict": "Darsi",
+              "places": []
+            },
+            {
+              "subDistrict": "Donakonda",
+              "places": []
+            },
+            {
+              "subDistrict": "Gudluru",
+              "places": []
+            },
+            {
+              "subDistrict": "J.Pangulur",
+              "places": []
+            },
+            {
+              "subDistrict": "Kandukuru",
+              "places": []
+            },
+            {
+              "subDistrict": "Kondapi",
+              "places": []
+            },
+            {
+              "subDistrict": "Korisapadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Kotha Patnam",
+              "places": []
+            },
+            {
+              "subDistrict": "Kurichedu",
+              "places": []
+            },
+            {
+              "subDistrict": "Lingasamudram",
+              "places": []
+            },
+            {
+              "subDistrict": "Maddipadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Marripudi",
+              "places": []
+            },
+            {
+              "subDistrict": "Mundlamuru",
+              "places": []
+            },
+            {
+              "subDistrict": "Naguluppala Padu",
+              "places": []
+            },
+            {
+              "subDistrict": "Ongole Rural",
+              "places": []
+            },
+            {
+              "subDistrict": "Ongole Urban",
+              "places": []
+            },
+            {
+              "subDistrict": "Ponnaluru",
+              "places": []
+            },
+            {
+              "subDistrict": "Santhamaguluru",
+              "places": []
+            },
+            {
+              "subDistrict": "Santhanuthala Padu",
+              "places": []
+            },
+            {
+              "subDistrict": "Singarayakonda",
+              "places": []
+            },
+            {
+              "subDistrict": "Tangutur",
+              "places": []
+            },
+            {
+              "subDistrict": "Thallur",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Sri Potti Sriramulu Nellore",
+          "subDistricts": [
+            {
+              "subDistrict": "Allur",
+              "places": []
+            },
+            {
+              "subDistrict": "Ananthasagaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Anumasamudrampeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Atmakur",
+              "places": []
+            },
+            {
+              "subDistrict": "Bogole",
+              "places": []
+            },
+            {
+              "subDistrict": "Buchireddipalem",
+              "places": []
+            },
+            {
+              "subDistrict": "Chejerla",
+              "places": []
+            },
+            {
+              "subDistrict": "Chillakur",
+              "places": []
+            },
+            {
+              "subDistrict": "Dagadarthi",
+              "places": []
+            },
+            {
+              "subDistrict": "Duttalur",
+              "places": []
+            },
+            {
+              "subDistrict": "Gudur",
+              "places": []
+            },
+            {
+              "subDistrict": "Indukurpet",
+              "places": []
+            },
+            {
+              "subDistrict": "Jaladanki",
+              "places": []
+            },
+            {
+              "subDistrict": "Kaligiri",
+              "places": []
+            },
+            {
+              "subDistrict": "Kaluvoya",
+              "places": []
+            },
+            {
+              "subDistrict": "Kavali",
+              "places": []
+            },
+            {
+              "subDistrict": "Kodavalur",
+              "places": []
+            },
+            {
+              "subDistrict": "Kondapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Kota",
+              "places": []
+            },
+            {
+              "subDistrict": "Kovur",
+              "places": []
+            },
+            {
+              "subDistrict": "Manubolu",
+              "places": []
+            },
+            {
+              "subDistrict": "Marripadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Muthukur",
+              "places": []
+            },
+            {
+              "subDistrict": "Nellore Rural",
+              "places": []
+            },
+            {
+              "subDistrict": "Nellore Urban",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Sri Sathya Sai",
+          "subDistricts": [
+            {
+              "subDistrict": "Agali",
+              "places": []
+            },
+            {
+              "subDistrict": "Amadagur",
+              "places": []
+            },
+            {
+              "subDistrict": "Amarapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Bathalapalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Bukkapatnam",
+              "places": []
+            },
+            {
+              "subDistrict": "Chennekothapalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Chilamathur",
+              "places": []
+            },
+            {
+              "subDistrict": "Dharmavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Gandlapenta",
+              "places": []
+            },
+            {
+              "subDistrict": "Gorantla",
+              "places": []
+            },
+            {
+              "subDistrict": "Gudibanda",
+              "places": []
+            },
+            {
+              "subDistrict": "Hindupur",
+              "places": []
+            },
+            {
+              "subDistrict": "Kadiri",
+              "places": []
+            },
+            {
+              "subDistrict": "Kanaganipalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Kothacheruvu",
+              "places": []
+            },
+            {
+              "subDistrict": "Lepakshi",
+              "places": []
+            },
+            {
+              "subDistrict": "Madakasira",
+              "places": []
+            },
+            {
+              "subDistrict": "Mudigubba",
+              "places": []
+            },
+            {
+              "subDistrict": "Nallachervu",
+              "places": []
+            },
+            {
+              "subDistrict": "Nallamada",
+              "places": []
+            },
+            {
+              "subDistrict": "Nambulapulakunta",
+              "places": []
+            },
+            {
+              "subDistrict": "Obuladevaracheruvu",
+              "places": []
+            },
+            {
+              "subDistrict": "Parigi",
+              "places": []
+            },
+            {
+              "subDistrict": "Penukonda",
+              "places": []
+            },
+            {
+              "subDistrict": "Puttaparthy",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Srikakulam",
+          "subDistricts": [
+            {
+              "subDistrict": "Amadalavalasa",
+              "places": []
+            },
+            {
+              "subDistrict": "Burja",
+              "places": []
+            },
+            {
+              "subDistrict": "Etcherla",
+              "places": []
+            },
+            {
+              "subDistrict": "Ganguvarisigadam",
+              "places": []
+            },
+            {
+              "subDistrict": "Gara",
+              "places": []
+            },
+            {
+              "subDistrict": "Hiramandalam",
+              "places": []
+            },
+            {
+              "subDistrict": "Ichchapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Jalumuru",
+              "places": []
+            },
+            {
+              "subDistrict": "Kanchili",
+              "places": []
+            },
+            {
+              "subDistrict": "Kaviti",
+              "places": []
+            },
+            {
+              "subDistrict": "Kotabommali",
+              "places": []
+            },
+            {
+              "subDistrict": "Kothuru",
+              "places": []
+            },
+            {
+              "subDistrict": "Laveru",
+              "places": []
+            },
+            {
+              "subDistrict": "Laxminarasupeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Mandasa",
+              "places": []
+            },
+            {
+              "subDistrict": "Meliaputti",
+              "places": []
+            },
+            {
+              "subDistrict": "Nandigam",
+              "places": []
+            },
+            {
+              "subDistrict": "Narasannapeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Palasa",
+              "places": []
+            },
+            {
+              "subDistrict": "Pathapatnam",
+              "places": []
+            },
+            {
+              "subDistrict": "Polaki",
+              "places": []
+            },
+            {
+              "subDistrict": "Ponduru",
+              "places": []
+            },
+            {
+              "subDistrict": "Ranastalam",
+              "places": []
+            },
+            {
+              "subDistrict": "Santhabommali",
+              "places": []
+            },
+            {
+              "subDistrict": "Saravakota",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Tirupati",
+          "subDistricts": [
+            {
+              "subDistrict": "Balayapalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Buchinaidu Kandriga",
+              "places": []
+            },
+            {
+              "subDistrict": "Chandragiri",
+              "places": []
+            },
+            {
+              "subDistrict": "Chinnagottigallu",
+              "places": []
+            },
+            {
+              "subDistrict": "Chittamur",
+              "places": []
+            },
+            {
+              "subDistrict": "Chitvel",
+              "places": []
+            },
+            {
+              "subDistrict": "Dakkili",
+              "places": []
+            },
+            {
+              "subDistrict": "Doravarisatram",
+              "places": []
+            },
+            {
+              "subDistrict": "Kodur",
+              "places": []
+            },
+            {
+              "subDistrict": "Kumara Venkata Bhupala Puram",
+              "places": []
+            },
+            {
+              "subDistrict": "Nagalapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Naidupet",
+              "places": []
+            },
+            {
+              "subDistrict": "Narayanavanam",
+              "places": []
+            },
+            {
+              "subDistrict": "Obulavaripalle",
+              "places": []
+            },
+            {
+              "subDistrict": "Ozili",
+              "places": []
+            },
+            {
+              "subDistrict": "Pakala",
+              "places": []
+            },
+            {
+              "subDistrict": "Pellakur",
+              "places": []
+            },
+            {
+              "subDistrict": "Penagalur",
+              "places": []
+            },
+            {
+              "subDistrict": "Pichatur",
+              "places": []
+            },
+            {
+              "subDistrict": "Pullampeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Puttur",
+              "places": []
+            },
+            {
+              "subDistrict": "Ramachandrapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Renigunta",
+              "places": []
+            },
+            {
+              "subDistrict": "Satyavedu",
+              "places": []
+            },
+            {
+              "subDistrict": "Srikalahasti",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Visakhapatnam",
+          "subDistricts": [
+            {
+              "subDistrict": "Anandapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Bheemunipatnam",
+              "places": []
+            },
+            {
+              "subDistrict": "Gajuwaka",
+              "places": []
+            },
+            {
+              "subDistrict": "Gopalapatnam",
+              "places": []
+            },
+            {
+              "subDistrict": "Maharanipeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Mulagada",
+              "places": []
+            },
+            {
+              "subDistrict": "Padmanabham",
+              "places": []
+            },
+            {
+              "subDistrict": "Pedagantyada",
+              "places": []
+            },
+            {
+              "subDistrict": "Pendurthi",
+              "places": []
+            },
+            {
+              "subDistrict": "Seethammadhara",
+              "places": []
+            },
+            {
+              "subDistrict": "Visakhapatnam (Rural)",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Vizianagaram",
+          "subDistricts": [
+            {
+              "subDistrict": "Badangi",
+              "places": []
+            },
+            {
+              "subDistrict": "Bhogapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Bobbili",
+              "places": []
+            },
+            {
+              "subDistrict": "Bondapalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Cheepurupalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Dattirajeru",
+              "places": []
+            },
+            {
+              "subDistrict": "Denkada",
+              "places": []
+            },
+            {
+              "subDistrict": "Gajapathinagaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Gantyada",
+              "places": []
+            },
+            {
+              "subDistrict": "Garividi",
+              "places": []
+            },
+            {
+              "subDistrict": "Gurla",
+              "places": []
+            },
+            {
+              "subDistrict": "Jami",
+              "places": []
+            },
+            {
+              "subDistrict": "Kothavalasa",
+              "places": []
+            },
+            {
+              "subDistrict": "Lakkavarapukota",
+              "places": []
+            },
+            {
+              "subDistrict": "Mentada",
+              "places": []
+            },
+            {
+              "subDistrict": "Merakamudidam",
+              "places": []
+            },
+            {
+              "subDistrict": "Nellimarla",
+              "places": []
+            },
+            {
+              "subDistrict": "Poosapatirega",
+              "places": []
+            },
+            {
+              "subDistrict": "Rajam",
+              "places": []
+            },
+            {
+              "subDistrict": "Ramabhadrapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Regidi Amadalavalasa",
+              "places": []
+            },
+            {
+              "subDistrict": "Santhakaviti",
+              "places": []
+            },
+            {
+              "subDistrict": "Srungavarapukota",
+              "places": []
+            },
+            {
+              "subDistrict": "Therlam",
+              "places": []
+            },
+            {
+              "subDistrict": "Vangara",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "West Godavari",
+          "subDistricts": [
+            {
+              "subDistrict": "Achanta",
+              "places": []
+            },
+            {
+              "subDistrict": "Akividu",
+              "places": []
+            },
+            {
+              "subDistrict": "Attili",
+              "places": []
+            },
+            {
+              "subDistrict": "Bhimavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Ganapavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Iragavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Kalla",
+              "places": []
+            },
+            {
+              "subDistrict": "Mogalthur",
+              "places": []
+            },
+            {
+              "subDistrict": "Narasapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Palacoderu",
+              "places": []
+            },
+            {
+              "subDistrict": "Palacole",
+              "places": []
+            },
+            {
+              "subDistrict": "Pentapadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Penugonda",
+              "places": []
+            },
+            {
+              "subDistrict": "Penumantra",
+              "places": []
+            },
+            {
+              "subDistrict": "Poduru",
+              "places": []
+            },
+            {
+              "subDistrict": "Tadepalligudem",
+              "places": []
+            },
+            {
+              "subDistrict": "Tanuku",
+              "places": []
+            },
+            {
+              "subDistrict": "Undi",
+              "places": []
+            },
+            {
+              "subDistrict": "Veeravasaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Yelamanchili",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Y.S.R. Kadapa",
+          "subDistricts": [
+            {
+              "subDistrict": "Atlur",
+              "places": []
+            },
+            {
+              "subDistrict": "B.Kodur",
+              "places": []
+            },
+            {
+              "subDistrict": "Badvel",
+              "places": []
+            },
+            {
+              "subDistrict": "Brahmamgarimattam",
+              "places": []
+            },
+            {
+              "subDistrict": "Chakrayapet",
+              "places": []
+            },
+            {
+              "subDistrict": "Chapad",
+              "places": []
+            },
+            {
+              "subDistrict": "Chennur",
+              "places": []
+            },
+            {
+              "subDistrict": "Chinthakommadinne",
+              "places": []
+            },
+            {
+              "subDistrict": "Duvvur",
+              "places": []
+            },
+            {
+              "subDistrict": "Gopavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Jammalamadugu",
+              "places": []
+            },
+            {
+              "subDistrict": "Kadapa",
+              "places": []
+            },
+            {
+              "subDistrict": "Kalasapadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Kamalapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Khajipeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Kondapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Lingala",
+              "places": []
+            },
+            {
+              "subDistrict": "Muddanur",
+              "places": []
+            },
+            {
+              "subDistrict": "Mylavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Nandalur",
+              "places": []
+            },
+            {
+              "subDistrict": "Peddamudiam",
+              "places": []
+            },
+            {
+              "subDistrict": "Pendlimarry",
+              "places": []
+            },
+            {
+              "subDistrict": "Porumamilla",
+              "places": []
+            },
+            {
+              "subDistrict": "Proddutur",
+              "places": []
+            },
+            {
+              "subDistrict": "Pulivendula",
+              "places": []
+            }
+          ]
+        }
+      ]
+    },
     {
       "state": "Assam",
       "districts": [
@@ -1947,10 +4526,6 @@ const seed = {
           ]
         }
       ]
-    },
-    {
-      "state": "Delhi",
-      "districts": []
     }
   ],
   "listings": []
