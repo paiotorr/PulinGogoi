@@ -29,25 +29,6 @@
 body { background: var(--bg); color: var(--text); font-family: Nunito, Arial, sans-serif; min-height: 100vh; }
 a { text-decoration: none; }
 button, input, select { font: inherit; }
-.notes-toolbar { display: grid; gap: 8px; grid-template-columns: repeat(2,minmax(0,1fr)); margin-bottom: 12px; }
-.notes-toolbar select, .notes-toolbar input { background: #fff; border: 2px solid var(--border); border-radius: 12px; color: var(--text); font-weight: 800; padding: 10px 12px; width: 100%; }
-.notes-list { display: grid; gap: 10px; }
-.student-note-card { background: #fff; border: 2px solid var(--border); border-radius: 16px; cursor: pointer; padding: 14px; text-align: left; transition: transform .15s, box-shadow .15s; width: 100%; }
-.student-note-card:hover { box-shadow: 0 8px 22px rgba(22,163,74,.12); transform: translateY(-1px); }
-.student-note-card strong { color: var(--red); display: block; font-size: 15px; font-weight: 950; line-height: 1.3; }
-.student-note-meta { color: var(--muted); font-size: 11px; font-weight: 900; line-height: 1.45; margin-top: 5px; }
-.student-note-badge { background: var(--red-light); border-radius: 999px; color: var(--red-dark); display: inline-flex; font-size: 10px; font-weight: 950; margin-top: 8px; padding: 4px 9px; }
-.note-reader-overlay { align-items: stretch; background: rgba(0,0,0,.58); display: none; inset: 0; justify-content: center; padding: 18px; position: fixed; z-index: 80; }
-.note-reader-overlay.open { display: flex; }
-.note-reader { background: #fff; border-radius: 22px; display: flex; flex-direction: column; max-width: 760px; overflow: hidden; width: min(100%,760px); }
-.note-reader-head { align-items: center; background: var(--red); color: #fff; display: flex; gap: 10px; padding: 14px 16px; }
-.note-reader-head strong { flex: 1; font-size: 17px; line-height: 1.25; }
-.note-reader-close { background: rgba(255,255,255,.2); border: 1px solid rgba(255,255,255,.35); border-radius: 50%; color: #fff; cursor: pointer; font-size: 18px; height: 36px; width: 36px; }
-.note-reader-meta { background: var(--red-light); border-bottom: 2px solid var(--line); color: var(--red-dark); font-size: 12px; font-weight: 900; padding: 9px 16px; }
-.note-reader-body { flex: 1; max-height: 70vh; overflow: auto; padding: 16px; }
-.note-reader-text { background: var(--red-light); border: 2px solid var(--border); border-radius: 14px; color: #1f2937; font-size: 14px; font-weight: 800; line-height: 1.7; padding: 14px; white-space: pre-wrap; }
-.note-reader-pdf { border: 2px solid var(--border); border-radius: 14px; height: min(68vh,620px); width: 100%; }
-@media(max-width:560px){ .notes-toolbar { grid-template-columns: 1fr; } .note-reader-overlay { padding: 8px; } }
 .topbar {
   align-items: center; background: var(--red);
   box-shadow: 0 4px 20px rgba(22,163,74,0.25); color: white;
@@ -78,6 +59,8 @@ button, input, select { font: inherit; }
 .menu-panel > button { align-items: center; background: #f9fafb; border: 2px solid transparent; border-radius: 12px; color: var(--text); cursor: pointer; display: flex; font-size: 14px; font-weight: 900; justify-content: flex-start; min-height: 46px; padding: 0 14px; text-align: left; width: 100%; }
 .menu-title { color: var(--muted); font-size: 12px; font-weight: 900; margin: 2px 4px 4px; text-transform: uppercase; }
 .menu-panel > button:hover { background: var(--red-light); border-color: var(--line); color: var(--red); }
+#menuMessages { position: relative; }
+#menuMessages.has-unread::after { background: #ef4444; border: 2px solid #fff; border-radius: 999px; box-shadow: 0 0 0 3px rgba(239,68,68,.14); content: ''; height: 10px; position: absolute; right: 14px; top: 10px; width: 10px; }
 #menuLogout { background: #fef2f2 !important; color: #dc2626 !important; }
 .menu-login-card {
   background: linear-gradient(135deg, var(--red-light) 0%, #dcfce7 100%);
@@ -129,6 +112,8 @@ label { color: #444; display: grid; font-size: 13px; font-weight: 900; gap: 5px;
 .class-card img, .book-card img { aspect-ratio: 1.25; background: var(--red-light); border-radius: 12px 12px 0 0; display: block; object-fit: cover; width: 100%; }
 .class-card.active, .stream-card.active { border-color: var(--red); color: var(--text); }
 .book-card.active { border-color: var(--red); }
+.book-grid.focused { grid-template-columns: minmax(0,1fr); }
+.book-grid.focused .book-card { cursor: default; }
 .card-info { background: white; display: grid; gap: 7px; min-height: 82px; padding: 12px; align-content: center; }
 .book-card .card-info { place-items: center; text-align: center; }
 .class-card strong, .book-card strong { display: block; font-size: 18px; line-height: 1.1; overflow-wrap: anywhere; }
@@ -203,6 +188,17 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 .auth-field.is-locked .dob-picker, .auth-field.is-locked .dob-summary { background: #f3f4f6; border-color: #e5e7eb; }
 #toast { background: #222; border-radius: 12px; bottom: 24px; color: white; font-weight: 900; opacity: 0; padding: 12px 18px; pointer-events: none; position: fixed; right: 24px; transform: translateY(12px); transition: 0.2s; z-index: 50; }
 #toast.show { opacity: 1; transform: translateY(0); }
+.sell-alt-action { border-top: 2px solid var(--line); display: flex; justify-content: center; margin-top: 12px; padding-top: 12px; }
+.sell-custom-note { color: var(--muted); display: block; font-size: 11px; font-weight: 800; line-height: 1.45; margin-top: 5px; }
+.sell-price-fixed { background: var(--red-light); border: 2px solid var(--line); border-radius: 12px; color: var(--red); font-size: 13px; font-weight: 900; padding: 10px 12px; }
+.confirm-overlay { align-items: center; background: rgba(15,23,42,.48); display: none; inset: 0; justify-content: center; padding: 18px; position: fixed; z-index: 120; }
+.confirm-overlay.open { display: flex; }
+.confirm-dialog { background: #fff; border-radius: 18px; box-shadow: 0 22px 55px rgba(15,23,42,.24); overflow: hidden; width: min(92vw, 360px); }
+.confirm-dialog-head { border-bottom: 2px solid #fee2e2; color: #dc2626; font-size: 18px; font-weight: 950; padding: 16px 18px 10px; }
+.confirm-dialog-body { color: var(--text); font-size: 14px; font-weight: 800; line-height: 1.55; padding: 16px 18px; }
+.confirm-dialog-actions { border-top: 2px solid var(--line); display: flex; gap: 10px; justify-content: flex-end; padding: 12px 18px 16px; }
+.confirm-dialog-actions .btn { min-height: 40px; padding: 0 16px; }
+.confirm-danger { background: #dc2626; color: #fff; }
 .otp-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.4); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 5px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .google-btn { align-items: center; background: white; border: 2px solid #dadce0; border-radius: 12px; color: #3c4043; cursor: pointer; display: flex; font-size: 15px; font-weight: 900; gap: 10px; justify-content: center; min-height: 52px; padding: 0 16px; transition: background 0.15s, box-shadow 0.15s; width: 100%; margin-top: 4px; }
@@ -266,14 +262,22 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 .home-link { color: var(--red) !important; font-weight: 900 !important; }
 .messages-shell { display: grid; gap: 12px; grid-template-columns: minmax(220px, 0.9fr) minmax(280px, 1.4fr); min-height: 560px; }
 .thread-list-panel, .chat-panel { background: #fff; border: 2px solid var(--line); border-radius: 16px; box-shadow: 0 8px 20px rgba(0,0,0,.05); overflow: hidden; }
-.thread-list-panel { display: flex; flex-direction: column; }
+.thread-list-panel { display: flex; flex-direction: column; min-height: 0; }
 .thread-head, .chat-head { align-items: center; background: var(--red); color: #fff; display: flex; justify-content: space-between; min-height: 58px; padding: 12px 14px; }
 .thread-head strong, .chat-head strong { font-size: 16px; font-weight: 950; }
-.thread-list { background: #f8fafc; display: flex; flex: 1; flex-direction: column; gap: 8px; max-height: 620px; overflow-y: auto; padding: 10px; }
+.thread-list { -webkit-overflow-scrolling: touch; background: #f8fafc; display: flex; flex: 1; flex-direction: column; gap: 8px; max-height: 620px; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 10px; }
 .thread-item { background: #fff; border: 2px solid transparent; border-radius: 14px; cursor: pointer; padding: 11px 12px; transition: background .15s, border .15s, transform .15s; }
 .thread-item:hover, .thread-item.active { background: var(--red-light); border-color: var(--line); transform: translateY(-1px); }
+.thread-item.unread { border-color: #f59e0b; box-shadow: 0 0 0 1px rgba(245,158,11,.14); }
 .thread-item strong { color: var(--text); display: block; font-size: 14px; font-weight: 950; }
 .thread-item span { color: var(--muted); display: block; font-size: 12px; font-weight: 800; line-height: 1.35; margin-top: 3px; }
+.thread-title-row { align-items: center; display: flex; gap: 8px; justify-content: space-between; }
+.thread-title-row strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.thread-unread-dot { background: #ef4444; border-radius: 999px; box-shadow: 0 0 0 3px rgba(239,68,68,.14); flex: 0 0 auto; height: 10px; width: 10px; }
+.thread-meta-row { align-items: center; display: flex; gap: 8px; justify-content: space-between; margin-top: 3px; }
+.thread-meta-row span { margin-top: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.thread-delete { align-items: center; background: #fff; border: 1px solid #fecaca; border-radius: 999px; color: #dc2626; cursor: pointer; display: inline-flex; font-size: 11px; font-weight: 950; justify-content: center; min-height: 26px; padding: 4px 9px; }
+.thread-delete:hover { background: #fef2f2; }
 .chat-panel { display: flex; flex-direction: column; min-height: 560px; }
 .messages-shell .chat-panel { display: none; }
 .messages-shell.chat-open { grid-template-columns: 1fr; }
@@ -281,20 +285,72 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 .messages-shell.chat-open .chat-panel { display: flex; }
 .chat-back { background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.35); border-radius: 999px; color: #fff; cursor: pointer; font-size: 12px; font-weight: 950; padding: 7px 10px; }
 .chat-sub { color: rgba(255,255,255,.85); display: block; font-size: 11px; font-weight: 800; margin-top: 2px; }
-.chat-body { background: linear-gradient(180deg,#f0fdf4 0%,#ecfdf5 100%); display: flex; flex: 1; flex-direction: column; gap: 8px; min-height: 380px; overflow-y: auto; padding: 14px; }
+.chat-body { -webkit-overflow-scrolling: touch; background: linear-gradient(180deg,#f0fdf4 0%,#ecfdf5 100%); display: flex; flex: 1; flex-direction: column; gap: 8px; min-height: 380px; overflow-y: auto; overscroll-behavior: contain; padding: 14px; }
 .chat-bubble { border-radius: 16px; box-shadow: 0 4px 10px rgba(0,0,0,.06); font-size: 13px; font-weight: 800; line-height: 1.4; max-width: 82%; padding: 9px 11px; word-break: break-word; }
 .chat-bubble.mine { align-self: flex-end; background: var(--red); border-bottom-right-radius: 5px; color: #fff; }
 .chat-bubble.theirs { align-self: flex-start; background: #fff; border-bottom-left-radius: 5px; color: var(--text); }
 .chat-time { display: block; font-size: 10px; font-weight: 800; margin-top: 4px; opacity: .72; text-align: right; }
+.chat-message-row { align-items: flex-end; display: flex; gap: 7px; max-width: 100%; }
+.chat-message-row.mine { align-self: flex-end; flex-direction: row-reverse; }
+.chat-message-row.theirs { align-self: flex-start; }
+.chat-message-row .chat-bubble { max-width: min(82%, 620px); }
 .chat-compose { align-items: end; background: #fff; border-top: 2px solid var(--line); display: grid; gap: 8px; grid-template-columns: 1fr auto; padding: 10px; }
 .chat-compose textarea { border-radius: 16px; box-sizing: border-box; line-height: 1.45; max-height: 140px; min-height: 52px; overflow-y: auto; padding: 13px 14px; resize: none; }
 .chat-send { align-items: center; aspect-ratio: 1; border-radius: 50%; display: grid; font-size: 18px; height: 46px; justify-content: center; padding: 0 !important; }
-@media (max-width: 760px) { .messages-shell { grid-template-columns: 1fr; } .chat-panel { min-height: 520px; } .thread-list { max-height: 240px; } }
+@media (max-width: 760px) {
+  .messages-shell { grid-template-columns: 1fr; min-height: 0; }
+  .thread-list-panel { min-height: calc(100dvh - 210px); }
+  .thread-list { max-height: none; overflow-y: visible; padding-bottom: 18px; }
+  .messages-shell.chat-open { min-height: calc(100dvh - 170px); }
+  .messages-shell.chat-open .chat-panel { height: calc(100dvh - 170px); min-height: 520px; }
+  .messages-shell.chat-open .chat-body { min-height: 0; }
+}
 .page-head { align-items: center; display: flex; gap: 12px; justify-content: space-between; }
 .page-head .search-wrap { flex: 1; }
+/* ── SPLASH / REFRESH SCREEN ── */
+#splashOverlay {
+  position: fixed; top: 58px; left: 0; right: 0; bottom: 0; z-index: 99999;
+  background: #ffffff;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 24px;
+  transition: opacity 0.55s ease;
+}
+#splashOverlay.fade-out { opacity: 0; pointer-events: none; }
+#splashText {
+  font-size: clamp(30px, 9vw, 58px);
+  font-weight: 900;
+  color: #16a34a;
+  text-align: center;
+  letter-spacing: 1px;
+  animation: splashPulse 1.5s ease-in-out infinite;
+  user-select: none;
+  font-family: 'Noto Sans Bengali', 'Hind Siliguri', sans-serif;
+  line-height: 1.3;
+}
+#splashDots { display: flex; gap: 8px; }
+#splashDots span {
+  width: 10px; height: 10px; border-radius: 50%; background: #16a34a;
+  animation: splashDot 1.2s ease-in-out infinite;
+}
+#splashDots span:nth-child(2) { animation-delay: 0.2s; }
+#splashDots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes splashPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.8; }
+}
+@keyframes splashDot {
+  0%, 80%, 100% { transform: scale(0.7); opacity: 0.4; }
+  40% { transform: scale(1.2); opacity: 1; }
+}
+body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity: 0.45; }
 </style>
 </head>
 <body>
+<!-- ── SPLASH SCREEN (shown on every page load / refresh) ── -->
+<div id="splashOverlay">
+  <div id="splashText">জয় জুবিন দা</div>
+  <div id="splashDots"><span></span><span></span><span></span></div>
+</div>
 <!-- Google Sign-In popup auth — no reCAPTCHA needed -->
 <header class="topbar">
   <div class="topbar-left"><div class="logo">PKiTAAP</div></div>
@@ -315,7 +371,6 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
     <button type="button" id="menuHome" class="home-link" style="display:none;">🏠 Home</button>
     <button data-page="sell" id="menuSell" style="display:none;">📦 Sell Books</button>
     <button data-page="myListings" id="menuListings" style="display:none;">📚 My Listings</button>
-    <button data-page="notes" id="menuNotes" style="display:none;">📝 Notes</button>
     <button data-page="messages" id="menuMessages" style="display:none;">Messages</button>
     <button type="button" id="menuAccount" style="display:none;">👤 Account Details</button>
     <button type="button" id="menuLogout" style="display:none;color:#dc2626;">🚪 Log Out</button>
@@ -332,7 +387,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
       </div>
       <div class="location-lock">
         <div><span>Country</span><strong>India</strong></div>
-        <div><span>States</span><select id="stateFilter" class="location-select" onchange="onStateFilterChange(this.value)" disabled><option value="">— Select State —</option><option value="Assam">Assam</option><option value="Delhi">Delhi</option></select></div>
+        <div><span>States</span><select id="stateFilter" class="location-select" onchange="onStateFilterChange(this.value)" disabled><option value="">— Select State —</option><option value="Andhra Pradesh">Andhra Pradesh</option><option value="Assam">Assam</option></select></div>
       </div>
       <div class="card">
         <div class="card-head">
@@ -354,7 +409,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
         <div class="card-head"><h2>Match</h2></div>
         <div class="card-body">
           <form id="buyForm" class="form-grid">
-            <label class="wide">State <span style="color:#ef4444;font-size:11px;"> *required</span><select id="buyState" required onchange="updateBuyDistricts()"><option value="">— Select Your State —</option><option value="Assam">Assam</option><option value="Delhi">Delhi</option></select></label>
+            <label class="wide">State <span style="color:#ef4444;font-size:11px;"> *required</span><select id="buyState" required onchange="updateBuyDistricts()"><option value="">— Select Your State —</option><option value="Andhra Pradesh">Andhra Pradesh</option><option value="Assam">Assam</option></select></label>
             <label>District <span style="color:#ef4444;font-size:11px;"> *required</span><select id="buyDistrict" required onchange="updateBuySubDistricts()"></select></label>
             <label>Sub-District <span style="color:#ef4444;font-size:11px;"> *required</span><select id="buySubDistrict" required onchange="updateBuyPlaces()"></select></label>
             <label>Place <span style="color:#ef4444;font-size:11px;"> *required</span><select id="buyPlace" required onchange="updateBuySchools()"></select></label>
@@ -377,7 +432,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
       </div>
       <div class="location-lock">
         <div><span>Country</span><strong>India</strong></div>
-        <div><span>States</span><select id="stateFilter2" class="location-select" onchange="onStateFilterChange2(this.value)"><option value="">— Select State —</option><option value="Assam">Assam</option><option value="Delhi">Delhi</option></select></div>
+        <div><span>States</span><select id="stateFilter2" class="location-select" onchange="onStateFilterChange2(this.value)"><option value="">— Select State —</option><option value="Andhra Pradesh">Andhra Pradesh</option><option value="Assam">Assam</option></select></div>
       </div>
       <!-- Book selector (same as buy page) -->
       <div class="card" id="sellCatalogCard">
@@ -390,6 +445,9 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
           <div class="stream-grid" id="sellBoardGrid" style="display:none;"></div>
           <div class="stream-grid" id="sellStreamGrid" style="display:none;"></div>
           <div class="book-grid" id="sellBookGrid" style="display:none;"><div>No books</div></div>
+          <div class="sell-alt-action">
+            <button class="btn btn-ghost" id="sellCustomToggle" type="button">Book not listed? Add your book</button>
+          </div>
         </div>
       </div>
       <div class="card" id="sellSelectedCard" style="display:none;">
@@ -401,12 +459,29 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
           </div>
         </div>
       </div>
+      <div class="card" id="sellCustomBookCard" style="display:none;">
+        <div class="card-head">
+          <h2>Book Details</h2>
+          <button class="btn btn-ghost" id="sellUseCatalogBtn" type="button">Choose Existing</button>
+        </div>
+        <div class="card-body">
+          <div class="form-grid">
+            <label class="wide">Book Name <span style="color:#ef4444;font-size:11px;"> *required</span><input id="sellCustomTitle" placeholder="e.g. Mathematics Part 1"></label>
+            <label>Class <span style="color:#ef4444;font-size:11px;"> *required</span><select id="sellCustomClass" onchange="updateSellCustomStreamVisibility()"><option value="">Select Class</option><option value="Class 9">Class 9</option><option value="Class 10">Class 10</option><option value="Class 11">Class 11</option><option value="Class 12">Class 12</option></select></label>
+            <label>Board <span style="color:#ef4444;font-size:11px;"> *required</span><input id="sellCustomBoard" list="sellCustomBoardOptions" placeholder="e.g. SEBA, CBSE, AHSEC"><datalist id="sellCustomBoardOptions"></datalist></label>
+            <label id="sellCustomStreamWrap">Stream <input id="sellCustomStream" list="sellCustomStreamOptions" placeholder="Science / Commerce / Arts"><datalist id="sellCustomStreamOptions"></datalist></label>
+            <label>Author <input id="sellCustomAuthor" placeholder="Optional"></label>
+            <label>Image URL <input id="sellCustomImage" placeholder="Optional"></label>
+            <span class="sell-custom-note wide">Use this when the book is missing from PKiTAAP. The book details will be saved with your listing so buyers can find it.</span>
+          </div>
+        </div>
+      </div>
       <div class="card" id="sellFormCard" style="display:none;">
         <div class="card-head"><h2>Seller Details</h2></div>
         <div class="card-body">
           <form id="sellForm" class="form-grid">
-            <label class="wide">State <select id="sellState" onchange="updateSellDistricts()"><option value="">— Select Your State —</option><option value="Assam">Assam</option><option value="Delhi">Delhi</option></select></label>
-            <label class="wide">Medium <span style="color:#ef4444;font-size:11px;"> *required</span><select id="sellMedium" required><option value="">Select state first</option></select></label>
+            <label class="wide">State <select id="sellState" onchange="updateSellDistricts()"><option value="">— Select Your State —</option><option value="Andhra Pradesh">Andhra Pradesh</option><option value="Assam">Assam</option></select></label>
+            <label class="wide">Medium <span style="color:#ef4444;font-size:11px;"> *required</span><select id="sellMedium"><option value="">Select state first</option></select><input id="sellCustomMedium" list="sellCustomMediumOptions" placeholder="Type medium if not listed" style="margin-top:6px;"><datalist id="sellCustomMediumOptions"></datalist></label>
             <label>District <select id="sellDistrict" onchange="updateSellSubDistricts()"></select></label>
             <label>Sub-District <select id="sellSubDistrict" onchange="updateSellPlaces()"></select></label>
             <label>Place <input id="sellPlace" list="sellPlaceOptions" onchange="updateSellSchools()" placeholder="Place / town"><datalist id="sellPlaceOptions"></datalist><select id="sellPlaceFallback" onchange="document.getElementById('sellPlace').value=this.value;updateSellSchools()" style="margin-top:6px;"><option value="">— Select Place —</option></select></label>
@@ -417,7 +492,8 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
               </select>
             </label>
             
-            <div class="wide" id="sellFixedPriceInfo" style="background:var(--red-light);border:2px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:900;color:var(--red);">Price: <strong id="sellFixedPriceText">Select a book</strong></div>
+            <label class="wide" id="sellPriceWrap">Seller Price (Rs) <span style="color:#ef4444;font-size:11px;"> *required</span><input type="number" id="sellPrice" min="1" placeholder="Enter your selling price"/><span id="sellPriceHelp" class="sell-custom-note"></span></label>
+            <div class="wide sell-price-fixed" id="sellFixedPriceInfo">Price: <strong id="sellFixedPriceText">Select a book</strong></div>
             <button class="btn btn-primary wide" type="submit">List for Sale</button>
           </form>
         </div>
@@ -434,24 +510,6 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
           <div class="result-list" id="myListingsList">
             <p style="color:#888;font-size:13px;font-weight:700;padding:8px 0;">No books listed yet.</p>
           </div>
-        </div>
-      </div>
-    </section>
-    <section class="page" id="notesPage">
-      <div class="page-head">
-        <h1>Notes</h1>
-        <button class="btn btn-primary" type="button" data-go-buy>Home</button>
-      </div>
-      <div class="card">
-        <div class="card-head"><h2>Study Notes</h2></div>
-        <div class="card-body">
-          <div class="notes-toolbar">
-            <select id="studentNoteClass" onchange="renderStudentNotes()"><option value="">All Classes</option></select>
-            <select id="studentNoteBoard" onchange="renderStudentNotes()"><option value="">All Boards</option></select>
-            <select id="studentNoteSubject" onchange="renderStudentNotes()"><option value="">All Subjects</option></select>
-            <input id="studentNoteSearch" placeholder="Search chapter or note..." oninput="renderStudentNotes()">
-          </div>
-          <div class="notes-list" id="studentNotesList"></div>
         </div>
       </div>
     </section>
@@ -593,7 +651,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
             <label>State <span style="color:#ef4444;font-size:11px;"> *required</span></label>
             <select id="signupState" required onchange="updateSignupDistricts()">
               <option value="">— Select Your State —</option>
-              <option value="Assam">Assam</option><option value="Delhi">Delhi</option>
+              <option value="Andhra Pradesh">Andhra Pradesh</option><option value="Assam">Assam</option>
             </select>
           </div>
           <div class="auth-field">
@@ -682,7 +740,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
           <label>State</label>
           <select id="accState" onchange="updateAccDistricts()">
             <option value="">— Select State —</option>
-            <option value="Assam">Assam</option><option value="Delhi">Delhi</option>
+            <option value="Andhra Pradesh">Andhra Pradesh</option><option value="Assam">Assam</option>
           </select>
         </div>
         <div class="auth-field">
@@ -718,14 +776,14 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
     </div>
   </div>
 </dialog>
-<div class="note-reader-overlay" id="studentNoteReader">
-  <div class="note-reader">
-    <div class="note-reader-head">
-      <strong id="studentNoteReaderTitle">Note</strong>
-      <button type="button" class="note-reader-close" onclick="closeStudentNote()">×</button>
+<div class="confirm-overlay" id="userConfirmModal" aria-hidden="true">
+  <div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="userConfirmTitle">
+    <div class="confirm-dialog-head" id="userConfirmTitle">Confirm Delete</div>
+    <div class="confirm-dialog-body" id="userConfirmMsg">Are you sure?</div>
+    <div class="confirm-dialog-actions">
+      <button class="btn btn-ghost" id="userConfirmCancel" type="button">Cancel</button>
+      <button class="btn confirm-danger" id="userConfirmOk" type="button">Delete</button>
     </div>
-    <div class="note-reader-meta" id="studentNoteReaderMeta"></div>
-    <div class="note-reader-body" id="studentNoteReaderBody"></div>
   </div>
 </div>
 <div id="toast"></div>
@@ -944,15 +1002,18 @@ const seed = {
   ],
   "boardsByState": {
     "Assam": [
-      "seba"
+      "CBSE",
+      "ASSEB"
     ],
-    "Delhi": []
+    "Andhra Pradesh": []
   },
   "mediumsByState": {
     "Assam": [
-      "ass"
+      "Assamese",
+      "English",
+      "Hindi"
     ],
-    "Delhi": []
+    "Andhra Pradesh": []
   },
   "settings": {
     "general": false,
@@ -970,21 +1031,6 @@ const seed = {
     "menuOption": ""
   },
   "categories": [],
-  "notes": [
-    {
-      "id": "ntmp3iakbg6bb",
-      "state": "Assam",
-      "cls": "Class 9",
-      "board": "SEBA",
-      "subject": "English",
-      "chapter": "Chapter 1",
-      "title": "notes",
-      "type": "text",
-      "content": "hertheritiew",
-      "pdfUrl": "",
-      "createdAt": "2026-05-13"
-    }
-  ],
   "books": [
     {
       "id": "xswzgbha",
@@ -1071,79 +1117,3116 @@ const seed = {
       "image": ""
     },
     {
-      "id": "x68h0en9",
+      "id": "xu9qs099",
       "type": "school",
       "state": "Assam",
-      "board": "seba",
+      "board": "ASSEB",
       "stream": "",
       "className": "Class 9",
-      "title": "assamese",
-      "price": 100,
+      "title": "Hindi",
+      "price": 20,
       "author": "",
       "image": ""
     },
     {
-      "id": "xc9ve81t",
+      "id": "x6dh5v9j",
       "type": "school",
       "state": "Assam",
-      "board": "seba",
+      "board": "CBSE",
+      "stream": "",
+      "className": "Class 9",
+      "title": "Hindi",
+      "price": 20,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "x17c4w1z",
+      "type": "school",
+      "state": "Assam",
+      "board": "ASSEB",
       "stream": "",
       "className": "Class 10",
-      "title": "assamese",
-      "price": 100,
+      "title": "Hindi",
+      "price": 20,
       "author": "",
       "image": ""
     },
     {
-      "id": "xl9powjm",
+      "id": "xxy0zw55",
       "type": "school",
       "state": "Assam",
-      "className": "Class 9",
-      "board": "seba",
+      "board": "CBSE",
       "stream": "",
+      "className": "Class 10",
+      "title": "Hindi",
+      "price": 20,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "x8xirnlk",
+      "type": "school",
+      "state": "Assam",
+      "board": "ASSEB",
+      "stream": "",
+      "className": "Class 9",
+      "title": "Social Science",
+      "price": 20,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "xdcrgqc5",
+      "type": "school",
+      "state": "Assam",
+      "board": "CBSE",
+      "stream": "",
+      "className": "Class 9",
+      "title": "Social Science",
+      "price": 20,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "xye061zr",
+      "type": "school",
+      "state": "Assam",
+      "board": "ASSEB",
+      "stream": "",
+      "className": "Class 10",
+      "title": "Social Science",
+      "price": 20,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "xvqymk4c",
+      "type": "school",
+      "state": "Assam",
+      "board": "CBSE",
+      "stream": "",
+      "className": "Class 10",
+      "title": "Social Science",
+      "price": 20,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "xp06b2cc",
+      "type": "school",
+      "state": "Assam",
+      "board": "ASSEB",
+      "stream": "",
+      "className": "Class 9",
+      "title": "General Science",
+      "price": 20,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "xi37jogj",
+      "type": "school",
+      "state": "Assam",
+      "board": "CBSE",
+      "stream": "",
+      "className": "Class 9",
+      "title": "General Science",
+      "price": 20,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "xuqygv27",
+      "type": "school",
+      "state": "Assam",
+      "board": "ASSEB",
+      "stream": "",
+      "className": "Class 10",
+      "title": "General Science",
+      "price": 20,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "xmwxr6w0",
+      "type": "school",
+      "state": "Assam",
+      "board": "CBSE",
+      "stream": "",
+      "className": "Class 10",
+      "title": "General Science",
+      "price": 20,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "x74fkaza",
+      "type": "school",
+      "state": "Assam",
+      "board": "ASSEB",
+      "stream": "",
+      "className": "Class 9",
+      "title": "Mathematics",
+      "price": 20,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "xv43cqnd",
+      "type": "school",
+      "state": "Assam",
+      "board": "CBSE",
+      "stream": "",
+      "className": "Class 9",
+      "title": "Mathematics",
+      "price": 20,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "xc5hu4d1",
+      "type": "school",
+      "state": "Assam",
+      "board": "ASSEB",
+      "stream": "",
+      "className": "Class 10",
+      "title": "Mathematics",
+      "price": 20,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "x54ay8kz",
+      "type": "school",
+      "state": "Assam",
+      "board": "CBSE",
+      "stream": "",
+      "className": "Class 10",
+      "title": "Mathematics",
+      "price": 20,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "x64baws9",
+      "type": "school",
+      "state": "Assam",
+      "board": "ASSEB",
+      "stream": "",
+      "className": "Class 9",
       "title": "English",
       "price": 20,
       "author": "",
       "image": ""
     },
     {
-      "id": "x30teky8",
+      "id": "x493redm",
       "type": "school",
       "state": "Assam",
-      "className": "Class 10",
-      "board": "seba",
+      "board": "CBSE",
       "stream": "",
+      "className": "Class 9",
       "title": "English",
       "price": 20,
       "author": "",
       "image": ""
     },
     {
-      "id": "xo0zzyda",
+      "id": "xptmblf7",
+      "type": "school",
+      "state": "Assam",
+      "board": "ASSEB",
+      "stream": "",
+      "className": "Class 10",
+      "title": "English",
+      "price": 20,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "xd2eecvb",
+      "type": "school",
+      "state": "Assam",
+      "board": "CBSE",
+      "stream": "",
+      "className": "Class 10",
+      "title": "English",
+      "price": 20,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "x5ufcol6",
+      "type": "school",
+      "state": "Assam",
+      "board": "ASSEB",
+      "stream": "",
+      "className": "Class 11",
+      "title": "English",
+      "price": 20,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "xjlsmbuo",
+      "type": "school",
+      "state": "Assam",
+      "board": "CBSE",
+      "stream": "",
+      "className": "Class 11",
+      "title": "English",
+      "price": 20,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "xoaat5bt",
+      "type": "school",
+      "state": "Assam",
+      "board": "ASSEB",
+      "stream": "",
+      "className": "Class 12",
+      "title": "English",
+      "price": 20,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "xx5sskhs",
+      "type": "school",
+      "state": "Assam",
+      "board": "CBSE",
+      "stream": "",
+      "className": "Class 12",
+      "title": "English",
+      "price": 20,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "xttl67n0",
       "type": "school",
       "state": "Assam",
       "className": "Class 11",
-      "board": "seba",
-      "stream": "",
-      "title": "English",
+      "board": "ASSEB",
+      "stream": "Arts",
+      "title": "Political Science",
+      "price": 30,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "xttmqgv5",
+      "type": "school",
+      "state": "Assam",
+      "className": "Class 11",
+      "board": "CBSE",
+      "stream": "Arts",
+      "title": "Political Science",
+      "price": 30,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "xdqs5im7",
+      "type": "school",
+      "state": "Assam",
+      "className": "Class 12",
+      "board": "ASSEB",
+      "stream": "Arts",
+      "title": "Political Science",
+      "price": 30,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "xfqo2oxt",
+      "type": "school",
+      "state": "Assam",
+      "className": "Class 12",
+      "board": "CBSE",
+      "stream": "Arts",
+      "title": "Political Science",
+      "price": 30,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "x3j7nv7r",
+      "type": "school",
+      "state": "Assam",
+      "className": "Class 11",
+      "board": "ASSEB",
+      "stream": "Arts",
+      "title": "History",
       "price": 20,
       "author": "",
       "image": ""
     },
     {
-      "id": "x6u6t50g",
+      "id": "xj5zgqtr",
+      "type": "school",
+      "state": "Assam",
+      "className": "Class 11",
+      "board": "CBSE",
+      "stream": "Arts",
+      "title": "History",
+      "price": 20,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "x3qvshp9",
       "type": "school",
       "state": "Assam",
       "className": "Class 12",
-      "board": "seba",
-      "stream": "",
-      "title": "English",
+      "board": "ASSEB",
+      "stream": "Arts",
+      "title": "History",
       "price": 20,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "x5r0tj14",
+      "type": "school",
+      "state": "Assam",
+      "className": "Class 12",
+      "board": "CBSE",
+      "stream": "Arts",
+      "title": "History",
+      "price": 20,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "x1hgrxz3",
+      "type": "school",
+      "state": "Assam",
+      "className": "Class 11",
+      "board": "ASSEB",
+      "stream": "Arts",
+      "title": "Economics",
+      "price": 20,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "xlvo4ee9",
+      "type": "school",
+      "state": "Assam",
+      "className": "Class 11",
+      "board": "CBSE",
+      "stream": "Arts",
+      "title": "Economics",
+      "price": 20,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "x42p0ig3",
+      "type": "school",
+      "state": "Assam",
+      "className": "Class 12",
+      "board": "ASSEB",
+      "stream": "Arts",
+      "title": "Economics",
+      "price": 20,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "x7183ghl",
+      "type": "school",
+      "state": "Assam",
+      "className": "Class 12",
+      "board": "CBSE",
+      "stream": "Arts",
+      "title": "Economics",
+      "price": 20,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "xzltxvcp",
+      "type": "school",
+      "state": "Assam",
+      "className": "Class 11",
+      "board": "ASSEB",
+      "stream": "Arts",
+      "title": "Education",
+      "price": 30,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "x8ei12t4",
+      "type": "school",
+      "state": "Assam",
+      "className": "Class 11",
+      "board": "CBSE",
+      "stream": "Arts",
+      "title": "Education",
+      "price": 30,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "xlajxbnw",
+      "type": "school",
+      "state": "Assam",
+      "className": "Class 12",
+      "board": "ASSEB",
+      "stream": "Arts",
+      "title": "Education",
+      "price": 30,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "x86nk4ql",
+      "type": "school",
+      "state": "Assam",
+      "className": "Class 12",
+      "board": "CBSE",
+      "stream": "Arts",
+      "title": "Education",
+      "price": 30,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "x0pzzf46",
+      "type": "school",
+      "state": "Assam",
+      "board": "ASSEB",
+      "stream": "",
+      "className": "Class 9",
+      "title": "assamese",
+      "price": 100,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "xuqkufvs",
+      "type": "school",
+      "state": "Assam",
+      "board": "CBSE",
+      "stream": "",
+      "className": "Class 9",
+      "title": "assamese",
+      "price": 100,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "xp16ok8q",
+      "type": "school",
+      "state": "Assam",
+      "board": "ASSEB",
+      "stream": "",
+      "className": "Class 10",
+      "title": "assamese",
+      "price": 100,
+      "author": "",
+      "image": ""
+    },
+    {
+      "id": "xihdqke9",
+      "type": "school",
+      "state": "Assam",
+      "board": "CBSE",
+      "stream": "",
+      "className": "Class 10",
+      "title": "assamese",
+      "price": 100,
       "author": "",
       "image": ""
     }
   ],
   "locations": [
+    {
+      "state": "Andhra Pradesh",
+      "districts": [
+        {
+          "district": "Alluri Sitharama Raju",
+          "subDistricts": [
+            {
+              "subDistrict": "Ananthagiri",
+              "places": []
+            },
+            {
+              "subDistrict": "Araku Valley",
+              "places": []
+            },
+            {
+              "subDistrict": "Chinthapalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Dumbriguda",
+              "places": []
+            },
+            {
+              "subDistrict": "G.Madugula",
+              "places": []
+            },
+            {
+              "subDistrict": "Gudem Kotha Veedhi",
+              "places": []
+            },
+            {
+              "subDistrict": "Hukumpeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Koyyuru",
+              "places": []
+            },
+            {
+              "subDistrict": "Munchingi Puttu",
+              "places": []
+            },
+            {
+              "subDistrict": "Paderu",
+              "places": []
+            },
+            {
+              "subDistrict": "Peda Bayalu",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Anakapalli",
+          "subDistricts": [
+            {
+              "subDistrict": "Anakapalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Atchuthapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Butchayyapeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Cheedikada",
+              "places": []
+            },
+            {
+              "subDistrict": "Chodavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Devarapalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Golugonda",
+              "places": []
+            },
+            {
+              "subDistrict": "K.Kotapadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Kasimkota",
+              "places": []
+            },
+            {
+              "subDistrict": "Kotauratla",
+              "places": []
+            },
+            {
+              "subDistrict": "Madugula",
+              "places": []
+            },
+            {
+              "subDistrict": "Makavarapalem",
+              "places": []
+            },
+            {
+              "subDistrict": "Munagapaka",
+              "places": []
+            },
+            {
+              "subDistrict": "Nakkapalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Narsipatnam",
+              "places": []
+            },
+            {
+              "subDistrict": "Nathavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Paravada",
+              "places": []
+            },
+            {
+              "subDistrict": "Payakaraopeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Rambilli",
+              "places": []
+            },
+            {
+              "subDistrict": "Ravikamatham",
+              "places": []
+            },
+            {
+              "subDistrict": "Rolugunta",
+              "places": []
+            },
+            {
+              "subDistrict": "S.Rayavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Sabbavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Yelamanchili",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Ananthapuramu",
+          "subDistricts": [
+            {
+              "subDistrict": "Anantapur Rural",
+              "places": []
+            },
+            {
+              "subDistrict": "Anantapur Urban",
+              "places": []
+            },
+            {
+              "subDistrict": "Atmakur",
+              "places": []
+            },
+            {
+              "subDistrict": "Beluguppa",
+              "places": []
+            },
+            {
+              "subDistrict": "Bommanahal",
+              "places": []
+            },
+            {
+              "subDistrict": "Brahmasamudram",
+              "places": []
+            },
+            {
+              "subDistrict": "Bukkaraya Samudram",
+              "places": []
+            },
+            {
+              "subDistrict": "D.Hirehal",
+              "places": []
+            },
+            {
+              "subDistrict": "Garladinne",
+              "places": []
+            },
+            {
+              "subDistrict": "Gooty",
+              "places": []
+            },
+            {
+              "subDistrict": "Gummagatta",
+              "places": []
+            },
+            {
+              "subDistrict": "Guntakal",
+              "places": []
+            },
+            {
+              "subDistrict": "Kalyanadurg",
+              "places": []
+            },
+            {
+              "subDistrict": "Kambadur",
+              "places": []
+            },
+            {
+              "subDistrict": "Kanekal",
+              "places": []
+            },
+            {
+              "subDistrict": "Kudair",
+              "places": []
+            },
+            {
+              "subDistrict": "Kundurpi",
+              "places": []
+            },
+            {
+              "subDistrict": "Narpala",
+              "places": []
+            },
+            {
+              "subDistrict": "Pamidi",
+              "places": []
+            },
+            {
+              "subDistrict": "Peddapappur",
+              "places": []
+            },
+            {
+              "subDistrict": "Peddavaduguru",
+              "places": []
+            },
+            {
+              "subDistrict": "Putlur",
+              "places": []
+            },
+            {
+              "subDistrict": "Rapthadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Rayadurg",
+              "places": []
+            },
+            {
+              "subDistrict": "Settur",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Annamayya",
+          "subDistricts": [
+            {
+              "subDistrict": "Beerongi Kothakota",
+              "places": []
+            },
+            {
+              "subDistrict": "Chinnamandem",
+              "places": []
+            },
+            {
+              "subDistrict": "Chowdepalle",
+              "places": []
+            },
+            {
+              "subDistrict": "Galiveedu",
+              "places": []
+            },
+            {
+              "subDistrict": "Gurramkonda",
+              "places": []
+            },
+            {
+              "subDistrict": "Kalakada",
+              "places": []
+            },
+            {
+              "subDistrict": "Kalikiri",
+              "places": []
+            },
+            {
+              "subDistrict": "Kambhamvaripalle",
+              "places": []
+            },
+            {
+              "subDistrict": "Kurabalakota",
+              "places": []
+            },
+            {
+              "subDistrict": "Lakkireddipalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Madanapalle",
+              "places": []
+            },
+            {
+              "subDistrict": "Mulakalacheruvu",
+              "places": []
+            },
+            {
+              "subDistrict": "Nimmanapalle",
+              "places": []
+            },
+            {
+              "subDistrict": "Pedda Thippasamudram",
+              "places": []
+            },
+            {
+              "subDistrict": "Peddamandyam",
+              "places": []
+            },
+            {
+              "subDistrict": "Pileru",
+              "places": []
+            },
+            {
+              "subDistrict": "Punganuru",
+              "places": []
+            },
+            {
+              "subDistrict": "Ramapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Ramasamudram",
+              "places": []
+            },
+            {
+              "subDistrict": "Rayachoti",
+              "places": []
+            },
+            {
+              "subDistrict": "Sambepalle",
+              "places": []
+            },
+            {
+              "subDistrict": "Sodam",
+              "places": []
+            },
+            {
+              "subDistrict": "Somala",
+              "places": []
+            },
+            {
+              "subDistrict": "Thamballapalle",
+              "places": []
+            },
+            {
+              "subDistrict": "Valmikipuram",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Bapatla",
+          "subDistricts": [
+            {
+              "subDistrict": "Amarthalur",
+              "places": []
+            },
+            {
+              "subDistrict": "Bapatla",
+              "places": []
+            },
+            {
+              "subDistrict": "Bhattiprolu",
+              "places": []
+            },
+            {
+              "subDistrict": "Cherukupalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Chinaganjam",
+              "places": []
+            },
+            {
+              "subDistrict": "Chirala",
+              "places": []
+            },
+            {
+              "subDistrict": "Inkollu",
+              "places": []
+            },
+            {
+              "subDistrict": "Karamchedu",
+              "places": []
+            },
+            {
+              "subDistrict": "Karlapalem",
+              "places": []
+            },
+            {
+              "subDistrict": "Kolluru",
+              "places": []
+            },
+            {
+              "subDistrict": "Martur",
+              "places": []
+            },
+            {
+              "subDistrict": "Nagaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Nizampatnam",
+              "places": []
+            },
+            {
+              "subDistrict": "Parchur",
+              "places": []
+            },
+            {
+              "subDistrict": "Pittalavanipalem",
+              "places": []
+            },
+            {
+              "subDistrict": "Repalle",
+              "places": []
+            },
+            {
+              "subDistrict": "Tsunduru",
+              "places": []
+            },
+            {
+              "subDistrict": "Vemuru",
+              "places": []
+            },
+            {
+              "subDistrict": "Vetapalem",
+              "places": []
+            },
+            {
+              "subDistrict": "Yeddana Pudi",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Chittoor",
+          "subDistricts": [
+            {
+              "subDistrict": "Baireddipalle",
+              "places": []
+            },
+            {
+              "subDistrict": "Bangarupalem",
+              "places": []
+            },
+            {
+              "subDistrict": "Chittoor Rural",
+              "places": []
+            },
+            {
+              "subDistrict": "Chittoor Urban",
+              "places": []
+            },
+            {
+              "subDistrict": "Gangadhara Nellore",
+              "places": []
+            },
+            {
+              "subDistrict": "Gangavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Gudipala",
+              "places": []
+            },
+            {
+              "subDistrict": "Gudupalle",
+              "places": []
+            },
+            {
+              "subDistrict": "Irala",
+              "places": []
+            },
+            {
+              "subDistrict": "Karvetinagar",
+              "places": []
+            },
+            {
+              "subDistrict": "Kuppam",
+              "places": []
+            },
+            {
+              "subDistrict": "Nagari",
+              "places": []
+            },
+            {
+              "subDistrict": "Nindra",
+              "places": []
+            },
+            {
+              "subDistrict": "Palamaner",
+              "places": []
+            },
+            {
+              "subDistrict": "Palasamudram",
+              "places": []
+            },
+            {
+              "subDistrict": "Peddapanjani",
+              "places": []
+            },
+            {
+              "subDistrict": "Penumur",
+              "places": []
+            },
+            {
+              "subDistrict": "Pulicherla",
+              "places": []
+            },
+            {
+              "subDistrict": "Puthalapattu",
+              "places": []
+            },
+            {
+              "subDistrict": "Ramakuppam",
+              "places": []
+            },
+            {
+              "subDistrict": "Rompicherla",
+              "places": []
+            },
+            {
+              "subDistrict": "Santhipuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Srirangarajapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Thavanampalle",
+              "places": []
+            },
+            {
+              "subDistrict": "Vedurukuppam",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Dr. B.R. Ambedkar Konaseema",
+          "subDistricts": [
+            {
+              "subDistrict": "Ainavilli",
+              "places": []
+            },
+            {
+              "subDistrict": "Alamuru",
+              "places": []
+            },
+            {
+              "subDistrict": "Allavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Amalapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Ambajipeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Atreyapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "I. Polavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "K Gangavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Katrenikona",
+              "places": []
+            },
+            {
+              "subDistrict": "Kothapeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Malikipuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Mamidikuduru",
+              "places": []
+            },
+            {
+              "subDistrict": "Mummidivaram",
+              "places": []
+            },
+            {
+              "subDistrict": "P.Gannavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Ramachandrapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Ravulapalem",
+              "places": []
+            },
+            {
+              "subDistrict": "Razole",
+              "places": []
+            },
+            {
+              "subDistrict": "Sakhinetipalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Uppalaguptam",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "East Godavari",
+          "subDistricts": [
+            {
+              "subDistrict": "Anaparthi",
+              "places": []
+            },
+            {
+              "subDistrict": "Biccavolu",
+              "places": []
+            },
+            {
+              "subDistrict": "Chagallu",
+              "places": []
+            },
+            {
+              "subDistrict": "Devarapalle",
+              "places": []
+            },
+            {
+              "subDistrict": "Gokavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Gopalapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Kadiam",
+              "places": []
+            },
+            {
+              "subDistrict": "Kapileswarapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Korukonda",
+              "places": []
+            },
+            {
+              "subDistrict": "Kovvur",
+              "places": []
+            },
+            {
+              "subDistrict": "Mandapeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Nallajerla",
+              "places": []
+            },
+            {
+              "subDistrict": "Nidadavole",
+              "places": []
+            },
+            {
+              "subDistrict": "Peravali",
+              "places": []
+            },
+            {
+              "subDistrict": "Rajamahendravaram Rural",
+              "places": []
+            },
+            {
+              "subDistrict": "Rajamahendravaram Urban",
+              "places": []
+            },
+            {
+              "subDistrict": "Rajanagaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Rangampeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Rayavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Seethanagaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Tallapudi",
+              "places": []
+            },
+            {
+              "subDistrict": "Undrajavaram",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Eluru",
+          "subDistricts": [
+            {
+              "subDistrict": "Agiripalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Bheemadole",
+              "places": []
+            },
+            {
+              "subDistrict": "Buttayagudem",
+              "places": []
+            },
+            {
+              "subDistrict": "Chatrai",
+              "places": []
+            },
+            {
+              "subDistrict": "Chintalapudi",
+              "places": []
+            },
+            {
+              "subDistrict": "Denduluru",
+              "places": []
+            },
+            {
+              "subDistrict": "Dwarakatirumala",
+              "places": []
+            },
+            {
+              "subDistrict": "Eluru Rural",
+              "places": []
+            },
+            {
+              "subDistrict": "Eluru Urban",
+              "places": []
+            },
+            {
+              "subDistrict": "Jangareddigudem",
+              "places": []
+            },
+            {
+              "subDistrict": "Jeelugu Milli",
+              "places": []
+            },
+            {
+              "subDistrict": "Kaikaluru",
+              "places": []
+            },
+            {
+              "subDistrict": "Kalidindi",
+              "places": []
+            },
+            {
+              "subDistrict": "Kamavarapukota",
+              "places": []
+            },
+            {
+              "subDistrict": "Koyyalagudem",
+              "places": []
+            },
+            {
+              "subDistrict": "Kukunoor",
+              "places": []
+            },
+            {
+              "subDistrict": "Lingapalem",
+              "places": []
+            },
+            {
+              "subDistrict": "Mandavalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Mudinepalle",
+              "places": []
+            },
+            {
+              "subDistrict": "Musunuru",
+              "places": []
+            },
+            {
+              "subDistrict": "Nidamarru",
+              "places": []
+            },
+            {
+              "subDistrict": "Nuzividu",
+              "places": []
+            },
+            {
+              "subDistrict": "Pedapadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Pedavegi",
+              "places": []
+            },
+            {
+              "subDistrict": "Polavaram",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Guntur",
+          "subDistricts": [
+            {
+              "subDistrict": "Chebrolu",
+              "places": []
+            },
+            {
+              "subDistrict": "Duggirala",
+              "places": []
+            },
+            {
+              "subDistrict": "Guntur East",
+              "places": []
+            },
+            {
+              "subDistrict": "Guntur West",
+              "places": []
+            },
+            {
+              "subDistrict": "Kakumanu",
+              "places": []
+            },
+            {
+              "subDistrict": "Kollipara",
+              "places": []
+            },
+            {
+              "subDistrict": "Mangalagiri",
+              "places": []
+            },
+            {
+              "subDistrict": "Medikonduru",
+              "places": []
+            },
+            {
+              "subDistrict": "Pedakakani",
+              "places": []
+            },
+            {
+              "subDistrict": "Pedanandipadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Phirangipuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Ponnur",
+              "places": []
+            },
+            {
+              "subDistrict": "Prathipadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Tadepalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Tadikonda",
+              "places": []
+            },
+            {
+              "subDistrict": "Tenali",
+              "places": []
+            },
+            {
+              "subDistrict": "Thulluru",
+              "places": []
+            },
+            {
+              "subDistrict": "Vatticherukuru",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Kakinada",
+          "subDistricts": [
+            {
+              "subDistrict": "Gandepalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Gollaprolu",
+              "places": []
+            },
+            {
+              "subDistrict": "Jaggampeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Kajuluru",
+              "places": []
+            },
+            {
+              "subDistrict": "Kakinada (Rural)",
+              "places": []
+            },
+            {
+              "subDistrict": "Kakinada (Urban)",
+              "places": []
+            },
+            {
+              "subDistrict": "Karapa",
+              "places": []
+            },
+            {
+              "subDistrict": "Kirlampudi",
+              "places": []
+            },
+            {
+              "subDistrict": "Kotananduru",
+              "places": []
+            },
+            {
+              "subDistrict": "Pedapudi",
+              "places": []
+            },
+            {
+              "subDistrict": "Peddapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Pithapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Prathipadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Rowthulapudi",
+              "places": []
+            },
+            {
+              "subDistrict": "Samalkota",
+              "places": []
+            },
+            {
+              "subDistrict": "Sankhavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Tallarevu",
+              "places": []
+            },
+            {
+              "subDistrict": "Thondangi",
+              "places": []
+            },
+            {
+              "subDistrict": "Tuni",
+              "places": []
+            },
+            {
+              "subDistrict": "U.Kothapalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Yeleswaram",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Krishna",
+          "subDistricts": [
+            {
+              "subDistrict": "Avanigadda",
+              "places": []
+            },
+            {
+              "subDistrict": "Bantumilli",
+              "places": []
+            },
+            {
+              "subDistrict": "Bapulapadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Challapalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Gannavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Ghantasala",
+              "places": []
+            },
+            {
+              "subDistrict": "Gudivada",
+              "places": []
+            },
+            {
+              "subDistrict": "Gudlavalleru",
+              "places": []
+            },
+            {
+              "subDistrict": "Guduru",
+              "places": []
+            },
+            {
+              "subDistrict": "Kankipadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Koduru",
+              "places": []
+            },
+            {
+              "subDistrict": "Kruthivennu",
+              "places": []
+            },
+            {
+              "subDistrict": "Machilipatnam North",
+              "places": []
+            },
+            {
+              "subDistrict": "Machilipatnam South",
+              "places": []
+            },
+            {
+              "subDistrict": "Mopidevi",
+              "places": []
+            },
+            {
+              "subDistrict": "Movva",
+              "places": []
+            },
+            {
+              "subDistrict": "Nagayalanka",
+              "places": []
+            },
+            {
+              "subDistrict": "Nandivada",
+              "places": []
+            },
+            {
+              "subDistrict": "Pamarru",
+              "places": []
+            },
+            {
+              "subDistrict": "Pamidimukkala",
+              "places": []
+            },
+            {
+              "subDistrict": "Pedana",
+              "places": []
+            },
+            {
+              "subDistrict": "Pedaparupudi",
+              "places": []
+            },
+            {
+              "subDistrict": "Penamaluru",
+              "places": []
+            },
+            {
+              "subDistrict": "Thotlavalluru",
+              "places": []
+            },
+            {
+              "subDistrict": "Unguturu",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Kurnool",
+          "subDistricts": [
+            {
+              "subDistrict": "Adoni",
+              "places": []
+            },
+            {
+              "subDistrict": "Adoni-2",
+              "places": []
+            },
+            {
+              "subDistrict": "Alur",
+              "places": []
+            },
+            {
+              "subDistrict": "Aspari",
+              "places": []
+            },
+            {
+              "subDistrict": "C.Belagal",
+              "places": []
+            },
+            {
+              "subDistrict": "Chippagiri",
+              "places": []
+            },
+            {
+              "subDistrict": "Devanakonda",
+              "places": []
+            },
+            {
+              "subDistrict": "Gonegandla",
+              "places": []
+            },
+            {
+              "subDistrict": "Gudur",
+              "places": []
+            },
+            {
+              "subDistrict": "Halaharvi",
+              "places": []
+            },
+            {
+              "subDistrict": "Holagunda",
+              "places": []
+            },
+            {
+              "subDistrict": "Kallur",
+              "places": []
+            },
+            {
+              "subDistrict": "Kodumur",
+              "places": []
+            },
+            {
+              "subDistrict": "Kosigi",
+              "places": []
+            },
+            {
+              "subDistrict": "Kowthalam",
+              "places": []
+            },
+            {
+              "subDistrict": "Krishnagiri",
+              "places": []
+            },
+            {
+              "subDistrict": "Kurnool Rural",
+              "places": []
+            },
+            {
+              "subDistrict": "Kurnool Urban",
+              "places": []
+            },
+            {
+              "subDistrict": "Maddikera (East)",
+              "places": []
+            },
+            {
+              "subDistrict": "Mantralayam",
+              "places": []
+            },
+            {
+              "subDistrict": "Nandavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Orvakal",
+              "places": []
+            },
+            {
+              "subDistrict": "Pattikonda",
+              "places": []
+            },
+            {
+              "subDistrict": "Pedda Kadubur",
+              "places": []
+            },
+            {
+              "subDistrict": "Tuggali",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Markapuram",
+          "subDistricts": [
+            {
+              "subDistrict": "Ardhaveedu",
+              "places": []
+            },
+            {
+              "subDistrict": "Bestavaripeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Chandra Sekhara Puram",
+              "places": []
+            },
+            {
+              "subDistrict": "Cumbum",
+              "places": []
+            },
+            {
+              "subDistrict": "Dornala",
+              "places": []
+            },
+            {
+              "subDistrict": "Giddalur",
+              "places": []
+            },
+            {
+              "subDistrict": "Hanumanthuni Padu",
+              "places": []
+            },
+            {
+              "subDistrict": "Kanigiri",
+              "places": []
+            },
+            {
+              "subDistrict": "Komarolu",
+              "places": []
+            },
+            {
+              "subDistrict": "Konakanamitla",
+              "places": []
+            },
+            {
+              "subDistrict": "Markapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Pamur",
+              "places": []
+            },
+            {
+              "subDistrict": "Pedacherlo Palle",
+              "places": []
+            },
+            {
+              "subDistrict": "Peddaaraveedu",
+              "places": []
+            },
+            {
+              "subDistrict": "Podili",
+              "places": []
+            },
+            {
+              "subDistrict": "Pullalacheruvu",
+              "places": []
+            },
+            {
+              "subDistrict": "Racherla",
+              "places": []
+            },
+            {
+              "subDistrict": "Tarlupadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Tripuranthakam",
+              "places": []
+            },
+            {
+              "subDistrict": "Veligandla",
+              "places": []
+            },
+            {
+              "subDistrict": "Yerragondapalem",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Nandyal",
+          "subDistricts": [
+            {
+              "subDistrict": "Allagadda",
+              "places": []
+            },
+            {
+              "subDistrict": "Atmakur",
+              "places": []
+            },
+            {
+              "subDistrict": "Banaganapalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Bandi Atmakur",
+              "places": []
+            },
+            {
+              "subDistrict": "Bethamcherla",
+              "places": []
+            },
+            {
+              "subDistrict": "Chagalamarri",
+              "places": []
+            },
+            {
+              "subDistrict": "Dhone",
+              "places": []
+            },
+            {
+              "subDistrict": "Dornipadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Gadivemula",
+              "places": []
+            },
+            {
+              "subDistrict": "Gospadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Jupadu Bunglow",
+              "places": []
+            },
+            {
+              "subDistrict": "Koilakuntla",
+              "places": []
+            },
+            {
+              "subDistrict": "Kolimigundla",
+              "places": []
+            },
+            {
+              "subDistrict": "Kothapalle",
+              "places": []
+            },
+            {
+              "subDistrict": "Mahanandi",
+              "places": []
+            },
+            {
+              "subDistrict": "Midthur",
+              "places": []
+            },
+            {
+              "subDistrict": "Nandikotkur",
+              "places": []
+            },
+            {
+              "subDistrict": "Nandyal Rural",
+              "places": []
+            },
+            {
+              "subDistrict": "Nandyal Urban",
+              "places": []
+            },
+            {
+              "subDistrict": "Owk",
+              "places": []
+            },
+            {
+              "subDistrict": "Pagidyala",
+              "places": []
+            },
+            {
+              "subDistrict": "Pamulapadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Panyam",
+              "places": []
+            },
+            {
+              "subDistrict": "Peapully",
+              "places": []
+            },
+            {
+              "subDistrict": "Rudravaram",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Ntr",
+          "subDistricts": [
+            {
+              "subDistrict": "Atlapragada Konduru",
+              "places": []
+            },
+            {
+              "subDistrict": "Chandarlapadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Gaddamanugu Konduru",
+              "places": []
+            },
+            {
+              "subDistrict": "Gampalagudem",
+              "places": []
+            },
+            {
+              "subDistrict": "Ibrahimpatnam",
+              "places": []
+            },
+            {
+              "subDistrict": "Jaggaiahpeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Kanchikacherla",
+              "places": []
+            },
+            {
+              "subDistrict": "Mylavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Nandigama",
+              "places": []
+            },
+            {
+              "subDistrict": "Penuganchiprolu",
+              "places": []
+            },
+            {
+              "subDistrict": "Reddigudem",
+              "places": []
+            },
+            {
+              "subDistrict": "Tiruvuru",
+              "places": []
+            },
+            {
+              "subDistrict": "Vatsavai",
+              "places": []
+            },
+            {
+              "subDistrict": "Veerullapadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Vijayawada (Rural)",
+              "places": []
+            },
+            {
+              "subDistrict": "Vijayawada Central",
+              "places": []
+            },
+            {
+              "subDistrict": "Vijayawada East",
+              "places": []
+            },
+            {
+              "subDistrict": "Vijayawada North",
+              "places": []
+            },
+            {
+              "subDistrict": "Vijayawada West",
+              "places": []
+            },
+            {
+              "subDistrict": "Vissannapeta",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Palnadu",
+          "subDistricts": [
+            {
+              "subDistrict": "Amaravathi",
+              "places": []
+            },
+            {
+              "subDistrict": "Atchampet",
+              "places": []
+            },
+            {
+              "subDistrict": "Bellamkonda",
+              "places": []
+            },
+            {
+              "subDistrict": "Bollapalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Chilakaluripet H/O.Purushotha Patnam",
+              "places": []
+            },
+            {
+              "subDistrict": "Dachepalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Durgi",
+              "places": []
+            },
+            {
+              "subDistrict": "Edlapadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Gurajala",
+              "places": []
+            },
+            {
+              "subDistrict": "Ipuru",
+              "places": []
+            },
+            {
+              "subDistrict": "Karempudi",
+              "places": []
+            },
+            {
+              "subDistrict": "Krosuru",
+              "places": []
+            },
+            {
+              "subDistrict": "Machavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Macherla",
+              "places": []
+            },
+            {
+              "subDistrict": "Muppalla",
+              "places": []
+            },
+            {
+              "subDistrict": "Nadendla",
+              "places": []
+            },
+            {
+              "subDistrict": "Narasaraopet",
+              "places": []
+            },
+            {
+              "subDistrict": "Nekarikallu",
+              "places": []
+            },
+            {
+              "subDistrict": "Nuzendla",
+              "places": []
+            },
+            {
+              "subDistrict": "Pedakurapadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Piduguralla",
+              "places": []
+            },
+            {
+              "subDistrict": "Rajupalem",
+              "places": []
+            },
+            {
+              "subDistrict": "Rentachintala",
+              "places": []
+            },
+            {
+              "subDistrict": "Rompicharla",
+              "places": []
+            },
+            {
+              "subDistrict": "Sattenapalli",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Parvathipuram Manyam",
+          "subDistricts": [
+            {
+              "subDistrict": "Balijipeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Bhamini",
+              "places": []
+            },
+            {
+              "subDistrict": "Garugubilli",
+              "places": []
+            },
+            {
+              "subDistrict": "Gummalakshmipuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Jiyyammavalasa",
+              "places": []
+            },
+            {
+              "subDistrict": "Komarada",
+              "places": []
+            },
+            {
+              "subDistrict": "Kurupam",
+              "places": []
+            },
+            {
+              "subDistrict": "Makkuva",
+              "places": []
+            },
+            {
+              "subDistrict": "Pachipenta",
+              "places": []
+            },
+            {
+              "subDistrict": "Palakonda",
+              "places": []
+            },
+            {
+              "subDistrict": "Parvathipuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Salur",
+              "places": []
+            },
+            {
+              "subDistrict": "Seethampeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Seethanagaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Veeraghattam",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Polavaram",
+          "subDistricts": [
+            {
+              "subDistrict": "Addateegala",
+              "places": []
+            },
+            {
+              "subDistrict": "Chinturu",
+              "places": []
+            },
+            {
+              "subDistrict": "Devipatnam",
+              "places": []
+            },
+            {
+              "subDistrict": "Gangavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Gurthedu",
+              "places": []
+            },
+            {
+              "subDistrict": "Kunavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Maredumilli",
+              "places": []
+            },
+            {
+              "subDistrict": "Rajavommangi",
+              "places": []
+            },
+            {
+              "subDistrict": "Rampachodavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Vararamachandrapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Y. Ramavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Yetapaka",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Prakasam",
+          "subDistricts": [
+            {
+              "subDistrict": "Addanki",
+              "places": []
+            },
+            {
+              "subDistrict": "Ballikurava",
+              "places": []
+            },
+            {
+              "subDistrict": "Chimakurthy",
+              "places": []
+            },
+            {
+              "subDistrict": "Darsi",
+              "places": []
+            },
+            {
+              "subDistrict": "Donakonda",
+              "places": []
+            },
+            {
+              "subDistrict": "Gudluru",
+              "places": []
+            },
+            {
+              "subDistrict": "J.Pangulur",
+              "places": []
+            },
+            {
+              "subDistrict": "Kandukuru",
+              "places": []
+            },
+            {
+              "subDistrict": "Kondapi",
+              "places": []
+            },
+            {
+              "subDistrict": "Korisapadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Kotha Patnam",
+              "places": []
+            },
+            {
+              "subDistrict": "Kurichedu",
+              "places": []
+            },
+            {
+              "subDistrict": "Lingasamudram",
+              "places": []
+            },
+            {
+              "subDistrict": "Maddipadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Marripudi",
+              "places": []
+            },
+            {
+              "subDistrict": "Mundlamuru",
+              "places": []
+            },
+            {
+              "subDistrict": "Naguluppala Padu",
+              "places": []
+            },
+            {
+              "subDistrict": "Ongole Rural",
+              "places": []
+            },
+            {
+              "subDistrict": "Ongole Urban",
+              "places": []
+            },
+            {
+              "subDistrict": "Ponnaluru",
+              "places": []
+            },
+            {
+              "subDistrict": "Santhamaguluru",
+              "places": []
+            },
+            {
+              "subDistrict": "Santhanuthala Padu",
+              "places": []
+            },
+            {
+              "subDistrict": "Singarayakonda",
+              "places": []
+            },
+            {
+              "subDistrict": "Tangutur",
+              "places": []
+            },
+            {
+              "subDistrict": "Thallur",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Sri Potti Sriramulu Nellore",
+          "subDistricts": [
+            {
+              "subDistrict": "Allur",
+              "places": []
+            },
+            {
+              "subDistrict": "Ananthasagaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Anumasamudrampeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Atmakur",
+              "places": []
+            },
+            {
+              "subDistrict": "Bogole",
+              "places": []
+            },
+            {
+              "subDistrict": "Buchireddipalem",
+              "places": []
+            },
+            {
+              "subDistrict": "Chejerla",
+              "places": []
+            },
+            {
+              "subDistrict": "Chillakur",
+              "places": []
+            },
+            {
+              "subDistrict": "Dagadarthi",
+              "places": []
+            },
+            {
+              "subDistrict": "Duttalur",
+              "places": []
+            },
+            {
+              "subDistrict": "Gudur",
+              "places": []
+            },
+            {
+              "subDistrict": "Indukurpet",
+              "places": []
+            },
+            {
+              "subDistrict": "Jaladanki",
+              "places": []
+            },
+            {
+              "subDistrict": "Kaligiri",
+              "places": []
+            },
+            {
+              "subDistrict": "Kaluvoya",
+              "places": []
+            },
+            {
+              "subDistrict": "Kavali",
+              "places": []
+            },
+            {
+              "subDistrict": "Kodavalur",
+              "places": []
+            },
+            {
+              "subDistrict": "Kondapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Kota",
+              "places": []
+            },
+            {
+              "subDistrict": "Kovur",
+              "places": []
+            },
+            {
+              "subDistrict": "Manubolu",
+              "places": []
+            },
+            {
+              "subDistrict": "Marripadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Muthukur",
+              "places": []
+            },
+            {
+              "subDistrict": "Nellore Rural",
+              "places": []
+            },
+            {
+              "subDistrict": "Nellore Urban",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Sri Sathya Sai",
+          "subDistricts": [
+            {
+              "subDistrict": "Agali",
+              "places": []
+            },
+            {
+              "subDistrict": "Amadagur",
+              "places": []
+            },
+            {
+              "subDistrict": "Amarapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Bathalapalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Bukkapatnam",
+              "places": []
+            },
+            {
+              "subDistrict": "Chennekothapalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Chilamathur",
+              "places": []
+            },
+            {
+              "subDistrict": "Dharmavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Gandlapenta",
+              "places": []
+            },
+            {
+              "subDistrict": "Gorantla",
+              "places": []
+            },
+            {
+              "subDistrict": "Gudibanda",
+              "places": []
+            },
+            {
+              "subDistrict": "Hindupur",
+              "places": []
+            },
+            {
+              "subDistrict": "Kadiri",
+              "places": []
+            },
+            {
+              "subDistrict": "Kanaganipalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Kothacheruvu",
+              "places": []
+            },
+            {
+              "subDistrict": "Lepakshi",
+              "places": []
+            },
+            {
+              "subDistrict": "Madakasira",
+              "places": []
+            },
+            {
+              "subDistrict": "Mudigubba",
+              "places": []
+            },
+            {
+              "subDistrict": "Nallachervu",
+              "places": []
+            },
+            {
+              "subDistrict": "Nallamada",
+              "places": []
+            },
+            {
+              "subDistrict": "Nambulapulakunta",
+              "places": []
+            },
+            {
+              "subDistrict": "Obuladevaracheruvu",
+              "places": []
+            },
+            {
+              "subDistrict": "Parigi",
+              "places": []
+            },
+            {
+              "subDistrict": "Penukonda",
+              "places": []
+            },
+            {
+              "subDistrict": "Puttaparthy",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Srikakulam",
+          "subDistricts": [
+            {
+              "subDistrict": "Amadalavalasa",
+              "places": []
+            },
+            {
+              "subDistrict": "Burja",
+              "places": []
+            },
+            {
+              "subDistrict": "Etcherla",
+              "places": []
+            },
+            {
+              "subDistrict": "Ganguvarisigadam",
+              "places": []
+            },
+            {
+              "subDistrict": "Gara",
+              "places": []
+            },
+            {
+              "subDistrict": "Hiramandalam",
+              "places": []
+            },
+            {
+              "subDistrict": "Ichchapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Jalumuru",
+              "places": []
+            },
+            {
+              "subDistrict": "Kanchili",
+              "places": []
+            },
+            {
+              "subDistrict": "Kaviti",
+              "places": []
+            },
+            {
+              "subDistrict": "Kotabommali",
+              "places": []
+            },
+            {
+              "subDistrict": "Kothuru",
+              "places": []
+            },
+            {
+              "subDistrict": "Laveru",
+              "places": []
+            },
+            {
+              "subDistrict": "Laxminarasupeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Mandasa",
+              "places": []
+            },
+            {
+              "subDistrict": "Meliaputti",
+              "places": []
+            },
+            {
+              "subDistrict": "Nandigam",
+              "places": []
+            },
+            {
+              "subDistrict": "Narasannapeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Palasa",
+              "places": []
+            },
+            {
+              "subDistrict": "Pathapatnam",
+              "places": []
+            },
+            {
+              "subDistrict": "Polaki",
+              "places": []
+            },
+            {
+              "subDistrict": "Ponduru",
+              "places": []
+            },
+            {
+              "subDistrict": "Ranastalam",
+              "places": []
+            },
+            {
+              "subDistrict": "Santhabommali",
+              "places": []
+            },
+            {
+              "subDistrict": "Saravakota",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Tirupati",
+          "subDistricts": [
+            {
+              "subDistrict": "Balayapalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Buchinaidu Kandriga",
+              "places": []
+            },
+            {
+              "subDistrict": "Chandragiri",
+              "places": []
+            },
+            {
+              "subDistrict": "Chinnagottigallu",
+              "places": []
+            },
+            {
+              "subDistrict": "Chittamur",
+              "places": []
+            },
+            {
+              "subDistrict": "Chitvel",
+              "places": []
+            },
+            {
+              "subDistrict": "Dakkili",
+              "places": []
+            },
+            {
+              "subDistrict": "Doravarisatram",
+              "places": []
+            },
+            {
+              "subDistrict": "Kodur",
+              "places": []
+            },
+            {
+              "subDistrict": "Kumara Venkata Bhupala Puram",
+              "places": []
+            },
+            {
+              "subDistrict": "Nagalapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Naidupet",
+              "places": []
+            },
+            {
+              "subDistrict": "Narayanavanam",
+              "places": []
+            },
+            {
+              "subDistrict": "Obulavaripalle",
+              "places": []
+            },
+            {
+              "subDistrict": "Ozili",
+              "places": []
+            },
+            {
+              "subDistrict": "Pakala",
+              "places": []
+            },
+            {
+              "subDistrict": "Pellakur",
+              "places": []
+            },
+            {
+              "subDistrict": "Penagalur",
+              "places": []
+            },
+            {
+              "subDistrict": "Pichatur",
+              "places": []
+            },
+            {
+              "subDistrict": "Pullampeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Puttur",
+              "places": []
+            },
+            {
+              "subDistrict": "Ramachandrapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Renigunta",
+              "places": []
+            },
+            {
+              "subDistrict": "Satyavedu",
+              "places": []
+            },
+            {
+              "subDistrict": "Srikalahasti",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Visakhapatnam",
+          "subDistricts": [
+            {
+              "subDistrict": "Anandapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Bheemunipatnam",
+              "places": []
+            },
+            {
+              "subDistrict": "Gajuwaka",
+              "places": []
+            },
+            {
+              "subDistrict": "Gopalapatnam",
+              "places": []
+            },
+            {
+              "subDistrict": "Maharanipeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Mulagada",
+              "places": []
+            },
+            {
+              "subDistrict": "Padmanabham",
+              "places": []
+            },
+            {
+              "subDistrict": "Pedagantyada",
+              "places": []
+            },
+            {
+              "subDistrict": "Pendurthi",
+              "places": []
+            },
+            {
+              "subDistrict": "Seethammadhara",
+              "places": []
+            },
+            {
+              "subDistrict": "Visakhapatnam (Rural)",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Vizianagaram",
+          "subDistricts": [
+            {
+              "subDistrict": "Badangi",
+              "places": []
+            },
+            {
+              "subDistrict": "Bhogapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Bobbili",
+              "places": []
+            },
+            {
+              "subDistrict": "Bondapalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Cheepurupalli",
+              "places": []
+            },
+            {
+              "subDistrict": "Dattirajeru",
+              "places": []
+            },
+            {
+              "subDistrict": "Denkada",
+              "places": []
+            },
+            {
+              "subDistrict": "Gajapathinagaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Gantyada",
+              "places": []
+            },
+            {
+              "subDistrict": "Garividi",
+              "places": []
+            },
+            {
+              "subDistrict": "Gurla",
+              "places": []
+            },
+            {
+              "subDistrict": "Jami",
+              "places": []
+            },
+            {
+              "subDistrict": "Kothavalasa",
+              "places": []
+            },
+            {
+              "subDistrict": "Lakkavarapukota",
+              "places": []
+            },
+            {
+              "subDistrict": "Mentada",
+              "places": []
+            },
+            {
+              "subDistrict": "Merakamudidam",
+              "places": []
+            },
+            {
+              "subDistrict": "Nellimarla",
+              "places": []
+            },
+            {
+              "subDistrict": "Poosapatirega",
+              "places": []
+            },
+            {
+              "subDistrict": "Rajam",
+              "places": []
+            },
+            {
+              "subDistrict": "Ramabhadrapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Regidi Amadalavalasa",
+              "places": []
+            },
+            {
+              "subDistrict": "Santhakaviti",
+              "places": []
+            },
+            {
+              "subDistrict": "Srungavarapukota",
+              "places": []
+            },
+            {
+              "subDistrict": "Therlam",
+              "places": []
+            },
+            {
+              "subDistrict": "Vangara",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "West Godavari",
+          "subDistricts": [
+            {
+              "subDistrict": "Achanta",
+              "places": []
+            },
+            {
+              "subDistrict": "Akividu",
+              "places": []
+            },
+            {
+              "subDistrict": "Attili",
+              "places": []
+            },
+            {
+              "subDistrict": "Bhimavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Ganapavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Iragavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Kalla",
+              "places": []
+            },
+            {
+              "subDistrict": "Mogalthur",
+              "places": []
+            },
+            {
+              "subDistrict": "Narasapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Palacoderu",
+              "places": []
+            },
+            {
+              "subDistrict": "Palacole",
+              "places": []
+            },
+            {
+              "subDistrict": "Pentapadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Penugonda",
+              "places": []
+            },
+            {
+              "subDistrict": "Penumantra",
+              "places": []
+            },
+            {
+              "subDistrict": "Poduru",
+              "places": []
+            },
+            {
+              "subDistrict": "Tadepalligudem",
+              "places": []
+            },
+            {
+              "subDistrict": "Tanuku",
+              "places": []
+            },
+            {
+              "subDistrict": "Undi",
+              "places": []
+            },
+            {
+              "subDistrict": "Veeravasaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Yelamanchili",
+              "places": []
+            }
+          ]
+        },
+        {
+          "district": "Y.S.R. Kadapa",
+          "subDistricts": [
+            {
+              "subDistrict": "Atlur",
+              "places": []
+            },
+            {
+              "subDistrict": "B.Kodur",
+              "places": []
+            },
+            {
+              "subDistrict": "Badvel",
+              "places": []
+            },
+            {
+              "subDistrict": "Brahmamgarimattam",
+              "places": []
+            },
+            {
+              "subDistrict": "Chakrayapet",
+              "places": []
+            },
+            {
+              "subDistrict": "Chapad",
+              "places": []
+            },
+            {
+              "subDistrict": "Chennur",
+              "places": []
+            },
+            {
+              "subDistrict": "Chinthakommadinne",
+              "places": []
+            },
+            {
+              "subDistrict": "Duvvur",
+              "places": []
+            },
+            {
+              "subDistrict": "Gopavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Jammalamadugu",
+              "places": []
+            },
+            {
+              "subDistrict": "Kadapa",
+              "places": []
+            },
+            {
+              "subDistrict": "Kalasapadu",
+              "places": []
+            },
+            {
+              "subDistrict": "Kamalapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Khajipeta",
+              "places": []
+            },
+            {
+              "subDistrict": "Kondapuram",
+              "places": []
+            },
+            {
+              "subDistrict": "Lingala",
+              "places": []
+            },
+            {
+              "subDistrict": "Muddanur",
+              "places": []
+            },
+            {
+              "subDistrict": "Mylavaram",
+              "places": []
+            },
+            {
+              "subDistrict": "Nandalur",
+              "places": []
+            },
+            {
+              "subDistrict": "Peddamudiam",
+              "places": []
+            },
+            {
+              "subDistrict": "Pendlimarry",
+              "places": []
+            },
+            {
+              "subDistrict": "Porumamilla",
+              "places": []
+            },
+            {
+              "subDistrict": "Proddutur",
+              "places": []
+            },
+            {
+              "subDistrict": "Pulivendula",
+              "places": []
+            }
+          ]
+        }
+      ]
+    },
     {
       "state": "Assam",
       "districts": [
@@ -1696,9 +4779,7 @@ const seed = {
               "places": [
                 {
                   "name": "Nn",
-                  "schools": [
-                    "Bb"
-                  ]
+                  "schools": []
                 }
               ]
             },
@@ -2008,10 +5089,6 @@ const seed = {
           ]
         }
       ]
-    },
-    {
-      "state": "Delhi",
-      "districts": []
     }
   ],
   "listings": []
@@ -2084,9 +5161,30 @@ window.pkitaapAndroidBack = function() {
   return false;
 };
 
+// ── MOBILE BROWSER BACK BUTTON SUPPORT ──────────────────────────
+// On mobile browsers the hardware/gesture back button normally closes
+// the tab or leaves the page. We intercept it with the History API:
+// keep one "sentinel" entry on top of the stack so the back gesture
+// always fires a popstate event (which we can catch) instead of
+// navigating away from the app entirely.
+(function() {
+  // Push the sentinel entry — this means there is always something to
+  // pop back to before the browser would actually leave the page.
+  history.pushState({ pkitaap: 1 }, '');
+
+  window.addEventListener('popstate', function() {
+    // Route the back press through our in-app handler.
+    window.pkitaapAndroidBack && window.pkitaapAndroidBack();
+    // Re-push the sentinel so the NEXT back press is also caught.
+    // (Without this the second back press would leave the page.)
+    history.pushState({ pkitaap: 1 }, '');
+  });
+})();
+// ────────────────────────────────────────────────────────────────
+
 function updateAccessControls() {
   const locked = !window._isLoggedIn;
-  ['searchInput','stateFilter','buyState','buyDistrict','buySubDistrict','buyPlace','buySchool','buyMedium','sellMedium'].forEach(id => {
+  ['searchInput','stateFilter','buyState','buyDistrict','buySubDistrict','buyPlace','buySchool','buyMedium','sellMedium','sellCustomMedium','sellCustomTitle','sellCustomClass','sellCustomBoard','sellCustomStream','sellCustomAuthor','sellCustomImage','sellPrice'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.disabled = locked;
@@ -2103,57 +5201,67 @@ async function loadRemoteAppData() {
       ref.doc('settings').get(),
       ref.doc('classes').get(),
       ref.doc('locations').get(),
-      ref.doc('categories').get(),
-      ref.doc('notes').get()
+      ref.doc('categories').get()
     ]);
     const settingsDoc = docs[0].exists ? docs[0].data() : {};
     const classesDoc = docs[1].exists ? docs[1].data() : {};
     const locationsDoc = docs[2].exists ? docs[2].data() : {};
     const categoriesDoc = docs[3].exists ? docs[3].data() : {};
-    const notesDoc = docs[4].exists ? docs[4].data() : {};
     if (settingsDoc.settings) state.settings = Object.assign({}, state.settings || {}, settingsDoc.settings);
     if (settingsDoc.adMob) state.adMob = Object.assign({}, state.adMob || {}, settingsDoc.adMob);
     window.PKITAAP_ADMOB_IDS = state.adMob || {};
-    if (Array.isArray(settingsDoc.streams) && settingsDoc.streams.length) state.streams = settingsDoc.streams;
-    if (Array.isArray(classesDoc.classes) && classesDoc.classes.length) state.classes = classesDoc.classes;
+    if (settingsDoc.streams) state.streams = settingsDoc.streams;
+    if (classesDoc.classes) state.classes = classesDoc.classes;
     if (classesDoc.classThumbs) state.classThumbs = classesDoc.classThumbs;
     if (classesDoc.boardsByState) state.boardsByState = classesDoc.boardsByState;
     if (classesDoc.mediumsByState) state.mediumsByState = classesDoc.mediumsByState;
     if (locationsDoc.locations) state.locations = locationsDoc.locations;
     if (categoriesDoc.categories) state.categories = categoriesDoc.categories;
-    if (notesDoc.notes) state.notes = notesDoc.notes;
     try {
       const bookSnap = await ref.doc('books').collection('items').limit(1000).get();
       if (!bookSnap.empty) state.books = bookSnap.docs.map(doc => Object.assign({id: doc.id}, doc.data()));
     } catch(e) {}
+    try {
+      const listingSnap = await _db.collection('listings').get();
+      if (!listingSnap.empty) {
+        const existing = new Map((state.listings || []).map(l => [String(l.id || ''), l]));
+        listingSnap.docs.forEach(doc => existing.set(String(doc.id), Object.assign({id: doc.id}, doc.data())));
+        state.listings = Array.from(existing.values());
+      }
+    } catch(e) {}
     _remoteDataLoaded = true;
     save();
     render();
+    // ── Data is ready — now dismiss the splash screen ──
+    if (window._hideSplash) window._hideSplash();
   } catch(e) {
     console.warn('[PKITAAP] Remote app data load failed:', e);
+    // Dismiss splash even on failure so user isn't stuck
+    if (window._hideSplash) window._hideSplash();
   }
 }
 
 function normalizeState(input) {
   const next = input || structuredClone(seed);
-  const seedBooks = Array.isArray(seed.books) ? seed.books : [];
-  const bookClasses = [...new Set(seedBooks.map(b => b && b.className).filter(Boolean))];
-  const fallbackClasses = (Array.isArray(seed.classes) && seed.classes.length) ? seed.classes : (bookClasses.length ? bookClasses : ["Class 9","Class 10","Class 11","Class 12"]);
-  const fallbackStreams = (Array.isArray(seed.streams) && seed.streams.length) ? seed.streams : ["Science","Commerce","Arts"];
-  const fallbackBooks = (Array.isArray(seed.books) && seed.books.length) ? seed.books : [];
-  if(!next.appName || next.appName === 'PKITAAP') next.appName = 'PKiTAAP';
+  // App name / tagline — always reflect latest admin export
+  next.appName    = seed.appName    || next.appName    || 'PKiTAAP';
+  next.appTagline = seed.appTagline || next.appTagline || '';
+  // Settings: seed is the base; any user-level overrides sit on top
   next.settings    = { ...seed.settings,   ...(next.settings    || {}) };
   next.adMob       = { ...(seed.adMob || {}), ...(next.adMob || {}) };
   next.classThumbs = { ...seed.classThumbs, ...(next.classThumbs || {}) };
-  next.categories  = next.categories || seed.categories;
-  next.notes       = next.notes || seed.notes || [];
-  next.locations     = next.locations     || seed.locations;
-  next.listings      = next.listings      || seed.listings;
-  next.classes       = (Array.isArray(next.classes) && next.classes.length) ? next.classes : fallbackClasses;
-  next.streams       = (Array.isArray(next.streams) && next.streams.length) ? next.streams : fallbackStreams;
-  next.boardsByState  = next.boardsByState  || seed.boardsByState  || {};
-  next.mediumsByState = next.mediumsByState || seed.mediumsByState || {};
-  next.books = ((Array.isArray(next.books) && next.books.length) ? next.books : fallbackBooks).map(item => {
+  // ── Admin-controlled config: ALWAYS use the freshly-exported seed so that
+  //    new boards / mediums / subjects / classes / locations / categories that
+  //    were added in the admin panel are visible in every new export, even
+  //    when the user's browser already has an older pkitaap-simple in
+  //    localStorage (the old || operator was keeping stale cached values). ──
+  next.classes        = seed.classes        || ["Class 9","Class 10","Class 11","Class 12"];
+  next.streams        = seed.streams        || ["Science","Commerce","Arts"];
+  next.boardsByState  = seed.boardsByState  || {};
+  next.mediumsByState = seed.mediumsByState || {};
+  next.categories     = seed.categories     || [];
+  next.locations      = seed.locations      || [];
+  next.books = (seed.books || []).map(item => {
     const normalized = { image:"", author:"", ...item, board: item.board || "" };
     if (normalized.type === "school" && !normalized.state && normalized.board) {
       const wanted = _normStateBoard(normalized.board);
@@ -2164,27 +5272,116 @@ function normalizeState(input) {
     }
     return normalized;
   });
+  // User-generated listings are preserved from localStorage
+  next.listings = next.listings || seed.listings || [];
   return next;
 }
 function save() { localStorage.setItem("pkitaap-simple", JSON.stringify(state)); }
 function toast(text) { const el = document.querySelector("#toast"); el.textContent = text; el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 1800); }
-function book() { return state.books.find(item => item.id === selectedBookId) || null; }
-let selectedState = "";
-function classList() {
-  if (Array.isArray(state.classes) && state.classes.length) return state.classes;
-  const fromSeed = Array.isArray(seed.classes) ? seed.classes.filter(Boolean) : [];
-  if (fromSeed.length) return fromSeed;
-  const fromBooks = [...new Set((state.books || seed.books || []).map(b => b && b.className).filter(Boolean))];
-  return fromBooks.length ? fromBooks : ["Class 9","Class 10","Class 11","Class 12"];
+function closeConfirm() {
+  const modal = document.getElementById('userConfirmModal');
+  if (modal) {
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+  }
 }
-function streamList() { return (Array.isArray(state.streams) && state.streams.length) ? state.streams : ["Science","Commerce","Arts"]; }
+function showConfirm(msg, cb, btnLabel) {
+  const modal = document.getElementById('userConfirmModal');
+  const text = document.getElementById('userConfirmMsg');
+  const ok = document.getElementById('userConfirmOk');
+  const cancel = document.getElementById('userConfirmCancel');
+  if (!modal || !text || !ok || !cancel) {
+    if (window.confirm(msg || 'Are you sure?') && typeof cb === 'function') cb();
+    return;
+  }
+  text.textContent = msg || 'Are you sure?';
+  ok.textContent = btnLabel || 'Delete';
+  ok.onclick = async () => {
+    const action = cb;
+    closeConfirm();
+    if (typeof action === 'function') {
+      try { await action(); }
+      catch(e) {
+        console.warn('[PKITAAP] Confirm action failed:', e);
+        toast('Could not delete. Please try again.');
+      }
+    }
+  };
+  cancel.onclick = closeConfirm;
+  modal.onclick = e => { if (e.target === modal) closeConfirm(); };
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden', 'false');
+}
+function _normCatalogText(value) {
+  return String(value || '').trim().toLowerCase();
+}
+function _uniqueTextList(values) {
+  const seen = new Set();
+  const out = [];
+  (values || []).forEach(value => {
+    const text = String(value || '').trim();
+    const key = text.toLowerCase();
+    if (text && !seen.has(key)) { seen.add(key); out.push(text); }
+  });
+  return out;
+}
+function _listingToCatalogBook(l) {
+  if (!l || !(l.title || l.bookTitle) || !l.className) return null;
+  return {
+    id: l.bookId || ('custom_' + (l.id || Date.now())),
+    type: l.type || (l.className === 'General' ? 'general' : 'school'),
+    state: l.state || '',
+    className: l.className || '',
+    board: l.board || '',
+    stream: l.stream || '',
+    title: l.title || l.bookTitle || 'Book',
+    price: parseInt(l.price || l.adminPrice || 0) || 0,
+    author: l.author || '',
+    image: l.image || '',
+    fromListing: true
+  };
+}
+function _catalogBooks() {
+  const out = [];
+  const seenIds = new Set();
+  const seenCustom = new Set();
+  (state.books || []).forEach(item => {
+    if (!item || !item.id) return;
+    seenIds.add(String(item.id));
+    out.push(item);
+  });
+  (state.listings || []).forEach(listing => {
+    const item = _listingToCatalogBook(listing);
+    if (!item) return;
+    if (item.id && seenIds.has(String(item.id))) return;
+    const customKey = [item.title,item.className,item.board,item.stream,item.state].map(_normCatalogText).join('|');
+    if (seenCustom.has(customKey)) return;
+    seenCustom.add(customKey);
+    out.push(item);
+  });
+  return out;
+}
+function book() { return _catalogBooks().find(item => item.id === selectedBookId) || null; }
+let selectedState = "";
+const classes = state.classes || ["Class 9","Class 10","Class 11","Class 12"];
+const streams  = state.streams || ["Science","Commerce","Arts"];
 function getBoardsForState(st) {
   const wanted = String(st || '').trim().toLowerCase();
   const key = Object.keys(state.boardsByState || {}).find(k => String(k || '').trim().toLowerCase() === wanted);
-  return key ? ((state.boardsByState || {})[key] || []) : [];
+  const base = key ? ((state.boardsByState || {})[key] || []) : [];
+  const listingBoards = (state.listings || [])
+    .filter(l => !st || _normCatalogText(l.state) === wanted)
+    .map(l => l.board);
+  return _uniqueTextList(base.concat(listingBoards));
 }
 function getMediumsForState(st) {
-  return (state.mediumsByState||{})[st] || [];
+  const wanted = String(st || '').trim().toLowerCase();
+  const key = Object.keys(state.mediumsByState || {}).find(k => String(k || '').trim().toLowerCase() === wanted);
+  const base = key ? ((state.mediumsByState || {})[key] || []) : [];
+  const listingMediums = (state.listings || [])
+    .filter(l => !st || _normCatalogText(l.state) === wanted)
+    .map(l => l.medium);
+  return _uniqueTextList(base.concat(listingMediums));
 }
 function _normStateBoard(value) {
   return String(value || '').trim().toLowerCase();
@@ -2211,17 +5408,18 @@ function _schoolBookMatchesSelectedState(item) {
   return _normStateBoard(_bookStateForFilter(item)) === _normStateBoard(selectedState);
 }
 function shownBooks() {
+  const catalog = _catalogBooks();
   if (selectedCategory) {
-    return state.books.filter(item => item.categoryId === selectedCategory && _schoolBookMatchesSelectedState(item));
+    return catalog.filter(item => item.categoryId === selectedCategory && _schoolBookMatchesSelectedState(item));
   }
   if (search) {
-    return state.books.filter(item => {
+    return catalog.filter(item => {
       if (item.type === "general" && !state.settings.general) return false;
       if (!_schoolBookMatchesSelectedState(item)) return false;
       return [item.title,item.className,item.board,item.stream,item.author].join(" ").toLowerCase().includes(search.toLowerCase());
     });
   }
-  return state.books.filter(item => {
+  return catalog.filter(item => {
     if (item.type === "general" && !state.settings.general) return false;
     if (!_schoolBookMatchesSelectedState(item)) return false;
     if (item.className !== selectedClass) return false;
@@ -2239,12 +5437,16 @@ function imageForClass(name) { return state.classThumbs?.[name] || placeholder(n
 function imageForBook(item)  { return item.image || placeholder(item.title); }
 function bookMeta(item)      { return [item.className,item.board,item.stream].filter(Boolean).join(" / "); }
 function priceText(item)     { return '&#8377;' + item.price; }
+function bookCardHtml(item) {
+  const active = item.id === selectedBookId;
+  return '<button class="book-card ' + (active ? "active" : "") + '" type="button" data-id="' + item.id + '"' + (active ? ' aria-current="true"' : '') + '><img src="' + imageForBook(item) + '" alt="' + item.title + '"/><div class="card-info"><strong>' + item.title + '</strong><small>' + bookMeta(item) + '</small><span class="price">' + priceText(item) + '</span></div></button>';
+}
 function renderClasses() {
-  const classes = classList();
   const all = state.settings.general ? [...classes,"General"] : classes;
   const grid = document.querySelector("#classGrid");
   grid.style.display = catalogStep === "classes" ? "grid" : "none";
-  grid.innerHTML = all.map(name => '<button class="class-card ' + (name===selectedClass?"active":"") + '" data-class="' + name + '"><img src="' + imageForClass(name) + '" alt="' + name + '"/><div class="card-info"><strong>' + name + '</strong><span>' + state.books.filter(b=>b.className===name&&(b.type!=="general"||state.settings.general)).length + ' books</span></div></button>').join("");
+  const catalog = _catalogBooks();
+  grid.innerHTML = all.map(name => '<button class="class-card ' + (name===selectedClass?"active":"") + '" data-class="' + name + '"><img src="' + imageForClass(name) + '" alt="' + name + '"/><div class="card-info"><strong>' + name + '</strong><span>' + catalog.filter(b=>b.className===name&&(b.type!=="general"||state.settings.general)).length + ' books</span></div></button>').join("");
   document.querySelectorAll(".class-card").forEach(card => {
     card.onclick = () => { if(!requireLogin()) return; triggerAdMob("classClick"); selectedClass = card.dataset.class; selectedBoard=""; selectedStream=""; selectedBookId=""; selectedCategory=""; catalogStep = selectedClass === "General" ? "books" : "boards"; const _ml=document.querySelector("#matchList"); if(_ml) _ml.innerHTML=""; render(); };
   });
@@ -2287,23 +5489,68 @@ function renderStreams() {
   if (!show) { grid.innerHTML = ""; return; }
   // Only show streams that have at least one subject for this class+board
   const activeStreams = [...new Set(
-    state.books
+    _catalogBooks()
       .filter(b => b.type === "school" && _schoolBookMatchesSelectedState(b) && b.className === selectedClass &&
         (b.board||"").toLowerCase() === (selectedBoard||"").toLowerCase() && b.stream)
       .map(b => b.stream)
   )];
   // Fall back to all streams if none found (safety)
-  const toShow = activeStreams.length ? activeStreams : streamList();
+  const toShow = activeStreams.length ? activeStreams : streams;
   grid.innerHTML = toShow.map(name => '<button class="stream-card" data-stream="' + name + '"><strong>' + name + '</strong></button>').join("");
   document.querySelectorAll("[data-stream]").forEach(card => { card.onclick = () => { selectedStream=card.dataset.stream; selectedBookId=""; catalogStep="books"; render(); }; });
 }
 function renderBooks() {
   const items = shownBooks();
   const grid  = document.querySelector("#bookGrid");
+  const selected = selectedBookId ? book() : null;
+  const visibleItems = selected ? [selected] : items;
+  const isFocused = !!selected;
   grid.style.display = catalogStep === "books" ? "grid" : "none";
-  grid.innerHTML = items.length ? items.map(item => '<button class="book-card ' + (item.id===selectedBookId?"active":"") + '" data-id="' + item.id + '"><img src="' + imageForBook(item) + '" alt="' + item.title + '"/><div class="card-info"><strong>' + item.title + '</strong><small>' + bookMeta(item) + '</small><span class="price">' + priceText(item) + '</span></div></button>').join("") : '<div>No books found</div>';
-  document.querySelectorAll(".book-card").forEach(card => { card.onclick = () => { triggerAdMob("subjectClick"); selectedBookId=card.dataset.id; const _ml=document.querySelector("#matchList"); if(_ml) _ml.innerHTML=""; render(); }; });
+  grid.classList.toggle("focused", catalogStep === "books" && isFocused);
+  grid.innerHTML = visibleItems.length ? visibleItems.map(bookCardHtml).join("") : '<div>No books found</div>';
+  grid.querySelectorAll(".book-card").forEach(card => {
+    card.onclick = () => {
+      if (card.dataset.id === selectedBookId) return;
+      triggerAdMob("subjectClick");
+      selectedBookId = card.dataset.id;
+      const _ml = document.querySelector("#matchList");
+      if (_ml) _ml.innerHTML = "";
+      render();
+      // Auto-find sellers as soon as a subject is tapped — no extra button press needed
+      _autoFindSellers();
+    };
+  });
 }
+
+// ── AUTO FIND SELLERS ─────────────────────────────────────────────
+// Called whenever the user selects a subject on the Buy page.
+// If the user's location is already filled in (from their profile),
+// we skip the manual "Find sellers" button and fire the search
+// automatically, then scroll the results into view.
+function _autoFindSellers() {
+  if (!window._isLoggedIn) return;  // guest — they still need to log in
+  // _prefillBuyFromProfile uses a chain of setTimeout(50ms) so we wait
+  // a little longer to be sure all dropdowns have cascaded into place.
+  setTimeout(function() {
+    const stateVal       = document.getElementById('buyState')?.value       || '';
+    const districtVal    = document.getElementById('buyDistrict')?.value    || '';
+    const subDistrictVal = document.getElementById('buySubDistrict')?.value || '';
+    const placeVal       = document.getElementById('buyPlace')?.value       || '';
+    const mediumVal      = document.getElementById('buyMedium')?.value      || '';
+    // Only auto-fire if the minimum required fields are already filled
+    if (stateVal && districtVal && subDistrictVal && placeVal && mediumVal) {
+      renderMatches();
+      // Scroll the match card into view so results are immediately visible
+      setTimeout(function() {
+        const mc = document.getElementById('matchCard');
+        if (mc) mc.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 250);
+    }
+    // If fields aren't filled yet (first-time / incomplete profile) the user
+    // still sees the form and can fill it manually — nothing changes for them.
+  }, 350);
+}
+// ─────────────────────────────────────────────────────────────────
 function renderSelected() {
   const b = book();
   const box = document.querySelector("#selectedBox");
@@ -2312,35 +5559,43 @@ function renderSelected() {
 }
 // ── Sell page catalog render (mirrors buy page) ───────────────
 let sellCatalogStep = "classes";
+let sellCustomMode = false;
 function renderSellCatalog() {
   const sellPage = document.getElementById('sellPage');
   if (!sellPage || !sellPage.classList.contains('active')) return;
   const sellSelectedCard = document.getElementById('sellSelectedCard');
+  const sellCustomCard   = document.getElementById('sellCustomBookCard');
   const sellFormCard     = document.getElementById('sellFormCard');
   const catalogTitle = document.getElementById('sellCatalogTitle');
   const backBtn = document.getElementById('sellBackBtn');
+  const customToggle = document.getElementById('sellCustomToggle');
+  const useCatalogBtn = document.getElementById('sellUseCatalogBtn');
   // Update title and back button
-  if (catalogTitle) catalogTitle.textContent = sellCatalogStep==='classes'?'Select a Book to Sell':sellCatalogStep==='boards'?'Select Board':sellCatalogStep==='streams'?'Select Stream':'Select Subject';
+  if (catalogTitle) catalogTitle.textContent = sellCustomMode ? 'Add Your Book' : sellCatalogStep==='classes'?'Select a Book to Sell':sellCatalogStep==='boards'?'Select Board':sellCatalogStep==='streams'?'Select Stream':'Select Subject';
   if (backBtn) backBtn.style.display = sellCatalogStep==='classes' ? 'none' : 'inline-block';
-  // Show selected + sell form only when a book is picked
-  if (sellSelectedCard) sellSelectedCard.style.display = (selectedBookId && sellCatalogStep==='books') ? '' : 'none';
-  if (sellFormCard) sellFormCard.style.display = (selectedBookId && sellCatalogStep==='books') ? '' : 'none';
+  if (customToggle) customToggle.onclick = () => { if(!requireLogin()) return; sellCustomMode=true; selectedBookId=''; _populateSellCustomOptions(); renderSellCatalog(); };
+  if (useCatalogBtn) useCatalogBtn.onclick = () => { sellCustomMode=false; renderSellCatalog(); };
+  if (sellCustomCard) sellCustomCard.style.display = sellCustomMode ? '' : 'none';
+  // Show selected + sell form when a catalog book is picked or custom mode is open.
+  if (sellSelectedCard) sellSelectedCard.style.display = (!sellCustomMode && selectedBookId && sellCatalogStep==='books') ? '' : 'none';
+  if (sellFormCard) sellFormCard.style.display = (sellCustomMode || (selectedBookId && sellCatalogStep==='books')) ? '' : 'none';
+  if (sellCustomMode) _populateSellCustomOptions();
   updateSellPriceControls();
   // Render class grid
   const cg = document.getElementById('sellClassGrid');
   if (cg) {
-    if (sellCatalogStep === 'classes') {
-      const classes = classList();
+    if (!sellCustomMode && sellCatalogStep === 'classes') {
       const all = state.settings.general ? [...classes,'General'] : classes;
       cg.style.display = 'grid';
-      cg.innerHTML = all.map(name => '<button class="class-card" data-sellclass="' + name + '"><img src="' + imageForClass(name) + '" alt="' + name + '"/><div class="card-info"><strong>' + name + '</strong><span>' + state.books.filter(b=>b.className===name&&(b.type!=="general"||state.settings.general)).length + ' books</span></div></button>').join('');
-      cg.querySelectorAll('[data-sellclass]').forEach(card => { card.onclick = () => { triggerAdMob("classClick"); selectedClass=card.dataset.sellclass; selectedBoard=''; selectedStream=''; selectedBookId=''; sellCatalogStep=selectedClass==='General'?'books':'boards'; renderSellCatalog(); }; });
+      const catalog = _catalogBooks();
+      cg.innerHTML = all.map(name => '<button class="class-card" data-sellclass="' + name + '"><img src="' + imageForClass(name) + '" alt="' + name + '"/><div class="card-info"><strong>' + name + '</strong><span>' + catalog.filter(b=>b.className===name&&(b.type!=="general"||state.settings.general)).length + ' books</span></div></button>').join('');
+      cg.querySelectorAll('[data-sellclass]').forEach(card => { card.onclick = () => { triggerAdMob("classClick"); sellCustomMode=false; selectedClass=card.dataset.sellclass; selectedBoard=''; selectedStream=''; selectedBookId=''; sellCatalogStep=selectedClass==='General'?'books':'boards'; renderSellCatalog(); }; });
     } else { cg.style.display='none'; cg.innerHTML=''; }
   }
   // Render board grid
   const bg = document.getElementById('sellBoardGrid');
   if (bg) {
-    if (sellCatalogStep === 'boards') {
+    if (!sellCustomMode && sellCatalogStep === 'boards') {
       bg.style.display = 'grid';
       if (!selectedState) { bg.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:24px;color:#888;font-weight:700;font-size:14px;">Please select your state above to see boards.</div>'; }
       else {
@@ -2356,9 +5611,9 @@ function renderSellCatalog() {
   // Render stream grid
   const sg = document.getElementById('sellStreamGrid');
   if (sg) {
-    if (sellCatalogStep === 'streams') {
+    if (!sellCustomMode && sellCatalogStep === 'streams') {
       sg.style.display='grid';
-      const activeStreams=[...new Set(state.books.filter(b=>b.type==='school'&&_schoolBookMatchesSelectedState(b)&&b.className===selectedClass&&(b.board||'').toLowerCase()===(selectedBoard||'').toLowerCase()&&b.stream).map(b=>b.stream))];
+      const activeStreams=[...new Set(_catalogBooks().filter(b=>b.type==='school'&&_schoolBookMatchesSelectedState(b)&&b.className===selectedClass&&(b.board||'').toLowerCase()===(selectedBoard||'').toLowerCase()&&b.stream).map(b=>b.stream))];
       const toShow=activeStreams.length?activeStreams:streams;
       sg.innerHTML=toShow.map(name=>'<button class="stream-card" data-sellstream="'+name+'"><strong>'+name+'</strong></button>').join('');
       sg.querySelectorAll('[data-sellstream]').forEach(card=>{card.onclick=()=>{selectedStream=card.dataset.sellstream;selectedBookId='';sellCatalogStep='books';renderSellCatalog();};});
@@ -2367,27 +5622,110 @@ function renderSellCatalog() {
   // Render book grid
   const bkg = document.getElementById('sellBookGrid');
   if (bkg) {
-    if (sellCatalogStep === 'books') {
+    if (!sellCustomMode && sellCatalogStep === 'books') {
       bkg.style.display='grid';
       const items=shownBooks();
       bkg.innerHTML=items.length?items.map(item=>'<button class="book-card '+(item.id===selectedBookId?'active':'')+'" data-sellid="'+item.id+'"><img src="'+imageForBook(item)+'" alt="'+item.title+'"/><div class="card-info"><strong>'+item.title+'</strong><small>'+bookMeta(item)+'</small><span class="price">'+priceText(item)+'</span></div></button>').join(''):'<div>No books found</div>';
-      bkg.querySelectorAll('[data-sellid]').forEach(card=>{card.onclick=()=>{triggerAdMob("subjectClick");selectedBookId=card.dataset.sellid;renderSellCatalog();renderSelected();};});
+      bkg.querySelectorAll('[data-sellid]').forEach(card=>{card.onclick=()=>{triggerAdMob("subjectClick");sellCustomMode=false;selectedBookId=card.dataset.sellid;const price=document.getElementById('sellPrice');if(price)price.value='';renderSellCatalog();renderSelected();};});
     } else { bkg.style.display='none'; }
   }
 }
+function _fillDatalist(id, values) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = _uniqueTextList(values).map(v => '<option value="' + _acEsc(v) + '"></option>').join('');
+}
+function _populateSellCustomOptions() {
+  const cls = document.getElementById('sellCustomClass');
+  if (cls) {
+    const current = cls.value;
+    const all = state.settings.general ? [...classes,'General'] : classes;
+    cls.innerHTML = '<option value="">Select Class</option>' + all.map(c => '<option value="' + _acEsc(c) + '">' + _acEsc(c) + '</option>').join('');
+    if (current) cls.value = current;
+  }
+  const stateVal = document.getElementById('sellState')?.value || selectedState || '';
+  _fillDatalist('sellCustomBoardOptions', getBoardsForState(stateVal));
+  _fillDatalist('sellCustomStreamOptions', streams);
+  _fillDatalist('sellCustomMediumOptions', getMediumsForState(stateVal));
+  updateSellCustomStreamVisibility();
+}
+function updateSellCustomStreamVisibility() {
+  const cls = document.getElementById('sellCustomClass')?.value || '';
+  const wrap = document.getElementById('sellCustomStreamWrap');
+  const needsStream = cls === 'Class 11' || cls === 'Class 12';
+  if (wrap) wrap.style.display = needsStream ? '' : 'none';
+  if (!needsStream) {
+    const stream = document.getElementById('sellCustomStream');
+    if (stream) stream.value = '';
+  }
+}
+function _sellMediumValue() {
+  return (document.getElementById('sellCustomMedium')?.value || document.getElementById('sellMedium')?.value || '').trim();
+}
+function _collectCustomSellBook() {
+  const title = (document.getElementById('sellCustomTitle')?.value || '').trim();
+  const className = (document.getElementById('sellCustomClass')?.value || '').trim();
+  const board = (document.getElementById('sellCustomBoard')?.value || '').trim();
+  const stream = (document.getElementById('sellCustomStream')?.value || '').trim();
+  const author = (document.getElementById('sellCustomAuthor')?.value || '').trim();
+  const image = (document.getElementById('sellCustomImage')?.value || '').trim();
+  if (!title) { toast('Please enter the book name'); return null; }
+  if (!className) { toast('Please select the class'); return null; }
+  if (className !== 'General' && !board) { toast('Please enter the board'); return null; }
+  if ((className === 'Class 11' || className === 'Class 12') && !stream) { toast('Please enter the stream'); return null; }
+  const id = 'custom_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+  return {
+    id,
+    type: className === 'General' ? 'general' : 'school',
+    state: document.getElementById('sellState')?.value || selectedState || '',
+    className,
+    board,
+    stream,
+    title,
+    price: parseInt(document.getElementById('sellPrice')?.value || '') || 0,
+    author,
+    image,
+    customBook: true
+  };
+}
+function _rememberUserCatalogValues(customBook, medium, stateName) {
+  const st = stateName || selectedState || customBook?.state || '';
+  if (!st) return;
+  state.boardsByState = state.boardsByState || {};
+  state.mediumsByState = state.mediumsByState || {};
+  state.boardsByState[st] = _uniqueTextList((state.boardsByState[st] || []).concat(customBook?.board || []));
+  state.mediumsByState[st] = _uniqueTextList((state.mediumsByState[st] || []).concat(medium || []));
+}
+function _resetCustomSellBookForm() {
+  ['sellCustomTitle','sellCustomBoard','sellCustomStream','sellCustomAuthor','sellCustomImage','sellCustomMedium','sellPrice'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+}
 function updateSellPriceControls() {
-  const b = book();
+  const b = sellCustomMode ? null : book();
   const adminPrice = parseInt(b?.price) || 0;
+  const allowSellerPrice = state.settings.allowUserPrice === true;
+  const needsSellerPrice = allowSellerPrice || sellCustomMode;
+  const priceWrap = document.getElementById('sellPriceWrap');
+  const fixedInfo = document.getElementById('sellFixedPriceInfo');
   const fixedText = document.getElementById('sellFixedPriceText');
-  if (fixedText) fixedText.textContent = b ? ('₹' + adminPrice + ' (admin fixed price)') : 'Select a book';
+  if (priceWrap) priceWrap.style.display = needsSellerPrice ? '' : 'none';
+  if (fixedInfo) fixedInfo.style.display = needsSellerPrice ? 'none' : '';
+  if (fixedText) fixedText.textContent = b ? ('Rs ' + adminPrice + ' (admin fixed price)') : 'Select a book';
   const inp = document.getElementById('sellPrice');
   const help = document.getElementById('sellPriceHelp');
   if (inp) {
-    inp.min = adminPrice ? '1' : '';
-    inp.max = adminPrice ? String(adminPrice) : '';
-    inp.placeholder = adminPrice ? ('Optional, max ₹' + adminPrice) : 'Select a book first';
+    inp.required = needsSellerPrice;
+    inp.min = '1';
+    inp.removeAttribute('max');
+    inp.placeholder = sellCustomMode ? 'Enter price for your book' : (allowSellerPrice ? 'Enter your selling price' : 'Admin fixed price is used');
   }
-  if (help) help.textContent = adminPrice ? ('Optional. You can enter ₹1 to ₹' + adminPrice + ', or leave blank to use ₹' + adminPrice + '.') : 'Select a book first.';
+  if (help) {
+    if (sellCustomMode) help.textContent = 'Required for a new book listing.';
+    else if (allowSellerPrice) help.textContent = adminPrice ? ('Required. Admin suggested price is Rs ' + adminPrice + ', but you can enter your own selling price.') : 'Required. Enter your selling price.';
+    else help.textContent = '';
+  }
 }
 // ── Account Details helpers ────────────────────────────────────
 function updateAccDistricts() {
@@ -2606,15 +5944,72 @@ async function _syncSellerNameInListings(uid, newName) {
   // 2. Update Firebase listings so other users see the new name when they search
   if (!_db) return;
   try {
-    const snap = await _db.collection('listings').where('userId', '==', uid).get();
+    const snaps = await Promise.all([
+      _db.collection('listings').where('userId', '==', uid).get(),
+      _db.collection('listings').where('sellerUserId', '==', uid).get()
+    ]);
+    const batch = _db.batch();
+    const seen = new Set();
+    snaps.forEach(snap => snap.docs.forEach(doc => {
+      if (seen.has(doc.ref.path)) return;
+      seen.add(doc.ref.path);
+      batch.update(doc.ref, { seller: newName, sellerName: newName });
+    }));
+    if (seen.size) await batch.commit();
+  } catch(e) {
+    console.warn('[PKITAAP] Could not sync seller name in listings:', e);
+  }
+}
+async function _fetchCurrentUserName(uid, fallback) {
+  uid = String(uid || '').trim();
+  if (!_db || !uid) return fallback || '';
+  try {
+    const doc = await _db.collection('users').doc(uid).get();
+    if (!doc.exists) return '';
+    const data = doc.data() || {};
+    return String(data.name || data.fullName || data.displayName || fallback || '').trim();
+  } catch(e) {
+    return fallback || '';
+  }
+}
+async function _syncUserNameInChats(uid, newName) {
+  uid = String(uid || '').trim();
+  newName = String(newName || '').trim();
+  if (!uid || !newName) return;
+  let localChanged = false;
+  const localChats = _getLocalChats();
+  localChats.forEach(chat => {
+    if (String(chat.buyerUid || chat.buyerId || '') === uid && chat.buyerName !== newName) {
+      chat.buyerName = newName;
+      localChanged = true;
+    }
+    if (String(chat.sellerUid || chat.sellerId || '') === uid && chat.sellerName !== newName) {
+      chat.sellerName = newName;
+      localChanged = true;
+    }
+    (Array.isArray(chat.messages) ? chat.messages : []).forEach(msg => {
+      if (String(msg.senderUid || msg.senderId || '') === uid && msg.senderName !== newName) {
+        msg.senderName = newName;
+        localChanged = true;
+      }
+    });
+  });
+  if (localChanged) _saveLocalChats(localChats);
+  if (!_db) return;
+  try {
+    const snap = await _db.collection('chats').where('participants', 'array-contains', uid).get();
     if (snap.empty) return;
     const batch = _db.batch();
     snap.docs.forEach(doc => {
-      batch.update(doc.ref, { seller: newName, sellerName: newName });
+      const data = doc.data() || {};
+      const update = {};
+      if (String(data.buyerUid || data.buyerId || '') === uid) update.buyerName = newName;
+      if (String(data.sellerUid || data.sellerId || '') === uid) update.sellerName = newName;
+      if (Object.keys(update).length) batch.set(doc.ref, update, { merge: true });
     });
     await batch.commit();
   } catch(e) {
-    console.warn('[PKITAAP] Could not sync seller name in listings:', e);
+    console.warn('[PKITAAP] Could not sync user name in chats:', e);
   }
 }
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2715,6 +6110,7 @@ async function saveAccountDetails() {
     const _sellerUid = (window._currentUser && (window._currentUser.uid || window._currentUser.id)) || u.uid || '';
     if (_sellerUid && _newSellerName && _newSellerName !== _oldSellerName) {
       _syncSellerNameInListings(_sellerUid, _newSellerName);
+      _syncUserNameInChats(_sellerUid, _newSellerName);
     }
   }).catch(() => { _captureAccountSnapshotAndLock(); toast('Saved locally.'); });
 }
@@ -2787,18 +6183,31 @@ function renderMatches(bookId) {
   if (_db) {
     _db.collection('listings').get().then(async snap => {
       let changed = false;
+      const remoteListings = snap.docs.map(doc => Object.assign({id:doc.id}, doc.data()));
+      const remoteIds = new Set(remoteListings.map(l => String(l.id || '').trim()).filter(Boolean));
+      let previousRemoteIds = [];
+      try { previousRemoteIds = JSON.parse(localStorage.getItem('pkitaap_remote_listing_ids_v1') || '[]'); } catch(e) { previousRemoteIds = []; }
+      const previousRemoteSet = new Set((previousRemoteIds || []).map(String));
+      const beforePrune = (state.listings || []).length;
+      state.listings = (state.listings || []).filter(l => {
+        const id = String(l.id || '').trim();
+        return !id || !previousRemoteSet.has(id) || remoteIds.has(id);
+      });
+      if (state.listings.length !== beforePrune) changed = true;
       snap.docs.forEach(doc => {
         const data = Object.assign({id:doc.id}, doc.data());
         const idx = (state.listings || []).findIndex(x => String(x.id) === String(data.id));
         if (idx >= 0) state.listings[idx] = Object.assign({}, state.listings[idx], data);
         else { state.listings.push(data); changed = true; }
       });
+      try { localStorage.setItem('pkitaap_remote_listing_ids_v1', JSON.stringify(Array.from(remoteIds))); } catch(e) {}
       if (changed) save();
       // FIX: fetch each seller's CURRENT name live from /users so any
       // profile name change is reflected immediately without re-listing
       const sellerNameMap = {};
+      const removedSellerUids = {};
       try {
-        const matchedListings = (state.listings || []).filter(l => _selectedBookMatchesListing(l, bId));
+        const matchedListings = remoteListings.filter(l => _selectedBookMatchesListing(l, bId));
         const uniqueUids = [...new Set(
           matchedListings
             .map(l => String(l.userId || l.sellerUserId || '').trim())
@@ -2809,11 +6218,12 @@ function renderMatches(bookId) {
             try {
               const uDoc = await _db.collection('users').doc(uid).get();
               if (uDoc.exists && uDoc.data().name) sellerNameMap[uid] = uDoc.data().name;
+              if (!uDoc.exists) removedSellerUids[uid] = true;
             } catch(e) {}
           }));
         }
       } catch(e) {}
-      _renderMatchList(bId, query, sellerNameMap);
+      _renderMatchList(bId, query, sellerNameMap, removedSellerUids, remoteListings);
     }).catch(e=>{
       console.warn('[PKITAAP] Could not load listings:', e);
       _renderMatchList(bId, query);
@@ -2833,7 +6243,7 @@ function _locScore(l, q) {
   return score;
 }
 function _selectedBookMatchesListing(l, bId) {
-  const selected = state.books.find(b => String(b.id) === String(bId)) || null;
+  const selected = _catalogBooks().find(b => String(b.id) === String(bId)) || null;
   if (!l) return false;
   if (String(l.bookId || '') === String(bId || '')) return true;
   if (!selected) return false;
@@ -2843,11 +6253,15 @@ function _selectedBookMatchesListing(l, bId) {
   const sameStream = !selected.stream || !l.stream || _sameText(l.stream, selected.stream);
   return sameTitle && sameClass && sameBoard && sameStream;
 }
-function _renderMatchList(bId, query, sellerNameMap) {
+function _renderMatchList(bId, query, sellerNameMap, removedSellerUids, sourceListings) {
   const list = document.querySelector("#matchList");
   if (!list) return;
-  const matches = (state.listings || [])
+  const matches = (sourceListings || state.listings || [])
     .filter(l => _selectedBookMatchesListing(l, bId))
+    .filter(l => {
+      const uid = String(l.userId || l.sellerUserId || '').trim();
+      return !(removedSellerUids && uid && removedSellerUids[uid]);
+    })
     .filter(l => !query.medium || !l.medium || _sameText(l.medium, query.medium))
     .map(l => Object.assign({_score:_locScore(l, query)}, l))
     .sort((a,b) => (b._score - a._score) || String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
@@ -2855,7 +6269,7 @@ function _renderMatchList(bId, query, sellerNameMap) {
     const location = [l.place,l.subDistrict,l.district,l.state].filter(Boolean).join(', ');
     // FIX: prefer the live name fetched from /users over the stale stored name
     const lUid = String(l.userId || l.sellerUserId || '').trim();
-    const displayName = (sellerNameMap && lUid && sellerNameMap[lUid]) || l.seller || l.sellerName || 'Seller';
+    const displayName = (sellerNameMap && lUid && sellerNameMap[lUid]) || l.sellerName || l.seller || 'Seller';
     return '<div class="result-card"><strong>' + _acEsc(displayName) + '</strong>' +
       '<span>School/College: ' + _acEsc(l.school || 'Not added') + '</span>' +
       '<span>Medium: ' + _acEsc(l.medium || 'Not added') + '</span>' +
@@ -2883,7 +6297,7 @@ function _isMineListing(l) {
   return listingOwnerIds.some(id => myOwnerIds.includes(id));
 }
 function _listingBook(l) {
-  return state.books.find(b => b.id === l.bookId) || null;
+  return _catalogBooks().find(b => b.id === l.bookId) || null;
 }
 async function _loadMyListingsFromFirestore() {
   const u = window._currentUser;
@@ -2945,85 +6359,14 @@ async function removeMyListing(id) {
   toast('Listing removed.');
 }
 // ── Location helpers (State → District → Place → School) ──────────────────
-function _studentEsc(v){
-  return String(v == null ? '' : v).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-}
-function _studentNotes(){
-  const userState = String(window._currentUser?.state || '').trim().toLowerCase();
-  return (state.notes || []).filter(n => {
-    const noteState = String(n?.state || '').trim().toLowerCase();
-    return n && n.title && n.subject && (n.type === 'text' || n.type === 'pdf') && (!noteState || !userState || noteState === userState);
-  });
-}
-function _fillStudentNoteFilters(){
-  const notes = _studentNotes();
-  const clsSel = document.getElementById('studentNoteClass');
-  const boardSel = document.getElementById('studentNoteBoard');
-  const subjectSel = document.getElementById('studentNoteSubject');
-  if(!clsSel || !boardSel || !subjectSel) return;
-  const keep = { cls: clsSel.value, board: boardSel.value, subject: subjectSel.value };
-  const classes = [...new Set(notes.map(n=>n.cls).filter(Boolean))].sort();
-  const boards = [...new Set(notes.filter(n=>!keep.cls || n.cls===keep.cls).map(n=>n.board).filter(Boolean))].sort();
-  const subjects = [...new Set(notes.filter(n=>(!keep.cls || n.cls===keep.cls) && (!keep.board || n.board===keep.board)).map(n=>n.subject).filter(Boolean))].sort();
-  clsSel.innerHTML = '<option value="">All Classes</option>' + classes.map(v=>'<option value="'+_studentEsc(v)+'">'+_studentEsc(v)+'</option>').join('');
-  if(classes.includes(keep.cls)) clsSel.value = keep.cls;
-  boardSel.innerHTML = '<option value="">All Boards</option>' + boards.map(v=>'<option value="'+_studentEsc(v)+'">'+_studentEsc(v)+'</option>').join('');
-  if(boards.includes(keep.board)) boardSel.value = keep.board;
-  subjectSel.innerHTML = '<option value="">All Subjects</option>' + subjects.map(v=>'<option value="'+_studentEsc(v)+'">'+_studentEsc(v)+'</option>').join('');
-  if(subjects.includes(keep.subject)) subjectSel.value = keep.subject;
-}
-function renderStudentNotes(){
-  if(!window._isLoggedIn) { requireLogin(); return; }
-  _fillStudentNoteFilters();
-  const list = document.getElementById('studentNotesList');
-  if(!list) return;
-  const cls = document.getElementById('studentNoteClass')?.value || '';
-  const board = document.getElementById('studentNoteBoard')?.value || '';
-  const subject = document.getElementById('studentNoteSubject')?.value || '';
-  const q = (document.getElementById('studentNoteSearch')?.value || '').trim().toLowerCase();
-  const items = _studentNotes().filter(n =>
-    (!cls || n.cls === cls) &&
-    (!board || n.board === board) &&
-    (!subject || n.subject === subject) &&
-    (!q || [n.title,n.chapter,n.subject,n.cls,n.board].join(' ').toLowerCase().includes(q))
-  );
-  if(!items.length){
-    list.innerHTML = '<p style="color:#888;font-size:13px;font-weight:800;padding:8px 0;">No notes found for this filter.</p>';
-    return;
-  }
-  list.innerHTML = items.map(n => {
-    const meta = [n.cls,n.board,n.subject,n.chapter].filter(Boolean).join(' / ');
-    return '<button type="button" class="student-note-card" onclick="openStudentNote(\''+_studentEsc(n.id)+'\')">' +
-      '<strong>' + _studentEsc(n.title) + '</strong>' +
-      '<div class="student-note-meta">' + _studentEsc(meta) + '</div>' +
-      '<span class="student-note-badge">' + (n.type === 'pdf' ? 'PDF Note' : 'Text Note') + '</span>' +
-    '</button>';
-  }).join('');
-}
-function openStudentNote(id){
-  if(!window._isLoggedIn) { requireLogin(); return; }
-  const n = _studentNotes().find(x=>String(x.id)===String(id));
-  if(!n) return;
-  document.getElementById('studentNoteReaderTitle').textContent = n.title || 'Note';
-  document.getElementById('studentNoteReaderMeta').textContent = [n.cls,n.board,n.subject,n.chapter].filter(Boolean).join(' / ');
-  const body = document.getElementById('studentNoteReaderBody');
-  if(n.type === 'pdf'){
-    const src = encodeURI(String(n.pdfUrl || '')) + '#toolbar=0&navpanes=0&scrollbar=1';
-    body.innerHTML = '<iframe class="note-reader-pdf" sandbox="allow-scripts allow-same-origin" referrerpolicy="no-referrer" src="'+_studentEsc(src)+'" title="'+_studentEsc(n.title || 'PDF note')+'"></iframe><p style="color:#888;font-size:11px;font-weight:800;margin-top:8px;">PDF is view-only inside PKiTAAP.</p>';
-  } else {
-    body.innerHTML = '<div class="note-reader-text">' + _studentEsc(n.content || '') + '</div>';
-  }
-  document.getElementById('studentNoteReader')?.classList.add('open');
-}
-function closeStudentNote(){
-  document.getElementById('studentNoteReader')?.classList.remove('open');
-  const body = document.getElementById('studentNoteReaderBody');
-  if(body) body.innerHTML = '';
-}
 const CHAT_STORE_KEY = 'pkitaap_chats_v1';
+const CHAT_READ_STORE_KEY = 'pkitaap_chat_read_v1';
+const CHAT_HIDDEN_STORE_KEY = 'pkitaap_chat_hidden_v1';
 let _activeChatId = '';
 let _activeChatListenId = '';
 let _activeChatUnsub = null;
+let _myChatsListenUid = '';
+let _myChatsUnsub = null;
 function _myChatUid() {
   const u = window._currentUser || {};
   return String((_auth && _auth.currentUser && _auth.currentUser.uid) || u.uid || u.id || u.mobile || u.email || '').trim();
@@ -3037,6 +6380,52 @@ function _getLocalChats() {
 }
 function _saveLocalChats(chats) {
   try { localStorage.setItem(CHAT_STORE_KEY, JSON.stringify(chats || [])); } catch(e) {}
+}
+function _chatLastMs(chat) {
+  chat = chat || {};
+  const msgs = Array.isArray(chat.messages) ? chat.messages : [];
+  const last = msgs.length ? msgs[msgs.length - 1] : null;
+  return Number((last && last.createdAtMs) || chat.updatedAtMs || Date.parse(chat.updatedAt || chat.lastMessageAt || '') || 0) || 0;
+}
+function _chatReadKey() {
+  return CHAT_READ_STORE_KEY + '_' + (_myChatUid() || 'guest');
+}
+function _getChatReadMap() {
+  try { return JSON.parse(localStorage.getItem(_chatReadKey()) || '{}') || {}; } catch(e) { return {}; }
+}
+function _saveChatReadMap(map) {
+  try { localStorage.setItem(_chatReadKey(), JSON.stringify(map || {})); } catch(e) {}
+}
+function _getHiddenChatMap() {
+  try { return JSON.parse(localStorage.getItem(CHAT_HIDDEN_STORE_KEY) || '{}') || {}; } catch(e) { return {}; }
+}
+function _saveHiddenChatMap(map) {
+  try { localStorage.setItem(CHAT_HIDDEN_STORE_KEY, JSON.stringify(map || {})); } catch(e) {}
+}
+function _markChatRead(chatId) {
+  if (!chatId) return;
+  const chat = _getLocalChats().find(c => c.id === chatId);
+  const map = _getChatReadMap();
+  map[chatId] = Math.max(Date.now(), _chatLastMs(chat));
+  _saveChatReadMap(map);
+  _updateMessagesMenuBadge();
+}
+function _chatUnreadCount(chat, me) {
+  if (!chat || !me) return 0;
+  const readAt = Number(_getChatReadMap()[chat.id] || 0) || 0;
+  return (Array.isArray(chat.messages) ? chat.messages : []).filter(m => {
+    const sender = String(m.senderUid || m.senderId || '').trim();
+    const ms = Number(m.createdAtMs || Date.parse(m.createdAt || '')) || 0;
+    return sender && sender !== me && ms > readAt;
+  }).length;
+}
+function _updateMessagesMenuBadge() {
+  const btn = document.getElementById('menuMessages');
+  if (!btn) return;
+  const me = _myChatUid();
+  const hasUnread = _myChats().some(chat => _chatUnreadCount(chat, me) > 0);
+  btn.classList.toggle('has-unread', !!hasUnread);
+  btn.title = hasUnread ? 'Messages - new message' : 'Messages';
 }
 function _upsertLocalChat(chat) {
   const chats = _getLocalChats();
@@ -3094,14 +6483,16 @@ function _normalizeChatMessage(msg) {
     createdAtMs: msg.createdAtMs || Date.parse(createdAt) || Date.now()
   });
 }
-function _mergeChatMessages(chatId, messages) {
+function _mergeChatMessages(chatId, messages, replaceExisting) {
   const chats = _getLocalChats();
   const idx = chats.findIndex(c => c.id === chatId);
   if (idx < 0) return null;
   const byId = new Map();
-  (Array.isArray(chats[idx].messages) ? chats[idx].messages : []).forEach(m => {
-    if (m && m.id) byId.set(String(m.id), m);
-  });
+  if (!replaceExisting) {
+    (Array.isArray(chats[idx].messages) ? chats[idx].messages : []).forEach(m => {
+      if (m && m.id) byId.set(String(m.id), m);
+    });
+  }
   (Array.isArray(messages) ? messages : []).forEach(m => {
     m = _normalizeChatMessage(m);
     if (m && m.id) byId.set(String(m.id), m);
@@ -3113,8 +6504,15 @@ function _mergeChatMessages(chatId, messages) {
     chats[idx].lastMessage = last.text || '';
     chats[idx].lastMessageAt = last.createdAt || '';
     chats[idx].updatedAt = last.createdAt || chats[idx].updatedAt || '';
+    chats[idx].updatedAtMs = Number(last.createdAtMs || Date.parse(last.createdAt || '')) || chats[idx].updatedAtMs || Date.now();
+  } else if (replaceExisting) {
+    chats[idx].lastMessage = '';
+    chats[idx].lastMessageAt = '';
+    chats[idx].updatedAt = chats[idx].updatedAt || new Date().toISOString();
+    chats[idx].updatedAtMs = chats[idx].updatedAtMs || Date.now();
   }
   _saveLocalChats(chats);
+  _updateMessagesMenuBadge();
   return chats[idx];
 }
 function _chatIdFor(listing, buyerUid, sellerUidOverride) {
@@ -3188,12 +6586,76 @@ async function _loadChatMessagesFromFirestore(chat) {
   } catch(e) { console.warn('[PKITAAP] Chat messages load failed:', e); }
   return chat;
 }
+async function _refreshChatParticipantNames(chats) {
+  if (!_db || !Array.isArray(chats) || !chats.length) return;
+  const ids = [...new Set(chats.flatMap(c => [c.buyerUid || c.buyerId, c.sellerUid || c.sellerId]).map(v => String(v || '').trim()).filter(Boolean))];
+  const names = {};
+  await Promise.all(ids.map(async uid => {
+    const name = await _fetchCurrentUserName(uid, '');
+    if (name) names[uid] = name;
+  }));
+  await Promise.all(chats.map(async chat => {
+    let changed = false;
+    const buyerUid = String(chat.buyerUid || chat.buyerId || '').trim();
+    const sellerUid = String(chat.sellerUid || chat.sellerId || '').trim();
+    if (buyerUid && names[buyerUid] && chat.buyerName !== names[buyerUid]) {
+      chat.buyerName = names[buyerUid];
+      changed = true;
+    }
+    if (sellerUid && names[sellerUid] && chat.sellerName !== names[sellerUid]) {
+      chat.sellerName = names[sellerUid];
+      changed = true;
+    }
+    if (changed) {
+      _upsertLocalChat(chat);
+      await _saveChatToFirestore(chat);
+    }
+  }));
+}
 function _stopActiveChatListener() {
   if (_activeChatUnsub) {
     try { _activeChatUnsub(); } catch(e) {}
   }
   _activeChatUnsub = null;
   _activeChatListenId = '';
+}
+function _stopMyChatsWatcher() {
+  if (_myChatsUnsub) {
+    try { _myChatsUnsub(); } catch(e) {}
+  }
+  _myChatsUnsub = null;
+  _myChatsListenUid = '';
+}
+function _watchMyChatsForUnread() {
+  const me = _myChatUid();
+  if (!_db || !me || _myChatsListenUid === me) return;
+  _stopMyChatsWatcher();
+  _myChatsListenUid = me;
+  try {
+    _myChatsUnsub = _db.collection('chats').where('participants','array-contains',me).onSnapshot(async snap => {
+      const hidden = _getHiddenChatMap();
+      let hiddenChanged = false;
+      const remoteChats = [];
+      snap.docs.forEach(doc => {
+        const chat = Object.assign({ id: doc.id, messages: [] }, doc.data());
+        const hiddenAt = Number(hidden[chat.id] || 0) || 0;
+        const remoteMs = _chatLastMs(chat);
+        if (hiddenAt && remoteMs <= hiddenAt) return;
+        if (hiddenAt && remoteMs > hiddenAt) {
+          delete hidden[chat.id];
+          hiddenChanged = true;
+        }
+        remoteChats.push(_upsertLocalChat(chat));
+      });
+      if (hiddenChanged) _saveHiddenChatMap(hidden);
+      await Promise.all(remoteChats.map(_loadChatMessagesFromFirestore));
+      _updateMessagesMenuBadge();
+      if (document.getElementById('messagesPage')?.classList.contains('active')) renderMessages(true);
+    }, err => console.warn('[PKITAAP] Chat list listener failed:', err));
+  } catch(e) {
+    console.warn('[PKITAAP] Chat list listener setup failed:', e);
+    _stopMyChatsWatcher();
+  }
 }
 function _watchChatMessages(chatId) {
   if (!_db || !chatId || _activeChatListenId === chatId) return;
@@ -3202,7 +6664,7 @@ function _watchChatMessages(chatId) {
   try {
     _activeChatUnsub = _db.collection('chats').doc(chatId).collection('messages').orderBy('createdAt','asc').onSnapshot(snap => {
       const messages = snap.docs.map(doc => _normalizeChatMessage(Object.assign({ id: doc.id }, doc.data())));
-      _mergeChatMessages(chatId, messages);
+      _mergeChatMessages(chatId, messages, true);
       if (_activeChatId === chatId) openChat(chatId, true);
       renderMessages(true);
     }, err => console.warn('[PKITAAP] Chat listener failed:', err));
@@ -3217,19 +6679,33 @@ async function _loadMyChatsFromFirestore() {
   try {
     const snap = await _db.collection('chats').where('participants','array-contains',me).get();
     const remoteChats = [];
+    const hidden = _getHiddenChatMap();
+    let hiddenChanged = false;
     snap.docs.forEach(doc => {
       const chat = Object.assign({ id: doc.id, messages: [] }, doc.data());
+      const hiddenAt = Number(hidden[chat.id] || 0) || 0;
+      const remoteMs = _chatLastMs(chat);
+      if (hiddenAt && remoteMs <= hiddenAt) return;
+      if (hiddenAt && remoteMs > hiddenAt) {
+        delete hidden[chat.id];
+        hiddenChanged = true;
+      }
       remoteChats.push(_upsertLocalChat(chat));
     });
+    if (hiddenChanged) _saveHiddenChatMap(hidden);
+    await _refreshChatParticipantNames(remoteChats);
     await Promise.all(remoteChats.map(_loadChatMessagesFromFirestore));
   } catch(e) { console.warn('[PKITAAP] Chats load failed:', e); }
+  _updateMessagesMenuBadge();
   return _getLocalChats();
 }
 function _myChats() {
   const me = _myChatUid();
+  const hidden = _getHiddenChatMap();
   return _getLocalChats()
     .filter(c => !me || (Array.isArray(c.participants) && c.participants.includes(me)))
-    .sort((a,b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
+    .filter(c => !hidden[c.id])
+    .sort((a,b) => _chatLastMs(b) - _chatLastMs(a));
 }
 function _showMessagesPage() {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -3258,7 +6734,14 @@ async function startListingChat(listingId) {
   const me = _myChatUid();
   const sellerUid = await _resolveSellerUidForListing(listing);
   if (!me || !sellerUid) { toast('Could not open chat for this seller.'); return; }
+  const sellerName = await _fetchCurrentUserName(sellerUid, listing.sellerName || listing.seller || 'Seller');
+  if (!sellerName) { toast('This seller profile is no longer available.'); return; }
   const chatId = _chatIdFor(listing, me, sellerUid);
+  const hidden = _getHiddenChatMap();
+  if (hidden[chatId]) {
+    delete hidden[chatId];
+    _saveHiddenChatMap(hidden);
+  }
   const existing = _getLocalChats().find(c => c.id === chatId) || {};
   const bookTitle = listing.title || listing.bookTitle || 'book';
   const chat = Object.assign({}, existing, {
@@ -3270,7 +6753,7 @@ async function startListingChat(listingId) {
     buyerUid: me,
     sellerUid: sellerUid,
     buyerName: window._currentUser?.name || 'Buyer',
-    sellerName: listing.sellerName || listing.seller || 'Seller',
+    sellerName: sellerName,
     updatedAt: new Date().toISOString(),
     messages: Array.isArray(existing.messages) ? existing.messages : []
   });
@@ -3283,6 +6766,23 @@ async function startListingChat(listingId) {
   const input = document.getElementById('messageInput');
   if (input && !input.value) input.value = 'Hi, I found your ' + bookTitle + ' on PKiTAAP. Is it still available?';
   _autosizeMessageInput();
+}
+function deleteChatForMe(chatId) {
+  if (!chatId) return;
+  showConfirm('Are you sure you want to delete this conversation from your messages?', () => {
+    const hidden = _getHiddenChatMap();
+    const chat = _getLocalChats().find(c => c.id === chatId);
+    hidden[chatId] = Math.max(Date.now(), _chatLastMs(chat));
+    _saveHiddenChatMap(hidden);
+    _saveLocalChats(_getLocalChats().filter(c => c.id !== chatId));
+    if (_activeChatId === chatId) {
+      _activeChatId = '';
+      _showMessageListView();
+    }
+    renderMessages(true);
+    _updateMessagesMenuBadge();
+    toast('Conversation deleted from your messages.');
+  }, 'Delete');
 }
 async function renderMessages(skipFetch) {
   if (!window._isLoggedIn) { requireLogin(); return; }
@@ -3298,23 +6798,36 @@ async function renderMessages(skipFetch) {
     const body = document.getElementById('messageChatBody');
     if (body) body.innerHTML = '<p style="color:#64748b;font-size:13px;font-weight:800;padding:8px 0;">Open a seller result and tap Message Seller.</p>';
     _showMessageListView();
+    _updateMessagesMenuBadge();
     return;
   }
   list.innerHTML = chats.map(c => {
     const otherName = c.sellerUid === me ? (c.buyerName || 'Buyer') : (c.sellerName || 'Seller');
     const msgs = Array.isArray(c.messages) ? c.messages : [];
     const last = msgs.length ? msgs[msgs.length - 1].text : (c.lastMessage || 'No messages yet');
+    const unread = _chatUnreadCount(c, me);
     const active = c.id === _activeChatId ? ' active' : '';
-    return '<div class="thread-item' + active + '" role="button" data-open-chat="' + _acEsc(c.id) + '">' +
-      '<strong>' + _acEsc(otherName) + '</strong>' +
+    const unreadClass = unread ? ' unread' : '';
+    return '<div class="thread-item' + active + unreadClass + '" role="button" data-open-chat="' + _acEsc(c.id) + '">' +
+      '<div class="thread-title-row"><strong>' + _acEsc(otherName) + '</strong>' + (unread ? '<i class="thread-unread-dot" aria-label="New message"></i>' : '') + '</div>' +
       '<span>Book: ' + _acEsc(c.bookTitle || 'Book') + '</span>' +
       '<span>' + _acEsc(last) + '</span>' +
-      '<span>' + _acEsc(String(c.updatedAt || '').slice(0,16).replace('T',' ')) + '</span>' +
+      '<div class="thread-meta-row"><span>' + _acEsc(String(c.updatedAt || '').slice(0,16).replace('T',' ')) + '</span><button type="button" class="thread-delete" data-delete-chat="' + _acEsc(c.id) + '">Delete</button></div>' +
     '</div>';
   }).join('');
   list.querySelectorAll('[data-open-chat]').forEach(el => {
-    el.onclick = () => openChat(el.getAttribute('data-open-chat'));
+    el.onclick = e => {
+      if (e.target && e.target.closest('[data-delete-chat]')) return;
+      openChat(el.getAttribute('data-open-chat'));
+    };
   });
+  list.querySelectorAll('[data-delete-chat]').forEach(btn => {
+    btn.onclick = e => {
+      e.stopPropagation();
+      deleteChatForMe(btn.getAttribute('data-delete-chat'));
+    };
+  });
+  _updateMessagesMenuBadge();
 }
 function openChat(chatId, skipRemote) {
   const chat = _getLocalChats().find(c => c.id === chatId);
@@ -3326,22 +6839,28 @@ function openChat(chatId, skipRemote) {
   const sub = document.getElementById('messageChatSub');
   const body = document.getElementById('messageChatBody');
   _showChatView();
+  _markChatRead(chatId);
   if (title) title.textContent = otherName;
   if (sub) sub.textContent = chat.bookTitle || 'Book conversation';
   if (body) {
     const msgs = Array.isArray(chat.messages) ? chat.messages : [];
     body.innerHTML = msgs.length ? msgs.map(m => {
       const mine = String(m.senderUid || m.senderId || '') === me;
-      return '<div class="chat-bubble ' + (mine ? 'mine' : 'theirs') + '">' +
-        _acEsc(m.text || '') +
-        '<span class="chat-time">' + _acEsc(String(m.createdAt || '').slice(0,16).replace('T',' ')) + '</span>' +
+      return '<div class="chat-message-row ' + (mine ? 'mine' : 'theirs') + '">' +
+        '<div class="chat-bubble ' + (mine ? 'mine' : 'theirs') + '">' +
+          _acEsc(m.text || '') +
+          '<span class="chat-time">' + _acEsc(String(m.createdAt || '').slice(0,16).replace('T',' ')) + '</span>' +
+        '</div>' +
       '</div>';
     }).join('') : '<p style="color:#64748b;font-size:13px;font-weight:800;padding:8px 0;">Start the conversation below.</p>';
     body.scrollTop = body.scrollHeight;
   }
   if (!skipRemote) {
     _loadChatMessagesFromFirestore(chat).then(() => {
-      if (_activeChatId === chatId) openChat(chatId, true);
+      if (_activeChatId === chatId) {
+        _markChatRead(chatId);
+        openChat(chatId, true);
+      }
     });
     _watchChatMessages(chatId);
   }
@@ -3535,6 +7054,7 @@ function updateSellDistricts() {
   const sSel  = document.getElementById('sellSchool');
   if (!dSel) return;
   _updateSellMediumsForState(stateName);
+  if (sellCustomMode) _populateSellCustomOptions();
   dSel.innerHTML = '<option value="">— District —</option>' + _getDistricts(stateName).map(d => '<option>' + d.district + '</option>').join('');
   if (sdSel) sdSel.innerHTML = '<option value="">— Sub-District —</option>';
   if (pSel)  pSel.value = '';
@@ -4163,7 +7683,8 @@ async function _saveCommunityLocation(state, district, subDistrict, place, schoo
 }
 function render() {
   updateAccessControls();
-  document.querySelector("#catalogTitle").textContent = catalogStep==="classes"?"Classes":catalogStep==="boards"?"Boards":catalogStep==="streams"?"Streams":"Subjects";
+  const selected = selectedBookId && catalogStep === "books" ? book() : null;
+  document.querySelector("#catalogTitle").textContent = selected ? selected.title : catalogStep==="classes"?"Classes":catalogStep==="boards"?"Boards":catalogStep==="streams"?"Streams":"Subjects";
   document.querySelector("#backBtn").style.display = catalogStep==="classes" ? "none" : "inline-block";
   document.querySelector("#matchCard").style.display = (selectedBookId && catalogStep === "books") ? "block" : "none";
   renderClasses(); renderCategories(); renderBoards(); renderStreams(); renderBooks(); renderSelected();
@@ -4205,38 +7726,44 @@ function bindSellForm() {
   const frm = document.querySelector("#sellForm");
   if(frm) frm.onsubmit = async e => {
     e.preventDefault();
-    if(!selectedBookId){ toast("Please select a book first"); return; }
     if(!window._isLoggedIn){ toast("Please log in first to list a book"); return; }
     const u = window._currentUser;
-    const selected = book();
+    const isCustom = sellCustomMode === true;
+    const customBook = isCustom ? _collectCustomSellBook() : null;
+    if (isCustom && !customBook) return;
+    if(!isCustom && !selectedBookId){ toast("Please select a book first, or tap Add your book"); return; }
+    const selected = isCustom ? customBook : book();
+    if (!selected) { toast("Please select a valid book"); return; }
     const adminPrice = parseInt(selected?.price) || 0;
     const typedPrice = parseInt(document.getElementById("sellPrice")?.value || "") || 0;
-    let listingPrice = adminPrice;
-    if (state.settings.allowUserPrice === true && typedPrice) {
-      if (!adminPrice) { toast("Admin price is not set for this book"); return; }
-      if (typedPrice < 1 || typedPrice > adminPrice) {
-        toast("Price must be between ₹1 and ₹" + adminPrice);
-        return;
-      }
-      listingPrice = typedPrice;
+    const needsSellerPrice = isCustom || state.settings.allowUserPrice === true;
+    let listingPrice = needsSellerPrice ? typedPrice : adminPrice;
+    if (needsSellerPrice) {
+      if (!typedPrice || typedPrice < 1) { toast("Please enter the selling price"); return; }
+    } else if (!adminPrice) {
+      toast("Admin price is not set for this book. Turn on seller pricing or add an admin price.");
+      return;
     }
     const listingState = document.getElementById("sellState")?.value || "";
     const listingDistrict = document.getElementById("sellDistrict")?.value || "";
     const listingSubDistrict = document.getElementById("sellSubDistrict")?.value || "";
     const listingPlace = (document.getElementById("sellPlace")?.value || "").trim();
     const listingSchool = (document.getElementById("sellSchool")?.value || "").trim();
-    const listingMedium = (document.getElementById("sellMedium")?.value || "").trim();
+    const listingMedium = _sellMediumValue();
     if(!listingState || !listingMedium || !listingDistrict || !listingSubDistrict || !listingPlace || !listingSchool){
       toast("Please fill state, medium, district, sub-district, place and school");
       return;
     }
     const listing = {
       id       : "ls"+Date.now(),
-      bookId   : selectedBookId,
+      bookId   : selected.id || selectedBookId,
       title    : selected ? selected.title : "",
       className: selected ? selected.className : "",
       board    : selected ? selected.board : "",
       stream   : selected ? selected.stream : "",
+      author   : selected ? (selected.author || "") : "",
+      image    : selected ? (selected.image || "") : "",
+      customBook: isCustom,
       seller   : u ? u.name : "You",
       sellerName: u ? u.name : "You",
       userId   : (_auth && _auth.currentUser && _auth.currentUser.uid) || (u ? (u.uid||u.id) : ""),
@@ -4254,9 +7781,10 @@ function bindSellForm() {
       whatsapp : document.getElementById("sellWhatsapp")?.value || "",
       price    : listingPrice,
       adminPrice: adminPrice,
-      priceMode: state.settings.allowUserPrice === true && typedPrice ? "seller" : "admin",
+      priceMode: needsSellerPrice ? (isCustom ? "seller-custom" : "seller") : "admin",
       createdAt: new Date().toISOString().slice(0,10)
     };
+    if (isCustom) _rememberUserCatalogValues(customBook, listingMedium, listingState);
     _saveCommunityLocation(listing.state, listing.district, listing.subDistrict, listing.place, listing.school);
     state.listings.push(listing);
     save();
@@ -4268,6 +7796,8 @@ function bindSellForm() {
     toast("✅ Listed for sale!");
     // Reset sell page to book selection
     selectedBookId = '';
+    sellCustomMode = false;
+    _resetCustomSellBookForm();
     sellCatalogStep = 'classes';
     renderSellCatalog();
     renderMyListings(true);
@@ -4290,12 +7820,12 @@ function bindPageNav() {
           if (sf2) sf2.value = selectedState;
         }
         sellCatalogStep = 'classes';
+        sellCustomMode = false;
         // Pre-fill sell form with profile defaults
         _prefillSellFromProfile();
         renderSellCatalog();
       }
       if (pg === 'myListings') renderMyListings();
-      if (pg === 'notes') renderStudentNotes();
       if (pg === 'messages') { _activeChatId = ''; _showMessageListView(); renderMessages(); }
     };
   });
@@ -4549,10 +8079,11 @@ function _updateSellMediumsForState(stateVal, selectedValue) {
   const meds = getMediumsForState(stateVal);
   const sel = document.getElementById('sellMedium');
   if (!sel) return;
-  if (!stateVal) { sel.innerHTML = '<option value="">Select state first</option>'; return; }
+  if (!stateVal) { sel.innerHTML = '<option value="">Select state first</option>'; _fillDatalist('sellCustomMediumOptions', []); return; }
   sel.innerHTML = '<option value="">Select Medium</option>' +
     (meds.length ? meds.map(m=>'<option value="'+m+'">'+m+'</option>').join('') :
       '<option value="English Medium">English Medium</option>');
+  _fillDatalist('sellCustomMediumOptions', meds.length ? meds : ['English Medium']);
   if (selectedValue) sel.value = selectedValue;
 }
 function onStateFilterChange(stateVal) {
@@ -4593,6 +8124,7 @@ function onStateFilterChange2(stateVal) {
   const sellStateEl = document.getElementById('sellState');
   if (sellStateEl) { sellStateEl.value = stateVal; updateSellDistricts(); }
   _updateSellMediumsForState(stateVal);
+  if (sellCustomMode) _populateSellCustomOptions();
   render();
 }
 function init() {
@@ -4607,6 +8139,11 @@ function init() {
   // Sell page back button
   const sellBack = document.getElementById('sellBackBtn');
   if (sellBack) sellBack.onclick = () => {
+    if (sellCustomMode) {
+      sellCustomMode = false;
+      renderSellCatalog();
+      return;
+    }
     if (sellCatalogStep==='books') {
       if (selectedStream) sellCatalogStep='streams';
       else if (selectedBoard) sellCatalogStep = selectedClass==='General'?'classes':'boards';
@@ -4674,8 +8211,9 @@ function init() {
       show('menuHome');
       show('menuSell');
       show('menuListings');
-      show('menuNotes');
       show('menuMessages');
+      _watchMyChatsForUnread();
+      _updateMessagesMenuBadge();
       show('menuAccount');
       show('menuLogout');
     });
@@ -4829,7 +8367,6 @@ init();
     const menuHome      = document.getElementById('menuHome');
     const menuSell      = document.getElementById('menuSell');
     const menuListings  = document.getElementById('menuListings');
-    const menuNotes     = document.getElementById('menuNotes');
     const menuMessages  = document.getElementById('menuMessages');
     const menuAccount   = document.getElementById('menuAccount');
     const menuLogout    = document.getElementById('menuLogout');
@@ -4837,8 +8374,9 @@ init();
     if (menuHome)      menuHome.style.display = '';
     if (menuSell)      menuSell.style.display = '';
     if (menuListings)  menuListings.style.display = '';
-    if (menuNotes)     menuNotes.style.display = '';
     if (menuMessages)  menuMessages.style.display = (state.settings.messaging !== false) ? '' : 'none';
+    _watchMyChatsForUnread();
+    _updateMessagesMenuBadge();
     if (menuAccount)   menuAccount.style.display = '';
     if (menuLogout)    menuLogout.style.display = '';
 
@@ -4850,10 +8388,18 @@ init();
       openAccountDetails();
     };
     // Wire logout button
-    if (menuLogout) menuLogout.onclick = function() {
+    if (menuLogout) menuLogout.onclick = async function() {
       triggerAdMob("menuOption");
       if (!confirm('Are you sure you want to log out?')) return;
-      if (_auth) _auth.signOut().catch(()=>{});
+      _authStateHandled = false;
+      try { if (_auth) await _auth.signOut(); } catch(e) {}
+      try { if (window.AndroidAuth && typeof window.AndroidAuth.signOutGoogle === 'function') window.AndroidAuth.signOutGoogle(); } catch(e) {}
+      _googleUser = null;
+      _resetGoogleButton('login');
+      _resetGoogleButton('signup');
+      _resetSignupToStage1();
+      _stopMyChatsWatcher();
+      _stopActiveChatListener();
       window._isLoggedIn = false;
       window._currentUser = null;
       updateAccessControls();
@@ -4861,8 +8407,8 @@ init();
       if (menuHome)      menuHome.style.display = 'none';
       if (menuSell)      menuSell.style.display = 'none';
       if (menuListings)  menuListings.style.display = 'none';
-      if (menuNotes)     menuNotes.style.display = 'none';
       if (menuMessages)  menuMessages.style.display = 'none';
+      if (menuMessages)  menuMessages.classList.remove('has-unread');
       if (menuAccount)   menuAccount.style.display = 'none';
       if (menuLogout)    menuLogout.style.display = 'none';
       document.getElementById('menuBtn')?.classList.remove('open');
@@ -5106,13 +8652,18 @@ init();
       if (_authStateHandled) return;
       _authStateHandled = true;
 
-      if (!firebaseUser) return; // Not logged in — show normal UI
+      if (!firebaseUser) {
+        // Not logged in — no remote data to wait for, dismiss splash now
+        if (window._hideSplash) window._hideSplash();
+        return;
+      }
 
       // Firebase says user is signed in — check if they have a profile
       const existingData = await _getUserFromFirestore(firebaseUser.uid);
 
       if (existingData) {
-        // Returning user with complete profile — restore session silently
+        // Returning user with complete profile — restore session silently.
+        // Splash is dismissed inside onAuthSuccess after remote data loads.
         await onAuthSuccess(existingData, firebaseUser);
       } else {
         // Firebase session exists but no Firestore profile yet
@@ -5123,10 +8674,33 @@ init();
         document.getElementById('signupTagline').textContent  = 'Complete your profile';
         _prefillNameFromGoogle();
         signupDialog.showModal();
+        // Dismiss splash now — user needs to see the signup form
+        if (window._hideSplash) window._hideSplash();
       }
     });
+  } else {
+    // No Firebase auth — dismiss splash when page finishes loading
+    window.addEventListener('load', function(){ setTimeout(function(){ if(window._hideSplash) window._hideSplash(); }, 2000); });
   }
 
+})();
+</script>
+<script>
+/* ── SPLASH DISMISS — waits for Firebase onAuthStateChanged ── */
+(function(){
+  document.body.classList.add('splash-active');
+  var _splashDone = false;
+  window._hideSplash = function(){
+    if (_splashDone) return;
+    _splashDone = true;
+    var overlay = document.getElementById('splashOverlay');
+    if (!overlay) return;
+    document.body.classList.remove('splash-active');
+    overlay.classList.add('fade-out');
+    setTimeout(function(){ if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 600);
+  };
+  // Fallback: if Firebase never calls onAuthStateChanged within 12 seconds, dismiss anyway
+  setTimeout(function(){ if (window._hideSplash) window._hideSplash(); }, 12000);
 })();
 </script>
 </body>
