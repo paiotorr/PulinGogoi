@@ -29,6 +29,25 @@
 body { background: var(--bg); color: var(--text); font-family: Nunito, Arial, sans-serif; min-height: 100vh; }
 a { text-decoration: none; }
 button, input, select { font: inherit; }
+.notes-toolbar { display: grid; gap: 8px; grid-template-columns: repeat(2,minmax(0,1fr)); margin-bottom: 12px; }
+.notes-toolbar select, .notes-toolbar input { background: #fff; border: 2px solid var(--border); border-radius: 12px; color: var(--text); font-weight: 800; padding: 10px 12px; width: 100%; }
+.notes-list { display: grid; gap: 10px; }
+.student-note-card { background: #fff; border: 2px solid var(--border); border-radius: 16px; cursor: pointer; padding: 14px; text-align: left; transition: transform .15s, box-shadow .15s; width: 100%; }
+.student-note-card:hover { box-shadow: 0 8px 22px rgba(22,163,74,.12); transform: translateY(-1px); }
+.student-note-card strong { color: var(--red); display: block; font-size: 15px; font-weight: 950; line-height: 1.3; }
+.student-note-meta { color: var(--muted); font-size: 11px; font-weight: 900; line-height: 1.45; margin-top: 5px; }
+.student-note-badge { background: var(--red-light); border-radius: 999px; color: var(--red-dark); display: inline-flex; font-size: 10px; font-weight: 950; margin-top: 8px; padding: 4px 9px; }
+.note-reader-overlay { align-items: stretch; background: rgba(0,0,0,.58); display: none; inset: 0; justify-content: center; padding: 18px; position: fixed; z-index: 80; }
+.note-reader-overlay.open { display: flex; }
+.note-reader { background: #fff; border-radius: 22px; display: flex; flex-direction: column; max-width: 760px; overflow: hidden; width: min(100%,760px); }
+.note-reader-head { align-items: center; background: var(--red); color: #fff; display: flex; gap: 10px; padding: 14px 16px; }
+.note-reader-head strong { flex: 1; font-size: 17px; line-height: 1.25; }
+.note-reader-close { background: rgba(255,255,255,.2); border: 1px solid rgba(255,255,255,.35); border-radius: 50%; color: #fff; cursor: pointer; font-size: 18px; height: 36px; width: 36px; }
+.note-reader-meta { background: var(--red-light); border-bottom: 2px solid var(--line); color: var(--red-dark); font-size: 12px; font-weight: 900; padding: 9px 16px; }
+.note-reader-body { flex: 1; max-height: 70vh; overflow: auto; padding: 16px; }
+.note-reader-text { background: var(--red-light); border: 2px solid var(--border); border-radius: 14px; color: #1f2937; font-size: 14px; font-weight: 800; line-height: 1.7; padding: 14px; white-space: pre-wrap; }
+.note-reader-pdf { border: 2px solid var(--border); border-radius: 14px; height: min(68vh,620px); width: 100%; }
+@media(max-width:560px){ .notes-toolbar { grid-template-columns: 1fr; } .note-reader-overlay { padding: 8px; } }
 .topbar {
   align-items: center; background: var(--red);
   box-shadow: 0 4px 20px rgba(22,163,74,0.25); color: white;
@@ -296,6 +315,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
     <button type="button" id="menuHome" class="home-link" style="display:none;">🏠 Home</button>
     <button data-page="sell" id="menuSell" style="display:none;">📦 Sell Books</button>
     <button data-page="myListings" id="menuListings" style="display:none;">📚 My Listings</button>
+    <button data-page="notes" id="menuNotes" style="display:none;">📝 Notes</button>
     <button data-page="messages" id="menuMessages" style="display:none;">Messages</button>
     <button type="button" id="menuAccount" style="display:none;">👤 Account Details</button>
     <button type="button" id="menuLogout" style="display:none;color:#dc2626;">🚪 Log Out</button>
@@ -414,6 +434,24 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
           <div class="result-list" id="myListingsList">
             <p style="color:#888;font-size:13px;font-weight:700;padding:8px 0;">No books listed yet.</p>
           </div>
+        </div>
+      </div>
+    </section>
+    <section class="page" id="notesPage">
+      <div class="page-head">
+        <h1>Notes</h1>
+        <button class="btn btn-primary" type="button" data-go-buy>Home</button>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>Study Notes</h2></div>
+        <div class="card-body">
+          <div class="notes-toolbar">
+            <select id="studentNoteClass" onchange="renderStudentNotes()"><option value="">All Classes</option></select>
+            <select id="studentNoteBoard" onchange="renderStudentNotes()"><option value="">All Boards</option></select>
+            <select id="studentNoteSubject" onchange="renderStudentNotes()"><option value="">All Subjects</option></select>
+            <input id="studentNoteSearch" placeholder="Search chapter or note..." oninput="renderStudentNotes()">
+          </div>
+          <div class="notes-list" id="studentNotesList"></div>
         </div>
       </div>
     </section>
@@ -680,13 +718,23 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
     </div>
   </div>
 </dialog>
+<div class="note-reader-overlay" id="studentNoteReader">
+  <div class="note-reader">
+    <div class="note-reader-head">
+      <strong id="studentNoteReaderTitle">Note</strong>
+      <button type="button" class="note-reader-close" onclick="closeStudentNote()">×</button>
+    </div>
+    <div class="note-reader-meta" id="studentNoteReaderMeta"></div>
+    <div class="note-reader-body" id="studentNoteReaderBody"></div>
+  </div>
+</div>
 <div id="toast"></div>
 <script>
 // ═══════════════════════════════════════════════════════════════
 //  FIREBASE INITIALISATION
 //  Config is baked in at export-time from the Admin Firebase tab.
 // ═══════════════════════════════════════════════════════════════
-const PKITAAP_FB_CONFIG = {"apiKey":"AIzaSyBfddqQmMk0GWChrC-eGFqFCiQA7tEMKUs","authDomain":"pkitaap.firebaseapp.com","projectId":"pkitaap","storageBucket":"pkitaap.firebasestorage.app","messagingSenderId":"8439723706","appId":"1:8439723706:web:2c1e96a447bca698b1b483"};
+const PKITAAP_FB_CONFIG = {"apiKey":"AIzaSyBfddqQmMk0GWChrC-eGFqFCiQA7tEMKUs","authDomain":"auth.paiotorr.com","projectId":"pkitaap","storageBucket":"pkitaap.firebasestorage.app","messagingSenderId":"8439723706","appId":"1:8439723706:web:2c1e96a447bca698b1b483"};
 const PKITAAP_GOOGLE_CLIENT_ID = "";
 let _db   = null;   // Firestore instance
 let _auth = null;   // Auth instance
@@ -922,6 +970,20 @@ const seed = {
     "menuOption": ""
   },
   "categories": [],
+  "notes": [
+    {
+      "id": "ntmp2dowc4yf6",
+      "state": "Assam",
+      "cls": "Class 9",
+      "board": "SEBA",
+      "subject": "assamese",
+      "title": "chapert 1",
+      "type": "text",
+      "content": "hiiiiiiiiiiii",
+      "pdfUrl": "",
+      "createdAt": "2026-05-12"
+    }
+  ],
   "books": [
     {
       "id": "xswzgbha",
@@ -4617,22 +4679,25 @@ async function loadRemoteAppData() {
       ref.doc('settings').get(),
       ref.doc('classes').get(),
       ref.doc('locations').get(),
-      ref.doc('categories').get()
+      ref.doc('categories').get(),
+      ref.doc('notes').get()
     ]);
     const settingsDoc = docs[0].exists ? docs[0].data() : {};
     const classesDoc = docs[1].exists ? docs[1].data() : {};
     const locationsDoc = docs[2].exists ? docs[2].data() : {};
     const categoriesDoc = docs[3].exists ? docs[3].data() : {};
+    const notesDoc = docs[4].exists ? docs[4].data() : {};
     if (settingsDoc.settings) state.settings = Object.assign({}, state.settings || {}, settingsDoc.settings);
     if (settingsDoc.adMob) state.adMob = Object.assign({}, state.adMob || {}, settingsDoc.adMob);
     window.PKITAAP_ADMOB_IDS = state.adMob || {};
-    if (settingsDoc.streams) state.streams = settingsDoc.streams;
-    if (classesDoc.classes) state.classes = classesDoc.classes;
+    if (Array.isArray(settingsDoc.streams) && settingsDoc.streams.length) state.streams = settingsDoc.streams;
+    if (Array.isArray(classesDoc.classes) && classesDoc.classes.length) state.classes = classesDoc.classes;
     if (classesDoc.classThumbs) state.classThumbs = classesDoc.classThumbs;
     if (classesDoc.boardsByState) state.boardsByState = classesDoc.boardsByState;
     if (classesDoc.mediumsByState) state.mediumsByState = classesDoc.mediumsByState;
     if (locationsDoc.locations) state.locations = locationsDoc.locations;
     if (categoriesDoc.categories) state.categories = categoriesDoc.categories;
+    if (notesDoc.notes) state.notes = notesDoc.notes;
     try {
       const bookSnap = await ref.doc('books').collection('items').limit(1000).get();
       if (!bookSnap.empty) state.books = bookSnap.docs.map(doc => Object.assign({id: doc.id}, doc.data()));
@@ -4647,18 +4712,22 @@ async function loadRemoteAppData() {
 
 function normalizeState(input) {
   const next = input || structuredClone(seed);
+  const fallbackClasses = (Array.isArray(seed.classes) && seed.classes.length) ? seed.classes : ["Class 9","Class 10","Class 11","Class 12"];
+  const fallbackStreams = (Array.isArray(seed.streams) && seed.streams.length) ? seed.streams : ["Science","Commerce","Arts"];
+  const fallbackBooks = (Array.isArray(seed.books) && seed.books.length) ? seed.books : [];
   if(!next.appName || next.appName === 'PKITAAP') next.appName = 'PKiTAAP';
   next.settings    = { ...seed.settings,   ...(next.settings    || {}) };
   next.adMob       = { ...(seed.adMob || {}), ...(next.adMob || {}) };
   next.classThumbs = { ...seed.classThumbs, ...(next.classThumbs || {}) };
   next.categories  = next.categories || seed.categories;
+  next.notes       = next.notes || seed.notes || [];
   next.locations     = next.locations     || seed.locations;
   next.listings      = next.listings      || seed.listings;
-  next.classes       = next.classes       || seed.classes  || ["Class 9","Class 10","Class 11","Class 12"];
-  next.streams       = next.streams       || seed.streams  || ["Science","Commerce","Arts"];
+  next.classes       = (Array.isArray(next.classes) && next.classes.length) ? next.classes : fallbackClasses;
+  next.streams       = (Array.isArray(next.streams) && next.streams.length) ? next.streams : fallbackStreams;
   next.boardsByState  = next.boardsByState  || seed.boardsByState  || {};
   next.mediumsByState = next.mediumsByState || seed.mediumsByState || {};
-  next.books = (next.books || seed.books).map(item => {
+  next.books = ((Array.isArray(next.books) && next.books.length) ? next.books : fallbackBooks).map(item => {
     const normalized = { image:"", author:"", ...item, board: item.board || "" };
     if (normalized.type === "school" && !normalized.state && normalized.board) {
       const wanted = _normStateBoard(normalized.board);
@@ -4675,8 +4744,8 @@ function save() { localStorage.setItem("pkitaap-simple", JSON.stringify(state));
 function toast(text) { const el = document.querySelector("#toast"); el.textContent = text; el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 1800); }
 function book() { return state.books.find(item => item.id === selectedBookId) || null; }
 let selectedState = "";
-const classes = state.classes || ["Class 9","Class 10","Class 11","Class 12"];
-const streams  = state.streams || ["Science","Commerce","Arts"];
+function classList() { return (Array.isArray(state.classes) && state.classes.length) ? state.classes : ["Class 9","Class 10","Class 11","Class 12"]; }
+function streamList() { return (Array.isArray(state.streams) && state.streams.length) ? state.streams : ["Science","Commerce","Arts"]; }
 function getBoardsForState(st) {
   const wanted = String(st || '').trim().toLowerCase();
   const key = Object.keys(state.boardsByState || {}).find(k => String(k || '').trim().toLowerCase() === wanted);
@@ -4739,6 +4808,7 @@ function imageForBook(item)  { return item.image || placeholder(item.title); }
 function bookMeta(item)      { return [item.className,item.board,item.stream].filter(Boolean).join(" / "); }
 function priceText(item)     { return '&#8377;' + item.price; }
 function renderClasses() {
+  const classes = classList();
   const all = state.settings.general ? [...classes,"General"] : classes;
   const grid = document.querySelector("#classGrid");
   grid.style.display = catalogStep === "classes" ? "grid" : "none";
@@ -4791,7 +4861,7 @@ function renderStreams() {
       .map(b => b.stream)
   )];
   // Fall back to all streams if none found (safety)
-  const toShow = activeStreams.length ? activeStreams : streams;
+  const toShow = activeStreams.length ? activeStreams : streamList();
   grid.innerHTML = toShow.map(name => '<button class="stream-card" data-stream="' + name + '"><strong>' + name + '</strong></button>').join("");
   document.querySelectorAll("[data-stream]").forEach(card => { card.onclick = () => { selectedStream=card.dataset.stream; selectedBookId=""; catalogStep="books"; render(); }; });
 }
@@ -4828,6 +4898,7 @@ function renderSellCatalog() {
   const cg = document.getElementById('sellClassGrid');
   if (cg) {
     if (sellCatalogStep === 'classes') {
+      const classes = classList();
       const all = state.settings.general ? [...classes,'General'] : classes;
       cg.style.display = 'grid';
       cg.innerHTML = all.map(name => '<button class="class-card" data-sellclass="' + name + '"><img src="' + imageForClass(name) + '" alt="' + name + '"/><div class="card-info"><strong>' + name + '</strong><span>' + state.books.filter(b=>b.className===name&&(b.type!=="general"||state.settings.general)).length + ' books</span></div></button>').join('');
@@ -5442,6 +5513,81 @@ async function removeMyListing(id) {
   toast('Listing removed.');
 }
 // ── Location helpers (State → District → Place → School) ──────────────────
+function _studentEsc(v){
+  return String(v == null ? '' : v).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+function _studentNotes(){
+  const userState = String(window._currentUser?.state || '').trim().toLowerCase();
+  return (state.notes || []).filter(n => {
+    const noteState = String(n?.state || '').trim().toLowerCase();
+    return n && n.title && n.subject && (n.type === 'text' || n.type === 'pdf') && (!noteState || !userState || noteState === userState);
+  });
+}
+function _fillStudentNoteFilters(){
+  const notes = _studentNotes();
+  const clsSel = document.getElementById('studentNoteClass');
+  const boardSel = document.getElementById('studentNoteBoard');
+  const subjectSel = document.getElementById('studentNoteSubject');
+  if(!clsSel || !boardSel || !subjectSel) return;
+  const keep = { cls: clsSel.value, board: boardSel.value, subject: subjectSel.value };
+  const classes = [...new Set(notes.map(n=>n.cls).filter(Boolean))].sort();
+  const boards = [...new Set(notes.filter(n=>!keep.cls || n.cls===keep.cls).map(n=>n.board).filter(Boolean))].sort();
+  const subjects = [...new Set(notes.filter(n=>(!keep.cls || n.cls===keep.cls) && (!keep.board || n.board===keep.board)).map(n=>n.subject).filter(Boolean))].sort();
+  clsSel.innerHTML = '<option value="">All Classes</option>' + classes.map(v=>'<option value="'+_studentEsc(v)+'">'+_studentEsc(v)+'</option>').join('');
+  if(classes.includes(keep.cls)) clsSel.value = keep.cls;
+  boardSel.innerHTML = '<option value="">All Boards</option>' + boards.map(v=>'<option value="'+_studentEsc(v)+'">'+_studentEsc(v)+'</option>').join('');
+  if(boards.includes(keep.board)) boardSel.value = keep.board;
+  subjectSel.innerHTML = '<option value="">All Subjects</option>' + subjects.map(v=>'<option value="'+_studentEsc(v)+'">'+_studentEsc(v)+'</option>').join('');
+  if(subjects.includes(keep.subject)) subjectSel.value = keep.subject;
+}
+function renderStudentNotes(){
+  if(!window._isLoggedIn) { requireLogin(); return; }
+  _fillStudentNoteFilters();
+  const list = document.getElementById('studentNotesList');
+  if(!list) return;
+  const cls = document.getElementById('studentNoteClass')?.value || '';
+  const board = document.getElementById('studentNoteBoard')?.value || '';
+  const subject = document.getElementById('studentNoteSubject')?.value || '';
+  const q = (document.getElementById('studentNoteSearch')?.value || '').trim().toLowerCase();
+  const items = _studentNotes().filter(n =>
+    (!cls || n.cls === cls) &&
+    (!board || n.board === board) &&
+    (!subject || n.subject === subject) &&
+    (!q || [n.title,n.chapter,n.subject,n.cls,n.board].join(' ').toLowerCase().includes(q))
+  );
+  if(!items.length){
+    list.innerHTML = '<p style="color:#888;font-size:13px;font-weight:800;padding:8px 0;">No notes found for this filter.</p>';
+    return;
+  }
+  list.innerHTML = items.map(n => {
+    const meta = [n.cls,n.board,n.subject,n.chapter].filter(Boolean).join(' / ');
+    return '<button type="button" class="student-note-card" onclick="openStudentNote(''+_studentEsc(n.id)+'')">' +
+      '<strong>' + _studentEsc(n.title) + '</strong>' +
+      '<div class="student-note-meta">' + _studentEsc(meta) + '</div>' +
+      '<span class="student-note-badge">' + (n.type === 'pdf' ? 'PDF Note' : 'Text Note') + '</span>' +
+    '</button>';
+  }).join('');
+}
+function openStudentNote(id){
+  if(!window._isLoggedIn) { requireLogin(); return; }
+  const n = _studentNotes().find(x=>String(x.id)===String(id));
+  if(!n) return;
+  document.getElementById('studentNoteReaderTitle').textContent = n.title || 'Note';
+  document.getElementById('studentNoteReaderMeta').textContent = [n.cls,n.board,n.subject,n.chapter].filter(Boolean).join(' / ');
+  const body = document.getElementById('studentNoteReaderBody');
+  if(n.type === 'pdf'){
+    const src = encodeURI(String(n.pdfUrl || '')) + '#toolbar=0&navpanes=0&scrollbar=1';
+    body.innerHTML = '<iframe class="note-reader-pdf" sandbox="allow-scripts allow-same-origin" referrerpolicy="no-referrer" src="'+_studentEsc(src)+'" title="'+_studentEsc(n.title || 'PDF note')+'"></iframe><p style="color:#888;font-size:11px;font-weight:800;margin-top:8px;">PDF is view-only inside PKiTAAP.</p>';
+  } else {
+    body.innerHTML = '<div class="note-reader-text">' + _studentEsc(n.content || '') + '</div>';
+  }
+  document.getElementById('studentNoteReader')?.classList.add('open');
+}
+function closeStudentNote(){
+  document.getElementById('studentNoteReader')?.classList.remove('open');
+  const body = document.getElementById('studentNoteReaderBody');
+  if(body) body.innerHTML = '';
+}
 const CHAT_STORE_KEY = 'pkitaap_chats_v1';
 let _activeChatId = '';
 let _activeChatListenId = '';
@@ -6717,6 +6863,7 @@ function bindPageNav() {
         renderSellCatalog();
       }
       if (pg === 'myListings') renderMyListings();
+      if (pg === 'notes') renderStudentNotes();
       if (pg === 'messages') { _activeChatId = ''; _showMessageListView(); renderMessages(); }
     };
   });
@@ -7095,6 +7242,7 @@ function init() {
       show('menuHome');
       show('menuSell');
       show('menuListings');
+      show('menuNotes');
       show('menuMessages');
       show('menuAccount');
       show('menuLogout');
@@ -7249,6 +7397,7 @@ init();
     const menuHome      = document.getElementById('menuHome');
     const menuSell      = document.getElementById('menuSell');
     const menuListings  = document.getElementById('menuListings');
+    const menuNotes     = document.getElementById('menuNotes');
     const menuMessages  = document.getElementById('menuMessages');
     const menuAccount   = document.getElementById('menuAccount');
     const menuLogout    = document.getElementById('menuLogout');
@@ -7256,6 +7405,7 @@ init();
     if (menuHome)      menuHome.style.display = '';
     if (menuSell)      menuSell.style.display = '';
     if (menuListings)  menuListings.style.display = '';
+    if (menuNotes)     menuNotes.style.display = '';
     if (menuMessages)  menuMessages.style.display = (state.settings.messaging !== false) ? '' : 'none';
     if (menuAccount)   menuAccount.style.display = '';
     if (menuLogout)    menuLogout.style.display = '';
@@ -7279,6 +7429,7 @@ init();
       if (menuHome)      menuHome.style.display = 'none';
       if (menuSell)      menuSell.style.display = 'none';
       if (menuListings)  menuListings.style.display = 'none';
+      if (menuNotes)     menuNotes.style.display = 'none';
       if (menuMessages)  menuMessages.style.display = 'none';
       if (menuAccount)   menuAccount.style.display = 'none';
       if (menuLogout)    menuLogout.style.display = 'none';
