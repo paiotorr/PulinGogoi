@@ -8207,7 +8207,7 @@ async function submitSuggestion(){
   if(!saved){
     try {
       _rememberSuggestionLocally(suggestion, true);
-      toast('✅ Suggestion saved locally! (Will sync when connected)');
+      toast('⚠️ Not visible to admin yet. Saved on this device; check internet/Firebase rules and try again.');
       saved = true;
     } catch(e2){
       console.warn('[PKITAAP] LocalStorage suggestion error:', e2);
