@@ -62,23 +62,6 @@ button, input, select { font: inherit; }
 #menuMessages { position: relative; }
 #menuMessages.has-unread::after { background: #ef4444; border: 2px solid #fff; border-radius: 999px; box-shadow: 0 0 0 3px rgba(239,68,68,.14); content: ''; height: 10px; position: absolute; right: 14px; top: 10px; width: 10px; }
 #menuLogout { background: #fef2f2 !important; color: #dc2626 !important; }
-.sugg-modal { background:white; border-radius:22px; box-shadow:0 24px 60px rgba(0,0,0,.25); width:min(96vw,480px); animation:popInSugg .25s cubic-bezier(.34,1.56,.64,1); overflow:hidden; }
-@keyframes popInSugg{from{transform:scale(.85);opacity:0;}to{transform:scale(1);opacity:1;}}
-.sugg-modal-bg { position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:500;display:none;align-items:center;justify-content:center;padding:16px; }
-.sugg-modal-bg.open { display:flex; }
-.sugg-modal-head { padding:18px 20px;border-bottom:2px solid #bbf7d0;display:flex;align-items:center;justify-content:space-between; }
-.sugg-modal-title { font-size:19px;font-weight:900;color:#16a34a; }
-.sugg-modal-body { padding:20px;display:flex;flex-direction:column;gap:14px; }
-.sugg-type-grid { display:grid;grid-template-columns:repeat(2,1fr);gap:8px; }
-.sugg-type-btn { background:#f9fafb;border:2px solid transparent;border-radius:12px;padding:10px 8px;cursor:pointer;font-size:13px;font-weight:800;text-align:center;transition:background .15s,border-color .15s; }
-.sugg-type-btn:hover { background:#f0fdf4;border-color:#bbf7d0;color:#16a34a; }
-.sugg-type-btn.selected { background:#dcfce7;border-color:#16a34a;color:#16a34a; }
-.sugg-textarea { border:2px solid #bbf7d0;border-radius:12px;padding:12px 14px;font-size:14px;font-weight:600;font-family:inherit;width:100%;resize:vertical;min-height:110px;outline:none;transition:border-color .15s; }
-.sugg-textarea:focus { border-color:#16a34a; }
-.sugg-submit-btn { background:#16a34a;color:white;border:none;border-radius:12px;padding:12px;font-size:15px;font-weight:900;cursor:pointer;width:100%;transition:background .15s,transform .1s; }
-.sugg-submit-btn:hover { background:#15803d; }
-.sugg-submit-btn:active { transform:scale(.97); }
-.sugg-submit-btn:disabled { opacity:.6;cursor:not-allowed; }
 .menu-login-card {
   background: linear-gradient(135deg, var(--red-light) 0%, #dcfce7 100%);
   border: 2px solid var(--border); border-radius: 18px;
@@ -205,6 +188,9 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 .auth-field.is-locked .dob-picker, .auth-field.is-locked .dob-summary { background: #f3f4f6; border-color: #e5e7eb; }
 #toast { background: #222; border-radius: 12px; bottom: 24px; color: white; font-weight: 900; opacity: 0; padding: 12px 18px; pointer-events: none; position: fixed; right: 24px; transform: translateY(12px); transition: 0.2s; z-index: 50; }
 #toast.show { opacity: 1; transform: translateY(0); }
+.sell-alt-action { border-top: 2px solid var(--line); display: flex; justify-content: center; margin-top: 12px; padding-top: 12px; }
+.sell-custom-note { color: var(--muted); display: block; font-size: 11px; font-weight: 800; line-height: 1.45; margin-top: 5px; }
+.sell-price-fixed { background: var(--red-light); border: 2px solid var(--line); border-radius: 12px; color: var(--red); font-size: 13px; font-weight: 900; padding: 10px 12px; }
 .confirm-overlay { align-items: center; background: rgba(15,23,42,.48); display: none; inset: 0; justify-content: center; padding: 18px; position: fixed; z-index: 120; }
 .confirm-overlay.open { display: flex; }
 .confirm-dialog { background: #fff; border-radius: 18px; box-shadow: 0 22px 55px rgba(15,23,42,.24); overflow: hidden; width: min(92vw, 360px); }
@@ -387,7 +373,6 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
     <button data-page="myListings" id="menuListings" style="display:none;">📚 My Listings</button>
     <button data-page="messages" id="menuMessages" style="display:none;">Messages</button>
     <button type="button" id="menuAccount" style="display:none;">👤 Account Details</button>
-    <button type="button" id="menuSuggestion" style="display:none;">💡 Suggestion Box</button>
     <button type="button" id="menuLogout" style="display:none;color:#dc2626;">🚪 Log Out</button>
   </div>
 </header>
@@ -460,6 +445,9 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
           <div class="stream-grid" id="sellBoardGrid" style="display:none;"></div>
           <div class="stream-grid" id="sellStreamGrid" style="display:none;"></div>
           <div class="book-grid" id="sellBookGrid" style="display:none;"><div>No books</div></div>
+          <div class="sell-alt-action">
+            <button class="btn btn-ghost" id="sellCustomToggle" type="button">Book not listed? Add your book</button>
+          </div>
         </div>
       </div>
       <div class="card" id="sellSelectedCard" style="display:none;">
@@ -471,12 +459,29 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
           </div>
         </div>
       </div>
+      <div class="card" id="sellCustomBookCard" style="display:none;">
+        <div class="card-head">
+          <h2>Book Details</h2>
+          <button class="btn btn-ghost" id="sellUseCatalogBtn" type="button">Choose Existing</button>
+        </div>
+        <div class="card-body">
+          <div class="form-grid">
+            <label class="wide">Book Name <span style="color:#ef4444;font-size:11px;"> *required</span><input id="sellCustomTitle" placeholder="e.g. Mathematics Part 1"></label>
+            <label>Class <span style="color:#ef4444;font-size:11px;"> *required</span><select id="sellCustomClass" onchange="updateSellCustomStreamVisibility()"><option value="">Select Class</option><option value="Class 9">Class 9</option><option value="Class 10">Class 10</option><option value="Class 11">Class 11</option><option value="Class 12">Class 12</option></select></label>
+            <label>Board <span style="color:#ef4444;font-size:11px;"> *required</span><input id="sellCustomBoard" list="sellCustomBoardOptions" placeholder="e.g. SEBA, CBSE, AHSEC"><datalist id="sellCustomBoardOptions"></datalist></label>
+            <label id="sellCustomStreamWrap">Stream <input id="sellCustomStream" list="sellCustomStreamOptions" placeholder="Science / Commerce / Arts"><datalist id="sellCustomStreamOptions"></datalist></label>
+            <label>Author <input id="sellCustomAuthor" placeholder="Optional"></label>
+            <label>Image URL <input id="sellCustomImage" placeholder="Optional"></label>
+            <span class="sell-custom-note wide">Use this when the book is missing from PKiTAAP. The book details will be saved with your listing so buyers can find it.</span>
+          </div>
+        </div>
+      </div>
       <div class="card" id="sellFormCard" style="display:none;">
         <div class="card-head"><h2>Seller Details</h2></div>
         <div class="card-body">
           <form id="sellForm" class="form-grid">
             <label class="wide">State <select id="sellState" onchange="updateSellDistricts()"><option value="">— Select Your State —</option><option value="Andhra Pradesh">Andhra Pradesh</option><option value="Assam">Assam</option></select></label>
-            <label class="wide">Medium <span style="color:#ef4444;font-size:11px;"> *required</span><select id="sellMedium" required><option value="">Select state first</option></select></label>
+            <label class="wide">Medium <span style="color:#ef4444;font-size:11px;"> *required</span><select id="sellMedium"><option value="">Select state first</option></select><input id="sellCustomMedium" list="sellCustomMediumOptions" placeholder="Type medium if not listed" style="margin-top:6px;"><datalist id="sellCustomMediumOptions"></datalist></label>
             <label>District <select id="sellDistrict" onchange="updateSellSubDistricts()"></select></label>
             <label>Sub-District <select id="sellSubDistrict" onchange="updateSellPlaces()"></select></label>
             <label>Place <input id="sellPlace" list="sellPlaceOptions" onchange="updateSellSchools()" placeholder="Place / town"><datalist id="sellPlaceOptions"></datalist><select id="sellPlaceFallback" onchange="document.getElementById('sellPlace').value=this.value;updateSellSchools()" style="margin-top:6px;"><option value="">— Select Place —</option></select></label>
@@ -487,7 +492,8 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
               </select>
             </label>
             
-            <div class="wide" id="sellFixedPriceInfo" style="background:var(--red-light);border:2px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:900;color:var(--red);">Price: <strong id="sellFixedPriceText">Select a book</strong></div>
+            <label class="wide" id="sellPriceWrap">Seller Price (Rs) <span style="color:#ef4444;font-size:11px;"> *required</span><input type="number" id="sellPrice" min="1" placeholder="Enter your selling price"/><span id="sellPriceHelp" class="sell-custom-note"></span></label>
+            <div class="wide sell-price-fixed" id="sellFixedPriceInfo">Price: <strong id="sellFixedPriceText">Select a book</strong></div>
             <button class="btn btn-primary wide" type="submit">List for Sale</button>
           </form>
         </div>
@@ -770,33 +776,6 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
     </div>
   </div>
 </dialog>
-<!-- SUGGESTION BOX MODAL -->
-<div class="sugg-modal-bg" id="suggModalBg">
-  <div class="sugg-modal">
-    <div class="sugg-modal-head">
-      <div class="sugg-modal-title">💡 Suggestion Box</div>
-      <button type="button" onclick="closeSuggModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888;padding:4px;">✕</button>
-    </div>
-    <div class="sugg-modal-body">
-      <div>
-        <label style="font-size:13px;font-weight:800;color:#444;display:block;margin-bottom:8px;">What is this about?</label>
-        <div class="sugg-type-grid" id="suggTypeGrid">
-          <button type="button" class="sugg-type-btn" data-type="book" onclick="suggSelectType(this)">📚 Book Request</button>
-          <button type="button" class="sugg-type-btn" data-type="price" onclick="suggSelectType(this)">💰 Price Issue</button>
-          <button type="button" class="sugg-type-btn" data-type="feature" onclick="suggSelectType(this)">✨ Feature Request</button>
-          <button type="button" class="sugg-type-btn" data-type="bug" onclick="suggSelectType(this)">🐛 Bug Report</button>
-          <button type="button" class="sugg-type-btn selected" data-type="other" onclick="suggSelectType(this)" style="grid-column:1/-1;">💬 Other / General</button>
-        </div>
-      </div>
-      <div>
-        <label style="font-size:13px;font-weight:800;color:#444;display:block;margin-bottom:6px;">Your Suggestion</label>
-        <textarea class="sugg-textarea" id="suggText" placeholder="Tell us what you'd like — a specific book, a price change, a feature, or anything at all…" maxlength="1000"></textarea>
-        <div style="font-size:11px;color:#888;font-weight:700;text-align:right;margin-top:4px;"><span id="suggCharCount">0</span>/1000</div>
-      </div>
-      <button type="button" class="sugg-submit-btn" id="suggSubmitBtn" onclick="submitSuggestion()">📤 Send Suggestion</button>
-    </div>
-  </div>
-</div>
 <div class="confirm-overlay" id="userConfirmModal" aria-hidden="true">
   <div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="userConfirmTitle">
     <div class="confirm-dialog-head" id="userConfirmTitle">Confirm Delete</div>
@@ -829,10 +808,7 @@ let _auth = null;   // Auth instance
     }
     _db   = firebase.firestore();
     _auth = firebase.auth();
-    window._db = _db;
-    window._auth = _auth;
     _db.enablePersistence({ synchronizeTabs: true }).catch(function(){});
-    setTimeout(function(){ _syncPendingSuggestions(); }, 0);
     console.log('[PKITAAP] Firebase initialised ✅');
   } catch (e) {
     console.error('[PKITAAP] Firebase init error:', e);
@@ -5208,7 +5184,7 @@ window.pkitaapAndroidBack = function() {
 
 function updateAccessControls() {
   const locked = !window._isLoggedIn;
-  ['searchInput','stateFilter','buyState','buyDistrict','buySubDistrict','buyPlace','buySchool','buyMedium','sellMedium'].forEach(id => {
+  ['searchInput','stateFilter','buyState','buyDistrict','buySubDistrict','buyPlace','buySchool','buyMedium','sellMedium','sellCustomMedium','sellCustomTitle','sellCustomClass','sellCustomBoard','sellCustomStream','sellCustomAuthor','sellCustomImage','sellPrice'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.disabled = locked;
@@ -5244,6 +5220,14 @@ async function loadRemoteAppData() {
     try {
       const bookSnap = await ref.doc('books').collection('items').limit(1000).get();
       if (!bookSnap.empty) state.books = bookSnap.docs.map(doc => Object.assign({id: doc.id}, doc.data()));
+    } catch(e) {}
+    try {
+      const listingSnap = await _db.collection('listings').get();
+      if (!listingSnap.empty) {
+        const existing = new Map((state.listings || []).map(l => [String(l.id || ''), l]));
+        listingSnap.docs.forEach(doc => existing.set(String(doc.id), Object.assign({id: doc.id}, doc.data())));
+        state.listings = Array.from(existing.values());
+      }
     } catch(e) {}
     _remoteDataLoaded = true;
     save();
@@ -5328,17 +5312,76 @@ function showConfirm(msg, cb, btnLabel) {
   modal.classList.add('open');
   modal.setAttribute('aria-hidden', 'false');
 }
-function book() { return state.books.find(item => item.id === selectedBookId) || null; }
+function _normCatalogText(value) {
+  return String(value || '').trim().toLowerCase();
+}
+function _uniqueTextList(values) {
+  const seen = new Set();
+  const out = [];
+  (values || []).forEach(value => {
+    const text = String(value || '').trim();
+    const key = text.toLowerCase();
+    if (text && !seen.has(key)) { seen.add(key); out.push(text); }
+  });
+  return out;
+}
+function _listingToCatalogBook(l) {
+  if (!l || !(l.title || l.bookTitle) || !l.className) return null;
+  return {
+    id: l.bookId || ('custom_' + (l.id || Date.now())),
+    type: l.type || (l.className === 'General' ? 'general' : 'school'),
+    state: l.state || '',
+    className: l.className || '',
+    board: l.board || '',
+    stream: l.stream || '',
+    title: l.title || l.bookTitle || 'Book',
+    price: parseInt(l.price || l.adminPrice || 0) || 0,
+    author: l.author || '',
+    image: l.image || '',
+    fromListing: true
+  };
+}
+function _catalogBooks() {
+  const out = [];
+  const seenIds = new Set();
+  const seenCustom = new Set();
+  (state.books || []).forEach(item => {
+    if (!item || !item.id) return;
+    seenIds.add(String(item.id));
+    out.push(item);
+  });
+  (state.listings || []).forEach(listing => {
+    const item = _listingToCatalogBook(listing);
+    if (!item) return;
+    if (item.id && seenIds.has(String(item.id))) return;
+    const customKey = [item.title,item.className,item.board,item.stream,item.state].map(_normCatalogText).join('|');
+    if (seenCustom.has(customKey)) return;
+    seenCustom.add(customKey);
+    out.push(item);
+  });
+  return out;
+}
+function book() { return _catalogBooks().find(item => item.id === selectedBookId) || null; }
 let selectedState = "";
 const classes = state.classes || ["Class 9","Class 10","Class 11","Class 12"];
 const streams  = state.streams || ["Science","Commerce","Arts"];
 function getBoardsForState(st) {
   const wanted = String(st || '').trim().toLowerCase();
   const key = Object.keys(state.boardsByState || {}).find(k => String(k || '').trim().toLowerCase() === wanted);
-  return key ? ((state.boardsByState || {})[key] || []) : [];
+  const base = key ? ((state.boardsByState || {})[key] || []) : [];
+  const listingBoards = (state.listings || [])
+    .filter(l => !st || _normCatalogText(l.state) === wanted)
+    .map(l => l.board);
+  return _uniqueTextList(base.concat(listingBoards));
 }
 function getMediumsForState(st) {
-  return (state.mediumsByState||{})[st] || [];
+  const wanted = String(st || '').trim().toLowerCase();
+  const key = Object.keys(state.mediumsByState || {}).find(k => String(k || '').trim().toLowerCase() === wanted);
+  const base = key ? ((state.mediumsByState || {})[key] || []) : [];
+  const listingMediums = (state.listings || [])
+    .filter(l => !st || _normCatalogText(l.state) === wanted)
+    .map(l => l.medium);
+  return _uniqueTextList(base.concat(listingMediums));
 }
 function _normStateBoard(value) {
   return String(value || '').trim().toLowerCase();
@@ -5365,17 +5408,18 @@ function _schoolBookMatchesSelectedState(item) {
   return _normStateBoard(_bookStateForFilter(item)) === _normStateBoard(selectedState);
 }
 function shownBooks() {
+  const catalog = _catalogBooks();
   if (selectedCategory) {
-    return state.books.filter(item => item.categoryId === selectedCategory && _schoolBookMatchesSelectedState(item));
+    return catalog.filter(item => item.categoryId === selectedCategory && _schoolBookMatchesSelectedState(item));
   }
   if (search) {
-    return state.books.filter(item => {
+    return catalog.filter(item => {
       if (item.type === "general" && !state.settings.general) return false;
       if (!_schoolBookMatchesSelectedState(item)) return false;
       return [item.title,item.className,item.board,item.stream,item.author].join(" ").toLowerCase().includes(search.toLowerCase());
     });
   }
-  return state.books.filter(item => {
+  return catalog.filter(item => {
     if (item.type === "general" && !state.settings.general) return false;
     if (!_schoolBookMatchesSelectedState(item)) return false;
     if (item.className !== selectedClass) return false;
@@ -5401,7 +5445,8 @@ function renderClasses() {
   const all = state.settings.general ? [...classes,"General"] : classes;
   const grid = document.querySelector("#classGrid");
   grid.style.display = catalogStep === "classes" ? "grid" : "none";
-  grid.innerHTML = all.map(name => '<button class="class-card ' + (name===selectedClass?"active":"") + '" data-class="' + name + '"><img src="' + imageForClass(name) + '" alt="' + name + '"/><div class="card-info"><strong>' + name + '</strong><span>' + state.books.filter(b=>b.className===name&&(b.type!=="general"||state.settings.general)).length + ' books</span></div></button>').join("");
+  const catalog = _catalogBooks();
+  grid.innerHTML = all.map(name => '<button class="class-card ' + (name===selectedClass?"active":"") + '" data-class="' + name + '"><img src="' + imageForClass(name) + '" alt="' + name + '"/><div class="card-info"><strong>' + name + '</strong><span>' + catalog.filter(b=>b.className===name&&(b.type!=="general"||state.settings.general)).length + ' books</span></div></button>').join("");
   document.querySelectorAll(".class-card").forEach(card => {
     card.onclick = () => { if(!requireLogin()) return; triggerAdMob("classClick"); selectedClass = card.dataset.class; selectedBoard=""; selectedStream=""; selectedBookId=""; selectedCategory=""; catalogStep = selectedClass === "General" ? "books" : "boards"; const _ml=document.querySelector("#matchList"); if(_ml) _ml.innerHTML=""; render(); };
   });
@@ -5444,7 +5489,7 @@ function renderStreams() {
   if (!show) { grid.innerHTML = ""; return; }
   // Only show streams that have at least one subject for this class+board
   const activeStreams = [...new Set(
-    state.books
+    _catalogBooks()
       .filter(b => b.type === "school" && _schoolBookMatchesSelectedState(b) && b.className === selectedClass &&
         (b.board||"").toLowerCase() === (selectedBoard||"").toLowerCase() && b.stream)
       .map(b => b.stream)
@@ -5514,34 +5559,43 @@ function renderSelected() {
 }
 // ── Sell page catalog render (mirrors buy page) ───────────────
 let sellCatalogStep = "classes";
+let sellCustomMode = false;
 function renderSellCatalog() {
   const sellPage = document.getElementById('sellPage');
   if (!sellPage || !sellPage.classList.contains('active')) return;
   const sellSelectedCard = document.getElementById('sellSelectedCard');
+  const sellCustomCard   = document.getElementById('sellCustomBookCard');
   const sellFormCard     = document.getElementById('sellFormCard');
   const catalogTitle = document.getElementById('sellCatalogTitle');
   const backBtn = document.getElementById('sellBackBtn');
+  const customToggle = document.getElementById('sellCustomToggle');
+  const useCatalogBtn = document.getElementById('sellUseCatalogBtn');
   // Update title and back button
-  if (catalogTitle) catalogTitle.textContent = sellCatalogStep==='classes'?'Select a Book to Sell':sellCatalogStep==='boards'?'Select Board':sellCatalogStep==='streams'?'Select Stream':'Select Subject';
+  if (catalogTitle) catalogTitle.textContent = sellCustomMode ? 'Add Your Book' : sellCatalogStep==='classes'?'Select a Book to Sell':sellCatalogStep==='boards'?'Select Board':sellCatalogStep==='streams'?'Select Stream':'Select Subject';
   if (backBtn) backBtn.style.display = sellCatalogStep==='classes' ? 'none' : 'inline-block';
-  // Show selected + sell form only when a book is picked
-  if (sellSelectedCard) sellSelectedCard.style.display = (selectedBookId && sellCatalogStep==='books') ? '' : 'none';
-  if (sellFormCard) sellFormCard.style.display = (selectedBookId && sellCatalogStep==='books') ? '' : 'none';
+  if (customToggle) customToggle.onclick = () => { if(!requireLogin()) return; sellCustomMode=true; selectedBookId=''; _populateSellCustomOptions(); renderSellCatalog(); };
+  if (useCatalogBtn) useCatalogBtn.onclick = () => { sellCustomMode=false; renderSellCatalog(); };
+  if (sellCustomCard) sellCustomCard.style.display = sellCustomMode ? '' : 'none';
+  // Show selected + sell form when a catalog book is picked or custom mode is open.
+  if (sellSelectedCard) sellSelectedCard.style.display = (!sellCustomMode && selectedBookId && sellCatalogStep==='books') ? '' : 'none';
+  if (sellFormCard) sellFormCard.style.display = (sellCustomMode || (selectedBookId && sellCatalogStep==='books')) ? '' : 'none';
+  if (sellCustomMode) _populateSellCustomOptions();
   updateSellPriceControls();
   // Render class grid
   const cg = document.getElementById('sellClassGrid');
   if (cg) {
-    if (sellCatalogStep === 'classes') {
+    if (!sellCustomMode && sellCatalogStep === 'classes') {
       const all = state.settings.general ? [...classes,'General'] : classes;
       cg.style.display = 'grid';
-      cg.innerHTML = all.map(name => '<button class="class-card" data-sellclass="' + name + '"><img src="' + imageForClass(name) + '" alt="' + name + '"/><div class="card-info"><strong>' + name + '</strong><span>' + state.books.filter(b=>b.className===name&&(b.type!=="general"||state.settings.general)).length + ' books</span></div></button>').join('');
-      cg.querySelectorAll('[data-sellclass]').forEach(card => { card.onclick = () => { triggerAdMob("classClick"); selectedClass=card.dataset.sellclass; selectedBoard=''; selectedStream=''; selectedBookId=''; sellCatalogStep=selectedClass==='General'?'books':'boards'; renderSellCatalog(); }; });
+      const catalog = _catalogBooks();
+      cg.innerHTML = all.map(name => '<button class="class-card" data-sellclass="' + name + '"><img src="' + imageForClass(name) + '" alt="' + name + '"/><div class="card-info"><strong>' + name + '</strong><span>' + catalog.filter(b=>b.className===name&&(b.type!=="general"||state.settings.general)).length + ' books</span></div></button>').join('');
+      cg.querySelectorAll('[data-sellclass]').forEach(card => { card.onclick = () => { triggerAdMob("classClick"); sellCustomMode=false; selectedClass=card.dataset.sellclass; selectedBoard=''; selectedStream=''; selectedBookId=''; sellCatalogStep=selectedClass==='General'?'books':'boards'; renderSellCatalog(); }; });
     } else { cg.style.display='none'; cg.innerHTML=''; }
   }
   // Render board grid
   const bg = document.getElementById('sellBoardGrid');
   if (bg) {
-    if (sellCatalogStep === 'boards') {
+    if (!sellCustomMode && sellCatalogStep === 'boards') {
       bg.style.display = 'grid';
       if (!selectedState) { bg.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:24px;color:#888;font-weight:700;font-size:14px;">Please select your state above to see boards.</div>'; }
       else {
@@ -5557,9 +5611,9 @@ function renderSellCatalog() {
   // Render stream grid
   const sg = document.getElementById('sellStreamGrid');
   if (sg) {
-    if (sellCatalogStep === 'streams') {
+    if (!sellCustomMode && sellCatalogStep === 'streams') {
       sg.style.display='grid';
-      const activeStreams=[...new Set(state.books.filter(b=>b.type==='school'&&_schoolBookMatchesSelectedState(b)&&b.className===selectedClass&&(b.board||'').toLowerCase()===(selectedBoard||'').toLowerCase()&&b.stream).map(b=>b.stream))];
+      const activeStreams=[...new Set(_catalogBooks().filter(b=>b.type==='school'&&_schoolBookMatchesSelectedState(b)&&b.className===selectedClass&&(b.board||'').toLowerCase()===(selectedBoard||'').toLowerCase()&&b.stream).map(b=>b.stream))];
       const toShow=activeStreams.length?activeStreams:streams;
       sg.innerHTML=toShow.map(name=>'<button class="stream-card" data-sellstream="'+name+'"><strong>'+name+'</strong></button>').join('');
       sg.querySelectorAll('[data-sellstream]').forEach(card=>{card.onclick=()=>{selectedStream=card.dataset.sellstream;selectedBookId='';sellCatalogStep='books';renderSellCatalog();};});
@@ -5568,27 +5622,110 @@ function renderSellCatalog() {
   // Render book grid
   const bkg = document.getElementById('sellBookGrid');
   if (bkg) {
-    if (sellCatalogStep === 'books') {
+    if (!sellCustomMode && sellCatalogStep === 'books') {
       bkg.style.display='grid';
       const items=shownBooks();
       bkg.innerHTML=items.length?items.map(item=>'<button class="book-card '+(item.id===selectedBookId?'active':'')+'" data-sellid="'+item.id+'"><img src="'+imageForBook(item)+'" alt="'+item.title+'"/><div class="card-info"><strong>'+item.title+'</strong><small>'+bookMeta(item)+'</small><span class="price">'+priceText(item)+'</span></div></button>').join(''):'<div>No books found</div>';
-      bkg.querySelectorAll('[data-sellid]').forEach(card=>{card.onclick=()=>{triggerAdMob("subjectClick");selectedBookId=card.dataset.sellid;renderSellCatalog();renderSelected();};});
+      bkg.querySelectorAll('[data-sellid]').forEach(card=>{card.onclick=()=>{triggerAdMob("subjectClick");sellCustomMode=false;selectedBookId=card.dataset.sellid;const price=document.getElementById('sellPrice');if(price)price.value='';renderSellCatalog();renderSelected();};});
     } else { bkg.style.display='none'; }
   }
 }
+function _fillDatalist(id, values) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = _uniqueTextList(values).map(v => '<option value="' + _acEsc(v) + '"></option>').join('');
+}
+function _populateSellCustomOptions() {
+  const cls = document.getElementById('sellCustomClass');
+  if (cls) {
+    const current = cls.value;
+    const all = state.settings.general ? [...classes,'General'] : classes;
+    cls.innerHTML = '<option value="">Select Class</option>' + all.map(c => '<option value="' + _acEsc(c) + '">' + _acEsc(c) + '</option>').join('');
+    if (current) cls.value = current;
+  }
+  const stateVal = document.getElementById('sellState')?.value || selectedState || '';
+  _fillDatalist('sellCustomBoardOptions', getBoardsForState(stateVal));
+  _fillDatalist('sellCustomStreamOptions', streams);
+  _fillDatalist('sellCustomMediumOptions', getMediumsForState(stateVal));
+  updateSellCustomStreamVisibility();
+}
+function updateSellCustomStreamVisibility() {
+  const cls = document.getElementById('sellCustomClass')?.value || '';
+  const wrap = document.getElementById('sellCustomStreamWrap');
+  const needsStream = cls === 'Class 11' || cls === 'Class 12';
+  if (wrap) wrap.style.display = needsStream ? '' : 'none';
+  if (!needsStream) {
+    const stream = document.getElementById('sellCustomStream');
+    if (stream) stream.value = '';
+  }
+}
+function _sellMediumValue() {
+  return (document.getElementById('sellCustomMedium')?.value || document.getElementById('sellMedium')?.value || '').trim();
+}
+function _collectCustomSellBook() {
+  const title = (document.getElementById('sellCustomTitle')?.value || '').trim();
+  const className = (document.getElementById('sellCustomClass')?.value || '').trim();
+  const board = (document.getElementById('sellCustomBoard')?.value || '').trim();
+  const stream = (document.getElementById('sellCustomStream')?.value || '').trim();
+  const author = (document.getElementById('sellCustomAuthor')?.value || '').trim();
+  const image = (document.getElementById('sellCustomImage')?.value || '').trim();
+  if (!title) { toast('Please enter the book name'); return null; }
+  if (!className) { toast('Please select the class'); return null; }
+  if (className !== 'General' && !board) { toast('Please enter the board'); return null; }
+  if ((className === 'Class 11' || className === 'Class 12') && !stream) { toast('Please enter the stream'); return null; }
+  const id = 'custom_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+  return {
+    id,
+    type: className === 'General' ? 'general' : 'school',
+    state: document.getElementById('sellState')?.value || selectedState || '',
+    className,
+    board,
+    stream,
+    title,
+    price: parseInt(document.getElementById('sellPrice')?.value || '') || 0,
+    author,
+    image,
+    customBook: true
+  };
+}
+function _rememberUserCatalogValues(customBook, medium, stateName) {
+  const st = stateName || selectedState || customBook?.state || '';
+  if (!st) return;
+  state.boardsByState = state.boardsByState || {};
+  state.mediumsByState = state.mediumsByState || {};
+  state.boardsByState[st] = _uniqueTextList((state.boardsByState[st] || []).concat(customBook?.board || []));
+  state.mediumsByState[st] = _uniqueTextList((state.mediumsByState[st] || []).concat(medium || []));
+}
+function _resetCustomSellBookForm() {
+  ['sellCustomTitle','sellCustomBoard','sellCustomStream','sellCustomAuthor','sellCustomImage','sellCustomMedium','sellPrice'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+}
 function updateSellPriceControls() {
-  const b = book();
+  const b = sellCustomMode ? null : book();
   const adminPrice = parseInt(b?.price) || 0;
+  const allowSellerPrice = state.settings.allowUserPrice === true;
+  const needsSellerPrice = allowSellerPrice || sellCustomMode;
+  const priceWrap = document.getElementById('sellPriceWrap');
+  const fixedInfo = document.getElementById('sellFixedPriceInfo');
   const fixedText = document.getElementById('sellFixedPriceText');
-  if (fixedText) fixedText.textContent = b ? ('₹' + adminPrice + ' (admin fixed price)') : 'Select a book';
+  if (priceWrap) priceWrap.style.display = needsSellerPrice ? '' : 'none';
+  if (fixedInfo) fixedInfo.style.display = needsSellerPrice ? 'none' : '';
+  if (fixedText) fixedText.textContent = b ? ('Rs ' + adminPrice + ' (admin fixed price)') : 'Select a book';
   const inp = document.getElementById('sellPrice');
   const help = document.getElementById('sellPriceHelp');
   if (inp) {
-    inp.min = adminPrice ? '1' : '';
-    inp.max = adminPrice ? String(adminPrice) : '';
-    inp.placeholder = adminPrice ? ('Optional, max ₹' + adminPrice) : 'Select a book first';
+    inp.required = needsSellerPrice;
+    inp.min = '1';
+    inp.removeAttribute('max');
+    inp.placeholder = sellCustomMode ? 'Enter price for your book' : (allowSellerPrice ? 'Enter your selling price' : 'Admin fixed price is used');
   }
-  if (help) help.textContent = adminPrice ? ('Optional. You can enter ₹1 to ₹' + adminPrice + ', or leave blank to use ₹' + adminPrice + '.') : 'Select a book first.';
+  if (help) {
+    if (sellCustomMode) help.textContent = 'Required for a new book listing.';
+    else if (allowSellerPrice) help.textContent = adminPrice ? ('Required. Admin suggested price is Rs ' + adminPrice + ', but you can enter your own selling price.') : 'Required. Enter your selling price.';
+    else help.textContent = '';
+  }
 }
 // ── Account Details helpers ────────────────────────────────────
 function updateAccDistricts() {
@@ -6106,7 +6243,7 @@ function _locScore(l, q) {
   return score;
 }
 function _selectedBookMatchesListing(l, bId) {
-  const selected = state.books.find(b => String(b.id) === String(bId)) || null;
+  const selected = _catalogBooks().find(b => String(b.id) === String(bId)) || null;
   if (!l) return false;
   if (String(l.bookId || '') === String(bId || '')) return true;
   if (!selected) return false;
@@ -6160,7 +6297,7 @@ function _isMineListing(l) {
   return listingOwnerIds.some(id => myOwnerIds.includes(id));
 }
 function _listingBook(l) {
-  return state.books.find(b => b.id === l.bookId) || null;
+  return _catalogBooks().find(b => b.id === l.bookId) || null;
 }
 async function _loadMyListingsFromFirestore() {
   const u = window._currentUser;
@@ -6917,6 +7054,7 @@ function updateSellDistricts() {
   const sSel  = document.getElementById('sellSchool');
   if (!dSel) return;
   _updateSellMediumsForState(stateName);
+  if (sellCustomMode) _populateSellCustomOptions();
   dSel.innerHTML = '<option value="">— District —</option>' + _getDistricts(stateName).map(d => '<option>' + d.district + '</option>').join('');
   if (sdSel) sdSel.innerHTML = '<option value="">— Sub-District —</option>';
   if (pSel)  pSel.value = '';
@@ -7588,38 +7726,44 @@ function bindSellForm() {
   const frm = document.querySelector("#sellForm");
   if(frm) frm.onsubmit = async e => {
     e.preventDefault();
-    if(!selectedBookId){ toast("Please select a book first"); return; }
     if(!window._isLoggedIn){ toast("Please log in first to list a book"); return; }
     const u = window._currentUser;
-    const selected = book();
+    const isCustom = sellCustomMode === true;
+    const customBook = isCustom ? _collectCustomSellBook() : null;
+    if (isCustom && !customBook) return;
+    if(!isCustom && !selectedBookId){ toast("Please select a book first, or tap Add your book"); return; }
+    const selected = isCustom ? customBook : book();
+    if (!selected) { toast("Please select a valid book"); return; }
     const adminPrice = parseInt(selected?.price) || 0;
     const typedPrice = parseInt(document.getElementById("sellPrice")?.value || "") || 0;
-    let listingPrice = adminPrice;
-    if (state.settings.allowUserPrice === true && typedPrice) {
-      if (!adminPrice) { toast("Admin price is not set for this book"); return; }
-      if (typedPrice < 1 || typedPrice > adminPrice) {
-        toast("Price must be between ₹1 and ₹" + adminPrice);
-        return;
-      }
-      listingPrice = typedPrice;
+    const needsSellerPrice = isCustom || state.settings.allowUserPrice === true;
+    let listingPrice = needsSellerPrice ? typedPrice : adminPrice;
+    if (needsSellerPrice) {
+      if (!typedPrice || typedPrice < 1) { toast("Please enter the selling price"); return; }
+    } else if (!adminPrice) {
+      toast("Admin price is not set for this book. Turn on seller pricing or add an admin price.");
+      return;
     }
     const listingState = document.getElementById("sellState")?.value || "";
     const listingDistrict = document.getElementById("sellDistrict")?.value || "";
     const listingSubDistrict = document.getElementById("sellSubDistrict")?.value || "";
     const listingPlace = (document.getElementById("sellPlace")?.value || "").trim();
     const listingSchool = (document.getElementById("sellSchool")?.value || "").trim();
-    const listingMedium = (document.getElementById("sellMedium")?.value || "").trim();
+    const listingMedium = _sellMediumValue();
     if(!listingState || !listingMedium || !listingDistrict || !listingSubDistrict || !listingPlace || !listingSchool){
       toast("Please fill state, medium, district, sub-district, place and school");
       return;
     }
     const listing = {
       id       : "ls"+Date.now(),
-      bookId   : selectedBookId,
+      bookId   : selected.id || selectedBookId,
       title    : selected ? selected.title : "",
       className: selected ? selected.className : "",
       board    : selected ? selected.board : "",
       stream   : selected ? selected.stream : "",
+      author   : selected ? (selected.author || "") : "",
+      image    : selected ? (selected.image || "") : "",
+      customBook: isCustom,
       seller   : u ? u.name : "You",
       sellerName: u ? u.name : "You",
       userId   : (_auth && _auth.currentUser && _auth.currentUser.uid) || (u ? (u.uid||u.id) : ""),
@@ -7637,9 +7781,10 @@ function bindSellForm() {
       whatsapp : document.getElementById("sellWhatsapp")?.value || "",
       price    : listingPrice,
       adminPrice: adminPrice,
-      priceMode: state.settings.allowUserPrice === true && typedPrice ? "seller" : "admin",
+      priceMode: needsSellerPrice ? (isCustom ? "seller-custom" : "seller") : "admin",
       createdAt: new Date().toISOString().slice(0,10)
     };
+    if (isCustom) _rememberUserCatalogValues(customBook, listingMedium, listingState);
     _saveCommunityLocation(listing.state, listing.district, listing.subDistrict, listing.place, listing.school);
     state.listings.push(listing);
     save();
@@ -7651,6 +7796,8 @@ function bindSellForm() {
     toast("✅ Listed for sale!");
     // Reset sell page to book selection
     selectedBookId = '';
+    sellCustomMode = false;
+    _resetCustomSellBookForm();
     sellCatalogStep = 'classes';
     renderSellCatalog();
     renderMyListings(true);
@@ -7673,6 +7820,7 @@ function bindPageNav() {
           if (sf2) sf2.value = selectedState;
         }
         sellCatalogStep = 'classes';
+        sellCustomMode = false;
         // Pre-fill sell form with profile defaults
         _prefillSellFromProfile();
         renderSellCatalog();
@@ -7931,10 +8079,11 @@ function _updateSellMediumsForState(stateVal, selectedValue) {
   const meds = getMediumsForState(stateVal);
   const sel = document.getElementById('sellMedium');
   if (!sel) return;
-  if (!stateVal) { sel.innerHTML = '<option value="">Select state first</option>'; return; }
+  if (!stateVal) { sel.innerHTML = '<option value="">Select state first</option>'; _fillDatalist('sellCustomMediumOptions', []); return; }
   sel.innerHTML = '<option value="">Select Medium</option>' +
     (meds.length ? meds.map(m=>'<option value="'+m+'">'+m+'</option>').join('') :
       '<option value="English Medium">English Medium</option>');
+  _fillDatalist('sellCustomMediumOptions', meds.length ? meds : ['English Medium']);
   if (selectedValue) sel.value = selectedValue;
 }
 function onStateFilterChange(stateVal) {
@@ -7975,6 +8124,7 @@ function onStateFilterChange2(stateVal) {
   const sellStateEl = document.getElementById('sellState');
   if (sellStateEl) { sellStateEl.value = stateVal; updateSellDistricts(); }
   _updateSellMediumsForState(stateVal);
+  if (sellCustomMode) _populateSellCustomOptions();
   render();
 }
 function init() {
@@ -7989,6 +8139,11 @@ function init() {
   // Sell page back button
   const sellBack = document.getElementById('sellBackBtn');
   if (sellBack) sellBack.onclick = () => {
+    if (sellCustomMode) {
+      sellCustomMode = false;
+      renderSellCatalog();
+      return;
+    }
     if (sellCatalogStep==='books') {
       if (selectedStream) sellCatalogStep='streams';
       else if (selectedBoard) sellCatalogStep = selectedClass==='General'?'classes':'boards';
@@ -8060,7 +8215,6 @@ function init() {
       _watchMyChatsForUnread();
       _updateMessagesMenuBadge();
       show('menuAccount');
-      show('menuSuggestion');
       show('menuLogout');
     });
     console.log('[PKITAAP] ⚡ Session restored instantly — no flash.');
@@ -8068,200 +8222,6 @@ function init() {
     // Silently ignore — onAuthStateChanged is always the authoritative source
   }
 })();
-
-// ═══════════════════════════════════════════════════════════════
-//  SUGGESTION BOX
-// ═══════════════════════════════════════════════════════════════
-let _suggSelectedType = 'other';
-let _suggRefersPage = '';
-function openSuggModal(){
-  document.getElementById('menuBtn')?.classList.remove('open');
-  document.getElementById('menuPanel')?.classList.remove('open');
-  // Capture which page/section the user is currently viewing
-  const activePage = document.querySelector('.page.active');
-  _suggRefersPage = activePage ? (activePage.id || activePage.dataset.page || 'app') : 'app';
-  document.getElementById('suggModalBg').classList.add('open');
-  document.getElementById('suggText').value = '';
-  document.getElementById('suggCharCount').textContent = '0';
-  _suggSelectedType = 'other';
-  document.querySelectorAll('.sugg-type-btn').forEach(b=>b.classList.toggle('selected', b.dataset.type==='other'));
-  document.getElementById('suggSubmitBtn').disabled = false;
-  document.getElementById('suggSubmitBtn').textContent = '📤 Send Suggestion';
-}
-function closeSuggModal(){
-  document.getElementById('suggModalBg').classList.remove('open');
-}
-function suggSelectType(btn){
-  _suggSelectedType = btn.dataset.type;
-  document.querySelectorAll('.sugg-type-btn').forEach(b=>b.classList.remove('selected'));
-  btn.classList.add('selected');
-}
-(function bindSuggCharCount(){
-  document.addEventListener('DOMContentLoaded', function(){
-    const ta = document.getElementById('suggText');
-    if(ta) ta.addEventListener('input', function(){ document.getElementById('suggCharCount').textContent = this.value.length; });
-    // Close modal on backdrop click
-    const bg = document.getElementById('suggModalBg');
-    if(bg) bg.addEventListener('click', function(e){ if(e.target===bg) closeSuggModal(); });
-  });
-})();
-const SUGG_LOCAL_KEY = 'pkitaap_suggestions';
-const SUGG_PENDING_KEY = 'pkitaap_suggestions_pending';
-function _suggReadList(key){
-  try {
-    const value = JSON.parse(localStorage.getItem(key)||'[]');
-    return Array.isArray(value) ? value : [];
-  } catch(e) {
-    return [];
-  }
-}
-function _suggWriteList(key, list){
-  localStorage.setItem(key, JSON.stringify(Array.isArray(list) ? list : []));
-}
-function _suggAuthUser(){
-  return (_auth && _auth.currentUser) || (window._auth && window._auth.currentUser) || {};
-}
-function _suggNewId(){
-  return 'sg_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
-}
-function _suggFirestorePayload(suggestion){
-  const payload = Object.assign({}, suggestion);
-  delete payload._localOnly;
-  delete payload._syncError;
-  return payload;
-}
-function _suggArrayUnion(value){
-  if(window.firebase && firebase.firestore && firebase.firestore.FieldValue) {
-    return firebase.firestore.FieldValue.arrayUnion(value);
-  }
-  return [value];
-}
-async function _sendSuggestionToFirestore(suggestion){
-  if(!_db) throw new Error('Firebase is not ready');
-  const id = suggestion.id || _suggNewId();
-  const payload = _suggFirestorePayload(Object.assign({}, suggestion, {id:id}));
-  const errors = [];
-  let saved = false;
-  try {
-    await _db.collection('suggestions').doc(id).set(payload, {merge:true});
-    saved = true;
-  } catch(e) {
-    errors.push('suggestions: ' + (e.message || e.code || e));
-  }
-  const uid = String(payload.userUid || payload.userId || '').trim();
-  if(uid){
-    try {
-      await _db.collection('users').doc(uid).set({
-        userSuggestions: _suggArrayUnion(payload),
-        lastSuggestionAt: payload.createdAt || new Date().toISOString()
-      }, {merge:true});
-      saved = true;
-    } catch(e) {
-      errors.push('users/' + uid + ': ' + (e.message || e.code || e));
-    }
-  }
-  try {
-    await _db.collection('community_data').doc('suggestions_inbox').set({
-      items: _suggArrayUnion(payload),
-      updatedAt: new Date().toISOString()
-    }, {merge:true});
-    saved = true;
-  } catch(e) {
-    errors.push('community_data: ' + (e.message || e.code || e));
-  }
-  if(!saved) throw new Error(errors.join(' | ') || 'Firebase write failed');
-  return id;
-}
-function _rememberSuggestionLocally(suggestion, pending, errorMessage){
-  const local = _suggReadList(SUGG_LOCAL_KEY);
-  const copy = Object.assign({}, suggestion, {_localOnly: !!pending});
-  if(errorMessage) copy._syncError = String(errorMessage);
-  const existing = local.findIndex(s=>s.id===copy.id);
-  if(existing >= 0) local[existing] = Object.assign({}, local[existing], copy);
-  else local.push(copy);
-  _suggWriteList(SUGG_LOCAL_KEY, local);
-  if(pending){
-    const queue = _suggReadList(SUGG_PENDING_KEY);
-    if(!queue.some(s=>s.id===copy.id)) queue.push(copy);
-    _suggWriteList(SUGG_PENDING_KEY, queue);
-  }
-}
-async function _syncPendingSuggestions(){
-  if(!_db) return;
-  const queue = _suggReadList(SUGG_PENDING_KEY);
-  if(!queue.length) return;
-  const remaining = [];
-  for(const item of queue){
-    try {
-      await _sendSuggestionToFirestore(item);
-    } catch(e) {
-      remaining.push(Object.assign({}, item, {_syncError: e.message || String(e)}));
-    }
-  }
-  _suggWriteList(SUGG_PENDING_KEY, remaining);
-  if(remaining.length !== queue.length){
-    const remainingIds = new Set(remaining.map(s=>s.id));
-    const local = _suggReadList(SUGG_LOCAL_KEY).map(s=>remainingIds.has(s.id) ? s : Object.assign({}, s, {_localOnly:false, _syncError:''}));
-    _suggWriteList(SUGG_LOCAL_KEY, local);
-  }
-}
-async function submitSuggestion(){
-  const text = (document.getElementById('suggText').value||'').trim();
-  if(!text){ document.getElementById('suggText').focus(); return; }
-  const btn = document.getElementById('suggSubmitBtn');
-  btn.disabled = true; btn.textContent = '⏳ Sending…';
-  const u = window._currentUser || {};
-  const authUser = _suggAuthUser();
-  const uid = authUser.uid || u.uid || u.id || '';
-  // Map page IDs to human-readable labels
-  const PAGE_LABELS = {buyPage:'Browse Books',sellPage:'Sell Books',myListingsPage:'My Listings',messagesPage:'Messages',accountPage:'Account'};
-  const refersRaw = _suggRefersPage || 'app';
-  const suggestion = {
-    id: _suggNewId(),
-    message: text,
-    type: _suggSelectedType || 'other',
-    userName: u.name || u.displayName || authUser.displayName || 'User',
-    userMobile: u.mobile || u.phoneNumber || authUser.phoneNumber || '',
-    userEmail: u.email || authUser.email || '',
-    userId: uid,
-    userUid: uid,
-    refers: PAGE_LABELS[refersRaw] || refersRaw,
-    status: 'new',
-    createdAt: new Date().toISOString(),
-    createdAtMs: Date.now(),
-    source: 'exported-user-app'
-  };
-  let saved = false;
-  // Try Firestore first
-  if(_db){
-    try {
-      await _syncPendingSuggestions();
-      await _sendSuggestionToFirestore(suggestion);
-      _rememberSuggestionLocally(suggestion, false);
-      saved = true;
-      toast('✅ Thank you! Your suggestion has been sent.');
-    } catch(e){
-      console.warn('[PKITAAP] Firestore suggestion error:', e);
-      // Fall through to localStorage backup below
-    }
-  }
-  // LocalStorage backup (also used when _db not available)
-  if(!saved){
-    try {
-      _rememberSuggestionLocally(suggestion, true);
-      toast('⚠️ Not visible to admin yet. Saved on this device; check internet/Firebase rules and try again.');
-      saved = true;
-    } catch(e2){
-      console.warn('[PKITAAP] LocalStorage suggestion error:', e2);
-    }
-  }
-  if(saved){
-    closeSuggModal();
-  } else {
-    btn.disabled = false; btn.textContent = '📤 Send Suggestion';
-    toast('❌ Could not send. Please try again.');
-  }
-}
 
 init();
 // ═══════════════════════════════════════════════════════════════
@@ -8409,7 +8369,6 @@ init();
     const menuListings  = document.getElementById('menuListings');
     const menuMessages  = document.getElementById('menuMessages');
     const menuAccount   = document.getElementById('menuAccount');
-    const menuSuggestion= document.getElementById('menuSuggestion');
     const menuLogout    = document.getElementById('menuLogout');
     if (menuLoginCard) menuLoginCard.style.display = 'none';
     if (menuHome)      menuHome.style.display = '';
@@ -8418,8 +8377,7 @@ init();
     if (menuMessages)  menuMessages.style.display = (state.settings.messaging !== false) ? '' : 'none';
     _watchMyChatsForUnread();
     _updateMessagesMenuBadge();
-    if (menuAccount)    menuAccount.style.display = '';
-    if (menuSuggestion) menuSuggestion.style.display = '';
+    if (menuAccount)   menuAccount.style.display = '';
     if (menuLogout)    menuLogout.style.display = '';
 
     // Wire account details button
@@ -8428,11 +8386,6 @@ init();
       document.getElementById('menuBtn')?.classList.remove('open');
       document.getElementById('menuPanel')?.classList.remove('open');
       openAccountDetails();
-    };
-    // Wire suggestion button
-    if (menuSuggestion) menuSuggestion.onclick = function() {
-      triggerAdMob("menuOption");
-      openSuggModal();
     };
     // Wire logout button
     if (menuLogout) menuLogout.onclick = async function() {
@@ -8450,15 +8403,14 @@ init();
       window._isLoggedIn = false;
       window._currentUser = null;
       updateAccessControls();
-      if (menuLoginCard)  menuLoginCard.style.display = '';
-      if (menuHome)       menuHome.style.display = 'none';
-      if (menuSell)       menuSell.style.display = 'none';
-      if (menuListings)   menuListings.style.display = 'none';
-      if (menuMessages)   menuMessages.style.display = 'none';
-      if (menuMessages)   menuMessages.classList.remove('has-unread');
-      if (menuAccount)    menuAccount.style.display = 'none';
-      if (menuSuggestion) menuSuggestion.style.display = 'none';
-      if (menuLogout)     menuLogout.style.display = 'none';
+      if (menuLoginCard) menuLoginCard.style.display = '';
+      if (menuHome)      menuHome.style.display = 'none';
+      if (menuSell)      menuSell.style.display = 'none';
+      if (menuListings)  menuListings.style.display = 'none';
+      if (menuMessages)  menuMessages.style.display = 'none';
+      if (menuMessages)  menuMessages.classList.remove('has-unread');
+      if (menuAccount)   menuAccount.style.display = 'none';
+      if (menuLogout)    menuLogout.style.display = 'none';
       document.getElementById('menuBtn')?.classList.remove('open');
       document.getElementById('menuPanel')?.classList.remove('open');
       toast('👋 Logged out successfully.');
