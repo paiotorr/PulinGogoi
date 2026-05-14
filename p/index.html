@@ -62,6 +62,23 @@ button, input, select { font: inherit; }
 #menuMessages { position: relative; }
 #menuMessages.has-unread::after { background: #ef4444; border: 2px solid #fff; border-radius: 999px; box-shadow: 0 0 0 3px rgba(239,68,68,.14); content: ''; height: 10px; position: absolute; right: 14px; top: 10px; width: 10px; }
 #menuLogout { background: #fef2f2 !important; color: #dc2626 !important; }
+.sugg-modal { background:white; border-radius:22px; box-shadow:0 24px 60px rgba(0,0,0,.25); width:min(96vw,480px); animation:popInSugg .25s cubic-bezier(.34,1.56,.64,1); overflow:hidden; }
+@keyframes popInSugg{from{transform:scale(.85);opacity:0;}to{transform:scale(1);opacity:1;}}
+.sugg-modal-bg { position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:500;display:none;align-items:center;justify-content:center;padding:16px; }
+.sugg-modal-bg.open { display:flex; }
+.sugg-modal-head { padding:18px 20px;border-bottom:2px solid #bbf7d0;display:flex;align-items:center;justify-content:space-between; }
+.sugg-modal-title { font-size:19px;font-weight:900;color:#16a34a; }
+.sugg-modal-body { padding:20px;display:flex;flex-direction:column;gap:14px; }
+.sugg-type-grid { display:grid;grid-template-columns:repeat(2,1fr);gap:8px; }
+.sugg-type-btn { background:#f9fafb;border:2px solid transparent;border-radius:12px;padding:10px 8px;cursor:pointer;font-size:13px;font-weight:800;text-align:center;transition:background .15s,border-color .15s; }
+.sugg-type-btn:hover { background:#f0fdf4;border-color:#bbf7d0;color:#16a34a; }
+.sugg-type-btn.selected { background:#dcfce7;border-color:#16a34a;color:#16a34a; }
+.sugg-textarea { border:2px solid #bbf7d0;border-radius:12px;padding:12px 14px;font-size:14px;font-weight:600;font-family:inherit;width:100%;resize:vertical;min-height:110px;outline:none;transition:border-color .15s; }
+.sugg-textarea:focus { border-color:#16a34a; }
+.sugg-submit-btn { background:#16a34a;color:white;border:none;border-radius:12px;padding:12px;font-size:15px;font-weight:900;cursor:pointer;width:100%;transition:background .15s,transform .1s; }
+.sugg-submit-btn:hover { background:#15803d; }
+.sugg-submit-btn:active { transform:scale(.97); }
+.sugg-submit-btn:disabled { opacity:.6;cursor:not-allowed; }
 .menu-login-card {
   background: linear-gradient(135deg, var(--red-light) 0%, #dcfce7 100%);
   border: 2px solid var(--border); border-radius: 18px;
@@ -370,6 +387,7 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
     <button data-page="myListings" id="menuListings" style="display:none;">📚 My Listings</button>
     <button data-page="messages" id="menuMessages" style="display:none;">Messages</button>
     <button type="button" id="menuAccount" style="display:none;">👤 Account Details</button>
+    <button type="button" id="menuSuggestion" style="display:none;">💡 Suggestion Box</button>
     <button type="button" id="menuLogout" style="display:none;color:#dc2626;">🚪 Log Out</button>
   </div>
 </header>
@@ -752,6 +770,33 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
     </div>
   </div>
 </dialog>
+<!-- SUGGESTION BOX MODAL -->
+<div class="sugg-modal-bg" id="suggModalBg">
+  <div class="sugg-modal">
+    <div class="sugg-modal-head">
+      <div class="sugg-modal-title">💡 Suggestion Box</div>
+      <button type="button" onclick="closeSuggModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888;padding:4px;">✕</button>
+    </div>
+    <div class="sugg-modal-body">
+      <div>
+        <label style="font-size:13px;font-weight:800;color:#444;display:block;margin-bottom:8px;">What is this about?</label>
+        <div class="sugg-type-grid" id="suggTypeGrid">
+          <button type="button" class="sugg-type-btn" data-type="book" onclick="suggSelectType(this)">📚 Book Request</button>
+          <button type="button" class="sugg-type-btn" data-type="price" onclick="suggSelectType(this)">💰 Price Issue</button>
+          <button type="button" class="sugg-type-btn" data-type="feature" onclick="suggSelectType(this)">✨ Feature Request</button>
+          <button type="button" class="sugg-type-btn" data-type="bug" onclick="suggSelectType(this)">🐛 Bug Report</button>
+          <button type="button" class="sugg-type-btn selected" data-type="other" onclick="suggSelectType(this)" style="grid-column:1/-1;">💬 Other / General</button>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:13px;font-weight:800;color:#444;display:block;margin-bottom:6px;">Your Suggestion</label>
+        <textarea class="sugg-textarea" id="suggText" placeholder="Tell us what you'd like — a specific book, a price change, a feature, or anything at all…" maxlength="1000"></textarea>
+        <div style="font-size:11px;color:#888;font-weight:700;text-align:right;margin-top:4px;"><span id="suggCharCount">0</span>/1000</div>
+      </div>
+      <button type="button" class="sugg-submit-btn" id="suggSubmitBtn" onclick="submitSuggestion()">📤 Send Suggestion</button>
+    </div>
+  </div>
+</div>
 <div class="confirm-overlay" id="userConfirmModal" aria-hidden="true">
   <div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="userConfirmTitle">
     <div class="confirm-dialog-head" id="userConfirmTitle">Confirm Delete</div>
@@ -784,7 +829,10 @@ let _auth = null;   // Auth instance
     }
     _db   = firebase.firestore();
     _auth = firebase.auth();
+    window._db = _db;
+    window._auth = _auth;
     _db.enablePersistence({ synchronizeTabs: true }).catch(function(){});
+    setTimeout(function(){ _syncPendingSuggestions(); }, 0);
     console.log('[PKITAAP] Firebase initialised ✅');
   } catch (e) {
     console.error('[PKITAAP] Firebase init error:', e);
@@ -8012,6 +8060,7 @@ function init() {
       _watchMyChatsForUnread();
       _updateMessagesMenuBadge();
       show('menuAccount');
+      show('menuSuggestion');
       show('menuLogout');
     });
     console.log('[PKITAAP] ⚡ Session restored instantly — no flash.');
@@ -8019,6 +8068,200 @@ function init() {
     // Silently ignore — onAuthStateChanged is always the authoritative source
   }
 })();
+
+// ═══════════════════════════════════════════════════════════════
+//  SUGGESTION BOX
+// ═══════════════════════════════════════════════════════════════
+let _suggSelectedType = 'other';
+let _suggRefersPage = '';
+function openSuggModal(){
+  document.getElementById('menuBtn')?.classList.remove('open');
+  document.getElementById('menuPanel')?.classList.remove('open');
+  // Capture which page/section the user is currently viewing
+  const activePage = document.querySelector('.page.active');
+  _suggRefersPage = activePage ? (activePage.id || activePage.dataset.page || 'app') : 'app';
+  document.getElementById('suggModalBg').classList.add('open');
+  document.getElementById('suggText').value = '';
+  document.getElementById('suggCharCount').textContent = '0';
+  _suggSelectedType = 'other';
+  document.querySelectorAll('.sugg-type-btn').forEach(b=>b.classList.toggle('selected', b.dataset.type==='other'));
+  document.getElementById('suggSubmitBtn').disabled = false;
+  document.getElementById('suggSubmitBtn').textContent = '📤 Send Suggestion';
+}
+function closeSuggModal(){
+  document.getElementById('suggModalBg').classList.remove('open');
+}
+function suggSelectType(btn){
+  _suggSelectedType = btn.dataset.type;
+  document.querySelectorAll('.sugg-type-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+(function bindSuggCharCount(){
+  document.addEventListener('DOMContentLoaded', function(){
+    const ta = document.getElementById('suggText');
+    if(ta) ta.addEventListener('input', function(){ document.getElementById('suggCharCount').textContent = this.value.length; });
+    // Close modal on backdrop click
+    const bg = document.getElementById('suggModalBg');
+    if(bg) bg.addEventListener('click', function(e){ if(e.target===bg) closeSuggModal(); });
+  });
+})();
+const SUGG_LOCAL_KEY = 'pkitaap_suggestions';
+const SUGG_PENDING_KEY = 'pkitaap_suggestions_pending';
+function _suggReadList(key){
+  try {
+    const value = JSON.parse(localStorage.getItem(key)||'[]');
+    return Array.isArray(value) ? value : [];
+  } catch(e) {
+    return [];
+  }
+}
+function _suggWriteList(key, list){
+  localStorage.setItem(key, JSON.stringify(Array.isArray(list) ? list : []));
+}
+function _suggAuthUser(){
+  return (_auth && _auth.currentUser) || (window._auth && window._auth.currentUser) || {};
+}
+function _suggNewId(){
+  return 'sg_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+}
+function _suggFirestorePayload(suggestion){
+  const payload = Object.assign({}, suggestion);
+  delete payload._localOnly;
+  delete payload._syncError;
+  return payload;
+}
+function _suggArrayUnion(value){
+  if(window.firebase && firebase.firestore && firebase.firestore.FieldValue) {
+    return firebase.firestore.FieldValue.arrayUnion(value);
+  }
+  return [value];
+}
+async function _sendSuggestionToFirestore(suggestion){
+  if(!_db) throw new Error('Firebase is not ready');
+  const id = suggestion.id || _suggNewId();
+  const payload = _suggFirestorePayload(Object.assign({}, suggestion, {id:id}));
+  const errors = [];
+  let saved = false;
+  try {
+    await _db.collection('suggestions').doc(id).set(payload, {merge:true});
+    saved = true;
+  } catch(e) {
+    errors.push('suggestions: ' + (e.message || e.code || e));
+  }
+  const uid = String(payload.userUid || payload.userId || '').trim();
+  if(uid){
+    try {
+      await _db.collection('users').doc(uid).set({
+        userSuggestions: _suggArrayUnion(payload),
+        lastSuggestionAt: payload.createdAt || new Date().toISOString()
+      }, {merge:true});
+      saved = true;
+    } catch(e) {
+      errors.push('users/' + uid + ': ' + (e.message || e.code || e));
+    }
+  }
+  try {
+    await _db.collection('community_data').doc('suggestions_inbox').set({
+      items: _suggArrayUnion(payload),
+      updatedAt: new Date().toISOString()
+    }, {merge:true});
+    saved = true;
+  } catch(e) {
+    errors.push('community_data: ' + (e.message || e.code || e));
+  }
+  if(!saved) throw new Error(errors.join(' | ') || 'Firebase write failed');
+  return id;
+}
+function _rememberSuggestionLocally(suggestion, pending, errorMessage){
+  const local = _suggReadList(SUGG_LOCAL_KEY);
+  const copy = Object.assign({}, suggestion, {_localOnly: !!pending});
+  if(errorMessage) copy._syncError = String(errorMessage);
+  const existing = local.findIndex(s=>s.id===copy.id);
+  if(existing >= 0) local[existing] = Object.assign({}, local[existing], copy);
+  else local.push(copy);
+  _suggWriteList(SUGG_LOCAL_KEY, local);
+  if(pending){
+    const queue = _suggReadList(SUGG_PENDING_KEY);
+    if(!queue.some(s=>s.id===copy.id)) queue.push(copy);
+    _suggWriteList(SUGG_PENDING_KEY, queue);
+  }
+}
+async function _syncPendingSuggestions(){
+  if(!_db) return;
+  const queue = _suggReadList(SUGG_PENDING_KEY);
+  if(!queue.length) return;
+  const remaining = [];
+  for(const item of queue){
+    try {
+      await _sendSuggestionToFirestore(item);
+    } catch(e) {
+      remaining.push(Object.assign({}, item, {_syncError: e.message || String(e)}));
+    }
+  }
+  _suggWriteList(SUGG_PENDING_KEY, remaining);
+  if(remaining.length !== queue.length){
+    const remainingIds = new Set(remaining.map(s=>s.id));
+    const local = _suggReadList(SUGG_LOCAL_KEY).map(s=>remainingIds.has(s.id) ? s : Object.assign({}, s, {_localOnly:false, _syncError:''}));
+    _suggWriteList(SUGG_LOCAL_KEY, local);
+  }
+}
+async function submitSuggestion(){
+  const text = (document.getElementById('suggText').value||'').trim();
+  if(!text){ document.getElementById('suggText').focus(); return; }
+  const btn = document.getElementById('suggSubmitBtn');
+  btn.disabled = true; btn.textContent = '⏳ Sending…';
+  const u = window._currentUser || {};
+  const authUser = _suggAuthUser();
+  const uid = authUser.uid || u.uid || u.id || '';
+  // Map page IDs to human-readable labels
+  const PAGE_LABELS = {buyPage:'Browse Books',sellPage:'Sell Books',myListingsPage:'My Listings',messagesPage:'Messages',accountPage:'Account'};
+  const refersRaw = _suggRefersPage || 'app';
+  const suggestion = {
+    id: _suggNewId(),
+    message: text,
+    type: _suggSelectedType || 'other',
+    userName: u.name || u.displayName || authUser.displayName || 'User',
+    userMobile: u.mobile || u.phoneNumber || authUser.phoneNumber || '',
+    userEmail: u.email || authUser.email || '',
+    userId: uid,
+    userUid: uid,
+    refers: PAGE_LABELS[refersRaw] || refersRaw,
+    status: 'new',
+    createdAt: new Date().toISOString(),
+    createdAtMs: Date.now(),
+    source: 'exported-user-app'
+  };
+  let saved = false;
+  // Try Firestore first
+  if(_db){
+    try {
+      await _syncPendingSuggestions();
+      await _sendSuggestionToFirestore(suggestion);
+      _rememberSuggestionLocally(suggestion, false);
+      saved = true;
+      toast('✅ Thank you! Your suggestion has been sent.');
+    } catch(e){
+      console.warn('[PKITAAP] Firestore suggestion error:', e);
+      // Fall through to localStorage backup below
+    }
+  }
+  // LocalStorage backup (also used when _db not available)
+  if(!saved){
+    try {
+      _rememberSuggestionLocally(suggestion, true);
+      toast('⚠️ Not visible to admin yet. Saved on this device; check internet/Firebase rules and try again.');
+      saved = true;
+    } catch(e2){
+      console.warn('[PKITAAP] LocalStorage suggestion error:', e2);
+    }
+  }
+  if(saved){
+    closeSuggModal();
+  } else {
+    btn.disabled = false; btn.textContent = '📤 Send Suggestion';
+    toast('❌ Could not send. Please try again.');
+  }
+}
 
 init();
 // ═══════════════════════════════════════════════════════════════
@@ -8166,6 +8409,7 @@ init();
     const menuListings  = document.getElementById('menuListings');
     const menuMessages  = document.getElementById('menuMessages');
     const menuAccount   = document.getElementById('menuAccount');
+    const menuSuggestion= document.getElementById('menuSuggestion');
     const menuLogout    = document.getElementById('menuLogout');
     if (menuLoginCard) menuLoginCard.style.display = 'none';
     if (menuHome)      menuHome.style.display = '';
@@ -8174,7 +8418,8 @@ init();
     if (menuMessages)  menuMessages.style.display = (state.settings.messaging !== false) ? '' : 'none';
     _watchMyChatsForUnread();
     _updateMessagesMenuBadge();
-    if (menuAccount)   menuAccount.style.display = '';
+    if (menuAccount)    menuAccount.style.display = '';
+    if (menuSuggestion) menuSuggestion.style.display = '';
     if (menuLogout)    menuLogout.style.display = '';
 
     // Wire account details button
@@ -8183,6 +8428,11 @@ init();
       document.getElementById('menuBtn')?.classList.remove('open');
       document.getElementById('menuPanel')?.classList.remove('open');
       openAccountDetails();
+    };
+    // Wire suggestion button
+    if (menuSuggestion) menuSuggestion.onclick = function() {
+      triggerAdMob("menuOption");
+      openSuggModal();
     };
     // Wire logout button
     if (menuLogout) menuLogout.onclick = async function() {
@@ -8200,14 +8450,15 @@ init();
       window._isLoggedIn = false;
       window._currentUser = null;
       updateAccessControls();
-      if (menuLoginCard) menuLoginCard.style.display = '';
-      if (menuHome)      menuHome.style.display = 'none';
-      if (menuSell)      menuSell.style.display = 'none';
-      if (menuListings)  menuListings.style.display = 'none';
-      if (menuMessages)  menuMessages.style.display = 'none';
-      if (menuMessages)  menuMessages.classList.remove('has-unread');
-      if (menuAccount)   menuAccount.style.display = 'none';
-      if (menuLogout)    menuLogout.style.display = 'none';
+      if (menuLoginCard)  menuLoginCard.style.display = '';
+      if (menuHome)       menuHome.style.display = 'none';
+      if (menuSell)       menuSell.style.display = 'none';
+      if (menuListings)   menuListings.style.display = 'none';
+      if (menuMessages)   menuMessages.style.display = 'none';
+      if (menuMessages)   menuMessages.classList.remove('has-unread');
+      if (menuAccount)    menuAccount.style.display = 'none';
+      if (menuSuggestion) menuSuggestion.style.display = 'none';
+      if (menuLogout)     menuLogout.style.display = 'none';
       document.getElementById('menuBtn')?.classList.remove('open');
       document.getElementById('menuPanel')?.classList.remove('open');
       toast('👋 Logged out successfully.');
