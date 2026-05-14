@@ -472,7 +472,7 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
         <div class="card-head"><h2>Add Book Details</h2></div>
         <div class="card-body">
           <form id="sellForm" class="form-grid">
-            <label>Class <input id="sellClassName" list="sellClassOptions" placeholder="Class / course" required><datalist id="sellClassOptions"></datalist></label>
+            <label>Class <input id="sellClassName" list="sellClassOptions" placeholder="Select or type class" required><datalist id="sellClassOptions"></datalist></label>
             <label>Board <select id="sellBoard" required onchange="updateSellStreamOptions()"><option value="">Select state first</option></select></label>
             <label id="sellStreamWrap">Stream <select id="sellStream"><option value="">Optional</option></select></label>
             <label class="wide">Book / Subject Name <input id="sellBookTitle" placeholder="Enter book or subject name" required></label>
@@ -4775,7 +4775,12 @@ const seed = {
             },
             {
               "subDistrict": "Kadam",
-              "places": []
+              "places": [
+                {
+                  "name": "Nn",
+                  "schools": []
+                }
+              ]
             },
             {
               "subDistrict": "Naobaicha",
@@ -4791,7 +4796,8 @@ const seed = {
                 {
                   "name": "Balijan",
                   "schools": [
-                    "Morning Glory Higher Secondary School"
+                    "Morning Glory Higher Secondary School",
+                    "Ifigogbl"
                   ]
                 },
                 {
@@ -5178,7 +5184,7 @@ window.pkitaapAndroidBack = function() {
 
 function updateAccessControls() {
   const locked = !window._isLoggedIn;
-  ['searchInput','stateFilter','buyState','buyDistrict','buySubDistrict','buyPlace','buySchool','buyMedium','sellMedium'].forEach(id => {
+  ['searchInput','stateFilter','browseDistrict','browseSubDistrict','buyState','buyDistrict','buySubDistrict','buyPlace','buySchool','buyMedium','sellMedium'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.disabled = locked;
@@ -5430,23 +5436,28 @@ function renderBooks() {
   grid.style.display = catalogStep === "books" ? "grid" : "none";
   grid.classList.toggle("focused", false);
   if (catalogStep !== "books") return;
+  const term = String(search || '').trim().toLowerCase();
+  const isSearching = !!term;
+  const profile = window._currentUser || {};
+  const effectiveState = selectedState || profile.state || '';
   const district = document.getElementById('browseDistrict')?.value || window._currentUser?.district || '';
   const subDistrict = document.getElementById('browseSubDistrict')?.value || window._currentUser?.subDistrict || '';
-  if (!selectedState) {
+  if (!effectiveState) {
     grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#888;font-weight:800;">Select your state first.</div>';
     return;
   }
-  if (!district || !subDistrict) {
+  if (!isSearching && (!district || !subDistrict)) {
     grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#888;font-weight:800;">Select district and sub-district to see sellers.</div>';
     return;
   }
   _loadBrowseListings();
   const myPlace = String(window._currentUser?.place || '').trim();
   const matches = (state.listings || [])
-    .filter(l => _listingMatchesBrowse(l, district, subDistrict))
-    .sort((a,b) => String(b.createdAtMs || b.createdAt || '').localeCompare(String(a.createdAtMs || a.createdAt || '')));
+    .filter(l => isSearching ? _listingMatchesSearch(l, term, effectiveState) : _listingMatchesBrowse(l, district, subDistrict))
+    .map(l => Object.assign({}, l, {_nearbyScore:_listingNearbyScore(l)}))
+    .sort((a,b) => (b._nearbyScore - a._nearbyScore) || String(b.createdAtMs || b.createdAt || '').localeCompare(String(a.createdAtMs || a.createdAt || '')));
   if (!matches.length) {
-    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#888;font-weight:800;">No seller books found in this sub-district yet.</div>';
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#888;font-weight:800;">' + (isSearching ? 'No nearby seller books found for this search.' : 'No seller books found in this sub-district yet.') + '</div>';
     return;
   }
   const groups = {};
@@ -5458,6 +5469,9 @@ function renderBooks() {
     const aMine = myPlace && _sameText(a, myPlace);
     const bMine = myPlace && _sameText(b, myPlace);
     if (aMine !== bMine) return aMine ? -1 : 1;
+    const aScore = Math.max(...groups[a].map(l => l._nearbyScore || 0));
+    const bScore = Math.max(...groups[b].map(l => l._nearbyScore || 0));
+    if (aScore !== bScore) return bScore - aScore;
     return a.localeCompare(b);
   });
   grid.innerHTML = places.map(place => {
@@ -5485,13 +5499,41 @@ function renderBooks() {
 
 function _listingMatchesBrowse(l, district, subDistrict) {
   if (!l) return false;
-  if (selectedState && l.state && !_sameText(l.state, selectedState)) return false;
+  const effectiveState = selectedState || window._currentUser?.state || '';
+  if (effectiveState && l.state && !_sameText(l.state, effectiveState)) return false;
   if (district && !_sameText(l.district, district)) return false;
   if (subDistrict && !_sameText(l.subDistrict, subDistrict)) return false;
   if (selectedClass && !_sameText(l.className, selectedClass)) return false;
   if (selectedBoard && l.board && !_sameText(l.board, selectedBoard)) return false;
   if (selectedStream && l.stream && !_sameText(l.stream, selectedStream)) return false;
   return true;
+}
+
+function _listingMatchesSearch(l, term, effectiveState) {
+  if (!l) return false;
+  if (effectiveState && l.state && !_sameText(l.state, effectiveState)) return false;
+  if (selectedClass && !_sameText(l.className, selectedClass)) return false;
+  if (selectedBoard && l.board && !_sameText(l.board, selectedBoard)) return false;
+  if (selectedStream && l.stream && !_sameText(l.stream, selectedStream)) return false;
+  const haystack = [
+    l.title, l.bookTitle, l.subject, l.className, l.board, l.stream,
+    l.sellerName, l.seller, l.place, l.school, l.district, l.subDistrict
+  ].join(' ').toLowerCase();
+  return !term || haystack.includes(term);
+}
+
+function _listingNearbyScore(l) {
+  const u = window._currentUser || {};
+  let score = 0;
+  if (_sameText(l.place, u.place)) score += 1000;
+  if (_sameText(l.subDistrict, u.subDistrict)) score += 500;
+  if (_sameText(l.district, u.district)) score += 250;
+  if (_sameText(l.state, u.state)) score += 100;
+  const browseDistrict = document.getElementById('browseDistrict')?.value || '';
+  const browseSubDistrict = document.getElementById('browseSubDistrict')?.value || '';
+  if (browseDistrict && _sameText(l.district, browseDistrict)) score += 80;
+  if (browseSubDistrict && _sameText(l.subDistrict, browseSubDistrict)) score += 120;
+  return score;
 }
 
 function _loadBrowseListings() {
@@ -5549,11 +5591,9 @@ function renderSelected() {
 // ── Sell page catalog render (mirrors buy page) ───────────────
 function _fillSellClassOptions() {
   const list = document.getElementById('sellClassOptions');
-  const input = document.getElementById('sellClassName');
   if (!list) return;
   const all = state.settings.general ? [...classes, 'General'] : classes;
   list.innerHTML = all.map(name => '<option value="' + _acEsc(name) + '"></option>').join('');
-  if (input && !input.value && window._currentUser?.className) input.value = window._currentUser.className;
 }
 function updateSellBoardOptions() {
   const sel = document.getElementById('sellBoard');
@@ -5998,7 +6038,8 @@ function _prefillSellFromProfile() {
   if (!u) return;
   _mergeCommunityLocation(u.state, u.district, u.subDistrict, u.place, u.school);
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
-  set('sellClassName', u.className);
+  set('sellClassName', '');
+  updateSellStreamOptions();
   // Pre-fill sell form state/location
   set('sellState', u.state);
   _updateSellMediumsForState(u.state, u.medium || u.defaultMedium || '');
@@ -7647,8 +7688,26 @@ function bindSearch() {
     if (_ml) _ml.innerHTML = "";
     render();
   };
-  inp.oninput = () => { if(!requireLogin()){ inp.value=''; return; } search = inp.value; clr.style.display = search ? "grid" : "none"; if(search) catalogStep="books"; else catalogStep="classes"; render(); };
-  clr.onclick = () => { inp.value=""; search=""; selectedCategory=""; clr.style.display="none"; catalogStep="classes"; selectedClass=selectedBoard=selectedStream=selectedBookId=""; const _ml=document.querySelector("#matchList"); if(_ml) _ml.innerHTML=""; render(); };
+  inp.oninput = () => {
+    if(!requireLogin()){ inp.value=''; return; }
+    search = inp.value.trim();
+    clr.style.display = search ? "grid" : "none";
+    selectedBookId = "";
+    if(search) catalogStep = "books";
+    else catalogStep = selectedBoard ? "books" : (selectedClass ? "boards" : "classes");
+    render();
+  };
+  clr.onclick = () => {
+    inp.value="";
+    search="";
+    selectedCategory="";
+    clr.style.display="none";
+    selectedBookId="";
+    catalogStep = selectedBoard ? "books" : (selectedClass ? "boards" : "classes");
+    const _ml=document.querySelector("#matchList");
+    if(_ml) _ml.innerHTML="";
+    render();
+  };
 }
 function bindBuyForm() {
   const frm = document.querySelector("#buyForm");
