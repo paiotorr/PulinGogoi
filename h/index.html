@@ -829,7 +829,10 @@ let _auth = null;   // Auth instance
     }
     _db   = firebase.firestore();
     _auth = firebase.auth();
+    window._db = _db;
+    window._auth = _auth;
     _db.enablePersistence({ synchronizeTabs: true }).catch(function(){});
+    setTimeout(function(){ _syncPendingSuggestions(); }, 0);
     console.log('[PKITAAP] Firebase initialised ✅');
   } catch (e) {
     console.error('[PKITAAP] Firebase init error:', e);
@@ -4797,12 +4800,7 @@ const seed = {
             },
             {
               "subDistrict": "Kadam",
-              "places": [
-                {
-                  "name": "Nn",
-                  "schools": []
-                }
-              ]
+              "places": []
             },
             {
               "subDistrict": "Naobaicha",
@@ -4818,8 +4816,7 @@ const seed = {
                 {
                   "name": "Balijan",
                   "schools": [
-                    "Morning Glory Higher Secondary School",
-                    "Ifigogbl"
+                    "Morning Glory Higher Secondary School"
                   ]
                 },
                 {
@@ -8070,9 +8067,13 @@ function init() {
 //  SUGGESTION BOX
 // ═══════════════════════════════════════════════════════════════
 let _suggSelectedType = 'other';
+let _suggRefersPage = '';
 function openSuggModal(){
   document.getElementById('menuBtn')?.classList.remove('open');
   document.getElementById('menuPanel')?.classList.remove('open');
+  // Capture which page/section the user is currently viewing
+  const activePage = document.querySelector('.page.active');
+  _suggRefersPage = activePage ? (activePage.id || activePage.dataset.page || 'app') : 'app';
   document.getElementById('suggModalBg').classList.add('open');
   document.getElementById('suggText').value = '';
   document.getElementById('suggCharCount').textContent = '0';
@@ -8098,39 +8099,125 @@ function suggSelectType(btn){
     if(bg) bg.addEventListener('click', function(e){ if(e.target===bg) closeSuggModal(); });
   });
 })();
+const SUGG_LOCAL_KEY = 'pkitaap_suggestions';
+const SUGG_PENDING_KEY = 'pkitaap_suggestions_pending';
+function _suggReadList(key){
+  try {
+    const value = JSON.parse(localStorage.getItem(key)||'[]');
+    return Array.isArray(value) ? value : [];
+  } catch(e) {
+    return [];
+  }
+}
+function _suggWriteList(key, list){
+  localStorage.setItem(key, JSON.stringify(Array.isArray(list) ? list : []));
+}
+function _suggAuthUser(){
+  return (_auth && _auth.currentUser) || (window._auth && window._auth.currentUser) || {};
+}
+function _suggNewId(){
+  return 'sg_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+}
+function _suggFirestorePayload(suggestion){
+  const payload = Object.assign({}, suggestion);
+  delete payload._localOnly;
+  delete payload._syncError;
+  return payload;
+}
+async function _sendSuggestionToFirestore(suggestion){
+  if(!_db) throw new Error('Firebase is not ready');
+  const id = suggestion.id || _suggNewId();
+  await _db.collection('suggestions').doc(id).set(_suggFirestorePayload(Object.assign({}, suggestion, {id:id})), {merge:true});
+  return id;
+}
+function _rememberSuggestionLocally(suggestion, pending, errorMessage){
+  const local = _suggReadList(SUGG_LOCAL_KEY);
+  const copy = Object.assign({}, suggestion, {_localOnly: !!pending});
+  if(errorMessage) copy._syncError = String(errorMessage);
+  const existing = local.findIndex(s=>s.id===copy.id);
+  if(existing >= 0) local[existing] = Object.assign({}, local[existing], copy);
+  else local.push(copy);
+  _suggWriteList(SUGG_LOCAL_KEY, local);
+  if(pending){
+    const queue = _suggReadList(SUGG_PENDING_KEY);
+    if(!queue.some(s=>s.id===copy.id)) queue.push(copy);
+    _suggWriteList(SUGG_PENDING_KEY, queue);
+  }
+}
+async function _syncPendingSuggestions(){
+  if(!_db) return;
+  const queue = _suggReadList(SUGG_PENDING_KEY);
+  if(!queue.length) return;
+  const remaining = [];
+  for(const item of queue){
+    try {
+      await _sendSuggestionToFirestore(item);
+    } catch(e) {
+      remaining.push(Object.assign({}, item, {_syncError: e.message || String(e)}));
+    }
+  }
+  _suggWriteList(SUGG_PENDING_KEY, remaining);
+  if(remaining.length !== queue.length){
+    const remainingIds = new Set(remaining.map(s=>s.id));
+    const local = _suggReadList(SUGG_LOCAL_KEY).map(s=>remainingIds.has(s.id) ? s : Object.assign({}, s, {_localOnly:false, _syncError:''}));
+    _suggWriteList(SUGG_LOCAL_KEY, local);
+  }
+}
 async function submitSuggestion(){
   const text = (document.getElementById('suggText').value||'').trim();
   if(!text){ document.getElementById('suggText').focus(); return; }
   const btn = document.getElementById('suggSubmitBtn');
   btn.disabled = true; btn.textContent = '⏳ Sending…';
   const u = window._currentUser || {};
-  const uid = (window._auth && window._auth.currentUser && window._auth.currentUser.uid) || u.uid || u.id || '';
+  const authUser = _suggAuthUser();
+  const uid = authUser.uid || u.uid || u.id || '';
+  // Map page IDs to human-readable labels
+  const PAGE_LABELS = {buyPage:'Browse Books',sellPage:'Sell Books',myListingsPage:'My Listings',messagesPage:'Messages',accountPage:'Account'};
+  const refersRaw = _suggRefersPage || 'app';
   const suggestion = {
+    id: _suggNewId(),
     message: text,
     type: _suggSelectedType || 'other',
-    userName: u.name || u.displayName || 'User',
-    userMobile: u.mobile || '',
-    userEmail: u.email || (window._auth && window._auth.currentUser && window._auth.currentUser.email) || '',
+    userName: u.name || u.displayName || authUser.displayName || 'User',
+    userMobile: u.mobile || u.phoneNumber || authUser.phoneNumber || '',
+    userEmail: u.email || authUser.email || '',
     userId: uid,
+    userUid: uid,
+    refers: PAGE_LABELS[refersRaw] || refersRaw,
     status: 'new',
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    createdAtMs: Date.now(),
+    source: 'exported-user-app'
   };
-  try {
-    if(_db){
-      await _db.collection('suggestions').add(suggestion);
+  let saved = false;
+  // Try Firestore first
+  if(_db){
+    try {
+      await _syncPendingSuggestions();
+      await _sendSuggestionToFirestore(suggestion);
+      _rememberSuggestionLocally(suggestion, false);
+      saved = true;
       toast('✅ Thank you! Your suggestion has been sent.');
-    } else {
-      // Fallback: store in localStorage if Firebase not available
-      const saved = JSON.parse(localStorage.getItem('pkitaap_suggestions')||'[]');
-      saved.push({...suggestion, id:'sg'+Date.now()});
-      localStorage.setItem('pkitaap_suggestions', JSON.stringify(saved));
-      toast('✅ Suggestion saved! (Will sync when connected)');
+    } catch(e){
+      console.warn('[PKITAAP] Firestore suggestion error:', e);
+      // Fall through to localStorage backup below
     }
+  }
+  // LocalStorage backup (also used when _db not available)
+  if(!saved){
+    try {
+      _rememberSuggestionLocally(suggestion, true);
+      toast('⚠️ Not visible to admin yet. Saved on this device; check internet/Firebase rules and try again.');
+      saved = true;
+    } catch(e2){
+      console.warn('[PKITAAP] LocalStorage suggestion error:', e2);
+    }
+  }
+  if(saved){
     closeSuggModal();
-  } catch(e){
+  } else {
     btn.disabled = false; btn.textContent = '📤 Send Suggestion';
-    toast('❌ Could not send. Try again.');
-    console.warn('[PKITAAP] Suggestion save error:', e);
+    toast('❌ Could not send. Please try again.');
   }
 }
 
