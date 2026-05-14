@@ -8124,10 +8124,46 @@ function _suggFirestorePayload(suggestion){
   delete payload._syncError;
   return payload;
 }
+function _suggArrayUnion(value){
+  if(window.firebase && firebase.firestore && firebase.firestore.FieldValue) {
+    return firebase.firestore.FieldValue.arrayUnion(value);
+  }
+  return [value];
+}
 async function _sendSuggestionToFirestore(suggestion){
   if(!_db) throw new Error('Firebase is not ready');
   const id = suggestion.id || _suggNewId();
-  await _db.collection('suggestions').doc(id).set(_suggFirestorePayload(Object.assign({}, suggestion, {id:id})), {merge:true});
+  const payload = _suggFirestorePayload(Object.assign({}, suggestion, {id:id}));
+  const errors = [];
+  let saved = false;
+  try {
+    await _db.collection('suggestions').doc(id).set(payload, {merge:true});
+    saved = true;
+  } catch(e) {
+    errors.push('suggestions: ' + (e.message || e.code || e));
+  }
+  const uid = String(payload.userUid || payload.userId || '').trim();
+  if(uid){
+    try {
+      await _db.collection('users').doc(uid).set({
+        userSuggestions: _suggArrayUnion(payload),
+        lastSuggestionAt: payload.createdAt || new Date().toISOString()
+      }, {merge:true});
+      saved = true;
+    } catch(e) {
+      errors.push('users/' + uid + ': ' + (e.message || e.code || e));
+    }
+  }
+  try {
+    await _db.collection('community_data').doc('suggestions_inbox').set({
+      items: _suggArrayUnion(payload),
+      updatedAt: new Date().toISOString()
+    }, {merge:true});
+    saved = true;
+  } catch(e) {
+    errors.push('community_data: ' + (e.message || e.code || e));
+  }
+  if(!saved) throw new Error(errors.join(' | ') || 'Firebase write failed');
   return id;
 }
 function _rememberSuggestionLocally(suggestion, pending, errorMessage){
