@@ -28,12 +28,12 @@
 }
 body { background: var(--bg); color: var(--text); font-family: Nunito, Arial, sans-serif; min-height: 100vh; }
 a { text-decoration: none; }
-button, input, select { font: inherit; }
+button, input, select, textarea { font: inherit; }
 .topbar {
   align-items: center; background: var(--red);
   box-shadow: 0 4px 20px rgba(22,163,74,0.25); color: white;
   display: flex; height: 58px; justify-content: space-between;
-  padding: 0 20px; position: sticky; top: 0; z-index: 20;
+  padding: 0 20px; position: sticky; top: 0; z-index: 100;
   border-bottom: 2px solid var(--line-dark);
 }
 .topbar-left, .topbar-right { align-items: center; display: flex; gap: 10px; }
@@ -48,42 +48,28 @@ button, input, select { font: inherit; }
 .menu-btn.open span:nth-child(2) { opacity: 0; }
 .menu-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 .menu-panel {
-  background: white; border: 2px solid var(--line);
-  border-radius: 16px; box-shadow: 0 18px 42px rgba(15,23,42,0.18);
-  display: none; gap: 8px; width: min(88vw,300px);
-  padding: 12px; position: fixed; right: 14px; top: 66px; z-index: 80;
-  max-height: calc(100vh - 84px); overflow-y: auto;
+  background: #fff; border: 1px solid rgba(15,23,42,0.08);
+  border-radius: 20px; box-shadow: 0 28px 70px rgba(15,23,42,0.28);
+  display: none; gap: 10px; left: 50%; width: min(92vw,390px);
+  padding: 18px; position: fixed; top: 78px; transform: translateX(-50%); z-index: 90;
+  max-height: calc(100vh - 104px); overflow-y: auto;
 }
-.menu-panel::before { content: ''; position: absolute; right: 18px; top: -9px; width: 16px; height: 16px; background: white; border-left: 2px solid var(--line); border-top: 2px solid var(--line); transform: rotate(45deg); }
+.menu-backdrop { background: rgba(15,23,42,0.42); backdrop-filter: blur(4px); display: none; inset: 58px 0 0; position: fixed; z-index: 85; }
+.menu-backdrop.open { display: block; }
 .menu-panel.open { display: flex; flex-direction: column; }
-.menu-panel > button { align-items: center; background: #f9fafb; border: 2px solid transparent; border-radius: 12px; color: var(--text); cursor: pointer; display: flex; font-size: 14px; font-weight: 900; justify-content: flex-start; min-height: 46px; padding: 0 14px; text-align: left; width: 100%; }
-.menu-title { color: var(--muted); font-size: 12px; font-weight: 900; margin: 2px 4px 4px; text-transform: uppercase; }
-.menu-panel > button:hover { background: var(--red-light); border-color: var(--line); color: var(--red); }
+.menu-panel > button { align-items: center; background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 14px; color: var(--text); cursor: pointer; display: flex; font-size: 15px; font-weight: 900; justify-content: flex-start; min-height: 54px; padding: 0 16px; text-align: left; width: 100%; box-shadow: 0 1px 0 rgba(15,23,42,0.03); transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease; }
+.menu-title { align-items: center; color: var(--text); display: flex; font-size: 19px; font-weight: 900; justify-content: space-between; margin: 0 2px 4px; }
+.menu-title::after { background: var(--red-light); border-radius: 999px; color: var(--red); content: 'PKiTAAP'; font-size: 11px; font-weight: 900; padding: 5px 9px; }
+.menu-panel > button:hover { background: var(--red-light); border-color: rgba(22,163,74,0.28); color: var(--red); transform: translateY(-1px); }
+.menu-panel > button:active { transform: scale(0.98); }
 #menuMessages { position: relative; }
 #menuMessages.has-unread::after { background: #ef4444; border: 2px solid #fff; border-radius: 999px; box-shadow: 0 0 0 3px rgba(239,68,68,.14); content: ''; height: 10px; position: absolute; right: 14px; top: 10px; width: 10px; }
 #menuLogout { background: #fef2f2 !important; color: #dc2626 !important; }
-.sugg-modal { background:white; border-radius:22px; box-shadow:0 24px 60px rgba(0,0,0,.25); width:min(96vw,480px); animation:popInSugg .25s cubic-bezier(.34,1.56,.64,1); overflow:hidden; }
-@keyframes popInSugg{from{transform:scale(.85);opacity:0;}to{transform:scale(1);opacity:1;}}
-.sugg-modal-bg { position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:500;display:none;align-items:center;justify-content:center;padding:16px; }
-.sugg-modal-bg.open { display:flex; }
-.sugg-modal-head { padding:18px 20px;border-bottom:2px solid #bbf7d0;display:flex;align-items:center;justify-content:space-between; }
-.sugg-modal-title { font-size:19px;font-weight:900;color:#16a34a; }
-.sugg-modal-body { padding:20px;display:flex;flex-direction:column;gap:14px; }
-.sugg-type-grid { display:grid;grid-template-columns:repeat(2,1fr);gap:8px; }
-.sugg-type-btn { background:#f9fafb;border:2px solid transparent;border-radius:12px;padding:10px 8px;cursor:pointer;font-size:13px;font-weight:800;text-align:center;transition:background .15s,border-color .15s; }
-.sugg-type-btn:hover { background:#f0fdf4;border-color:#bbf7d0;color:#16a34a; }
-.sugg-type-btn.selected { background:#dcfce7;border-color:#16a34a;color:#16a34a; }
-.sugg-textarea { border:2px solid #bbf7d0;border-radius:12px;padding:12px 14px;font-size:14px;font-weight:600;font-family:inherit;width:100%;resize:vertical;min-height:110px;outline:none;transition:border-color .15s; }
-.sugg-textarea:focus { border-color:#16a34a; }
-.sugg-submit-btn { background:#16a34a;color:white;border:none;border-radius:12px;padding:12px;font-size:15px;font-weight:900;cursor:pointer;width:100%;transition:background .15s,transform .1s; }
-.sugg-submit-btn:hover { background:#15803d; }
-.sugg-submit-btn:active { transform:scale(.97); }
-.sugg-submit-btn:disabled { opacity:.6;cursor:not-allowed; }
 .menu-login-card {
-  background: linear-gradient(135deg, var(--red-light) 0%, #dcfce7 100%);
-  border: 2px solid var(--border); border-radius: 18px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+  border: 1px solid #dcfce7; border-radius: 16px;
   display: flex; flex-direction: column; align-items: center;
-  gap: 10px; margin: auto 0; padding: 28px 20px 24px; text-align: center;
+  gap: 10px; margin: 0 0 2px; padding: 24px 20px 22px; text-align: center;
 }
 .menu-login-icon { align-items: center; background: var(--red); border-radius: 50%; display: flex; height: 52px; justify-content: center; width: 52px; }
 .menu-login-title { color: var(--text); font-size: 17px; font-weight: 900; margin-top: 2px; }
@@ -111,8 +97,9 @@ h2 { color: var(--red); font-size: 18px; font-weight: 900; }
 .card { background: var(--card); border: 2px solid var(--line); border-radius: 20px; box-shadow: 0 2px 16px rgba(0,0,0,0.06); overflow: hidden; }
 .card-head { align-items: center; border-bottom: 2px solid var(--line); display: flex; justify-content: space-between; padding: 14px 16px; }
 .card-body { padding: 16px; }
-input, select { background: white; border: 2px solid var(--line); border-radius: 10px; font-weight: 700; min-height: 42px; outline: none; padding: 8px 11px; width: 100%; }
-input:focus, select:focus { border-color: var(--red); }
+input, select, textarea { background: white; border: 2px solid var(--line); border-radius: 10px; font-weight: 700; min-height: 42px; outline: none; padding: 8px 11px; width: 100%; }
+textarea { line-height: 1.45; min-height: 84px; resize: vertical; }
+input:focus, select:focus, textarea:focus { border-color: var(--red); }
 .search-wrap { position: relative; width: 100%; }
 .search-wrap input { padding-right: 44px; }
 #clearSearch { align-items: center; background: var(--red-light); border: 0; border-radius: 8px; color: var(--red); cursor: pointer; display: none; font-weight: 900; height: 30px; justify-content: center; position: absolute; right: 6px; top: 6px; width: 30px; }
@@ -148,9 +135,13 @@ label { color: #444; display: grid; font-size: 13px; font-weight: 900; gap: 5px;
 .selected-box span { color: var(--muted); display: block; font-weight: 900; margin-top: 4px; }
 .result-list { display: grid; gap: 10px; margin-top: 14px; }
 .result-card { border: 2px solid var(--line); border-radius: 14px; padding: 12px; }
+.result-card[data-open-listing] { cursor: pointer; }
 .result-card strong { display: block; }
 .result-card span { color: var(--muted); display: block; font-size: 12px; font-weight: 900; margin-top: 4px; }
 .contact-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.brand-footer { border-top: 1px solid var(--line); color: var(--muted); display: flex; flex-wrap: wrap; font-size: 13px; font-weight: 900; gap: 8px 14px; justify-content: center; line-height: 1.5; margin: 8px auto 28px; max-width: 980px; padding: 18px 14px 0; text-align: center; }
+.brand-footer a { color: var(--red); font-weight: 950; }
+.brand-footer span { white-space: nowrap; }
 .toggle { align-items: center; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; padding: 12px 0; }
 .bottom-nav { display: none; }
 .bottom-item { text-align: center; }
@@ -371,6 +362,7 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
   <div class="topbar-right">
     <button class="menu-btn" id="menuBtn" type="button" aria-label="Open menu"><span></span><span></span><span></span></button>
   </div>
+  <div class="menu-backdrop" id="menuBackdrop"></div>
   <div class="menu-panel" id="menuPanel">
     <div class="menu-title">Menu</div>
     <div class="menu-login-card" id="menuLoginCard">
@@ -387,7 +379,6 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
     <button data-page="myListings" id="menuListings" style="display:none;">📚 My Listings</button>
     <button data-page="messages" id="menuMessages" style="display:none;">Messages</button>
     <button type="button" id="menuAccount" style="display:none;">👤 Account Details</button>
-    <button type="button" id="menuSuggestion" style="display:none;">💡 Suggestion Box</button>
     <button type="button" id="menuLogout" style="display:none;color:#dc2626;">🚪 Log Out</button>
   </div>
 </header>
@@ -401,8 +392,9 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
         </div>
       </div>
       <div class="location-lock">
-        <div><span>Country</span><strong>India</strong></div>
-        <div><span>States</span><select id="stateFilter" class="location-select" onchange="onStateFilterChange(this.value)" disabled><option value="">— Select State —</option><option value="Andhra Pradesh">Andhra Pradesh</option><option value="Assam">Assam</option></select></div>
+        <select id="stateFilter" style="display:none;" onchange="onStateFilterChange(this.value)"><option value="">— Select State —</option><option value="Andhra Pradesh">Andhra Pradesh</option><option value="Assam">Assam</option></select>
+        <div><span>District</span><select id="districtFilter" class="location-select" onchange="onDistrictFilterChange(this.value)" disabled><option value="">— District —</option></select></div>
+        <div><span>Sub-District</span><select id="subDistrictFilter" class="location-select" onchange="onSubDistrictFilterChange(this.value)" disabled><option value="">— Sub-District —</option></select></div>
       </div>
       <div class="card">
         <div class="card-head">
@@ -446,8 +438,9 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
         <button class="btn btn-primary" type="button" data-go-buy>Home</button>
       </div>
       <div class="location-lock">
-        <div><span>Country</span><strong>India</strong></div>
-        <div><span>States</span><select id="stateFilter2" class="location-select" onchange="onStateFilterChange2(this.value)"><option value="">— Select State —</option><option value="Andhra Pradesh">Andhra Pradesh</option><option value="Assam">Assam</option></select></div>
+        <select id="stateFilter2" style="display:none;" onchange="onStateFilterChange2(this.value)"><option value="">— Select State —</option><option value="Andhra Pradesh">Andhra Pradesh</option><option value="Assam">Assam</option></select>
+        <div><span>District</span><select id="sellDistrictFilter" class="location-select" onchange="onSellDistrictFilterChange(this.value)"><option value="">— District —</option></select></div>
+        <div><span>Sub-District</span><select id="sellSubDistrictFilter" class="location-select" onchange="onSellSubDistrictFilterChange(this.value)"><option value="">— Sub-District —</option></select></div>
       </div>
       <!-- Book selector (same as buy page) -->
       <div class="card" id="sellCatalogCard">
@@ -475,6 +468,9 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
         <div class="card-head"><h2>Seller Details</h2></div>
         <div class="card-body">
           <form id="sellForm" class="form-grid">
+            <label class="wide" id="sellCustomTitleWrap" style="display:none;">Subject / Book Title<input id="sellCustomTitle" placeholder="e.g. Assamese, The Alchemist"></label>
+            <label class="wide" id="sellCustomPriceWrap" style="display:none;">Price (₹)<input id="sellCustomPrice" type="number" min="1" placeholder="Expected selling price"></label>
+            <label class="wide">Details<textarea id="sellDetails" placeholder="Edition, notes, marks, missing pages, pickup timing"></textarea></label>
             <label class="wide">State <select id="sellState" onchange="updateSellDistricts()"><option value="">— Select Your State —</option><option value="Andhra Pradesh">Andhra Pradesh</option><option value="Assam">Assam</option></select></label>
             <label class="wide">Medium <span style="color:#ef4444;font-size:11px;"> *required</span><select id="sellMedium" required><option value="">Select state first</option></select></label>
             <label>District <select id="sellDistrict" onchange="updateSellSubDistricts()"></select></label>
@@ -583,6 +579,10 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
     </section>
   </main>
 </div>
+<footer class="brand-footer">
+  <span>Contact: <a href="mailto:pulinoffice@gmail.com">pulinoffice@gmail.com</a></span>
+  <span>Copyright by PAIOTORR</span>
+</footer>
 <dialog id="loginDialog">
   <div class="auth-modal">
     <button class="auth-close" id="loginClose">&#10005;</button>
@@ -770,33 +770,6 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
     </div>
   </div>
 </dialog>
-<!-- SUGGESTION BOX MODAL -->
-<div class="sugg-modal-bg" id="suggModalBg">
-  <div class="sugg-modal">
-    <div class="sugg-modal-head">
-      <div class="sugg-modal-title">💡 Suggestion Box</div>
-      <button type="button" onclick="closeSuggModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888;padding:4px;">✕</button>
-    </div>
-    <div class="sugg-modal-body">
-      <div>
-        <label style="font-size:13px;font-weight:800;color:#444;display:block;margin-bottom:8px;">What is this about?</label>
-        <div class="sugg-type-grid" id="suggTypeGrid">
-          <button type="button" class="sugg-type-btn" data-type="book" onclick="suggSelectType(this)">📚 Book Request</button>
-          <button type="button" class="sugg-type-btn" data-type="price" onclick="suggSelectType(this)">💰 Price Issue</button>
-          <button type="button" class="sugg-type-btn" data-type="feature" onclick="suggSelectType(this)">✨ Feature Request</button>
-          <button type="button" class="sugg-type-btn" data-type="bug" onclick="suggSelectType(this)">🐛 Bug Report</button>
-          <button type="button" class="sugg-type-btn selected" data-type="other" onclick="suggSelectType(this)" style="grid-column:1/-1;">💬 Other / General</button>
-        </div>
-      </div>
-      <div>
-        <label style="font-size:13px;font-weight:800;color:#444;display:block;margin-bottom:6px;">Your Suggestion</label>
-        <textarea class="sugg-textarea" id="suggText" placeholder="Tell us what you'd like — a specific book, a price change, a feature, or anything at all…" maxlength="1000"></textarea>
-        <div style="font-size:11px;color:#888;font-weight:700;text-align:right;margin-top:4px;"><span id="suggCharCount">0</span>/1000</div>
-      </div>
-      <button type="button" class="sugg-submit-btn" id="suggSubmitBtn" onclick="submitSuggestion()">📤 Send Suggestion</button>
-    </div>
-  </div>
-</div>
 <div class="confirm-overlay" id="userConfirmModal" aria-hidden="true">
   <div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="userConfirmTitle">
     <div class="confirm-dialog-head" id="userConfirmTitle">Confirm Delete</div>
@@ -1038,10 +1011,12 @@ const seed = {
   },
   "settings": {
     "general": false,
-    "instagram": true,
     "whatsapp": false,
     "passport": false,
-    "allowUserPrice": false
+    "allowUserPrice": false,
+    "messaging": true,
+    "allowSubjectAdding": true,
+    "instagram": true
   },
   "adMob": {
     "appId": "ca-app-pub-2402742761850779~4175768516",
@@ -5161,6 +5136,7 @@ function goHome() {
   document.getElementById('buyPage')?.classList.add('active');
   document.getElementById('menuBtn')?.classList.remove('open');
   document.getElementById('menuPanel')?.classList.remove('open');
+  document.getElementById('menuBackdrop')?.classList.remove('open');
   selectedClass = selectedBoard = selectedStream = selectedBookId = selectedCategory = '';
   catalogStep = 'classes';
   render();
@@ -5326,6 +5302,7 @@ function showConfirm(msg, cb, btnLabel) {
   modal.setAttribute('aria-hidden', 'false');
 }
 function book() { return state.books.find(item => item.id === selectedBookId) || null; }
+function isCustomSellSubject() { return selectedBookId === "__custom"; }
 let selectedState = "";
 const classes = state.classes || ["Class 9","Class 10","Class 11","Class 12"];
 const streams  = state.streams || ["Science","Commerce","Arts"];
@@ -5506,6 +5483,7 @@ function _autoFindSellers() {
 function renderSelected() {
   const b = book();
   const box = document.querySelector("#selectedBox");
+  if (isCustomSellSubject()) { box.innerHTML = '<strong>New subject/book</strong><span>Add the title, price, and details below.</span>'; return; }
   if (b) { box.innerHTML = '<img src="' + imageForBook(b) + '" alt="' + b.title + '"/><strong>' + b.title + '</strong><span>' + bookMeta(b) + ' &mdash; ' + priceText(b) + '</span>'; }
   else { box.innerHTML = '<strong>No subject selected</strong><span>Select class, board, stream, and subject first.</span>'; }
 }
@@ -5568,13 +5546,30 @@ function renderSellCatalog() {
     if (sellCatalogStep === 'books') {
       bkg.style.display='grid';
       const items=shownBooks();
-      bkg.innerHTML=items.length?items.map(item=>'<button class="book-card '+(item.id===selectedBookId?'active':'')+'" data-sellid="'+item.id+'"><img src="'+imageForBook(item)+'" alt="'+item.title+'"/><div class="card-info"><strong>'+item.title+'</strong><small>'+bookMeta(item)+'</small><span class="price">'+priceText(item)+'</span></div></button>').join(''):'<div>No books found</div>';
+      const allowCustomSubject = state.settings.allowSubjectAdding !== false;
+      const customCard = allowCustomSubject ? '<button class="book-card '+(isCustomSellSubject()?'active':'')+'" data-sell-custom="1"><div class="card-info"><strong>Add new subject/book</strong><small>Use this when the subject is not listed yet.</small><span class="price">Add title and price</span></div></button>' : '';
+      bkg.innerHTML=(items.length?items.map(item=>'<button class="book-card '+(item.id===selectedBookId?'active':'')+'" data-sellid="'+item.id+'"><img src="'+imageForBook(item)+'" alt="'+item.title+'"/><div class="card-info"><strong>'+item.title+'</strong><small>'+bookMeta(item)+'</small><span class="price">'+priceText(item)+'</span></div></button>').join(''):'<div>No books found</div>') + customCard;
       bkg.querySelectorAll('[data-sellid]').forEach(card=>{card.onclick=()=>{triggerAdMob("subjectClick");selectedBookId=card.dataset.sellid;renderSellCatalog();renderSelected();};});
+      bkg.querySelectorAll('[data-sell-custom]').forEach(card=>{card.onclick=()=>{selectedBookId='__custom';renderSellCatalog();renderSelected();};});
     } else { bkg.style.display='none'; }
   }
+  updateCustomSubjectControls();
+}
+function updateCustomSubjectControls() {
+  const show = isCustomSellSubject();
+  ['sellCustomTitleWrap','sellCustomPriceWrap'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = show ? '' : 'none';
+  });
 }
 function updateSellPriceControls() {
   const b = book();
+  if (isCustomSellSubject()) {
+    const fixedText = document.getElementById('sellFixedPriceText');
+    if (fixedText) fixedText.textContent = 'Enter price for this new subject';
+    updateCustomSubjectControls();
+    return;
+  }
   const adminPrice = parseInt(b?.price) || 0;
   const fixedText = document.getElementById('sellFixedPriceText');
   if (fixedText) fixedText.textContent = b ? ('₹' + adminPrice + ' (admin fixed price)') : 'Select a book';
@@ -5987,9 +5982,10 @@ function _prefillSellFromProfile() {
     setTimeout(() => {
       set('sellDistrict', u.district);
       updateSellSubDistricts();
-      setTimeout(() => {
-        set('sellSubDistrict', u.subDistrict);
-        updateSellPlaces();
+        setTimeout(() => {
+          set('sellSubDistrict', u.subDistrict);
+          _syncTopLocationFilters('sell', u.state, u.district, u.subDistrict);
+          updateSellPlaces();
         setTimeout(() => {
           set('sellPlace', u.place);
           updateSellSchools();
@@ -6001,6 +5997,7 @@ function _prefillSellFromProfile() {
   // Pre-fill stateFilter2 with user's state
   set('stateFilter2', u.state);
   if (u.state) { onStateFilterChange2(u.state); }
+  _syncTopLocationFilters('sell', u.state, u.district, u.subDistrict);
 }
 function _prefillBuyFromProfile() {
   const u = window._currentUser;
@@ -6015,9 +6012,10 @@ function _prefillBuyFromProfile() {
     setTimeout(() => {
       set('buyDistrict', u.district);
       updateBuySubDistricts();
-      setTimeout(() => {
-        set('buySubDistrict', u.subDistrict);
-        updateBuyPlaces();
+        setTimeout(() => {
+          set('buySubDistrict', u.subDistrict);
+          _syncTopLocationFilters('', u.state, u.district, u.subDistrict);
+          updateBuyPlaces();
         setTimeout(() => {
           set('buyPlace', u.place);
           updateBuySchools();
@@ -6026,6 +6024,7 @@ function _prefillBuyFromProfile() {
       }, 50);
     }, 50);
     _updateMediumsForState(u.state);
+    _syncTopLocationFilters('', u.state, u.district, u.subDistrict);
   }
 }
 function renderMatches(bookId) {
@@ -6116,7 +6115,7 @@ function _selectedBookMatchesListing(l, bId) {
 function _renderMatchList(bId, query, sellerNameMap, removedSellerUids, sourceListings) {
   const list = document.querySelector("#matchList");
   if (!list) return;
-  const matches = (sourceListings || state.listings || [])
+  const allMatches = (sourceListings || state.listings || [])
     .filter(l => _selectedBookMatchesListing(l, bId))
     .filter(l => {
       const uid = String(l.userId || l.sellerUserId || '').trim();
@@ -6125,24 +6124,52 @@ function _renderMatchList(bId, query, sellerNameMap, removedSellerUids, sourceLi
     .filter(l => !query.medium || !l.medium || _sameText(l.medium, query.medium))
     .map(l => Object.assign({_score:_locScore(l, query)}, l))
     .sort((a,b) => (b._score - a._score) || String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+  const exactPlaceMatches = allMatches.filter(l =>
+    _sameText(l.state, query.state) &&
+    _sameText(l.district, query.district) &&
+    _sameText(l.subDistrict, query.subDistrict) &&
+    _sameText(l.place, query.place)
+  );
+  const subDistrictMatches = allMatches.filter(l =>
+    _sameText(l.state, query.state) &&
+    _sameText(l.district, query.district) &&
+    _sameText(l.subDistrict, query.subDistrict) &&
+    !_sameText(l.place, query.place)
+  );
+  const matches = exactPlaceMatches.length ? exactPlaceMatches : subDistrictMatches;
+  const resultTitle = query.place
+    ? (exactPlaceMatches.length
+      ? 'Sellers in ' + query.place
+      : (subDistrictMatches.length ? 'No sellers in ' + query.place + '. Showing other places in ' + (query.subDistrict || 'this sub-district') : 'Sellers near ' + query.place))
+    : 'Matching sellers';
   list.innerHTML = matches.length ? matches.map(l => {
     const location = [l.place,l.subDistrict,l.district,l.state].filter(Boolean).join(', ');
     // FIX: prefer the live name fetched from /users over the stale stored name
     const lUid = String(l.userId || l.sellerUserId || '').trim();
     const displayName = (sellerNameMap && lUid && sellerNameMap[lUid]) || l.sellerName || l.seller || 'Seller';
-    return '<div class="result-card"><strong>' + _acEsc(displayName) + '</strong>' +
+    return '<div class="result-card" data-open-listing="' + _acEsc(l.id) + '"><strong>' + _acEsc(displayName) + '</strong>' +
       '<span>School/College: ' + _acEsc(l.school || 'Not added') + '</span>' +
       '<span>Medium: ' + _acEsc(l.medium || 'Not added') + '</span>' +
       '<span>Place: ' + _acEsc(l.place || 'Not added') + '</span>' +
       '<span>' + _acEsc(location || 'Location not added') + '</span>' +
       '<span>Condition: ' + _acEsc(l.condition || 'Not set') + (l.price ? ' · ₹' + _acEsc(l.price) : '') + '</span>' +
+      (l.details ? '<span>Details: ' + _acEsc(l.details) + '</span>' : '') +
       '<div class="contact-row">' +
       (state.settings.messaging!==false?'<button class="btn btn-primary" type="button" style="font-size:12px;" data-message-listing="' + _acEsc(l.id) + '">Message Seller</button>':'') +
       (state.settings.whatsapp&&l.whatsapp?'<a href="https://wa.me/91'+encodeURIComponent(l.whatsapp)+'" target="_blank" class="btn btn-primary" style="font-size:12px;">WhatsApp</a>':'') +
       '</div></div>';
-  }).join("") : '<p style="color:#888;font-size:13px;font-weight:700;padding:8px 0;">No sellers found for this book yet.</p>';
+  }).join("") : '<p style="color:#888;font-size:13px;font-weight:700;padding:8px 0;">No sellers found in ' + _acEsc(query.subDistrict || query.place || 'this area') + ' for this book yet.</p>';
+  if (matches.length) {
+    list.innerHTML = '<div style="font-size:14px;font-weight:950;color:var(--text);padding:2px 0 4px;">' + _acEsc(resultTitle) + '</div>' + list.innerHTML;
+  }
   list.querySelectorAll('[data-message-listing]').forEach(btn => {
     btn.onclick = () => startListingChat(btn.getAttribute('data-message-listing'));
+  });
+  list.querySelectorAll('[data-open-listing]').forEach(card => {
+    card.onclick = (e) => {
+      if (e.target.closest('button,a')) return;
+      startListingChat(card.getAttribute('data-open-listing'));
+    };
   });
 }
 function _isMineListing(l) {
@@ -6572,6 +6599,7 @@ function _showMessagesPage() {
   document.getElementById('messagesPage')?.classList.add('active');
   document.getElementById('menuBtn')?.classList.remove('open');
   document.getElementById('menuPanel')?.classList.remove('open');
+  document.getElementById('menuBackdrop')?.classList.remove('open');
 }
 function _showMessageListView() {
   document.getElementById('messagesShell')?.classList.remove('chat-open');
@@ -6970,6 +6998,58 @@ function updateSellSchools() {
     _fillChoiceControl('sellSchool', 'sellSchoolOptions', 'School / college', _getSchools(stateName, district, subDistrict, place), null, sSel?.value || '');
     _fillFallbackSelect('sellSchoolFallback', '— Select School —', _getSchools(stateName, district, subDistrict, place), null, sSel?.value || '');
   });
+}
+function _syncTopLocationFilters(prefix, stateName, district, subDistrict) {
+  const districtId = prefix === 'sell' ? 'sellDistrictFilter' : 'districtFilter';
+  const subDistrictId = prefix === 'sell' ? 'sellSubDistrictFilter' : 'subDistrictFilter';
+  const dSel = document.getElementById(districtId);
+  const sdSel = document.getElementById(subDistrictId);
+  if (dSel) {
+    dSel.disabled = !stateName;
+    dSel.innerHTML = _optionList('— District —', _getDistricts(stateName), d => d.district, district || '');
+    if (district) dSel.value = district;
+  }
+  if (sdSel) {
+    sdSel.disabled = !stateName || !district;
+    sdSel.innerHTML = _optionList('— Sub-District —', _getSubDistricts(stateName, district), sd => sd.subDistrict, subDistrict || '');
+    if (subDistrict) sdSel.value = subDistrict;
+  }
+}
+function onDistrictFilterChange(value) {
+  const stateName = selectedState || window._currentUser?.state || document.getElementById('buyState')?.value || '';
+  const buyState = document.getElementById('buyState');
+  const buyDistrict = document.getElementById('buyDistrict');
+  if (buyState && stateName) buyState.value = stateName;
+  if (buyState && stateName) updateBuyDistricts();
+  if (buyDistrict) buyDistrict.value = value || '';
+  updateBuySubDistricts();
+  _syncTopLocationFilters('', stateName, value || '', '');
+}
+function onSubDistrictFilterChange(value) {
+  const stateName = selectedState || window._currentUser?.state || document.getElementById('buyState')?.value || '';
+  const district = document.getElementById('districtFilter')?.value || document.getElementById('buyDistrict')?.value || '';
+  const buySub = document.getElementById('buySubDistrict');
+  if (buySub) buySub.value = value || '';
+  updateBuyPlaces();
+  _syncTopLocationFilters('', stateName, district, value || '');
+}
+function onSellDistrictFilterChange(value) {
+  const stateName = selectedState || window._currentUser?.state || document.getElementById('sellState')?.value || '';
+  const sellState = document.getElementById('sellState');
+  const sellDistrict = document.getElementById('sellDistrict');
+  if (sellState && stateName) sellState.value = stateName;
+  if (sellState && stateName) updateSellDistricts();
+  if (sellDistrict) sellDistrict.value = value || '';
+  updateSellSubDistricts();
+  _syncTopLocationFilters('sell', stateName, value || '', '');
+}
+function onSellSubDistrictFilterChange(value) {
+  const stateName = selectedState || window._currentUser?.state || document.getElementById('sellState')?.value || '';
+  const district = document.getElementById('sellDistrictFilter')?.value || document.getElementById('sellDistrict')?.value || '';
+  const sellSub = document.getElementById('sellSubDistrict');
+  if (sellSub) sellSub.value = value || '';
+  updateSellPlaces();
+  _syncTopLocationFilters('sell', stateName, district, value || '');
 }
 function updateSignupDistricts() {
   const stateName = document.getElementById('signupState')?.value;
@@ -7552,8 +7632,18 @@ function render() {
 function bindMenu() {
   const btn = document.getElementById("menuBtn");
   const panel = document.getElementById("menuPanel");
-  btn.onclick = () => { if (!panel.classList.contains("open")) triggerAdMob("menuOpen"); btn.classList.toggle("open"); panel.classList.toggle("open"); };
-  document.addEventListener("click", e => { if (!btn.contains(e.target) && !panel.contains(e.target)) { btn.classList.remove("open"); panel.classList.remove("open"); } });
+  const backdrop = document.getElementById("menuBackdrop");
+  const closeMenu = () => { btn.classList.remove("open"); panel.classList.remove("open"); backdrop?.classList.remove("open"); };
+  btn.onclick = () => {
+    const opening = !panel.classList.contains("open");
+    if (opening) triggerAdMob("menuOpen");
+    btn.classList.toggle("open", opening);
+    panel.classList.toggle("open", opening);
+    backdrop?.classList.toggle("open", opening);
+  };
+  backdrop?.addEventListener("click", closeMenu);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeMenu(); });
+  document.addEventListener("click", e => { if (!btn.contains(e.target) && !panel.contains(e.target) && !backdrop?.contains(e.target)) closeMenu(); });
 }
 function bindSearch() {
   const inp = document.querySelector("#searchInput");
@@ -7588,11 +7678,23 @@ function bindSellForm() {
     if(!selectedBookId){ toast("Please select a book first"); return; }
     if(!window._isLoggedIn){ toast("Please log in first to list a book"); return; }
     const u = window._currentUser;
-    const selected = book();
-    const adminPrice = parseInt(selected?.price) || 0;
+    const customSubject = isCustomSellSubject();
+    if (customSubject && state.settings.allowSubjectAdding === false) { toast("Subject adding is turned off by admin"); return; }
+    const selected = customSubject ? {
+      id: "custom_" + Date.now(),
+      title: (document.getElementById("sellCustomTitle")?.value || "").trim(),
+      className: selectedClass || "General",
+      board: selectedBoard || "",
+      stream: selectedStream || "",
+      type: selectedClass === "General" ? "general" : "school"
+    } : book();
+    if (customSubject && !selected.title) { toast("Please enter subject/book title"); return; }
+    const customPrice = parseInt(document.getElementById("sellCustomPrice")?.value || "") || 0;
+    if (customSubject && customPrice < 1) { toast("Please enter a valid price"); return; }
+    const adminPrice = customSubject ? customPrice : (parseInt(selected?.price) || 0);
     const typedPrice = parseInt(document.getElementById("sellPrice")?.value || "") || 0;
     let listingPrice = adminPrice;
-    if (state.settings.allowUserPrice === true && typedPrice) {
+    if (!customSubject && state.settings.allowUserPrice === true && typedPrice) {
       if (!adminPrice) { toast("Admin price is not set for this book"); return; }
       if (typedPrice < 1 || typedPrice > adminPrice) {
         toast("Price must be between ₹1 and ₹" + adminPrice);
@@ -7612,7 +7714,7 @@ function bindSellForm() {
     }
     const listing = {
       id       : "ls"+Date.now(),
-      bookId   : selectedBookId,
+      bookId   : customSubject ? selected.id : selectedBookId,
       title    : selected ? selected.title : "",
       className: selected ? selected.className : "",
       board    : selected ? selected.board : "",
@@ -7631,12 +7733,23 @@ function bindSellForm() {
       place    : listingPlace,
       school   : listingSchool,
       condition: document.getElementById("sellCondition").value,
+      details  : (document.getElementById("sellDetails")?.value || "").trim(),
+      customSubject: customSubject,
       whatsapp : document.getElementById("sellWhatsapp")?.value || "",
       price    : listingPrice,
       adminPrice: adminPrice,
-      priceMode: state.settings.allowUserPrice === true && typedPrice ? "seller" : "admin",
+      priceMode: customSubject ? "custom" : (state.settings.allowUserPrice === true && typedPrice ? "seller" : "admin"),
       createdAt: new Date().toISOString().slice(0,10)
     };
+    if (customSubject) {
+      state.books.push(Object.assign({}, selected, {
+        id: selected.id,
+        state: selected.type === "school" ? listingState : "",
+        price: listingPrice,
+        author: "",
+        image: ""
+      }));
+    }
     _saveCommunityLocation(listing.state, listing.district, listing.subDistrict, listing.place, listing.school);
     state.listings.push(listing);
     save();
@@ -7648,6 +7761,7 @@ function bindSellForm() {
     toast("✅ Listed for sale!");
     // Reset sell page to book selection
     selectedBookId = '';
+    ['sellCustomTitle','sellCustomPrice','sellDetails'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
     sellCatalogStep = 'classes';
     renderSellCatalog();
     renderMyListings(true);
@@ -7663,6 +7777,7 @@ function bindPageNav() {
       // Close menu panel
       document.getElementById('menuBtn')?.classList.remove('open');
       document.getElementById('menuPanel')?.classList.remove('open');
+      document.getElementById('menuBackdrop')?.classList.remove('open');
       if (pg === 'sell') {
         if (window._currentUser?.state) {
           selectedState = window._currentUser.state;
@@ -7685,13 +7800,17 @@ function bindPageNav() {
 function bindAdminForms() {
   const bookForm = document.getElementById("bookForm");
   if(bookForm){
+    if (state.settings.allowSubjectAdding === false) {
+      bookForm.innerHTML = '<p style="color:#888;font-size:13px;font-weight:800;padding:8px 0;">Subject adding is turned off by admin.</p>';
+    } else {
     const nCls=document.getElementById("newClass");
     const nBrd=document.getElementById("newBoard");
     const nStr=document.getElementById("newStream");
     nCls.innerHTML = [...classes,...(state.settings.general?["General"]:[])].map(c=>'<option>'+c+'</option>').join("");
     nCls.onchange = () => { const c=nCls.value; nBrd.innerHTML=(getBoardsForState(selectedState)||[]).map(b=>'<option>'+b+'</option>').join(""); };
     nCls.onchange();
-    bookForm.onsubmit = e => { e.preventDefault(); const cls=nCls.value; const brd=nBrd.value; const str=nStr.value; const title=document.getElementById("newTitle").value.trim(); const price=parseInt(document.getElementById("newPrice").value)||0; const author=document.getElementById("newAuthor").value.trim(); const image=document.getElementById("newImage").value.trim(); if(!title||!price) return; state.books.push({id:"b"+Date.now(),type:cls==="General"?"general":"school",state:cls==="General"?"":selectedState,className:cls,board:brd,stream:str,title,price,author,image}); save(); toast("Subject added!"); e.target.reset(); nCls.onchange(); };
+    bookForm.onsubmit = e => { e.preventDefault(); if(state.settings.allowSubjectAdding === false){ toast("Subject adding is turned off by admin"); return; } const cls=nCls.value; const brd=nBrd.value; const str=nStr.value; const title=document.getElementById("newTitle").value.trim(); const price=parseInt(document.getElementById("newPrice").value)||0; const author=document.getElementById("newAuthor").value.trim(); const image=document.getElementById("newImage").value.trim(); if(!title||!price) return; state.books.push({id:"b"+Date.now(),type:cls==="General"?"general":"school",state:cls==="General"?"":selectedState,className:cls,board:brd,stream:str,title,price,author,image}); save(); toast("Subject added!"); e.target.reset(); nCls.onchange(); };
+    }
   }
   const schoolForm = document.getElementById("schoolForm");
   if(schoolForm){
@@ -7952,6 +8071,7 @@ function onStateFilterChange(stateVal) {
   // Update buy form
   const buyStateEl = document.getElementById('buyState');
   if (buyStateEl) { buyStateEl.value = stateVal; updateBuyDistricts(); }
+  _syncTopLocationFilters('', stateVal, document.getElementById('buyDistrict')?.value || window._currentUser?.district || '', document.getElementById('buySubDistrict')?.value || window._currentUser?.subDistrict || '');
   // Update mediums dropdown
   _updateMediumsForState(stateVal);
   render();
@@ -7971,6 +8091,7 @@ function onStateFilterChange2(stateVal) {
   if (sf1 && sf1.value !== stateVal) sf1.value = stateVal;
   const sellStateEl = document.getElementById('sellState');
   if (sellStateEl) { sellStateEl.value = stateVal; updateSellDistricts(); }
+  _syncTopLocationFilters('sell', stateVal, document.getElementById('sellDistrict')?.value || window._currentUser?.district || '', document.getElementById('sellSubDistrict')?.value || window._currentUser?.subDistrict || '');
   _updateSellMediumsForState(stateVal);
   render();
 }
@@ -8057,7 +8178,6 @@ function init() {
       _watchMyChatsForUnread();
       _updateMessagesMenuBadge();
       show('menuAccount');
-      show('menuSuggestion');
       show('menuLogout');
     });
     console.log('[PKITAAP] ⚡ Session restored instantly — no flash.');
@@ -8065,95 +8185,6 @@ function init() {
     // Silently ignore — onAuthStateChanged is always the authoritative source
   }
 })();
-
-// ═══════════════════════════════════════════════════════════════
-//  SUGGESTION BOX
-// ═══════════════════════════════════════════════════════════════
-let _suggSelectedType = 'other';
-let _suggRefersPage = '';
-function openSuggModal(){
-  document.getElementById('menuBtn')?.classList.remove('open');
-  document.getElementById('menuPanel')?.classList.remove('open');
-  // Capture which page/section the user is currently viewing
-  const activePage = document.querySelector('.page.active');
-  _suggRefersPage = activePage ? (activePage.id || activePage.dataset.page || 'app') : 'app';
-  document.getElementById('suggModalBg').classList.add('open');
-  document.getElementById('suggText').value = '';
-  document.getElementById('suggCharCount').textContent = '0';
-  _suggSelectedType = 'other';
-  document.querySelectorAll('.sugg-type-btn').forEach(b=>b.classList.toggle('selected', b.dataset.type==='other'));
-  document.getElementById('suggSubmitBtn').disabled = false;
-  document.getElementById('suggSubmitBtn').textContent = '📤 Send Suggestion';
-}
-function closeSuggModal(){
-  document.getElementById('suggModalBg').classList.remove('open');
-}
-function suggSelectType(btn){
-  _suggSelectedType = btn.dataset.type;
-  document.querySelectorAll('.sugg-type-btn').forEach(b=>b.classList.remove('selected'));
-  btn.classList.add('selected');
-}
-(function bindSuggCharCount(){
-  document.addEventListener('DOMContentLoaded', function(){
-    const ta = document.getElementById('suggText');
-    if(ta) ta.addEventListener('input', function(){ document.getElementById('suggCharCount').textContent = this.value.length; });
-    // Close modal on backdrop click
-    const bg = document.getElementById('suggModalBg');
-    if(bg) bg.addEventListener('click', function(e){ if(e.target===bg) closeSuggModal(); });
-  });
-})();
-async function submitSuggestion(){
-  const text = (document.getElementById('suggText').value||'').trim();
-  if(!text){ document.getElementById('suggText').focus(); return; }
-  const btn = document.getElementById('suggSubmitBtn');
-  btn.disabled = true; btn.textContent = '⏳ Sending…';
-  const u = window._currentUser || {};
-  const uid = (window._auth && window._auth.currentUser && window._auth.currentUser.uid) || u.uid || u.id || '';
-  // Map page IDs to human-readable labels
-  const PAGE_LABELS = {buyPage:'Browse Books',sellPage:'Sell Books',myListingsPage:'My Listings',messagesPage:'Messages',accountPage:'Account'};
-  const refersRaw = _suggRefersPage || 'app';
-  const suggestion = {
-    message: text,
-    type: _suggSelectedType || 'other',
-    userName: u.name || u.displayName || 'User',
-    userMobile: u.mobile || '',
-    userEmail: u.email || (window._auth && window._auth.currentUser && window._auth.currentUser.email) || '',
-    userId: uid,
-    refers: PAGE_LABELS[refersRaw] || refersRaw,
-    status: 'new',
-    createdAt: new Date().toISOString()
-  };
-  let saved = false;
-  // Try Firestore first
-  if(_db){
-    try {
-      await _db.collection('suggestions').add(suggestion);
-      saved = true;
-      toast('✅ Thank you! Your suggestion has been sent.');
-    } catch(e){
-      console.warn('[PKITAAP] Firestore suggestion error:', e);
-      // Fall through to localStorage backup below
-    }
-  }
-  // LocalStorage backup (also used when _db not available)
-  if(!saved){
-    try {
-      const stored = JSON.parse(localStorage.getItem('pkitaap_suggestions')||'[]');
-      stored.push({...suggestion, id:'sg'+Date.now(), _localOnly:true});
-      localStorage.setItem('pkitaap_suggestions', JSON.stringify(stored));
-      toast('✅ Suggestion saved locally! (Will sync when connected)');
-      saved = true;
-    } catch(e2){
-      console.warn('[PKITAAP] LocalStorage suggestion error:', e2);
-    }
-  }
-  if(saved){
-    closeSuggModal();
-  } else {
-    btn.disabled = false; btn.textContent = '📤 Send Suggestion';
-    toast('❌ Could not send. Please try again.');
-  }
-}
 
 init();
 // ═══════════════════════════════════════════════════════════════
@@ -8301,7 +8332,6 @@ init();
     const menuListings  = document.getElementById('menuListings');
     const menuMessages  = document.getElementById('menuMessages');
     const menuAccount   = document.getElementById('menuAccount');
-    const menuSuggestion= document.getElementById('menuSuggestion');
     const menuLogout    = document.getElementById('menuLogout');
     if (menuLoginCard) menuLoginCard.style.display = 'none';
     if (menuHome)      menuHome.style.display = '';
@@ -8310,8 +8340,7 @@ init();
     if (menuMessages)  menuMessages.style.display = (state.settings.messaging !== false) ? '' : 'none';
     _watchMyChatsForUnread();
     _updateMessagesMenuBadge();
-    if (menuAccount)    menuAccount.style.display = '';
-    if (menuSuggestion) menuSuggestion.style.display = '';
+    if (menuAccount)   menuAccount.style.display = '';
     if (menuLogout)    menuLogout.style.display = '';
 
     // Wire account details button
@@ -8319,12 +8348,8 @@ init();
       triggerAdMob("menuOption");
       document.getElementById('menuBtn')?.classList.remove('open');
       document.getElementById('menuPanel')?.classList.remove('open');
+      document.getElementById('menuBackdrop')?.classList.remove('open');
       openAccountDetails();
-    };
-    // Wire suggestion button
-    if (menuSuggestion) menuSuggestion.onclick = function() {
-      triggerAdMob("menuOption");
-      openSuggModal();
     };
     // Wire logout button
     if (menuLogout) menuLogout.onclick = async function() {
@@ -8342,17 +8367,17 @@ init();
       window._isLoggedIn = false;
       window._currentUser = null;
       updateAccessControls();
-      if (menuLoginCard)  menuLoginCard.style.display = '';
-      if (menuHome)       menuHome.style.display = 'none';
-      if (menuSell)       menuSell.style.display = 'none';
-      if (menuListings)   menuListings.style.display = 'none';
-      if (menuMessages)   menuMessages.style.display = 'none';
-      if (menuMessages)   menuMessages.classList.remove('has-unread');
-      if (menuAccount)    menuAccount.style.display = 'none';
-      if (menuSuggestion) menuSuggestion.style.display = 'none';
-      if (menuLogout)     menuLogout.style.display = 'none';
+      if (menuLoginCard) menuLoginCard.style.display = '';
+      if (menuHome)      menuHome.style.display = 'none';
+      if (menuSell)      menuSell.style.display = 'none';
+      if (menuListings)  menuListings.style.display = 'none';
+      if (menuMessages)  menuMessages.style.display = 'none';
+      if (menuMessages)  menuMessages.classList.remove('has-unread');
+      if (menuAccount)   menuAccount.style.display = 'none';
+      if (menuLogout)    menuLogout.style.display = 'none';
       document.getElementById('menuBtn')?.classList.remove('open');
       document.getElementById('menuPanel')?.classList.remove('open');
+      document.getElementById('menuBackdrop')?.classList.remove('open');
       toast('👋 Logged out successfully.');
       // Navigate back to buy page
       document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
