@@ -1044,7 +1044,14 @@ const seed = {
           "subDistricts": [
             {
               "subDistrict": "Ananthagiri",
-              "places": []
+              "places": [
+                {
+                  "name": "Testing",
+                  "schools": [
+                    "testing"
+                  ]
+                }
+              ]
             },
             {
               "subDistrict": "Araku Valley",
@@ -4586,7 +4593,7 @@ function updateAccessControls() {
 }
 
 async function loadRemoteAppData() {
-  if (!_db || _remoteDataLoaded) return;
+  if (!_db) return;
   try {
     const ref = _db.collection('app_data');
     const docs = await Promise.all([
@@ -7657,6 +7664,13 @@ function init() {
   if (msgInput) msgInput.addEventListener('input', _autosizeMessageInput);
   const msgBack = document.getElementById('messageBackBtn');
   if (msgBack) msgBack.onclick = () => { _activeChatId = ''; _showMessageListView(); renderMessages(true); };
+
+  // ── AUTO-SYNC: Load latest admin data from Firebase on every page open ──
+  // This is what keeps the user file always up-to-date without re-exporting.
+  // The admin pushes data to Firebase → this call fetches it automatically.
+  if (_db) {
+    loadRemoteAppData();
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
