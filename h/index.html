@@ -139,6 +139,12 @@ label { color: #444; display: grid; font-size: 13px; font-weight: 900; gap: 5px;
 .result-card strong { display: block; }
 .result-card span { color: var(--muted); display: block; font-size: 12px; font-weight: 900; margin-top: 4px; }
 .contact-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.seller-place-group { display: grid; gap: 10px; grid-column: 1 / -1; }
+.seller-place-heading { align-items: center; background: var(--red-light); border: 2px solid var(--line); border-radius: 14px; color: var(--red); display: flex; font-size: 15px; font-weight: 950; justify-content: space-between; padding: 10px 12px; }
+.seller-subject-card { background: #fff; border: 2px solid var(--line); border-radius: 14px; cursor: pointer; display: grid; gap: 5px; padding: 13px 14px; text-align: left; transition: background .15s, border-color .15s, transform .15s; width: 100%; }
+.seller-subject-card:hover { background: var(--red-light); border-color: var(--red); transform: translateY(-1px); }
+.seller-subject-card strong { color: var(--text); font-size: 16px; font-weight: 950; }
+.seller-subject-card span { color: var(--muted); font-size: 12px; font-weight: 850; line-height: 1.35; }
 .brand-footer { border-top: 1px solid var(--line); color: var(--muted); display: flex; flex-wrap: wrap; font-size: 13px; font-weight: 900; gap: 8px 14px; justify-content: center; line-height: 1.5; margin: 8px auto 28px; max-width: 980px; padding: 18px 14px 0; text-align: center; }
 .brand-footer a { color: var(--red); font-weight: 950; }
 .brand-footer span { white-space: nowrap; }
@@ -392,10 +398,10 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
         </div>
       </div>
       <div class="location-lock">
-        <div id="homeCountryBox" class="home-loc-state"><span>Country</span><strong>India</strong></div>
-        <div id="homeStateBox" class="home-loc-state"><span>State</span><select id="stateFilter" class="location-select" onchange="onStateFilterChange(this.value)"><option value="">— Select State —</option><option value="Andhra Pradesh">Andhra Pradesh</option><option value="Assam">Assam</option></select></div>
-        <div id="homeDistrictBox" class="home-loc-area" style="display:none;"><span>District</span><select id="districtFilter" class="location-select" onchange="onDistrictFilterChange(this.value)" disabled><option value="">— District —</option></select></div>
-        <div id="homeSubDistrictBox" class="home-loc-area" style="display:none;"><span>Sub-District</span><select id="subDistrictFilter" class="location-select" onchange="onSubDistrictFilterChange(this.value)" disabled><option value="">— Sub-District —</option></select></div>
+        <div id="buyStateBox"><span>Country</span><strong>India</strong></div>
+        <div id="buyStateSelectBox"><span>States</span><select id="stateFilter" class="location-select" onchange="onStateFilterChange(this.value)"><option value="">— Select State —</option><option value="Andhra Pradesh">Andhra Pradesh</option><option value="Assam">Assam</option></select></div>
+        <div id="buyDistrictBox" style="display:none;"><span>District</span><select id="browseDistrict" class="location-select" onchange="updateBrowseSubDistricts()"><option value="">District</option></select></div>
+        <div id="buySubDistrictBox" style="display:none;"><span>Sub-District</span><select id="browseSubDistrict" class="location-select" onchange="renderBooks()"><option value="">Sub-District</option></select></div>
       </div>
       <div class="card">
         <div class="card-head">
@@ -867,17 +873,16 @@ function _mergeUserProfiles(localUser, remoteUser) {
     : Object.assign({}, localUser || {}, remoteUser || {});
   const primaryUser = preferLocal ? localUser : remoteUser;
   const secondaryUser = preferLocal ? remoteUser : localUser;
+  // ★ FIX: use only dateOfBirth — never set dob/birthDate/dobDay duplicates
   const dobValue = getUserDobValue(primaryUser) || getUserDobValue(secondaryUser) || getUserDobValue(merged);
   if (dobValue) {
-    const parts = _dobPartsFromValue(dobValue);
     merged.dateOfBirth = dobValue;
-    merged.dob = dobValue;
-    merged.birthDate = dobValue;
-    if (parts) {
-      merged.dobDay = parts.d;
-      merged.dobMonth = parts.m;
-      merged.dobYear = parts.y;
-    }
+    // Remove legacy duplicate fields
+    delete merged.dob;
+    delete merged.birthDate;
+    delete merged.dobDay;
+    delete merged.dobMonth;
+    delete merged.dobYear;
   }
   return merged;
 }
@@ -921,54 +926,82 @@ async function _getUserFromFirestore(uid) {
 async function _saveUserToFirestore(userData) {
   if (!userData) return;
   const authUid = String((_auth && _auth.currentUser && _auth.currentUser.uid) || userData.uid || '').trim();
-  if (authUid) userData.uid = authUid;
-  const mobile = userData.mobile || (userData.phone ? String(userData.phone).replace(/\D/g,'').slice(-10) : '');
-  const dobValue = userData.dateOfBirth || userData.dob || userData.birthDate || '';
-  const dobParts = _dobPartsFromValue(dobValue);
-  const normalizedUser = Object.assign({}, userData, {
-    id: userData.id || userData.uid || (mobile ? 'u' + mobile : ''),
-    mobile,
-    phone: userData.phone || (mobile ? '+91' + mobile : ''),
-    email: userData.email || ((_auth && _auth.currentUser && _auth.currentUser.email) || ''),
-    dateOfBirth: dobValue,
-    dob: dobValue,
-    birthDate: dobValue,
-    dobDay: dobParts ? dobParts.d : (userData.dobDay || ''),
-    dobMonth: dobParts ? dobParts.m : (userData.dobMonth || ''),
-    dobYear: dobParts ? dobParts.y : (userData.dobYear || '')
-  });
-  delete normalizedUser.platformUserId;
-  delete normalizedUser.publicUserId;
-  delete normalizedUser.userName;
-  delete normalizedUser.insta;
-  const docId = normalizedUser.uid || normalizedUser.id || normalizedUser.mobile;
-  // Mirror to localStorage (offline fallback)
+  if (!authUid) { console.warn('[PKITAAP] _saveUserToFirestore: no auth UID'); return; }
+
+  // ★ FIX: Document ID = Firebase Auth UID (not mobile, not random ID)
+  const docId = authUid;
+
+  const mobile = String(userData.mobile || userData.phone || '').replace(/D/g, '').slice(-10);
+  // ★ FIX: ONE canonical dateOfBirth field only — no dob/birthDate duplicates
+  const dateOfBirth = userData.dateOfBirth || userData.dob || userData.birthDate || '';
+
+  // ★ FIX: Clean field names — no duplicates, no confusing aliases
+  const cleanUser = {
+    uid:          authUid,
+    name:         String(userData.name || userData.fullName || userData.displayName || '').trim(),
+    email:        String(userData.email || (_auth && _auth.currentUser && _auth.currentUser.email) || '').trim(),
+    mobile:       mobile,
+    dateOfBirth:  dateOfBirth,               // ONLY this field — never dob/birthDate
+    className:    String(userData.className || userData.class || ''),
+    state:        String(userData.state || ''),
+    district:     String(userData.district || ''),
+    subDistrict:  String(userData.subDistrict || userData.sub_district || ''),
+    place:        String(userData.place || userData.locality || userData.placeName || '').trim(),
+    school:       String(userData.school || userData.college || '').trim(),
+    role:         'user',
+    status:       userData.status || 'active',
+    updatedAt:    new Date().toISOString(),
+    lastLoginAt:  new Date().toISOString()
+  };
+
+  // Minimal localStorage cache — only non-private display fields
   try {
-    const existing = JSON.parse(localStorage.getItem('pkitaap_registered_users') || '[]');
-    const idx = existing.findIndex(function(u){
-      if (normalizedUser.uid) return String(u.uid || '') === String(normalizedUser.uid || '');
-      return (normalizedUser.mobile && u.mobile === normalizedUser.mobile);
-    });
-    if (idx >= 0) { existing[idx] = Object.assign({}, existing[idx], normalizedUser); }
-    else { existing.push(normalizedUser); }
-    localStorage.setItem('pkitaap_registered_users', JSON.stringify(existing));
+    localStorage.setItem('pkitaap_profile_cache', JSON.stringify({
+      uid: authUid,
+      name: cleanUser.name,
+      email: cleanUser.email
+    }));
+    // ★ FIX: Remove the old full-profile localStorage store
+    localStorage.removeItem('pkitaap_registered_users');
   } catch(e) {}
-  // Write to Firestore
-  if (_db && docId) {
+
+  // Write to Firestore — use set with merge so createdAt is preserved
+  if (_db) {
     try {
-      const writeUser = Object.assign({}, normalizedUser, { lastLoginAt: new Date().toISOString() });
-      if (window.firebase && firebase.firestore && firebase.firestore.FieldValue) {
-        writeUser.platformUserId = firebase.firestore.FieldValue.delete();
-        writeUser.publicUserId = firebase.firestore.FieldValue.delete();
-        writeUser.userName = firebase.firestore.FieldValue.delete();
-        writeUser.insta = firebase.firestore.FieldValue.delete();
+      const ref = _db.collection('users').doc(docId);
+      const snap = await ref.get();
+      if (!snap.exists) {
+        cleanUser.createdAt = new Date().toISOString();
+        await ref.set(cleanUser);
+      } else {
+        // Remove stale duplicate fields from Firestore if they exist
+        const TS = (firebase.firestore && firebase.firestore.FieldValue)
+          ? firebase.firestore.FieldValue.delete() : undefined;
+        const updateData = Object.assign({}, cleanUser);
+        if (TS) {
+          updateData.dob = TS;
+          updateData.birthDate = TS;
+          updateData.dobDay = TS;
+          updateData.dobMonth = TS;
+          updateData.dobYear = TS;
+          updateData.phone = TS;
+          updateData.id = TS;
+          updateData.userName = TS;
+          updateData.fullName = TS;
+          updateData.displayName = TS;
+          updateData.locality = TS;
+          updateData.placeName = TS;
+          updateData.platformUserId = TS;
+          updateData.publicUserId = TS;
+          updateData.insta = TS;
+        }
+        await ref.update(updateData);
       }
-      await _db.collection('users').doc(docId).set(writeUser, { merge: true });
     } catch (e) {
-      console.warn('[PKITAAP] Firestore write failed (localStorage used):', e);
+      console.warn('[PKITAAP] Firestore write failed:', e);
     }
   }
-  return normalizedUser;
+  return cleanUser;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1028,620 +1061,7 @@ const seed = {
     "menuOption": ""
   },
   "categories": [],
-  "books": [
-    {
-      "id": "xswzgbha",
-      "type": "school",
-      "state": "",
-      "board": "",
-      "stream": "",
-      "className": "Class 9",
-      "title": "asssamese",
-      "price": 100,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "x52sthqc",
-      "type": "school",
-      "state": "",
-      "board": "",
-      "stream": "Science",
-      "className": "Class 11",
-      "title": "asssamese",
-      "price": 100,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xnmrdahb",
-      "type": "school",
-      "state": "",
-      "board": "",
-      "stream": "Commerce",
-      "className": "Class 11",
-      "title": "asssamese",
-      "price": 100,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xhnkwmza",
-      "type": "school",
-      "state": "",
-      "board": "",
-      "stream": "Arts",
-      "className": "Class 11",
-      "title": "asssamese",
-      "price": 100,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xbd5zdtg",
-      "type": "school",
-      "state": "",
-      "board": "",
-      "stream": "Science",
-      "className": "Class 12",
-      "title": "asssamese",
-      "price": 100,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xobr9y6w",
-      "type": "school",
-      "state": "",
-      "board": "",
-      "stream": "Commerce",
-      "className": "Class 12",
-      "title": "asssamese",
-      "price": 100,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xas97424",
-      "type": "school",
-      "state": "",
-      "board": "",
-      "stream": "Arts",
-      "className": "Class 12",
-      "title": "asssamese",
-      "price": 100,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xu9qs099",
-      "type": "school",
-      "state": "Assam",
-      "board": "ASSEB",
-      "stream": "",
-      "className": "Class 9",
-      "title": "Hindi",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "x6dh5v9j",
-      "type": "school",
-      "state": "Assam",
-      "board": "CBSE",
-      "stream": "",
-      "className": "Class 9",
-      "title": "Hindi",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "x17c4w1z",
-      "type": "school",
-      "state": "Assam",
-      "board": "ASSEB",
-      "stream": "",
-      "className": "Class 10",
-      "title": "Hindi",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xxy0zw55",
-      "type": "school",
-      "state": "Assam",
-      "board": "CBSE",
-      "stream": "",
-      "className": "Class 10",
-      "title": "Hindi",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "x8xirnlk",
-      "type": "school",
-      "state": "Assam",
-      "board": "ASSEB",
-      "stream": "",
-      "className": "Class 9",
-      "title": "Social Science",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xdcrgqc5",
-      "type": "school",
-      "state": "Assam",
-      "board": "CBSE",
-      "stream": "",
-      "className": "Class 9",
-      "title": "Social Science",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xye061zr",
-      "type": "school",
-      "state": "Assam",
-      "board": "ASSEB",
-      "stream": "",
-      "className": "Class 10",
-      "title": "Social Science",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xvqymk4c",
-      "type": "school",
-      "state": "Assam",
-      "board": "CBSE",
-      "stream": "",
-      "className": "Class 10",
-      "title": "Social Science",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xp06b2cc",
-      "type": "school",
-      "state": "Assam",
-      "board": "ASSEB",
-      "stream": "",
-      "className": "Class 9",
-      "title": "General Science",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xi37jogj",
-      "type": "school",
-      "state": "Assam",
-      "board": "CBSE",
-      "stream": "",
-      "className": "Class 9",
-      "title": "General Science",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xuqygv27",
-      "type": "school",
-      "state": "Assam",
-      "board": "ASSEB",
-      "stream": "",
-      "className": "Class 10",
-      "title": "General Science",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xmwxr6w0",
-      "type": "school",
-      "state": "Assam",
-      "board": "CBSE",
-      "stream": "",
-      "className": "Class 10",
-      "title": "General Science",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "x74fkaza",
-      "type": "school",
-      "state": "Assam",
-      "board": "ASSEB",
-      "stream": "",
-      "className": "Class 9",
-      "title": "Mathematics",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xv43cqnd",
-      "type": "school",
-      "state": "Assam",
-      "board": "CBSE",
-      "stream": "",
-      "className": "Class 9",
-      "title": "Mathematics",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xc5hu4d1",
-      "type": "school",
-      "state": "Assam",
-      "board": "ASSEB",
-      "stream": "",
-      "className": "Class 10",
-      "title": "Mathematics",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "x54ay8kz",
-      "type": "school",
-      "state": "Assam",
-      "board": "CBSE",
-      "stream": "",
-      "className": "Class 10",
-      "title": "Mathematics",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "x64baws9",
-      "type": "school",
-      "state": "Assam",
-      "board": "ASSEB",
-      "stream": "",
-      "className": "Class 9",
-      "title": "English",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "x493redm",
-      "type": "school",
-      "state": "Assam",
-      "board": "CBSE",
-      "stream": "",
-      "className": "Class 9",
-      "title": "English",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xptmblf7",
-      "type": "school",
-      "state": "Assam",
-      "board": "ASSEB",
-      "stream": "",
-      "className": "Class 10",
-      "title": "English",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xd2eecvb",
-      "type": "school",
-      "state": "Assam",
-      "board": "CBSE",
-      "stream": "",
-      "className": "Class 10",
-      "title": "English",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "x5ufcol6",
-      "type": "school",
-      "state": "Assam",
-      "board": "ASSEB",
-      "stream": "",
-      "className": "Class 11",
-      "title": "English",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xjlsmbuo",
-      "type": "school",
-      "state": "Assam",
-      "board": "CBSE",
-      "stream": "",
-      "className": "Class 11",
-      "title": "English",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xoaat5bt",
-      "type": "school",
-      "state": "Assam",
-      "board": "ASSEB",
-      "stream": "",
-      "className": "Class 12",
-      "title": "English",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xx5sskhs",
-      "type": "school",
-      "state": "Assam",
-      "board": "CBSE",
-      "stream": "",
-      "className": "Class 12",
-      "title": "English",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xttl67n0",
-      "type": "school",
-      "state": "Assam",
-      "className": "Class 11",
-      "board": "ASSEB",
-      "stream": "Arts",
-      "title": "Political Science",
-      "price": 30,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xttmqgv5",
-      "type": "school",
-      "state": "Assam",
-      "className": "Class 11",
-      "board": "CBSE",
-      "stream": "Arts",
-      "title": "Political Science",
-      "price": 30,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xdqs5im7",
-      "type": "school",
-      "state": "Assam",
-      "className": "Class 12",
-      "board": "ASSEB",
-      "stream": "Arts",
-      "title": "Political Science",
-      "price": 30,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xfqo2oxt",
-      "type": "school",
-      "state": "Assam",
-      "className": "Class 12",
-      "board": "CBSE",
-      "stream": "Arts",
-      "title": "Political Science",
-      "price": 30,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "x3j7nv7r",
-      "type": "school",
-      "state": "Assam",
-      "className": "Class 11",
-      "board": "ASSEB",
-      "stream": "Arts",
-      "title": "History",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xj5zgqtr",
-      "type": "school",
-      "state": "Assam",
-      "className": "Class 11",
-      "board": "CBSE",
-      "stream": "Arts",
-      "title": "History",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "x3qvshp9",
-      "type": "school",
-      "state": "Assam",
-      "className": "Class 12",
-      "board": "ASSEB",
-      "stream": "Arts",
-      "title": "History",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "x5r0tj14",
-      "type": "school",
-      "state": "Assam",
-      "className": "Class 12",
-      "board": "CBSE",
-      "stream": "Arts",
-      "title": "History",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "x1hgrxz3",
-      "type": "school",
-      "state": "Assam",
-      "className": "Class 11",
-      "board": "ASSEB",
-      "stream": "Arts",
-      "title": "Economics",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xlvo4ee9",
-      "type": "school",
-      "state": "Assam",
-      "className": "Class 11",
-      "board": "CBSE",
-      "stream": "Arts",
-      "title": "Economics",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "x42p0ig3",
-      "type": "school",
-      "state": "Assam",
-      "className": "Class 12",
-      "board": "ASSEB",
-      "stream": "Arts",
-      "title": "Economics",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "x7183ghl",
-      "type": "school",
-      "state": "Assam",
-      "className": "Class 12",
-      "board": "CBSE",
-      "stream": "Arts",
-      "title": "Economics",
-      "price": 20,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xzltxvcp",
-      "type": "school",
-      "state": "Assam",
-      "className": "Class 11",
-      "board": "ASSEB",
-      "stream": "Arts",
-      "title": "Education",
-      "price": 30,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "x8ei12t4",
-      "type": "school",
-      "state": "Assam",
-      "className": "Class 11",
-      "board": "CBSE",
-      "stream": "Arts",
-      "title": "Education",
-      "price": 30,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xlajxbnw",
-      "type": "school",
-      "state": "Assam",
-      "className": "Class 12",
-      "board": "ASSEB",
-      "stream": "Arts",
-      "title": "Education",
-      "price": 30,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "x86nk4ql",
-      "type": "school",
-      "state": "Assam",
-      "className": "Class 12",
-      "board": "CBSE",
-      "stream": "Arts",
-      "title": "Education",
-      "price": 30,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "x0pzzf46",
-      "type": "school",
-      "state": "Assam",
-      "board": "ASSEB",
-      "stream": "",
-      "className": "Class 9",
-      "title": "assamese",
-      "price": 100,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xuqkufvs",
-      "type": "school",
-      "state": "Assam",
-      "board": "CBSE",
-      "stream": "",
-      "className": "Class 9",
-      "title": "assamese",
-      "price": 100,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xp16ok8q",
-      "type": "school",
-      "state": "Assam",
-      "board": "ASSEB",
-      "stream": "",
-      "className": "Class 10",
-      "title": "assamese",
-      "price": 100,
-      "author": "",
-      "image": ""
-    },
-    {
-      "id": "xihdqke9",
-      "type": "school",
-      "state": "Assam",
-      "board": "CBSE",
-      "stream": "",
-      "className": "Class 10",
-      "title": "assamese",
-      "price": 100,
-      "author": "",
-      "image": ""
-    }
-  ],
+  "books": [],
   "locations": [
     {
       "state": "Andhra Pradesh",
@@ -1651,7 +1071,14 @@ const seed = {
           "subDistricts": [
             {
               "subDistrict": "Ananthagiri",
-              "places": []
+              "places": [
+                {
+                  "name": "Testing",
+                  "schools": [
+                    "testing"
+                  ]
+                }
+              ]
             },
             {
               "subDistrict": "Araku Valley",
@@ -4773,12 +4200,7 @@ const seed = {
             },
             {
               "subDistrict": "Kadam",
-              "places": [
-                {
-                  "name": "Nn",
-                  "schools": []
-                }
-              ]
+              "places": []
             },
             {
               "subDistrict": "Naobaicha",
@@ -4794,20 +4216,7 @@ const seed = {
                 {
                   "name": "Balijan",
                   "schools": [
-                    "Morning Glory Higher Secondary School",
-                    "Ifigogbl"
-                  ]
-                },
-                {
-                  "name": "14 mile",
-                  "schools": [
-                    "morning glory higher secondary school"
-                  ]
-                },
-                {
-                  "name": "Boginadi",
-                  "schools": [
-                    "Shankardev Shishu Niketan"
+                    "Morning Glory Higher Secondary School"
                   ]
                 }
               ]
@@ -5090,9 +4499,18 @@ const seed = {
   ],
   "listings": []
 };
-let state = normalizeState(JSON.parse(localStorage.getItem("pkitaap-simple") || "null") || structuredClone(seed));
+// ★ FIX: Do NOT load admin-controlled app data from pkitaap-simple cache.
+// Firebase onSnapshot listeners in loadRemoteAppData() will push live data
+// immediately after startup, overwriting any stale cached values.
+let state = normalizeState(structuredClone(seed));
+try {
+  // Only restore user-generated content (listings) from cache, never app config.
+  const _cached = JSON.parse(localStorage.getItem("pkitaap-simple") || "null");
+  if (_cached && Array.isArray(_cached.listings)) state.listings = _cached.listings;
+} catch(e) {}
 let selectedClass = "", selectedBoard = "", selectedStream = "", selectedBookId = "", selectedCategory = "";
 let search = "", catalogStep = "classes";
+let _browseListingsLoadedAt = 0;
 let _remoteDataLoaded = false;
 
 window.PKITAAP_ADMOB_IDS = state.adMob || {};
@@ -5192,41 +4610,85 @@ function updateAccessControls() {
 }
 
 async function loadRemoteAppData() {
-  if (!_db || _remoteDataLoaded) return;
+  if (!_db) return;
   try {
     const ref = _db.collection('app_data');
-    const docs = await Promise.all([
-      ref.doc('settings').get(),
-      ref.doc('classes').get(),
-      ref.doc('locations').get(),
-      ref.doc('categories').get()
-    ]);
-    const settingsDoc = docs[0].exists ? docs[0].data() : {};
-    const classesDoc = docs[1].exists ? docs[1].data() : {};
-    const locationsDoc = docs[2].exists ? docs[2].data() : {};
-    const categoriesDoc = docs[3].exists ? docs[3].data() : {};
-    if (settingsDoc.settings) state.settings = Object.assign({}, state.settings || {}, settingsDoc.settings);
-    if (settingsDoc.adMob) state.adMob = Object.assign({}, state.adMob || {}, settingsDoc.adMob);
-    window.PKITAAP_ADMOB_IDS = state.adMob || {};
-    if (settingsDoc.streams) state.streams = settingsDoc.streams;
-    if (classesDoc.classes) state.classes = classesDoc.classes;
-    if (classesDoc.classThumbs) state.classThumbs = classesDoc.classThumbs;
-    if (classesDoc.boardsByState) state.boardsByState = classesDoc.boardsByState;
-    if (classesDoc.mediumsByState) state.mediumsByState = classesDoc.mediumsByState;
-    if (locationsDoc.locations) state.locations = locationsDoc.locations;
-    if (categoriesDoc.categories) state.categories = categoriesDoc.categories;
+
+    // ── 1. Settings — real-time listener ──────────────────────────
+    ref.doc('settings').onSnapshot(snap => {
+      if (!snap.exists || snap.metadata.fromCache) return;
+      const d = snap.data();
+      if (d.settings)   state.settings   = Object.assign({}, state.settings || {}, d.settings);
+      if (d.adMob)      state.adMob      = Object.assign({}, state.adMob || {}, d.adMob);
+      if (d.streams)    state.streams    = d.streams;
+      if (d.appName)    state.appName    = d.appName;
+      if (d.appTagline) state.appTagline = d.appTagline;
+      window.PKITAAP_ADMOB_IDS = state.adMob || {};
+      save(); render();
+    }, err => console.warn('[PKITAAP] settings listener:', err));
+
+    // ── 2. Classes — real-time listener ───────────────────────────
+    ref.doc('classes').onSnapshot(snap => {
+      if (!snap.exists || snap.metadata.fromCache) return;
+      const d = snap.data();
+      if (d.list)        state.classes    = d.list;
+      if (d.classThumbs) state.classThumbs = d.classThumbs;
+      save(); render();
+    }, err => console.warn('[PKITAAP] classes listener:', err));
+
+    // ── 3. Boards — real-time listener ────────────────────────────
+    ref.doc('boards').onSnapshot(snap => {
+      if (!snap.exists || snap.metadata.fromCache) return;
+      const d = snap.data();
+      if (d.byState) state.boardsByState = d.byState;
+      save(); render();
+    }, err => console.warn('[PKITAAP] boards listener:', err));
+
+    // ── 4. Mediums — real-time listener ───────────────────────────
+    ref.doc('mediums').onSnapshot(snap => {
+      if (!snap.exists || snap.metadata.fromCache) return;
+      const d = snap.data();
+      if (d.byState) state.mediumsByState = d.byState;
+      save(); render();
+    }, err => console.warn('[PKITAAP] mediums listener:', err));
+
+    // ── 5. Locations — real-time listener ─────────────────────────
+    ref.doc('locations').onSnapshot(snap => {
+      if (!snap.exists || snap.metadata.fromCache) return;
+      const d = snap.data();
+      if (d.list) {
+        state.locations = d.list;
+        // ★ KEY FIX: overwrite location cache so deleted places don't reappear
+        try { localStorage.setItem('pkitaap_locs_v2', JSON.stringify(d.list)); } catch(e) {}
+        try { localStorage.removeItem('pkitaap_locations_cache'); } catch(e) {}
+      }
+      save(); render();
+    }, err => console.warn('[PKITAAP] locations listener:', err));
+
+    // ── 6. Categories — real-time listener ────────────────────────
+    ref.doc('categories').onSnapshot(snap => {
+      if (!snap.exists || snap.metadata.fromCache) return;
+      const d = snap.data();
+      if (d.list) state.categories = d.list;
+      save(); render();
+    }, err => console.warn('[PKITAAP] categories listener:', err));
+
+    // ── 7. Books — one-time fetch (sub-collection, large) ─────────
     try {
       const bookSnap = await ref.doc('books').collection('items').limit(1000).get();
       if (!bookSnap.empty) state.books = bookSnap.docs.map(doc => Object.assign({id: doc.id}, doc.data()));
     } catch(e) {}
+
+    // ★ KEY FIX: clear the old pkitaap-simple key once Firebase data is loaded
+    // so stale deleted classes/locations/categories never come back from cache.
+    try { localStorage.removeItem('pkitaap-simple'); } catch(e) {}
+
     _remoteDataLoaded = true;
     save();
     render();
-    // ── Data is ready — now dismiss the splash screen ──
     if (window._hideSplash) window._hideSplash();
   } catch(e) {
     console.warn('[PKITAAP] Remote app data load failed:', e);
-    // Dismiss splash even on failure so user isn't stuck
     if (window._hideSplash) window._hideSplash();
   }
 }
@@ -5240,11 +4702,9 @@ function normalizeState(input) {
   next.settings    = { ...seed.settings,   ...(next.settings    || {}) };
   next.adMob       = { ...(seed.adMob || {}), ...(next.adMob || {}) };
   next.classThumbs = { ...seed.classThumbs, ...(next.classThumbs || {}) };
-  // ── Admin-controlled config: ALWAYS use the freshly-exported seed so that
-  //    new boards / mediums / subjects / classes / locations / categories that
-  //    were added in the admin panel are visible in every new export, even
-  //    when the user's browser already has an older pkitaap-simple in
-  //    localStorage (the old || operator was keeping stale cached values). ──
+  // ── Admin-controlled config: seed is used for fast first render only.
+  //    onSnapshot listeners in loadRemoteAppData() immediately overwrite
+  //    these with live Firestore data — deleted items never return from cache.
   next.classes        = seed.classes        || ["Class 9","Class 10","Class 11","Class 12"];
   next.streams        = seed.streams        || ["Science","Commerce","Arts"];
   next.boardsByState  = seed.boardsByState  || {};
@@ -5409,7 +4869,7 @@ function renderBoards() {
   }
   boardGrid.innerHTML = bds.map(name => '<button class="stream-card" data-board="' + name + '"><strong>' + name + '</strong></button>').join("");
   document.querySelectorAll("[data-board]").forEach(card => {
-    card.onclick = () => { selectedBoard = card.dataset.board; if (selectedClass==="Class 11"||selectedClass==="Class 12") { selectedStream=""; selectedBookId=""; catalogStep="streams"; } else { selectedBookId=""; catalogStep="books"; } render(); };
+    card.onclick = () => { selectedBoard = card.dataset.board; selectedStream=""; selectedBookId=""; catalogStep="books"; render(); };
   });
 }
 function renderStreams() {
@@ -5430,26 +4890,102 @@ function renderStreams() {
   document.querySelectorAll("[data-stream]").forEach(card => { card.onclick = () => { selectedStream=card.dataset.stream; selectedBookId=""; catalogStep="books"; render(); }; });
 }
 function renderBooks() {
-  const items = shownBooks();
-  const grid  = document.querySelector("#bookGrid");
-  const selected = selectedBookId ? book() : null;
-  const visibleItems = selected ? [selected] : items;
-  const isFocused = !!selected;
+  const grid = document.querySelector("#bookGrid");
   grid.style.display = catalogStep === "books" ? "grid" : "none";
-  grid.classList.toggle("focused", catalogStep === "books" && isFocused);
-  grid.innerHTML = visibleItems.length ? visibleItems.map(bookCardHtml).join("") : '<div>No books found</div>';
-  grid.querySelectorAll(".book-card").forEach(card => {
+  grid.classList.toggle("focused", false);
+  if (catalogStep !== "books") return;
+
+  const district = document.getElementById('browseDistrict')?.value || window._currentUser?.district || '';
+  const subDistrict = document.getElementById('browseSubDistrict')?.value || window._currentUser?.subDistrict || '';
+
+  if (!selectedState) {
+    grid.innerHTML = '<div>Select your state first.</div>';
+    return;
+  }
+  if (!district || !subDistrict) {
+    grid.innerHTML = '<div>Select district and sub-district to see sellers.</div>';
+    return;
+  }
+
+  _loadBrowseListings();
+
+  const myPlace = String(window._currentUser?.place || '').trim();
+  const matches = (state.listings || [])
+    .filter(l => _listingMatchesBrowse(l, district, subDistrict))
+    .sort((a,b) => String(b.createdAtMs || b.createdAt || '').localeCompare(String(a.createdAtMs || a.createdAt || '')));
+
+  if (!matches.length) {
+    grid.innerHTML = '<div>No seller books found in this sub-district yet.</div>';
+    return;
+  }
+
+  const groups = {};
+  matches.forEach(l => {
+    const place = String(l.place || 'Place not added').trim();
+    (groups[place] = groups[place] || []).push(l);
+  });
+
+  const places = Object.keys(groups).sort((a,b) => {
+    const aMine = myPlace && _sameText(a, myPlace);
+    const bMine = myPlace && _sameText(b, myPlace);
+    if (aMine !== bMine) return aMine ? -1 : 1;
+    return a.localeCompare(b);
+  });
+
+  grid.innerHTML = places.map(place => {
+    const heading = '<div class="seller-place-heading"><strong>' + _acEsc(place) + '</strong><span>' + groups[place].length + ' book' + (groups[place].length === 1 ? '' : 's') + '</span></div>';
+    const cards = groups[place].map(l => {
+      const title = l.title || l.bookTitle || l.subject || 'Book';
+      const seller = l.sellerName || l.seller || l.userName || 'Seller';
+      const price = l.price ? ('Rs ' + l.price) : '';
+      const meta = [l.school, l.condition, price].filter(Boolean).join(' - ');
+      return '<button class="seller-subject-card" type="button" data-message-listing="' + _acEsc(l.id) + '">' +
+        '<strong>' + _acEsc(title) + '</strong>' +
+        '<span>Seller: ' + _acEsc(seller) + '</span>' +
+        '<span>Place: ' + _acEsc(place) + (meta ? ' - ' + _acEsc(meta) : '') + '</span>' +
+        '</button>';
+    }).join('');
+    return '<div class="seller-place-group">' + heading + cards + '</div>';
+  }).join('');
+
+  grid.querySelectorAll('[data-message-listing]').forEach(card => {
     card.onclick = () => {
-      if (card.dataset.id === selectedBookId) return;
       triggerAdMob("subjectClick");
-      selectedBookId = card.dataset.id;
-      const _ml = document.querySelector("#matchList");
-      if (_ml) _ml.innerHTML = "";
-      render();
-      // Auto-find sellers as soon as a subject is tapped — no extra button press needed
-      _autoFindSellers();
+      if(!requireLogin()) return;
+      startListingChat(card.getAttribute('data-message-listing'));
     };
   });
+}
+
+function _listingMatchesBrowse(l, district, subDistrict) {
+  if (!l) return false;
+  if (selectedState && l.state && !_sameText(l.state, selectedState)) return false;
+  if (district && !_sameText(l.district, district)) return false;
+  if (subDistrict && !_sameText(l.subDistrict, subDistrict)) return false;
+  if (selectedClass && !_sameText(l.className, selectedClass)) return false;
+  if (selectedBoard && l.board && !_sameText(l.board, selectedBoard)) return false;
+  if (selectedStream && l.stream && !_sameText(l.stream, selectedStream)) return false;
+  return true;
+}
+
+function _loadBrowseListings() {
+  if (!_db) return;
+  if (Date.now() - _browseListingsLoadedAt < 12000) return;
+  _browseListingsLoadedAt = Date.now();
+  _db.collection('listings').get().then(snap => {
+    let changed = false;
+    snap.docs.forEach(doc => {
+      const data = Object.assign({ id: doc.id }, doc.data());
+      const idx = (state.listings || []).findIndex(x => String(x.id) === String(data.id));
+      if (idx >= 0) state.listings[idx] = Object.assign({}, state.listings[idx], data);
+      else {
+        (state.listings = state.listings || []).push(data);
+        changed = true;
+      }
+    });
+    if (changed) save();
+    if (catalogStep === "books") renderBooks();
+  }).catch(e => console.warn('[PKITAAP] Browse listings load failed:', e));
 }
 
 // ── AUTO FIND SELLERS ─────────────────────────────────────────────
@@ -7005,8 +6541,8 @@ function updateSellSchools() {
   });
 }
 function _syncTopLocationFilters(prefix, stateName, district, subDistrict) {
-  const districtId = prefix === 'sell' ? 'sellDistrictFilter' : 'districtFilter';
-  const subDistrictId = prefix === 'sell' ? 'sellSubDistrictFilter' : 'subDistrictFilter';
+  const districtId = prefix === 'sell' ? 'sellDistrictFilter' : 'browseDistrict';
+  const subDistrictId = prefix === 'sell' ? 'sellSubDistrictFilter' : 'browseSubDistrict';
   const dSel = document.getElementById(districtId);
   const sdSel = document.getElementById(subDistrictId);
   if (dSel) {
@@ -7026,28 +6562,44 @@ function _defaultHomeState() {
   const assam = (state.locations || []).find(st => _sameText(st.state, 'Assam'));
   return assam ? assam.state : ((state.locations || [])[0]?.state || '');
 }
-function updateBuyLocationMode() {
-  const showArea = !!selectedBoard && (catalogStep === 'streams' || catalogStep === 'books');
-  ['homeCountryBox','homeStateBox'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = showArea ? 'none' : '';
-  });
-  ['homeDistrictBox','homeSubDistrictBox'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = showArea ? '' : 'none';
-  });
-  const stateEl = document.getElementById('stateFilter');
+function _updateBrowseLocationMode() {
+  const browseMode = catalogStep === "books" && !!selectedBoard;
+  const stateBox = document.getElementById('buyStateBox');
+  const stateSelectBox = document.getElementById('buyStateSelectBox');
+  const districtBox = document.getElementById('buyDistrictBox');
+  const subDistrictBox = document.getElementById('buySubDistrictBox');
+  if (stateBox) stateBox.style.display = browseMode ? 'none' : '';
+  if (stateSelectBox) stateSelectBox.style.display = browseMode ? 'none' : '';
+  if (districtBox) districtBox.style.display = browseMode ? '' : 'none';
+  if (subDistrictBox) subDistrictBox.style.display = browseMode ? '' : 'none';
+
   const defaultState = selectedState || _defaultHomeState();
+  const stateEl = document.getElementById('stateFilter');
   if (stateEl && defaultState && !stateEl.value) stateEl.value = defaultState;
   if (!selectedState && defaultState) selectedState = defaultState;
+
   const buyState = document.getElementById('buyState');
   if (buyState && defaultState && !buyState.value) {
     buyState.value = defaultState;
     updateBuyDistricts();
   }
-  if (showArea) {
-    _syncTopLocationFilters('', defaultState, document.getElementById('buyDistrict')?.value || window._currentUser?.district || '', document.getElementById('buySubDistrict')?.value || window._currentUser?.subDistrict || '');
-  }
+  if (browseMode) updateBrowseDistricts(false);
+}
+function updateBrowseDistricts(resetSubDistrict) {
+  const stateName = selectedState || window._currentUser?.state || document.getElementById('buyState')?.value || _defaultHomeState();
+  const currentDistrict = resetSubDistrict ? '' : (document.getElementById('browseDistrict')?.value || window._currentUser?.district || document.getElementById('buyDistrict')?.value || '');
+  const currentSubDistrict = resetSubDistrict ? '' : (document.getElementById('browseSubDistrict')?.value || window._currentUser?.subDistrict || document.getElementById('buySubDistrict')?.value || '');
+  _syncTopLocationFilters('', stateName, currentDistrict, currentSubDistrict);
+}
+function updateBrowseSubDistricts(shouldRender = true) {
+  const stateName = selectedState || window._currentUser?.state || document.getElementById('buyState')?.value || _defaultHomeState();
+  const district = document.getElementById('browseDistrict')?.value || '';
+  const subDistrict = document.getElementById('browseSubDistrict')?.value || '';
+  _syncTopLocationFilters('', stateName, district, subDistrict);
+  if (shouldRender) renderBooks();
+}
+function updateBuyLocationMode() {
+  _updateBrowseLocationMode();
 }
 function onDistrictFilterChange(value) {
   const stateName = selectedState || window._currentUser?.state || document.getElementById('buyState')?.value || '';
@@ -7657,10 +7209,10 @@ async function _saveCommunityLocation(state, district, subDistrict, place, schoo
 function render() {
   updateAccessControls();
   updateBuyLocationMode();
-  const selected = selectedBookId && catalogStep === "books" ? book() : null;
-  document.querySelector("#catalogTitle").textContent = selected ? selected.title : catalogStep==="classes"?"Classes":catalogStep==="boards"?"Boards":catalogStep==="streams"?"Streams":"Subjects";
+  const selected = null;
+  document.querySelector("#catalogTitle").textContent = catalogStep==="classes"?"Classes":catalogStep==="boards"?"Boards":catalogStep==="streams"?"Streams":"Books by Place";
   document.querySelector("#backBtn").style.display = catalogStep==="classes" ? "none" : "inline-block";
-  document.querySelector("#matchCard").style.display = (selectedBookId && catalogStep === "books") ? "block" : "none";
+  document.querySelector("#matchCard").style.display = "none";
   renderClasses(); renderCategories(); renderBoards(); renderStreams(); renderBooks(); renderSelected();
   renderSellCatalog();
 }
@@ -8171,6 +7723,13 @@ function init() {
   if (msgInput) msgInput.addEventListener('input', _autosizeMessageInput);
   const msgBack = document.getElementById('messageBackBtn');
   if (msgBack) msgBack.onclick = () => { _activeChatId = ''; _showMessageListView(); renderMessages(true); };
+
+  // ── AUTO-SYNC: Load latest admin data from Firebase on every page open ──
+  // This is what keeps the user file always up-to-date without re-exporting.
+  // The admin pushes data to Firebase → this call fetches it automatically.
+  if (_db) {
+    loadRemoteAppData();
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
