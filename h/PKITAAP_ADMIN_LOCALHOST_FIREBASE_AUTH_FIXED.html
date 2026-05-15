@@ -1335,6 +1335,16 @@ service cloud.firestore {
     function signedIn() {
       return request.auth != null;
     }
+    // ── Admin UID list ───────────────────────────────────────────────
+    // Paste the Firebase Auth UID(s) of your admin Google account(s) here.
+    // Find your UID at: Firebase Console → Authentication → Users.
+    // Without a real UID, admin edit / ban / delete from the admin panel
+    // will fail with a "permission-denied" error.
+    function isAdmin() {
+      return signedIn() &amp;&amp; request.auth.uid in [
+        '69a7H0NUnXhWRa7PlNL0w98ZqN33'
+      ];
+    }
     function isChatParticipant(chatId) {
       return signedIn()
         &amp;&amp; exists(/databases/$(database)/documents/chats/$(chatId))
@@ -1360,11 +1370,15 @@ service cloud.firestore {
     }
 
     // Users
+    //  • read    — public so the admin panel can list every user without sign-in
+    //  • create  — only the owner can create their own /users/{uid} doc
+    //  • update  — owner can edit own profile, admin can edit anyone (for the Edit ✏️ button)
+    //  • delete  — admin only
     match /users/{userId} {
-      allow read: if true;
+      allow read:   if true;
       allow create: if signedIn() &amp;&amp; request.auth.uid == userId;
-      allow update: if signedIn() &amp;&amp; request.auth.uid == userId;
-      allow delete: if true;
+      allow update: if (signedIn() &amp;&amp; request.auth.uid == userId) || isAdmin();
+      allow delete: if isAdmin();
     }
 
     // Listings
@@ -1813,7 +1827,7 @@ function updateCounts(){
 function renderDash(){
   const totalStates = S.locations.length;
   const totalDistricts = S.locations.reduce((a,st)=>a+(st.districts||[]).length,0);
-  const totalPlaces = S.locations.reduce((a,st)=>a+(st.districts||[]).reduce((b,d)=>b+d.places.length,0),0);
+  const totalPlaces = S.locations.reduce((a,st)=>a+(st.districts||[]).reduce((b,d)=>b+(d.subDistricts||[]).reduce((c,sd)=>c+(sd.places||[]).length,0)+(d.places||[]).length,0),0);
   document.getElementById('dashStats').innerHTML = [
     {n:S.classes.length+(S.settings.general?1:0), l:'Classes'},
     {n:S.books.length, l:'Subjects'},
@@ -2999,7 +3013,7 @@ function sbRefreshDistrictList(){
     <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:${i<districts.length-1?'1.5px solid var(--gm)':'none'};">
       <span style="font-size:16px;">🏙️</span>
       <span style="flex:1;font-size:14px;font-weight:800;">${d.district}</span>
-      <span style="font-size:12px;font-weight:700;color:var(--muted);">${d.places.length} places</span>
+      <span style="font-size:12px;font-weight:700;color:var(--muted);">${(d.subDistricts||[]).reduce((c,sd)=>c+(sd.places||[]).length,0)+(d.places||[]).length} places</span>
       <button class="btn btn-danger btn-sm" onclick='confirmDeleteDistrict("${stateName.replace(/'/g,"\\'")}","${d.district.replace(/'/g,"\\'")}");renderStateBoardsPanel();'>🗑️</button>
     </div>`).join('');
 }
@@ -4666,6 +4680,11 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
           <div class="book-grid" id="sellBookGrid" style="display:none;"><div>No books</div></div>
         </div>
       </div>
+      <!-- More Categories (Competitive Exam, Engineering, etc.) — admin-defined -->
+      <div class="card" id="sellCategoryCard" style="display:none;">
+        <div class="card-head"><h2>More Categories</h2></div>
+        <div class="card-body"><div class="class-grid" id="sellCategoryGrid"></div></div>
+      </div>
       <div class="card" id="sellSelectedCard" style="display:none;">
         <div class="card-head"><h2>Selected Book</h2></div>
         <div class="card-body">
@@ -4683,7 +4702,7 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
             <label class="wide" id="sellCustomPriceWrap" style="display:none;">Price (₹)<input id="sellCustomPrice" type="number" min="1" placeholder="Expected selling price"></label>
             <label class="wide">Details<textarea id="sellDetails" placeholder="Edition, notes, marks, missing pages, pickup timing"></textarea></label>
             <label class="wide">State <select id="sellState" onchange="updateSellDistricts()"><option value="">— Select Your State —</option>${signupStateOptions}</select></label>
-            <label class="wide">Medium <span style="color:#ef4444;font-size:11px;"> *required</span><select id="sellMedium" required><option value="">Select state first</option></select></label>
+            <label class="wide" id="sellMediumWrap">Medium <span style="color:#ef4444;font-size:11px;"> *required</span><select id="sellMedium" required><option value="">Select state first</option></select></label>
             <label>District <select id="sellDistrict" onchange="updateSellSubDistricts()"></select></label>
             <label>Sub-District <select id="sellSubDistrict" onchange="updateSellPlaces()"></select></label>
             <label>Place <input id="sellPlace" list="sellPlaceOptions" onchange="updateSellSchools()" placeholder="Place / town"><datalist id="sellPlaceOptions"></datalist><select id="sellPlaceFallback" onchange="document.getElementById('sellPlace').value=this.value;updateSellSchools()" style="margin-top:6px;"><option value="">— Select Place —</option></select></label>
@@ -5047,6 +5066,17 @@ let _auth = null;   // Auth instance
 // ═══════════════════════════════════════════════════════════════
 function _getLocalSavedUserProfile(match) {
   match = match || {};
+  // 1) Check the "pending" cache first — these are profiles whose Firestore
+  //    write failed and need to be retried.
+  try {
+    const pending = JSON.parse(localStorage.getItem('pkitaap_pending_profile') || 'null');
+    if (pending && (
+      (match.uid    && String(pending.uid    || '') === String(match.uid)) ||
+      (match.mobile && pending.mobile === match.mobile) ||
+      (match.email  && pending.email  === match.email)
+    )) return pending;
+  } catch(e) {}
+  // 2) Fall back to the legacy registered-users array (older exports).
   try {
     const users = JSON.parse(localStorage.getItem('pkitaap_registered_users') || '[]');
     if (match.uid) {
@@ -5145,10 +5175,11 @@ async function _saveUserToFirestore(userData) {
     name: String(userData.name || userData.fullName || userData.displayName || '').trim(),
     email: String(userData.email || (_auth && _auth.currentUser && _auth.currentUser.email) || '').trim(),
     mobile: mobile,
+    userName: String(userData.userName || userData.username || '').trim(),
     dateOfBirth: String(userData.dateOfBirth || userData.dob || userData.birthDate || '').trim(),
     className: String(userData.className || userData.class || '').trim(),
     state: String(userData.state || '').trim(),
-    district: String(userData.district || '').trim(),
+    district: String(userData.district || userData.town || userData.village || '').trim(),
     subDistrict: String(userData.subDistrict || userData.sub_district || '').trim(),
     place: String(userData.place || userData.locality || userData.placeName || '').trim(),
     school: String(userData.school || userData.college || '').trim(),
@@ -5157,6 +5188,22 @@ async function _saveUserToFirestore(userData) {
     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
     lastLoginAt: firebase.firestore.FieldValue.serverTimestamp()
   };
+
+  // ── Persist edit-history & profile-version data to Firestore ─────────
+  // saveAccountDetails() builds these locally — without writing them to
+  // Firestore the admin panel cannot show old/new edited details history.
+  if (Array.isArray(userData.profileUpdateHistory) && userData.profileUpdateHistory.length) {
+    cleanUser.profileUpdateHistory = userData.profileUpdateHistory.slice(-25);
+  }
+  if (userData.lastProfileUpdate)        cleanUser.lastProfileUpdate        = userData.lastProfileUpdate;
+  if (userData.profileVersion != null)   cleanUser.profileVersion           = userData.profileVersion;
+  if (userData.profileVersionLabel)      cleanUser.profileVersionLabel      = userData.profileVersionLabel;
+  if (userData.profileUpdatedAt)         cleanUser.profileUpdatedAt         = userData.profileUpdatedAt;
+  if (userData.accountDetailsSavedAt)    cleanUser.accountDetailsSavedAt    = userData.accountDetailsSavedAt;
+  if (userData.accountDetailsSaveLockedUntil) cleanUser.accountDetailsSaveLockedUntil = userData.accountDetailsSaveLockedUntil;
+  if (userData.profileSaveLockedUntil)   cleanUser.profileSaveLockedUntil   = userData.profileSaveLockedUntil;
+  if (userData.updatedBy)                cleanUser.updatedBy                = userData.updatedBy;
+  if (userData.updatedByUid)             cleanUser.updatedByUid             = userData.updatedByUid;
 
   // Only keep a tiny non-authoritative cache. Full profiles must live in Firestore.
   try {
@@ -5177,6 +5224,7 @@ async function _saveUserToFirestore(userData) {
       await ref.set(Object.assign({}, cleanUser, {
         status: 'active',
         role: 'user',
+        joinedAt: new Date().toISOString(),
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       }));
     } else {
@@ -5188,6 +5236,8 @@ async function _saveUserToFirestore(userData) {
       await ref.set(cleanUser, {merge:true});
     }
 
+    // Success — clear any pending-profile cache so we don't retry forever.
+    try { localStorage.removeItem('pkitaap_pending_profile'); } catch(_) {}
     return Object.assign({}, userData, cleanUser, {
       uid: authUid,
       updatedAt: new Date().toISOString(),
@@ -5195,10 +5245,58 @@ async function _saveUserToFirestore(userData) {
     });
   } catch (e) {
     console.error('[PKITAAP] Firestore user save failed:', e);
-    try { toast('❌ Account details were not saved to Firebase: ' + (e.message || e)); } catch(_) {}
+    const errMsg = (e && (e.code || e.message)) || String(e);
+    // Stash the full profile so the next page load can auto-retry the save.
+    try {
+      const pending = Object.assign({}, userData, cleanUser, {
+        uid: authUid,
+        updatedAt: new Date().toISOString(),
+        _pendingSince: new Date().toISOString(),
+        _pendingError: errMsg
+      });
+      delete pending.updatedAt; // strip non-serializable FieldValue
+      delete pending.lastLoginAt;
+      delete pending.createdAt;
+      localStorage.setItem('pkitaap_pending_profile', JSON.stringify(pending));
+    } catch(_) {}
+    try { toast('❌ Profile not saved to Firebase: ' + errMsg); } catch(_) {}
+    // Park a persistent banner so the failure is impossible to miss and
+    // the user can retry the save manually.
+    try {
+      let warn = document.getElementById('pkitaap-user-save-error');
+      if (!warn) {
+        warn = document.createElement('div');
+        warn.id = 'pkitaap-user-save-error';
+        warn.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:99999;background:#fee2e2;color:#991b1b;border:2px solid #f87171;border-radius:12px;padding:12px 14px;font-weight:900;line-height:1.5;box-shadow:0 6px 22px rgba(0,0,0,.18);';
+        document.body.appendChild(warn);
+      }
+      warn.innerHTML = '⚠️ Your profile did NOT save to Firebase.<br><span style="font-weight:700;font-size:12px;">Reason: ' + errMsg + '</span><br>'
+        + '<button class="btn btn-primary btn-sm" style="margin-top:8px;" onclick="_pkitaapRetryProfileSync()">🔄 Retry Sync</button> '
+        + '<button class="btn btn-ghost btn-sm" style="margin-top:8px;" onclick="this.parentElement.remove()">Hide</button>';
+    } catch(_) {}
     return null;
   }
 }
+
+// Manual retry — visible to the user when a save fails. Re-runs the
+// Firestore write with the current in-memory profile, useful when the
+// first save errored because of transient rules/network/auth issues.
+window._pkitaapRetryProfileSync = async function() {
+  try {
+    const u = window._currentUser;
+    if (!u) { try { toast('Please log in first.'); } catch(_){} return; }
+    const saved = await _saveUserToFirestore(u);
+    if (saved) {
+      try { toast('✅ Profile synced to Firebase!'); } catch(_){}
+      const w = document.getElementById('pkitaap-user-save-error');
+      if (w) w.remove();
+      window._currentUser = saved;
+    }
+  } catch(e) {
+    console.error('[PKITAAP] Retry sync failed:', e);
+    try { toast('❌ Retry failed: ' + (e.message || e)); } catch(_){}
+  }
+};
 
 // ═══════════════════════════════════════════════════════════════
 //  APP SEED
@@ -5395,9 +5493,11 @@ async function loadRemoteAppData() {
     save();
     render();
     if (window._hideSplash) window._hideSplash();
+    if (window._hideSyncSplash) window._hideSyncSplash();
   } catch(e) {
     console.warn('[PKITAAP] Remote app data load failed:', e);
     if (window._hideSplash) window._hideSplash();
+    if (window._hideSyncSplash) window._hideSyncSplash();
   }
 }
 
@@ -5553,10 +5653,11 @@ function renderClasses() {
 function renderCategories() {
   const card = document.querySelector("#categoryCard");
   const grid = document.querySelector("#categoryGrid");
-  const show = catalogStep === "classes" && (state.categories||[]).length > 0;
+  const activeCats = (state.categories||[]).filter(cat => state.books.filter(b=>b.categoryId===cat.id).length > 0);
+  const show = catalogStep === "classes" && activeCats.length > 0;
   card.style.display = show ? "block" : "none";
   if (!show) return;
-  grid.innerHTML = (state.categories||[]).map(cat => '<button class="class-card" data-catid="' + cat.id + '"><img src="' + (cat.image||placeholder(cat.name)) + '" alt="' + cat.name + '"/><div class="card-info"><strong>' + cat.name + '</strong><span>' + state.books.filter(b=>b.categoryId===cat.id).length + ' books</span></div></button>').join("");
+  grid.innerHTML = activeCats.map(cat => '<button class="class-card" data-catid="' + cat.id + '"><img src="' + (cat.image||placeholder(cat.name)) + '" alt="' + cat.name + '"/><div class="card-info"><strong>' + cat.name + '</strong><span>' + state.books.filter(b=>b.categoryId===cat.id).length + ' books</span></div></button>').join("");
   document.querySelectorAll("[data-catid]").forEach(card => {
     card.onclick = () => { if(!requireLogin()) return; selectedClass = "General"; selectedCategory = card.dataset.catid; search = ""; document.querySelector("#searchInput").value = ""; document.querySelector("#clearSearch").style.display = "none"; catalogStep = "books"; render(); };
   });
@@ -5743,6 +5844,9 @@ function renderSellCatalog() {
   if (sellSelectedCard) sellSelectedCard.style.display = (selectedBookId && sellCatalogStep==='books') ? '' : 'none';
   if (sellFormCard) sellFormCard.style.display = (selectedBookId && sellCatalogStep==='books') ? '' : 'none';
   updateSellPriceControls();
+  // Medium is only relevant for school/class books, not for admin-defined categories
+  const mw = document.getElementById('sellMediumWrap');
+  if (mw) mw.style.display = selectedCategory ? 'none' : '';
   // Render class grid
   const cg = document.getElementById('sellClassGrid');
   if (cg) {
@@ -5750,8 +5854,35 @@ function renderSellCatalog() {
       const all = state.settings.general ? [...classes,'General'] : classes;
       cg.style.display = 'grid';
       cg.innerHTML = all.map(name => '<button class="class-card" data-sellclass="' + name + '"><img src="' + imageForClass(name) + '" alt="' + name + '"/><div class="card-info"><strong>' + name + '</strong><span>' + state.books.filter(b=>b.className===name&&(b.type!=="general"||state.settings.general)).length + ' books</span></div></button>').join('');
-      cg.querySelectorAll('[data-sellclass]').forEach(card => { card.onclick = () => { triggerAdMob("classClick"); selectedClass=card.dataset.sellclass; selectedBoard=''; selectedStream=''; selectedBookId=''; sellCatalogStep=selectedClass==='General'?'books':'boards'; renderSellCatalog(); }; });
+      cg.querySelectorAll('[data-sellclass]').forEach(card => { card.onclick = () => { triggerAdMob("classClick"); selectedClass=card.dataset.sellclass; selectedBoard=''; selectedStream=''; selectedBookId=''; selectedCategory=''; sellCatalogStep=selectedClass==='General'?'books':'boards'; renderSellCatalog(); }; });
     } else { cg.style.display='none'; cg.innerHTML=''; }
+  }
+  // Render "More Categories" grid — admin-defined categories like
+  // Competitive Exam, Engineering, etc. Visible only at the classes step,
+  // and only when the admin has actually configured at least one category.
+  const catCard = document.getElementById('sellCategoryCard');
+  const catGrid = document.getElementById('sellCategoryGrid');
+  if (catCard && catGrid) {
+    const cats = (state.categories || []).filter(cat => state.books.filter(b=>b.categoryId===cat.id).length > 0);
+    const showCats = sellCatalogStep === 'classes' && cats.length > 0;
+    catCard.style.display = showCats ? '' : 'none';
+    if (showCats) {
+      catGrid.innerHTML = cats.map(cat => '<button class="class-card" data-sellcatid="' + cat.id + '"><img src="' + (cat.image || placeholder(cat.name)) + '" alt="' + cat.name + '"/><div class="card-info"><strong>' + cat.name + '</strong><span>' + state.books.filter(b=>b.categoryId===cat.id).length + ' books</span></div></button>').join('');
+      catGrid.querySelectorAll('[data-sellcatid]').forEach(card => {
+        card.onclick = () => {
+          triggerAdMob("classClick");
+          selectedClass = 'General';
+          selectedCategory = card.dataset.sellcatid;
+          selectedBoard = '';
+          selectedStream = '';
+          selectedBookId = '';
+          sellCatalogStep = 'books';
+          renderSellCatalog();
+        };
+      });
+    } else {
+      catGrid.innerHTML = '';
+    }
   }
   // Render board grid
   const bg = document.getElementById('sellBoardGrid');
@@ -7979,8 +8110,8 @@ function bindSellForm() {
     const listingPlace = (document.getElementById("sellPlace")?.value || "").trim();
     const listingSchool = (document.getElementById("sellSchool")?.value || "").trim();
     const listingMedium = (document.getElementById("sellMedium")?.value || "").trim();
-    if(!listingState || !listingMedium || !listingDistrict || !listingSubDistrict || !listingPlace || !listingSchool){
-      toast("Please fill state, medium, district, sub-district, place and school");
+    if(!listingState || (!selectedCategory && !listingMedium) || !listingDistrict || !listingSubDistrict || !listingPlace || !listingSchool){
+      toast("Please fill state" + (!selectedCategory ? ", medium" : "") + ", district, sub-district, place and school");
       return;
     }
     const listing = {
@@ -8379,13 +8510,15 @@ function init() {
   const sellBack = document.getElementById('sellBackBtn');
   if (sellBack) sellBack.onclick = () => {
     if (sellCatalogStep==='books') {
-      if (selectedStream) sellCatalogStep='streams';
+      // Books reached via a category card → back goes straight to classes
+      if (selectedCategory) { sellCatalogStep='classes'; selectedCategory=''; selectedClass=''; }
+      else if (selectedStream) sellCatalogStep='streams';
       else if (selectedBoard) sellCatalogStep = selectedClass==='General'?'classes':'boards';
       else sellCatalogStep='classes';
       selectedBookId='';
     } else if (sellCatalogStep==='streams') { sellCatalogStep='boards'; selectedStream=''; selectedBookId=''; }
     else if (sellCatalogStep==='boards') { sellCatalogStep='classes'; selectedBoard=''; selectedStream=''; selectedBookId=''; }
-    else { sellCatalogStep='classes'; selectedClass=selectedBoard=selectedStream=selectedBookId=''; }
+    else { sellCatalogStep='classes'; selectedClass=selectedBoard=selectedStream=selectedBookId=''; selectedCategory=''; }
     renderSellCatalog();
   };
   // Account details dialog save + close
@@ -8582,7 +8715,10 @@ init();
   document.getElementById('menuGoSignup').onclick = function(){ triggerAdMob("menuOption"); openSignup(); };
 
   // ── Auth success handler ───────────────────────────────────
-  async function onAuthSuccess(userData, firebaseUser) {
+  // _fromActiveLogin = true  → user pressed Login/Signup button (re-show splash)
+  // _fromActiveLogin = false → page-refresh restore (original splash already showing)
+  async function onAuthSuccess(userData, firebaseUser, _fromActiveLogin) {
+    if (_fromActiveLogin && window._showSyncSplash) window._showSyncSplash();
     window._isLoggedIn  = true;
     window._currentUser = userData || null;
     window._signupProfileGuardActive = false;
@@ -8658,6 +8794,16 @@ init();
         document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
         document.getElementById('buyPage')?.classList.add('active');
       }
+      // Reset state filter & location to a fresh "Select State" page
+      selectedState = '';
+      const _sfEl = document.getElementById('stateFilter');
+      if (_sfEl) _sfEl.value = '';
+      const _sf2El = document.getElementById('stateFilter2');
+      if (_sf2El) _sf2El.value = '';
+      if (typeof _updateMediumsForState === 'function') _updateMediumsForState('');
+      if (typeof _updateSellMediumsForState === 'function') _updateSellMediumsForState('');
+      if (typeof _syncTopLocationFilters === 'function') _syncTopLocationFilters('', '', '', '');
+      if (typeof render === 'function') render();
       toast('👋 Logged out successfully.');
     };
 
@@ -8697,7 +8843,7 @@ init();
 
     const existingData = await _getUserFromFirestore(_googleUser.uid);
     if (existingData) {
-      await onAuthSuccess(existingData, _googleUser);
+      await onAuthSuccess(existingData, _googleUser, true);
       return;
     }
 
@@ -8764,7 +8910,7 @@ init();
 
       if (existingData) {
         // ── Returning user ─ log in directly ──────────────
-        await onAuthSuccess(existingData, _googleUser);
+        await onAuthSuccess(existingData, _googleUser, true);
         return;
       }
 
@@ -8877,7 +9023,7 @@ init();
 
     try {
       await _saveCommunityLocation(stateVal, district, subDistrict, place, school);
-      await onAuthSuccess(userData, _googleUser);
+      await onAuthSuccess(userData, _googleUser, true);
     } finally {
       continueBtn.disabled  = false;
       continueBtn.textContent = 'Create Account';
@@ -8908,16 +9054,34 @@ init();
         // Splash is dismissed inside onAuthSuccess after remote data loads.
         await onAuthSuccess(existingData, firebaseUser);
       } else {
-        // Firebase session exists but no Firestore profile yet
-        // (e.g. user signed in but closed browser before completing form)
-        _googleUser = firebaseUser;
-        document.getElementById('signupStage1').style.display = 'none';
-        document.getElementById('signupStage2').style.display = '';
-        document.getElementById('signupTagline').textContent  = 'Complete your profile';
-        _prefillNameFromGoogle();
-        signupDialog.showModal();
-        // Dismiss splash now — user needs to see the signup form
-        if (window._hideSplash) window._hideSplash();
+        // Firebase session exists but no Firestore profile yet.
+        // BEFORE forcing the signup form, check if we have a profile draft
+        // saved locally from a previous, failed save attempt. If yes, retry
+        // the Firestore write — this auto-heals signups whose first write
+        // got blocked (transient network, rules not yet deployed, etc.).
+        let healedFromLocal = null;
+        try {
+          const localProfile = _getLocalSavedUserProfile({ uid: firebaseUser.uid });
+          if (localProfile && localProfile.name && localProfile.mobile && localProfile.className) {
+            console.log('[PKITAAP] Auto-resync: retrying Firestore save for', firebaseUser.uid);
+            localProfile.uid   = firebaseUser.uid;
+            localProfile.email = firebaseUser.email || localProfile.email || '';
+            healedFromLocal = await _saveUserToFirestore(localProfile);
+          }
+        } catch(e) { console.warn('[PKITAAP] Auto-resync attempt failed:', e); }
+
+        if (healedFromLocal) {
+          await onAuthSuccess(healedFromLocal, firebaseUser);
+        } else {
+          _googleUser = firebaseUser;
+          document.getElementById('signupStage1').style.display = 'none';
+          document.getElementById('signupStage2').style.display = '';
+          document.getElementById('signupTagline').textContent  = 'Complete your profile';
+          _prefillNameFromGoogle();
+          signupDialog.showModal();
+          // Dismiss splash now — user needs to see the signup form
+          if (window._hideSplash) window._hideSplash();
+        }
       }
     });
   } else {
@@ -8943,6 +9107,33 @@ init();
   };
   // Fallback: if Firebase never calls onAuthStateChanged within 12 seconds, dismiss anyway
   setTimeout(function(){ if (window._hideSplash) window._hideSplash(); }, 12000);
+
+  // ── SYNC SPLASH — re-shown after active login while Firebase syncs the account ──
+  // Called at the start of onAuthSuccess so the user never sees a half-loaded page.
+  // Dismissed by loadRemoteAppData() once all Firestore data is confirmed written.
+  window._showSyncSplash = function(){
+    if (document.getElementById('splashOverlay')) return; // original still on screen — no duplicate needed
+    if (document.getElementById('syncSplashOverlay')) return;
+    var el = document.createElement('div');
+    el.id = 'syncSplashOverlay';
+    el.style.cssText = 'position:fixed;top:58px;left:0;right:0;bottom:0;z-index:99999;background:#ffffff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;transition:opacity 0.55s ease;';
+    el.innerHTML = '<div style="font-size:clamp(30px,9vw,58px);font-weight:900;color:#16a34a;text-align:center;letter-spacing:1px;animation:splashPulse 1.5s ease-in-out infinite;font-family:\'Noto Sans Bengali\',\'Hind Siliguri\',sans-serif;line-height:1.3;">জয় জুবিন দা</div>'
+      + '<div style="display:flex;gap:8px;">'
+      + '<span style="width:10px;height:10px;border-radius:50%;background:#16a34a;animation:splashDot 1.2s ease-in-out infinite;display:block;"></span>'
+      + '<span style="width:10px;height:10px;border-radius:50%;background:#16a34a;animation:splashDot 1.2s ease-in-out infinite;animation-delay:0.2s;display:block;"></span>'
+      + '<span style="width:10px;height:10px;border-radius:50%;background:#16a34a;animation:splashDot 1.2s ease-in-out infinite;animation-delay:0.4s;display:block;"></span>'
+      + '</div>';
+    document.body.appendChild(el);
+    // Safety fallback — if Firestore hangs, dismiss after 15 s so the user is never stuck
+    setTimeout(function(){ if (window._hideSyncSplash) window._hideSyncSplash(); }, 15000);
+  };
+  window._hideSyncSplash = function(){
+    var el = document.getElementById('syncSplashOverlay');
+    if (!el) return;
+    el.style.opacity = '0';
+    el.style.pointerEvents = 'none';
+    setTimeout(function(){ if (el.parentNode) el.parentNode.removeChild(el); }, 600);
+  };
 })();
 <\/script>
 </body>
@@ -11262,6 +11453,15 @@ function saveUser(){
   const users = _getAppUsers();
   const u = users.find(u=>u.id===id || u.uid===id); if(!u){ toast('⚠️ User not found.'); return; }
   const oldName = u.name || '';
+
+  // ── Snapshot BEFORE so we can build an edit-history entry ──
+  const beforeSnap = {
+    name: u.name||'', mobile: u.mobile||'', dateOfBirth: u.dateOfBirth||u.dob||'',
+    className: u.className||'', state: u.state||'', district: u.district||'',
+    subDistrict: u.subDistrict||'', place: u.place||'', school: u.school||'',
+    status: u.status||'active'
+  };
+
   u.name = document.getElementById('eu-name').value.trim();
   u.mobile = document.getElementById('eu-mobile').value.trim();
   u.dateOfBirth = document.getElementById('eu-dob').value.trim();
@@ -11271,6 +11471,44 @@ function saveUser(){
   u.school = document.getElementById('eu-school').value.trim();
   u.status = document.getElementById('eu-status').value;
   u.updatedAt = new Date().toISOString();
+
+  const afterSnap = {
+    name: u.name||'', mobile: u.mobile||'', dateOfBirth: u.dateOfBirth||'',
+    className: u.className||'', state: u.state||'', district: u.district||'',
+    subDistrict: u.subDistrict||'', place: u.place||'', school: u.school||'',
+    status: u.status||'active'
+  };
+  const FIELD_LABELS = {
+    name:'Name', mobile:'Mobile', dateOfBirth:'Date of Birth', className:'Class',
+    state:'State', district:'District/Town', subDistrict:'Sub-district',
+    place:'Place', school:'School', status:'Status'
+  };
+  const changes = Object.keys(FIELD_LABELS)
+    .filter(k => String(beforeSnap[k]||'') !== String(afterSnap[k]||''))
+    .map(k => ({field:k, label:FIELD_LABELS[k], oldValue:beforeSnap[k]||'', newValue:afterSnap[k]||''}));
+
+  let historyEntry = null;
+  if (changes.length) {
+    const nextVersion = (Number(u.profileVersion||0) || 0) + 1;
+    u.profileVersion = nextVersion;
+    u.profileVersionLabel = 'v' + nextVersion;
+    u.profileUpdatedAt = u.updatedAt;
+    u.updatedBy = 'admin';
+    historyEntry = {
+      version: nextVersion,
+      versionLabel: 'v' + nextVersion,
+      changedAt: u.updatedAt,
+      changedBy: 'admin',
+      oldDetails: beforeSnap,
+      newDetails: afterSnap,
+      changes
+    };
+    u.lastProfileUpdate = historyEntry;
+    u.profileUpdateHistory = Array.isArray(u.profileUpdateHistory) ? u.profileUpdateHistory : [];
+    u.profileUpdateHistory.push(historyEntry);
+    u.profileUpdateHistory = u.profileUpdateHistory.slice(-25);
+  }
+
   _setAppUsers(users);
   if(_fbDb) {
     const docId = u.uid || u.id;
@@ -11290,13 +11528,16 @@ function saveUser(){
       status: u.status || 'active',
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
-    const del = firebase.firestore.FieldValue.delete();
-    Object.assign(writeUser, {
-      dob: del, birthDate: del, dobDay: del, dobMonth: del, dobYear: del,
-      phone: del, userName: del, fullName: del, displayName: del,
-      locality: del, placeName: del, platformUserId: del, publicUserId: del, insta: del
-    });
-    _fbDb.collection('users').doc(docId).set(writeUser, {merge:true}).catch(e=>toast('⚠️ User saved locally, Firebase failed: '+e.message));
+    if (historyEntry) {
+      writeUser.profileVersion       = u.profileVersion;
+      writeUser.profileVersionLabel  = u.profileVersionLabel;
+      writeUser.profileUpdatedAt     = u.profileUpdatedAt;
+      writeUser.updatedBy            = 'admin';
+      writeUser.lastProfileUpdate    = historyEntry;
+      writeUser.profileUpdateHistory = firebase.firestore.FieldValue.arrayUnion(historyEntry);
+    }
+    _fbDb.collection('users').doc(docId).set(writeUser, {merge:true})
+      .catch(e=>toast('⚠️ User saved locally, Firebase failed: '+e.message));
   }
   if(u.name && u.name !== oldName) _syncAdminUserNameEverywhere(u, u.name);
   closeModal('editUserModal');
@@ -12670,8 +12911,8 @@ async function fbPullUsers(options){
   if(!_fbDb){ if(!options.silent) toast('⚠️ Connect to Firebase first.'); return; }
   try {
     fbUpdateUsersInfo();
-    // Secure rules allow /users reads only for admin. Make this explicit.
-    await fbEnsureAdminAuth(!options.silent);
+    // /users has public read in the deployed rules, so reading does NOT
+    // require admin sign-in. Old users and new users both appear here.
     let users = await _fbCollectionDocs('users');
     _fbUsersLoadedFromFirestore = true;
     _fbUsersLastError = '';
@@ -12709,14 +12950,12 @@ function fbWatchUsers(autoMode){
     if(!autoMode) toast('Live watch stopped.');
     return;
   }
-  if(!_fbAuth || !_fbAuth.currentUser){
-    if(!autoMode) fbSignInAdminAndSync();
-    return;
-  }
+  // /users has public read — live watch does not require admin sign-in.
   if(btn){ btn.textContent='🔴 Stop Watch'; btn.style.background='#fee2e2'; }
   _fbUnsubUsers = _fbDb.collection('users').limit(1000)
     .onSnapshot({includeMetadataChanges: false}, snap=>{
-      if(snap.metadata && snap.metadata.fromCache) return;
+      // Note: do NOT skip fromCache snapshots — on flaky networks the
+      // first paint comes from cache and we'd never render users otherwise.
       _fbUsersLoadedFromFirestore = true;
       _fbUsersLastError = '';
       let users = snap.docs.map(d=>({id:d.id,...d.data()}));
