@@ -4702,7 +4702,7 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
             <label class="wide" id="sellCustomPriceWrap" style="display:none;">Price (₹)<input id="sellCustomPrice" type="number" min="1" placeholder="Expected selling price"></label>
             <label class="wide">Details<textarea id="sellDetails" placeholder="Edition, notes, marks, missing pages, pickup timing"></textarea></label>
             <label class="wide">State <select id="sellState" onchange="updateSellDistricts()"><option value="">— Select Your State —</option>${signupStateOptions}</select></label>
-            <label class="wide">Medium <span style="color:#ef4444;font-size:11px;"> *required</span><select id="sellMedium" required><option value="">Select state first</option></select></label>
+            <label class="wide" id="sellMediumWrap">Medium <span style="color:#ef4444;font-size:11px;"> *required</span><select id="sellMedium" required><option value="">Select state first</option></select></label>
             <label>District <select id="sellDistrict" onchange="updateSellSubDistricts()"></select></label>
             <label>Sub-District <select id="sellSubDistrict" onchange="updateSellPlaces()"></select></label>
             <label>Place <input id="sellPlace" list="sellPlaceOptions" onchange="updateSellSchools()" placeholder="Place / town"><datalist id="sellPlaceOptions"></datalist><select id="sellPlaceFallback" onchange="document.getElementById('sellPlace').value=this.value;updateSellSchools()" style="margin-top:6px;"><option value="">— Select Place —</option></select></label>
@@ -5640,7 +5640,8 @@ function bookCardHtml(item) {
   return '<button class="book-card ' + (active ? "active" : "") + '" type="button" data-id="' + item.id + '"' + (active ? ' aria-current="true"' : '') + '><img src="' + imageForBook(item) + '" alt="' + item.title + '"/><div class="card-info"><strong>' + item.title + '</strong><small>' + bookMeta(item) + '</small><span class="price">' + priceText(item) + '</span></div></button>';
 }
 function renderClasses() {
-  const all = state.settings.general ? [...classes,"General"] : classes;
+  const all = (state.settings.general ? [...classes,"General"] : classes)
+    .filter(name => state.books.filter(b=>b.className===name&&(b.type!=="general"||state.settings.general)).length > 0);
   const grid = document.querySelector("#classGrid");
   grid.style.display = catalogStep === "classes" ? "grid" : "none";
   grid.innerHTML = all.map(name => '<button class="class-card ' + (name===selectedClass?"active":"") + '" data-class="' + name + '"><img src="' + imageForClass(name) + '" alt="' + name + '"/><div class="card-info"><strong>' + name + '</strong><span>' + state.books.filter(b=>b.className===name&&(b.type!=="general"||state.settings.general)).length + ' books</span></div></button>').join("");
@@ -5651,10 +5652,11 @@ function renderClasses() {
 function renderCategories() {
   const card = document.querySelector("#categoryCard");
   const grid = document.querySelector("#categoryGrid");
-  const show = catalogStep === "classes" && (state.categories||[]).length > 0;
+  const activeCats = (state.categories||[]).filter(cat => state.books.filter(b=>b.categoryId===cat.id).length > 0);
+  const show = catalogStep === "classes" && activeCats.length > 0;
   card.style.display = show ? "block" : "none";
   if (!show) return;
-  grid.innerHTML = (state.categories||[]).map(cat => '<button class="class-card" data-catid="' + cat.id + '"><img src="' + (cat.image||placeholder(cat.name)) + '" alt="' + cat.name + '"/><div class="card-info"><strong>' + cat.name + '</strong><span>' + state.books.filter(b=>b.categoryId===cat.id).length + ' books</span></div></button>').join("");
+  grid.innerHTML = activeCats.map(cat => '<button class="class-card" data-catid="' + cat.id + '"><img src="' + (cat.image||placeholder(cat.name)) + '" alt="' + cat.name + '"/><div class="card-info"><strong>' + cat.name + '</strong><span>' + state.books.filter(b=>b.categoryId===cat.id).length + ' books</span></div></button>').join("");
   document.querySelectorAll("[data-catid]").forEach(card => {
     card.onclick = () => { if(!requireLogin()) return; selectedClass = "General"; selectedCategory = card.dataset.catid; search = ""; document.querySelector("#searchInput").value = ""; document.querySelector("#clearSearch").style.display = "none"; catalogStep = "books"; render(); };
   });
@@ -5841,11 +5843,15 @@ function renderSellCatalog() {
   if (sellSelectedCard) sellSelectedCard.style.display = (selectedBookId && sellCatalogStep==='books') ? '' : 'none';
   if (sellFormCard) sellFormCard.style.display = (selectedBookId && sellCatalogStep==='books') ? '' : 'none';
   updateSellPriceControls();
+  // Medium is only relevant for school/class books, not for admin-defined categories
+  const mw = document.getElementById('sellMediumWrap');
+  if (mw) mw.style.display = selectedCategory ? 'none' : '';
   // Render class grid
   const cg = document.getElementById('sellClassGrid');
   if (cg) {
     if (sellCatalogStep === 'classes') {
-      const all = state.settings.general ? [...classes,'General'] : classes;
+      const all = (state.settings.general ? [...classes,'General'] : classes)
+        .filter(name => state.books.filter(b=>b.className===name&&(b.type!=="general"||state.settings.general)).length > 0);
       cg.style.display = 'grid';
       cg.innerHTML = all.map(name => '<button class="class-card" data-sellclass="' + name + '"><img src="' + imageForClass(name) + '" alt="' + name + '"/><div class="card-info"><strong>' + name + '</strong><span>' + state.books.filter(b=>b.className===name&&(b.type!=="general"||state.settings.general)).length + ' books</span></div></button>').join('');
       cg.querySelectorAll('[data-sellclass]').forEach(card => { card.onclick = () => { triggerAdMob("classClick"); selectedClass=card.dataset.sellclass; selectedBoard=''; selectedStream=''; selectedBookId=''; selectedCategory=''; sellCatalogStep=selectedClass==='General'?'books':'boards'; renderSellCatalog(); }; });
@@ -5857,7 +5863,7 @@ function renderSellCatalog() {
   const catCard = document.getElementById('sellCategoryCard');
   const catGrid = document.getElementById('sellCategoryGrid');
   if (catCard && catGrid) {
-    const cats = state.categories || [];
+    const cats = (state.categories || []).filter(cat => state.books.filter(b=>b.categoryId===cat.id).length > 0);
     const showCats = sellCatalogStep === 'classes' && cats.length > 0;
     catCard.style.display = showCats ? '' : 'none';
     if (showCats) {
@@ -8104,8 +8110,8 @@ function bindSellForm() {
     const listingPlace = (document.getElementById("sellPlace")?.value || "").trim();
     const listingSchool = (document.getElementById("sellSchool")?.value || "").trim();
     const listingMedium = (document.getElementById("sellMedium")?.value || "").trim();
-    if(!listingState || !listingMedium || !listingDistrict || !listingSubDistrict || !listingPlace || !listingSchool){
-      toast("Please fill state, medium, district, sub-district, place and school");
+    if(!listingState || (!selectedCategory && !listingMedium) || !listingDistrict || !listingSubDistrict || !listingPlace || !listingSchool){
+      toast("Please fill state" + (!selectedCategory ? ", medium" : "") + ", district, sub-district, place and school");
       return;
     }
     const listing = {
@@ -8785,6 +8791,16 @@ init();
         document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
         document.getElementById('buyPage')?.classList.add('active');
       }
+      // Reset state filter & location to a fresh "Select State" page
+      selectedState = '';
+      const _sfEl = document.getElementById('stateFilter');
+      if (_sfEl) _sfEl.value = '';
+      const _sf2El = document.getElementById('stateFilter2');
+      if (_sf2El) _sf2El.value = '';
+      if (typeof _updateMediumsForState === 'function') _updateMediumsForState('');
+      if (typeof _updateSellMediumsForState === 'function') _updateSellMediumsForState('');
+      if (typeof _syncTopLocationFilters === 'function') _syncTopLocationFilters('', '', '', '');
+      if (typeof render === 'function') render();
       toast('👋 Logged out successfully.');
     };
 
