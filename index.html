@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
 <meta name="theme-color" content="#16a34a"/>
 <meta name="google-site-verification" content="4ta1Nf4vjaHpRLbLyc0uHx-Z8bkMQyAQ4S_NwWgpl1w" />
+<meta name="description" content="Buy and sell used books across India on PKiTAAP. Free marketplace for school textbooks, general books and more, with no commission or listing fees. ( pkitaap )">
+<meta property="og:type" content="website">
+<meta property="og:title" content="PKiTAAP — Find &amp; sell used school books near you">
+<meta property="og:description" content="Buy and sell used books across India on PKiTAAP. Free marketplace for school textbooks, general books and more, with no commission or listing fees. ( pkitaap )">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="PKiTAAP">
+<meta name="twitter:description" content="Buy and sell used books across India on PKiTAAP. Free marketplace for school textbooks, general books and more, with no commission or listing fees. ( pkitaap )">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7928260464252096" crossorigin="anonymous"></script>
 <title>PKiTAAP</title>
 <!-- ═══ Firebase SDKs (compat v10) ═══ -->
@@ -394,6 +401,7 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
     <button data-page="messages" id="menuMessages" style="display:none;">Messages</button>
     <button type="button" id="menuAccount" style="display:none;">👤 Account Details</button>
     <button type="button" id="menuLogout" style="display:none;color:#dc2626;">🚪 Log Out</button>
+    
   </div>
 </header>
 <div class="shell">
@@ -449,6 +457,12 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
           <div class="result-list" id="matchList"></div>
         </div>
       </div>
+      
+      <section id="aboutSection" style="background:#ffffff;border:1.5px solid var(--border);border-radius:14px;padding:22px 20px;margin:24px 0 12px;box-shadow:0 2px 8px rgba(0,0,0,.04);">
+        <h2 style="margin:0 0 14px;font-size:22px;font-weight:900;color:var(--text);letter-spacing:-0.2px;">What is PKiTAAP?  - pkitaap</h2>
+        <p style="margin:0 0 12px;line-height:1.65;color:var(--text);font-size:14.5px;font-weight:500;">PKiTAAP ( pkitaap ) is India&#39;s free marketplace for buying and selling used school textbooks. Built for students of Class 9 to Class 12 across all major boards — CBSE, SEBA, AHSEC and more — in English, Assamese and Hindi medium.</p><p style="margin:0 0 12px;line-height:1.65;color:var(--text);font-size:14.5px;font-weight:500;">Sell your old books in under a minute. Find affordable textbooks from sellers near you. Chat directly with buyers and sellers through our built-in messaging system. No commissions, no middlemen, no listing fees.</p><p style="margin:0 0 12px;line-height:1.65;color:var(--text);font-size:14.5px;font-weight:500;">PKiTAAP is designed for students across India, with state, district and locality-based search to help buyers find books from nearby sellers. Whether you&#39;re starting a new academic year and need cheap textbooks, or you&#39;ve finished your class and want to recover the cost of your old books, PKiTAAP is the easiest place to do both.</p><p style="margin:0 0 12px;line-height:1.65;color:var(--text);font-size:14.5px;font-weight:500;">Save money on books. Give your old textbooks a second life. Help fellow Indian students afford their education.</p>
+        
+      </section>
     </section>
     <section class="page" id="sellPage">
       <div class="page-head">
@@ -647,6 +661,16 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
           <input type="tel" id="signupMobile" placeholder="10-digit number" maxlength="10" required style="width:100%;">
         </div>
         <div class="auth-field">
+          <label>Gender <span style="color:#ef4444;font-size:11px;"> *required</span></label>
+          <select id="signupGender" required>
+            <option value="">— Select Gender —</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+            <option value="Prefer not to say">Prefer not to say</option>
+          </select>
+        </div>
+        <div class="auth-field">
           <label>Date of Birth <span style="color:#ef4444;font-size:11px;"> *required</span></label>
           <div class="dob-simple-grid">
             <select id="signupDobDay" required aria-label="Birth day"><option value="">Day</option></select>
@@ -730,6 +754,16 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
       <div class="auth-field">
         <label>Mobile Number</label>
         <input type="tel" id="accMobile" placeholder="10-digit number" maxlength="10">
+      </div>
+      <div class="auth-field">
+        <label>Gender</label>
+        <select id="accGender">
+          <option value="">— Select Gender —</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+          <option value="Prefer not to say">Prefer not to say</option>
+        </select>
       </div>
       <div class="auth-field">
         <label>Google Email</label>
@@ -33582,37 +33616,76 @@ function goHome() {
 
 window.pkitaapAndroidBack = function() {
   const dialog = document.querySelector('dialog[open]');
-  if (dialog) { dialog.close(); return true; }
+  if (dialog) { try { dialog.close(); } catch(_){} return true; }
+
+  const menuPanel = document.getElementById('menuPanel');
+  if (menuPanel && menuPanel.classList.contains('open')) {
+    document.getElementById('menuBtn')?.classList.remove('open');
+    menuPanel.classList.remove('open');
+    document.getElementById('menuBackdrop')?.classList.remove('open');
+    return true;
+  }
+
   const shell = document.getElementById('messagesShell');
   if (_activeChatId && shell && shell.classList.contains('chat-open')) {
     _activeChatId = '';
-    _showMessageListView();
-    renderMessages(true);
+    document.body.classList.remove('chat-typing');
+    if (typeof _showMessageListView === 'function') _showMessageListView();
+    if (typeof renderMessages === 'function') renderMessages(true);
     return true;
   }
+
   const buy = document.getElementById('buyPage');
-  const onHome = !!(buy && buy.classList.contains('active') && catalogStep === 'classes' && !selectedClass && !selectedBoard && !selectedBookId);
-  if (!onHome) { goHome(); return true; }
+  if (buy && !buy.classList.contains('active')) {
+    goHome();
+    return true;
+  }
+
+  if (selectedBookId) {
+    selectedBookId = '';
+    const _ml = document.querySelector('#matchList');
+    if (_ml) _ml.innerHTML = '';
+    render();
+    return true;
+  }
+  if (catalogStep === 'books') {
+    selectedCategory = '';
+    if (selectedStream) { catalogStep = 'streams'; }
+    else if (selectedBoard) { catalogStep = (selectedClass === 'General' ? 'classes' : 'boards'); }
+    else { catalogStep = 'classes'; selectedClass = ''; }
+    if (catalogStep === 'classes') { selectedBoard = selectedStream = ''; }
+    const _ml2 = document.querySelector('#matchList');
+    if (_ml2) _ml2.innerHTML = '';
+    render();
+    return true;
+  }
+  if (catalogStep === 'streams') {
+    catalogStep = 'boards';
+    selectedStream = '';
+    render();
+    return true;
+  }
+  if (catalogStep === 'boards') {
+    catalogStep = 'classes';
+    selectedClass = selectedBoard = selectedStream = '';
+    render();
+    return true;
+  }
+
+  // Truly at home — let the next back press exit the app/page normally
   return false;
 };
 
-// ── MOBILE BROWSER BACK BUTTON SUPPORT ──────────────────────────
-// On mobile browsers the hardware/gesture back button normally closes
-// the tab or leaves the page. We intercept it with the History API:
-// keep one "sentinel" entry on top of the stack so the back gesture
-// always fires a popstate event (which we can catch) instead of
-// navigating away from the app entirely.
+// ── MOBILE BROWSER / ANDROID BACK BUTTON SUPPORT ──────────────────
 (function() {
-  // Push the sentinel entry — this means there is always something to
-  // pop back to before the browser would actually leave the page.
   history.pushState({ pkitaap: 1 }, '');
 
   window.addEventListener('popstate', function() {
-    // Route the back press through our in-app handler.
-    window.pkitaapAndroidBack && window.pkitaapAndroidBack();
-    // Re-push the sentinel so the NEXT back press is also caught.
-    // (Without this the second back press would leave the page.)
-    history.pushState({ pkitaap: 1 }, '');
+    var handled = false;
+    try { handled = !!(window.pkitaapAndroidBack && window.pkitaapAndroidBack()); } catch(e) {}
+    if (handled) {
+      history.pushState({ pkitaap: 1 }, '');
+    }
   });
 })();
 // ────────────────────────────────────────────────────────────────
@@ -34300,6 +34373,7 @@ async function openAccountDetails() {
   const googleEmail = u.email || (_auth && _auth.currentUser && _auth.currentUser.email) || '';
   set('accName', u.name);
   set('accMobile', u.mobile || (u.phone ? String(u.phone).replace(/\D/g,'').slice(-10) : ''));
+  set('accGender', u.gender || '');
   set('accEmail', googleEmail);
   setDobValue('acc', getUserDobValue(u));
   set('accClass', u.className);
@@ -34514,6 +34588,7 @@ async function saveAccountDetails() {
   if (!name) { toast('Please enter your full name'); return; }
   const mobile = g('accMobile').replace(/\D/g,'');
   if (!/^[0-9]{10}$/.test(mobile)) { toast('Please enter a valid 10-digit mobile number'); return; }
+  const gender = g('accGender');
   const dobValue = getDobValue('acc');
   if (!dobValue) { toast('Please select your complete date of birth'); return; }
   const className = g('accClass');
@@ -34530,6 +34605,7 @@ async function saveAccountDetails() {
   u.name       = name;
   u.mobile     = mobile;
   u.phone      = '+91' + u.mobile;
+  u.gender     = gender;
   u.email      = ((_auth && _auth.currentUser && _auth.currentUser.email) || u.email || g('accEmail') || '').trim();
   u.dateOfBirth= dobValue;
   u.dob        = dobValue;
@@ -36090,6 +36166,7 @@ function _collectSignupDraft() {
   return {
     fullName: (document.getElementById('signupFullName')?.value || '').trim(),
     mobile: (document.getElementById('signupMobile')?.value || '').trim(),
+    gender: (document.getElementById('signupGender')?.value || '').trim(),
     dateOfBirth: getDobValue('signup'),
     dobDay: document.getElementById('signupDobDay')?.value || '',
     dobMonth: document.getElementById('signupDobMonth')?.value || '',
@@ -36278,6 +36355,7 @@ function _updateSignupProgressLocks() {
 function _checkUnlockPassword() {
   const fullName = (document.getElementById('signupFullName')?.value || '').trim();
   const mobile = (document.getElementById('signupMobile')?.value || '').trim();
+  const gender = (document.getElementById('signupGender')?.value || '').trim();
   const dob = getDobValue('signup');
   const cls = (document.getElementById('signupClass')?.value || '').trim();
   const stateVal = (document.getElementById('signupState')?.value || '').trim();
@@ -36290,7 +36368,7 @@ function _checkUnlockPassword() {
   const btnContinue = document.getElementById('signupContinue');
   _updateSignupProgressLocks();
   if (!btnContinue) return;
-  const complete = !!(fullName && /^[0-9]{10}$/.test(mobile) && dob && cls && stateVal && district && subDistrict && place && school && window._signupPlaceConfirmed && window._signupSchoolConfirmed && (!passportRequired || passport));
+  const complete = !!(fullName && /^[0-9]{10}$/.test(mobile) && gender && dob && cls && stateVal && district && subDistrict && place && school && window._signupPlaceConfirmed && window._signupSchoolConfirmed && (!passportRequired || passport));
   if (complete) {
     btnContinue.disabled = false; btnContinue.style.opacity=''; btnContinue.style.cursor='';
   } else {
@@ -37383,6 +37461,7 @@ init();
     if (!_googleUser) { toast('⚠️ Please sign in with Google first.'); openSignup(); return; }
 
     const mobile      = ((document.getElementById('signupMobile')      || {}).value || '').trim();
+    const gender      = ((document.getElementById('signupGender')      || {}).value || '').trim();
     const dateOfBirth = getDobValue('signup');
     const cls         = (document.getElementById('signupClass')         || {}).value;
     const stateVal    = (document.getElementById('signupState')         || {}).value;
@@ -37394,6 +37473,7 @@ init();
 
     if (!firstName)       { toast('Please enter your full name'); return; }
     if (!mobile || !/^[0-9]{10}$/.test(mobile)) { toast('Please enter a valid 10-digit mobile number'); return; }
+    if (!gender)          { toast('Please select your gender'); return; }
     if (!dateOfBirth)     { toast('Please select your date of birth'); return; }
     if (!cls)            { toast('Please select your class'); return; }
     if (!stateVal)       { toast('Please select your state'); return; }
@@ -37416,6 +37496,7 @@ init();
       name        : firstName,
       mobile      : mobile,
       phone       : '+91' + mobile,
+      gender      : gender,
       dateOfBirth : dateOfBirth,
       dob         : dateOfBirth,
       birthDate   : dateOfBirth,
