@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="icon" type="image/jpeg" href="favicon.jpeg">
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
 <meta name="theme-color" content="#16a34a"/>
@@ -174,8 +175,8 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 .auth-form { padding: 24px 28px 28px; display: flex; flex-direction: column; gap: 14px; }
 .auth-field { display: flex; flex-direction: column; gap: 6px; }
 .auth-field label { color: #374151; font-size: 13px; font-weight: 900; }
-.auth-field input, .auth-field select { background: #f9fafb; border: 2px solid var(--line); border-radius: 12px; font-size: 15px; font-weight: 600; min-height: 48px; outline: none; padding: 10px 14px; width: 100%; transition: border-color 0.15s, background 0.15s; }
-.auth-field input:focus, .auth-field select:focus { border-color: var(--red); background: white; }
+.auth-field input, .auth-field select { background: #f9fafb; border: 2px solid var(--line); border-radius: 12px; font-size: 15px; font-weight: 600; min-height: 48px; outline: none; padding: 10px 14px; width: 100%; transition: border-color 0.22s ease, background 0.22s ease, box-shadow 0.22s ease; }
+.auth-field input:focus, .auth-field select:focus { border-color: var(--red); background: white; box-shadow: 0 0 0 3px rgba(220,38,38,0.10); }
 .auth-field.is-locked { opacity: 0.62; }
 .auth-field.is-locked label { color: #9ca3af; }
 .auth-field input:disabled, .auth-field select:disabled { background: #f3f4f6; border-color: #e5e7eb; color: #9ca3af; cursor: not-allowed; }
@@ -270,14 +271,17 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 .pw-wrap input:disabled ~ .pw-eye { pointer-events: none; color: #d1d5db; }
 .ac-wrap { position: relative; }
 .ac-wrap input { min-height: 56px; padding-right: 58px; }
-.ac-ok { position: absolute; right: 8px; top: 28px; transform: translateY(-50%); background: var(--red); color: white; border: none; border-radius: 9px; font-size: 12px; font-weight: 900; padding: 6px 12px; cursor: pointer; display: none; z-index: 5; transition: background 0.15s; white-space: nowrap; }
+.ac-ok { position: absolute; right: 8px; top: 28px; transform: translateY(-50%); background: var(--red); color: white; border: none; border-radius: 9px; font-size: 12px; font-weight: 900; padding: 6px 12px; cursor: pointer; display: none; z-index: 5; transition: background 0.2s ease, transform 0.2s ease, opacity 0.2s ease; white-space: nowrap; }
 .ac-ok:hover { background: var(--red-dark); }
 .ac-wrap input:disabled { background: #f3f4f6; color: #aaa; cursor: not-allowed; border-color: #e5e7eb; }
-.ac-list { background: #fff; border: 2px solid var(--line); border-radius: 14px; box-shadow: 0 10px 26px rgba(0,0,0,0.12); display: none; margin-top: 8px; max-height: 230px; overflow-y: auto; position: relative; z-index: 200; }
-.ac-item { padding: 13px 14px; font-size: 15px; font-weight: 800; cursor: pointer; border-bottom: 1px solid var(--line); color: var(--text); line-height: 1.35; transition: background 0.1s; white-space: normal; word-break: break-word; }
+.ac-list { background: #fff; border: 2px solid var(--line); border-radius: 14px; box-shadow: 0 10px 26px rgba(0,0,0,0.12); display: none; margin-top: 8px; max-height: 230px; overflow-y: auto; position: relative; z-index: 200; animation: acListIn 0.22s cubic-bezier(0.16,1,0.3,1); }
+@keyframes acListIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+.ac-item { padding: 13px 14px; font-size: 15px; font-weight: 800; cursor: pointer; border-bottom: 1px solid var(--line); color: var(--text); line-height: 1.35; transition: background 0.15s ease, color 0.15s ease, padding-left 0.15s ease; white-space: normal; word-break: break-word; }
 .ac-item:last-child { border-bottom: none; }
-.ac-item:hover { background: var(--red-light); color: var(--red); }
+.ac-item:hover { background: var(--red-light); color: var(--red); padding-left: 18px; }
 .ac-empty { color: var(--muted); font-size: 13px; font-weight: 800; line-height: 1.45; padding: 13px 14px; }
+.ac-hint { background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 10px; padding: 8px 11px; font-size: 12px; font-weight: 700; line-height: 1.5; color: #92590b; margin-bottom: 2px; }
+.ac-hint strong { color: #b45309; }
 .locked-control { opacity: 0.5; pointer-events: none; }
 .home-link { color: var(--red) !important; font-weight: 900 !important; }
 .messages-shell { display: grid; gap: 12px; grid-template-columns: minmax(220px, 0.9fr) minmax(280px, 1.4fr); min-height: 560px; }
@@ -667,7 +671,6 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
             <option value="Male">Male</option>
             <option value="Female">Female</option>
             <option value="Other">Other</option>
-            <option value="Prefer not to say">Prefer not to say</option>
           </select>
         </div>
         <div class="auth-field">
@@ -712,6 +715,7 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
         <div class="auth-row profile-stack">
           <div class="auth-field profile-wide">
             <label>Place / Town <span style="color:#ef4444;font-size:11px;"> *required</span></label>
+            <div class="ac-hint">💡 Start typing your place. If it appears in the list, tap it. If your place is <strong>not in the list</strong>, just type the full name — an <strong>OK</strong> button will appear; tap it to save and move on.</div>
             <div class="ac-wrap" id="placeAcWrap">
               <div class="input-preview-bubble" id="placeBubble"></div>
               <input type="text" id="signupPlace" autocomplete="off" placeholder="Select sub-district first"
@@ -725,6 +729,7 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
           </div>
           <div class="auth-field profile-wide">
             <label>School / College <span style="color:#ef4444;font-size:11px;"> *required</span></label>
+            <div class="ac-hint">💡 Start typing your school / college. If it appears in the list, tap it. If it's <strong>not in the list</strong>, just type the full name — an <strong>OK</strong> button will appear; tap it to save and finish.</div>
             <div class="ac-wrap" id="schoolAcWrap">
               <div class="input-preview-bubble" id="schoolBubble"></div>
               <input type="text" id="signupSchool" autocomplete="off" placeholder="Enter place first"
@@ -762,7 +767,6 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
           <option value="Male">Male</option>
           <option value="Female">Female</option>
           <option value="Other">Other</option>
-          <option value="Prefer not to say">Prefer not to say</option>
         </select>
       </div>
       <div class="auth-field">
@@ -33672,7 +33676,6 @@ window.pkitaapAndroidBack = function() {
     return true;
   }
 
-  // Truly at home — let the next back press exit the app/page normally
   return false;
 };
 
@@ -34915,12 +34918,18 @@ async function renderMyListings(skipFetch) {
       '<strong>' + _acEsc(title) + '</strong>' +
       '<span>' + _acEsc(meta || 'Subject') + ' · ' + _acEsc(price) + '</span>' +
       '<span>' + _acEsc([l.state,l.district,l.subDistrict,l.place].filter(Boolean).join(', ') || 'Location not set') + '</span>' +
-      '<span>Condition: ' + _acEsc(l.condition || 'Not set') + (l.createdAt ? ' · Posted ' + _acEsc(String(l.createdAt).slice(0,10)) : '') + '</span>' +
-      '<div class="contact-row"><button class="btn btn-danger" type="button" style="font-size:12px;" data-remove-listing="' + _acEsc(l.id) + '">Remove</button></div>' +
+      '<span>Condition: ' + _acEsc(l.condition || 'Not set') + (l.createdAt ? ' · Posted ' + _acEsc(String(l.createdAt).slice(0,10)) : '') + (l.updatedAt ? ' · Updated ' + _acEsc(String(l.updatedAt).slice(0,10)) : '') + '</span>' +
+      '<div class="contact-row" style="display:flex;gap:8px;">' +
+        '<button class="btn btn-primary" type="button" style="font-size:12px;flex:1;" data-edit-listing="' + _acEsc(l.id) + '">✏️ Edit</button>' +
+        '<button class="btn btn-danger" type="button" style="font-size:12px;flex:1;" data-remove-listing="' + _acEsc(l.id) + '">🗑️ Remove</button>' +
+      '</div>' +
     '</div>';
   }).join('');
   list.querySelectorAll('[data-remove-listing]').forEach(btn => {
     btn.onclick = () => removeMyListing(btn.getAttribute('data-remove-listing'));
+  });
+  list.querySelectorAll('[data-edit-listing]').forEach(btn => {
+    btn.onclick = () => editMyListing(btn.getAttribute('data-edit-listing'));
   });
 }
 async function removeMyListing(id) {
@@ -34934,6 +34943,174 @@ async function removeMyListing(id) {
   }
   renderMyListings(true);
   toast('Listing removed.');
+}
+
+// ── EDIT LISTING ─────────────────────────────────────────────────
+// Reuses the Sell page UI. When user clicks Edit on a listing card,
+// we navigate to the Sell page with all catalog state set to point
+// at the listing's book, pre-fill every form field, and flip the
+// sellForm submit handler into edit mode via window._editingListingId.
+// On submit, the sell handler detects edit mode and UPDATES the
+// existing listing instead of creating a new one.
+function editMyListing(id) {
+  if (!id) return;
+  const lis = (state.listings || []).find(l => l.id === id);
+  if (!lis) { toast('Listing not found.'); return; }
+  if (!_isMineListing(lis)) { toast('You can only edit your own listings.'); return; }
+
+  window._editingListingId = id;
+  // Mark on body so CSS could optionally hide the catalog browse during edit
+  document.body.classList.add('editing-listing');
+
+  // Point the sell-page catalog state at the listing's book so the
+  // sellFormCard renders for the right book.
+  try {
+    if (typeof selectedClass  !== 'undefined') selectedClass  = lis.className || '';
+    if (typeof selectedBoard  !== 'undefined') selectedBoard  = lis.board     || '';
+    if (typeof selectedStream !== 'undefined') selectedStream = lis.stream    || '';
+    if (typeof selectedBookId !== 'undefined') selectedBookId = lis.bookId    || '';
+    if (typeof sellCatalogStep !== 'undefined') sellCatalogStep = 'books';
+  } catch(_) {}
+
+  // Navigate to the sell page
+  try {
+    if (typeof nav === 'function') nav('sell');
+    else {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('sellPage')?.classList.add('active');
+    }
+  } catch(_) {}
+
+  if (typeof renderSellCatalog === 'function') {
+    try { renderSellCatalog(); } catch(_) {}
+  }
+
+  // Pre-fill all form fields after one tick so the sellFormCard has rendered
+  setTimeout(() => _prefillSellFormFromListing(lis), 50);
+}
+
+// Inject-and-select for sell-form dropdowns: if 'value' isn't already an
+// option in the select with id 'selId', append it, then select it. Lets
+// edit-mode round-trip saved values even when the admin catalog dropped them.
+function _ensureSellSelOption(selId, value) {
+  const sel = document.getElementById(selId);
+  if (!sel || !value) return;
+  if (!Array.from(sel.options).some(o => o.value === value)) {
+    const opt = document.createElement('option');
+    opt.value = value;
+    opt.textContent = value;
+    sel.appendChild(opt);
+  }
+  sel.value = value;
+}
+
+// Pre-fill the sellForm fields with the listing's current values.
+// Cascades state → district → sub-district → place → school so each
+// dropdown's options are populated before its value is set. Handles
+// both school subjects and custom-subject listings.
+function _prefillSellFormFromListing(lis) {
+  const setVal = (i, v) => { const el = document.getElementById(i); if (el) el.value = v == null ? '' : String(v); };
+
+  // If sellFormCard isn't visible yet, force it visible — the user came
+  // here via Edit, not via picking a book, so the normal show trigger
+  // (book click) hasn't run.
+  const card = document.getElementById('sellFormCard');
+  if (card) card.style.display = '';
+
+  // Custom-subject fields, if applicable
+  if (lis.customSubject) {
+    const titleWrap = document.getElementById('sellCustomTitleWrap');
+    if (titleWrap) titleWrap.style.display = '';
+    setVal('sellCustomTitle', lis.title);
+    const priceWrap = document.getElementById('sellCustomPriceWrap');
+    if (priceWrap) priceWrap.style.display = '';
+    setVal('sellCustomPrice', lis.price);
+  }
+
+  // Location: state → cascading
+  setVal('sellState', lis.state);
+  if (typeof updateSellDistricts === 'function') { try { updateSellDistricts(); } catch(_) {} }
+  _ensureSellSelOption('sellDistrict', lis.district);
+  if (typeof updateSellSubDistricts === 'function') { try { updateSellSubDistricts(); } catch(_) {} }
+  _ensureSellSelOption('sellSubDistrict', lis.subDistrict);
+  if (typeof updateSellPlaces === 'function') { try { updateSellPlaces(); } catch(_) {} }
+  setVal('sellPlace', lis.place);
+  if (typeof updateSellSchools === 'function') { try { updateSellSchools(); } catch(_) {} }
+  setVal('sellSchool', lis.school);
+
+  // Medium dropdown — depends on selected state; if listing's medium
+  // isn't in the catalog any more, inject it as a one-off option.
+  _ensureSellSelOption('sellMedium', lis.medium);
+
+  setVal('sellCondition', lis.condition || 'Good');
+  setVal('sellWhatsapp', lis.whatsapp);
+  setVal('sellPrice', lis.price);
+
+  // Add the edit-mode banner above the form and switch button text
+  _showEditModeUI(lis);
+
+  // Scroll the form into view
+  try {
+    document.getElementById('sellFormCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch(_) {}
+}
+
+// Adds a yellow "Editing your listing" banner above the form, changes
+// the submit button text to "Save Changes", and adds a Cancel button.
+function _showEditModeUI(lis) {
+  const card = document.getElementById('sellFormCard');
+  if (!card) return;
+  const cardBody = card.querySelector('.card-body');
+  if (!cardBody) return;
+
+  // Remove any old banner first
+  document.getElementById('editModeBanner')?.remove();
+
+  const title = lis.title || 'this listing';
+  const banner = document.createElement('div');
+  banner.id = 'editModeBanner';
+  banner.style.cssText = 'background:#fef9c3;border:2px solid #facc15;border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;flex-direction:column;gap:8px;';
+  banner.innerHTML =
+    '<div style="font-weight:900;color:#854d0e;font-size:14px;">✏️ Editing your listing</div>' +
+    '<div style="font-size:13px;font-weight:700;color:#854d0e;">' + _acEsc(title) + '</div>' +
+    '<button type="button" class="btn btn-danger" style="font-size:12px;align-self:flex-start;" onclick="cancelEditListing()">✖ Cancel edit</button>';
+  cardBody.insertBefore(banner, cardBody.firstChild);
+
+  const submitBtn = document.querySelector('#sellForm button[type="submit"]');
+  if (submitBtn) submitBtn.textContent = '💾 Save Changes';
+}
+
+// Hides the edit-mode banner and restores the submit button text. Called
+// from cancelEditListing AND from the sellForm submit handler after a
+// successful update.
+function _hideEditModeUI() {
+  document.getElementById('editModeBanner')?.remove();
+  const submitBtn = document.querySelector('#sellForm button[type="submit"]');
+  if (submitBtn) submitBtn.textContent = 'List for Sale';
+  document.body.classList.remove('editing-listing');
+}
+
+// Cancel: drops the edit-in-progress and navigates back to My Listings.
+function cancelEditListing() {
+  if (!window._editingListingId) return;
+  window._editingListingId = '';
+  _hideEditModeUI();
+  // Reset sell page transient state
+  try {
+    if (typeof selectedBookId !== 'undefined') selectedBookId = '';
+    ['sellCustomTitle','sellCustomPrice','sellDetails'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    if (typeof sellCatalogStep !== 'undefined') sellCatalogStep = 'classes';
+    if (typeof renderSellCatalog === 'function') renderSellCatalog();
+  } catch(_) {}
+  // Go to My Listings
+  try {
+    if (typeof nav === 'function') nav('myListings');
+    else {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('myListingsPage')?.classList.add('active');
+    }
+  } catch(_) {}
+  toast('Edit cancelled');
 }
 // ── Location helpers (State → District → Place → School) ──────────────────
 const CHAT_STORE_KEY = 'pkitaap_chats_v1';
@@ -34961,8 +35138,18 @@ function _saveLocalChats(chats) {
 function _chatLastMs(chat) {
   chat = chat || {};
   const msgs = Array.isArray(chat.messages) ? chat.messages : [];
-  const last = msgs.length ? msgs[msgs.length - 1] : null;
-  return Number((last && last.createdAtMs) || chat.updatedAtMs || Date.parse(chat.updatedAt || chat.lastMessageAt || '') || 0) || 0;
+  // Use the MAXIMUM timestamp across all messages — never trust array order,
+  // because an out-of-order array (or a stale updatedAtMs fallback) could make
+  // "read up to" land below an already-seen message and keep the red dot stuck.
+  let maxMs = 0;
+  for (let i = 0; i < msgs.length; i++) {
+    const m = msgs[i] || {};
+    const ms = Number(m.createdAtMs || Date.parse(m.createdAt || '')) || 0;
+    if (ms > maxMs) maxMs = ms;
+  }
+  const chatMs = Number(chat.updatedAtMs || Date.parse(chat.updatedAt || chat.lastMessageAt || '') || 0) || 0;
+  if (chatMs > maxMs) maxMs = chatMs;
+  return maxMs;
 }
 function _chatReadKey() {
   return CHAT_READ_STORE_KEY + '_' + (_myChatUid() || 'guest');
@@ -35877,7 +36064,7 @@ function updateSignupDistricts() {
   const pInp  = document.getElementById('signupPlace');
   const sInp  = document.getElementById('signupSchool');
   if (!dSel) return;
-  dSel.innerHTML = '<option value="">— District —</option>' + _getDistricts(stateName).map(d => '<option value="' + d.district + '">' + d.district + '</option>').join('');
+  dSel.innerHTML = '<option value="">— District —</option>' + _getDistricts(stateName).slice().sort((a,b)=>String(a.district||'').localeCompare(String(b.district||''))).map(d => '<option value="' + d.district + '">' + d.district + '</option>').join('');
   if (sdSel) sdSel.innerHTML = '<option value="">— Sub-District —</option>';
   if (pInp) { pInp.value = ''; pInp.disabled = true; pInp.placeholder = 'Select sub-district first'; }
   if (sInp) { sInp.value = ''; sInp.disabled = true; sInp.placeholder = 'Enter place first'; }
@@ -35896,7 +36083,7 @@ function updateSignupSubDistricts() {
   const sInp  = document.getElementById('signupSchool');
   if (!sdSel) return;
   sdSel.innerHTML = '<option value="">— Sub-District —</option>' +
-    _getSubDistricts(stateName, district).map(sd =>
+    _getSubDistricts(stateName, district).slice().sort((a,b)=>String(a.subDistrict||'').localeCompare(String(b.subDistrict||''))).map(sd =>
       '<option value="' + sd.subDistrict + '">' + sd.subDistrict + '</option>'
     ).join('');
   if (pInp) { pInp.value = ''; pInp.disabled = true; pInp.placeholder = 'Select sub-district first'; }
@@ -35978,9 +36165,11 @@ function filterPlaceSuggestions(val) {
   const list = document.getElementById('placeAcList');
   if (!list) return;
   const q = val.trim().toLowerCase();
+  // Show nothing until the user types. When typing, match places whose
+  // name STARTS WITH the typed text, sorted alphabetically.
   const filtered = q
-    ? (window._placeOptions || []).filter(p => p.toLowerCase().includes(q))
-    : (window._placeOptions || []);
+    ? (window._placeOptions || []).filter(p => p.toLowerCase().startsWith(q)).slice().sort((a,b)=>a.localeCompare(b))
+    : [];
   _renderAcList(list, filtered, val, 'selectPlaceSuggestion', 'placeOkBtn');
 }
 
@@ -36011,9 +36200,11 @@ function filterSchoolSuggestions(val) {
   const list = document.getElementById('schoolAcList');
   if (!list) return;
   const q = val.trim().toLowerCase();
+  // Show nothing until the user types. When typing, match schools whose
+  // name STARTS WITH the typed text, sorted alphabetically.
   const filtered = q
-    ? (window._schoolOptions || []).filter(s => s.toLowerCase().includes(q))
-    : (window._schoolOptions || []);
+    ? (window._schoolOptions || []).filter(s => s.toLowerCase().startsWith(q)).slice().sort((a,b)=>a.localeCompare(b))
+    : [];
   _renderAcList(list, filtered, val, 'selectSchoolSuggestion', 'schoolOkBtn');
   // Lazily load community schools when user starts typing school
   const place = (document.getElementById('signupPlace')?.value || '').trim();
@@ -36047,8 +36238,9 @@ function _renderAcList(listEl, items, inputVal, selectFn, okBtnId) {
       listEl.innerHTML = '<div class="ac-empty">No saved ' + (isPlace ? 'place' : 'school / college') + ' found. Check the spelling, or tap OK to use this new name.</div>';
       listEl.style.display = 'block';
     } else {
-      listEl.innerHTML = '<div class="ac-empty">No saved ' + (isPlace ? 'places' : 'schools / colleges') + ' found yet for this selection. Type the full name and tap OK.</div>';
-      listEl.style.display = 'block';
+      // Box is empty — keep the suggestion list hidden until the user types.
+      listEl.innerHTML = '';
+      listEl.style.display = 'none';
     }
     return;
   }
@@ -36086,7 +36278,7 @@ window.confirmPlaceInput = function() {
   const okBtn = document.getElementById('placeOkBtn');
   if (okBtn) okBtn.style.display = 'none';
   updateSignupSchools();   // this also unlocks school if place is filled
-  setTimeout(() => document.getElementById('signupSchool')?.focus(), 80);
+  _smoothFocus('signupSchool');
 };
 window.confirmSchoolInput = function() {
   const inp = document.getElementById('signupSchool');
@@ -36110,7 +36302,7 @@ window.selectPlaceSuggestion = function(val) {
   const okBtn = document.getElementById('placeOkBtn');
   if (okBtn) okBtn.style.display = 'none';
   updateSignupSchools();
-  setTimeout(() => document.getElementById('signupSchool')?.focus(), 80);
+  _smoothFocus('signupSchool');
 };
 
 window.selectSchoolSuggestion = function(val) {
@@ -36122,12 +36314,20 @@ window.selectSchoolSuggestion = function(val) {
   const okBtn = document.getElementById('schoolOkBtn');
   if (okBtn) okBtn.style.display = 'none';
   _checkUnlockPassword();
-  setTimeout(() => document.getElementById('signupContinue')?.focus(), 80);
+  _smoothFocus('signupContinue');
 };
 
 function hideSuggestions(id) {
   const el = document.getElementById(id);
   if (el) { el.style.display = 'none'; }
+}
+// Smoothly scroll a field into view, then focus it. Used when advancing
+// from Place → School → Create Account so the move feels smooth.
+function _smoothFocus(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(_) {}
+  setTimeout(() => { try { el.focus({ preventScroll: true }); } catch(_) { try { el.focus(); } catch(__){} } }, 140);
 }
 function hideAllAcSuggestions() {
   hideSuggestions('placeAcList');
@@ -36602,6 +36802,53 @@ function bindSellForm() {
       }));
     }
     _saveCommunityLocation(listing.state, listing.district, listing.subDistrict, listing.place, listing.school);
+
+    // ── EDIT MODE BRANCH ────────────────────────────────────────────
+    // If the user got here via Edit on My Listings, update the existing
+    // listing in place instead of pushing a brand new one.
+    if (window._editingListingId) {
+      const editId = window._editingListingId;
+      const existingIdx = (state.listings || []).findIndex(l => l && l.id === editId);
+      if (existingIdx === -1) {
+        toast('Could not find listing to update — saving as new instead.');
+        state.listings.push(listing);
+      } else {
+        const existing = state.listings[existingIdx];
+        if (!_isMineListing(existing)) {
+          toast('You can only edit your own listings.');
+          return;
+        }
+        // Preserve identity + creation info
+        listing.id          = existing.id;
+        listing.createdAt   = existing.createdAt || listing.createdAt;
+        listing.userId      = existing.userId      || listing.userId;
+        listing.sellerUserId = existing.sellerUserId || listing.sellerUserId;
+        listing.ownerId     = existing.ownerId     || listing.ownerId;
+        listing.sellerName  = existing.sellerName  || listing.sellerName;
+        listing.sellerEmail = existing.sellerEmail || listing.sellerEmail;
+        listing.updatedAt   = new Date().toISOString().slice(0, 10);
+        state.listings[existingIdx] = listing;
+      }
+      save();
+      if (_db) {
+        try { await _db.collection('listings').doc(listing.id).set(listing); }
+        catch(e) { toast('Saved locally, but Firebase sync failed.'); console.warn('[PKITAAP] Edit save failed:', e); }
+      }
+      window._editingListingId = '';
+      if (typeof _hideEditModeUI === 'function') _hideEditModeUI();
+      toast('✅ Listing updated!');
+      // Reset sell-page transient state
+      selectedBookId = '';
+      ['sellCustomTitle','sellCustomPrice','sellDetails'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+      sellCatalogStep = 'classes';
+      try {
+        if (typeof nav === 'function') nav('myListings');
+        else { document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); document.getElementById('myListingsPage')?.classList.add('active'); }
+      } catch(_) {}
+      renderMyListings(true);
+      return;
+    }
+
     state.listings.push(listing);
     save();
     // Also save to Firestore
