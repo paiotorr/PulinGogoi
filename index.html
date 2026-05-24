@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<link rel="icon" type="image/jpeg" href="favicon.jpeg">
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
 <meta name="theme-color" content="#16a34a"/>
+<link rel="icon" type="image/jpeg" href="favicon.jpeg">
+<link rel="shortcut icon" type="image/jpeg" href="favicon.jpeg">
+<link rel="apple-touch-icon" href="favicon.jpeg">
 <meta name="google-site-verification" content="4ta1Nf4vjaHpRLbLyc0uHx-Z8bkMQyAQ4S_NwWgpl1w" />
 <meta name="description" content="Buy and sell used books across India on PKiTAAP. Free marketplace for school textbooks, general books and more, with no commission or listing fees. ( pkitaap )">
 <meta property="og:type" content="website">
@@ -62,8 +64,11 @@ button, input, select, textarea { font: inherit; }
   border-radius: 20px; box-shadow: 0 28px 70px rgba(15,23,42,0.28);
   display: none; gap: 10px; left: 50%; width: min(92vw,390px);
   padding: 18px; position: fixed; top: 78px; transform: translateX(-50%); z-index: 90;
-  max-height: calc(100vh - 104px); overflow-y: auto;
+  max-height: calc(100vh - 104px); overflow-y: auto; overscroll-behavior: contain;
 }
+/* Freeze the page behind the menu while it's open (restored on close). */
+html.menu-open, body.menu-open { overflow: hidden !important; }
+.menu-backdrop { touch-action: none; }
 .menu-backdrop { background: rgba(15,23,42,0.42); backdrop-filter: blur(4px); display: none; inset: 58px 0 0; position: fixed; z-index: 85; }
 .menu-backdrop.open { display: block; }
 .menu-panel.open { display: flex; flex-direction: column; }
@@ -408,7 +413,7 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
     
     <div style="margin-top:14px;padding-top:14px;border-top:1.5px solid var(--border);">
       <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;padding:0 4px 8px;">Connect with us</div>
-      <a href="https://youtube.com/@pkitaap" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:var(--text);text-decoration:none;font-weight:700;font-size:14px;margin-bottom:4px;transition:background .15s;" onmouseover="this.style.background='var(--gm)'" onmouseout="this.style.background=''"><span style="font-size:18px;">🔗</span><span>YouTube</span></a><a href="https://www.instagram.com/pkitaap" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:var(--text);text-decoration:none;font-weight:700;font-size:14px;margin-bottom:4px;transition:background .15s;" onmouseover="this.style.background='var(--gm)'" onmouseout="this.style.background=''"><span style="font-size:18px;">🔗</span><span>Instagram</span></a>
+      <a href="https://youtube.com/@pkitaap" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:var(--text);text-decoration:none;font-weight:700;font-size:14px;margin-bottom:4px;transition:background .15s;" onmouseover="this.style.background='var(--gm)'" onmouseout="this.style.background=''"><svg viewBox="0 0 24 24" width="20" height="20" fill="#FF0000" style="flex:0 0 auto;" aria-hidden="true"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg><span>YouTube</span></a><a href="https://www.instagram.com/pkitaap" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:var(--text);text-decoration:none;font-weight:700;font-size:14px;margin-bottom:4px;transition:background .15s;" onmouseover="this.style.background='var(--gm)'" onmouseout="this.style.background=''"><svg viewBox="0 0 24 24" width="20" height="20" fill="#E4405F" style="flex:0 0 auto;" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg><span>Instagram</span></a>
     </div>
   </div>
 </header>
@@ -427,7 +432,7 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
         <div id="buyDistrictBox" style="display:none;"><span>District</span><select id="browseDistrict" class="location-select" onchange="updateBrowseSubDistricts()"><option value="">District</option></select></div>
         <div id="buySubDistrictBox" style="display:none;"><span>Sub-District</span><select id="browseSubDistrict" class="location-select" onchange="renderBooks()"><option value="">Sub-District</option></select></div>
       </div>
-      <div class="card">
+      <div class="card" id="catalogCard">
         <div class="card-head">
           <h2 id="catalogTitle">Classes</h2>
           <select id="booksMediumFilter" style="display:none;width:134px;padding:8px 18px 8px 12px;border:2px solid var(--border);border-radius:10px;background-color:#fff;background-image:url(&quot;data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4 L6 8 L10 4' stroke='%23222' stroke-width='1.8' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>&quot;);background-repeat:no-repeat;background-position:right 4px center;background-size:11px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;color:var(--text);cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;-moz-appearance:none;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;transition:border-color .15s;" onchange="onBooksMediumFilterChange(this.value)">
@@ -473,7 +478,7 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
         <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border);">
           <div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">Follow us</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <a href="https://youtube.com/@pkitaap" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:var(--gm);border:1.5px solid var(--border);border-radius:24px;text-decoration:none;color:var(--text);font-size:13px;font-weight:800;"><span style="font-size:16px;">🔗</span><span>YouTube</span></a><a href="https://www.instagram.com/pkitaap" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:var(--gm);border:1.5px solid var(--border);border-radius:24px;text-decoration:none;color:var(--text);font-size:13px;font-weight:800;"><span style="font-size:16px;">🔗</span><span>Instagram</span></a>
+            <a href="https://youtube.com/@pkitaap" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:var(--gm);border:1.5px solid var(--border);border-radius:24px;text-decoration:none;color:var(--text);font-size:13px;font-weight:800;"><svg viewBox="0 0 24 24" width="20" height="20" fill="#FF0000" style="flex:0 0 auto;" aria-hidden="true"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg><span>YouTube</span></a><a href="https://www.instagram.com/pkitaap" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:var(--gm);border:1.5px solid var(--border);border-radius:24px;text-decoration:none;color:var(--text);font-size:13px;font-weight:800;"><svg viewBox="0 0 24 24" width="20" height="20" fill="#E4405F" style="flex:0 0 auto;" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg><span>Instagram</span></a>
           </div>
         </div>
       </section>
@@ -696,7 +701,7 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
           <label>Currently Studying Class <span style="color:#ef4444;font-size:11px;"> *required</span></label>
           <select id="signupClass" required>
             <option value="">— Select Class —</option>
-            <option value="Class 9">Class 9</option><option value="Class 10">Class 10</option><option value="Class 11">Class 11</option><option value="Class 12">Class 12</option>
+            <option value="Class 9">Class 9</option><option value="Class 10">Class 10</option><option value="Class 11">Class 11</option><option value="Class 12">Class 12</option><option value="Class 8">Class 8</option><option value="Class 7">Class 7</option><option value="Class 6">Class 6</option>
           </select>
         </div>
         <div class="auth-row">
@@ -796,7 +801,7 @@ body.splash-active .menu-btn { pointer-events: none; user-select: none; opacity:
         <label>Currently Studying Class</label>
         <select id="accClass">
           <option value="">— Select Class —</option>
-          <option value="Class 9">Class 9</option><option value="Class 10">Class 10</option><option value="Class 11">Class 11</option><option value="Class 12">Class 12</option>
+          <option value="Class 9">Class 9</option><option value="Class 10">Class 10</option><option value="Class 11">Class 11</option><option value="Class 12">Class 12</option><option value="Class 8">Class 8</option><option value="Class 7">Class 7</option><option value="Class 6">Class 6</option>
         </select>
       </div>
       <div class="auth-row">
@@ -890,6 +895,7 @@ let _auth = null;   // Auth instance
 //    name       : string
 //    mobile     : string   (10-digit, no country code)
 //    phone      : string   (E.164, e.g. "+919876543210")
+//    gender     : string
 //    dateOfBirth: string   (YYYY-MM-DD)
 //    className  : string
 //    state      : string
@@ -940,6 +946,9 @@ function _profileUpdatedMs(u) {
     return !isNaN(ts) && ts > max ? ts : max;
   }, 0);
 }
+function _userGenderValue(u) {
+  return String((u && (u.gender || u.Gender || u.sex)) || '').trim();
+}
 function _mergeUserProfiles(localUser, remoteUser) {
   const localMs = _profileUpdatedMs(localUser);
   const remoteMs = _profileUpdatedMs(remoteUser);
@@ -960,6 +969,8 @@ function _mergeUserProfiles(localUser, remoteUser) {
     delete merged.dobMonth;
     delete merged.dobYear;
   }
+  const genderValue = _userGenderValue(primaryUser) || _userGenderValue(secondaryUser) || _userGenderValue(merged);
+  if (genderValue) merged.gender = genderValue;
   return merged;
 }
 // Fetch a user profile from Firestore by Firebase UID
@@ -1014,6 +1025,7 @@ async function _saveUserToFirestore(userData) {
     name: String(userData.name || userData.fullName || userData.displayName || '').trim(),
     email: String(userData.email || (_auth && _auth.currentUser && _auth.currentUser.email) || '').trim(),
     mobile: mobile,
+    gender: _userGenderValue(userData),
     userName: String(userData.userName || userData.username || '').trim(),
     dateOfBirth: String(userData.dateOfBirth || userData.dob || userData.birthDate || '').trim(),
     className: String(userData.className || userData.class || '').trim(),
@@ -1072,6 +1084,9 @@ async function _saveUserToFirestore(userData) {
       const existing = snap.data() || {};
       cleanUser.status = existing.status || cleanUser.status || 'active';
       cleanUser.role = existing.role || 'user';
+      // Preserve previously-saved gender if this write (e.g. a plain login)
+      // didn't carry one — otherwise the merge would blank it out.
+      if (!cleanUser.gender && existing.gender) cleanUser.gender = existing.gender;
       await ref.set(cleanUser, {merge:true});
     }
 
@@ -1147,14 +1162,20 @@ const seed = {
     "Class 9",
     "Class 10",
     "Class 11",
-    "Class 12"
+    "Class 12",
+    "Class 8",
+    "Class 7",
+    "Class 6"
   ],
   "classThumbs": {
     "Class 9": "",
     "Class 10": "",
     "Class 11": "",
     "Class 12": "",
-    "General": ""
+    "General": "",
+    "Class 8": "",
+    "Class 7": "",
+    "Class 6": ""
   },
   "streams": [
     "Science",
@@ -34070,7 +34091,7 @@ function renderBooks() {
     const _valStyle = 'font-size:13px;color:var(--text);font-weight:700;';
     const cards = groups[place].map(l => {
       const title = l.title || l.bookTitle || l.subject || 'Book';
-      const seller = l.sellerName || l.seller || l.userName || 'Seller';
+      const seller = 'Seller';
       const rows = [];
       rows.push('<span style="' + _rowStyle + '">Seller: <span style="' + _valStyle + '">' + _acEsc(seller) + '</span></span>');
       if (l.condition) rows.push('<span style="' + _rowStyle + '">Condition: <span style="' + _valStyle + '">' + _acEsc(l.condition) + '</span></span>');
@@ -34116,11 +34137,18 @@ function _loadBrowseListings() {
   if (_listingsUnsub) return;
   _listingsUnsub = _db.collection('listings')
     .onSnapshot(snap => {
-      state.listings = snap.docs.map(doc => Object.assign({ id: doc.id }, doc.data()));
+      state.listings = snap.docs.map(doc => _publicListingCopy(Object.assign({ id: doc.id }, doc.data())));
       save();
       if (catalogStep === "books") renderBooks();
       if (typeof renderMyListings === 'function') renderMyListings(true);
     }, e => console.warn('[PKITAAP] Browse listings live load failed:', e));
+}
+function _publicListingCopy(raw) {
+  const l = Object.assign({}, raw || {});
+  ['sellerEmail','email','mobile','sellerMobile','phone','whatsapp','userName'].forEach(k => delete l[k]);
+  l.seller = 'Seller';
+  l.sellerName = 'Seller';
+  return l;
 }
 
 // ── AUTO FIND SELLERS ─────────────────────────────────────────────
@@ -34386,7 +34414,7 @@ async function openAccountDetails() {
   const googleEmail = u.email || (_auth && _auth.currentUser && _auth.currentUser.email) || '';
   set('accName', u.name);
   set('accMobile', u.mobile || (u.phone ? String(u.phone).replace(/\D/g,'').slice(-10) : ''));
-  set('accGender', u.gender || '');
+  set('accGender', _userGenderValue(u));
   set('accEmail', googleEmail);
   setDobValue('acc', getUserDobValue(u));
   set('accClass', u.className);
@@ -34415,6 +34443,7 @@ function _accountSnapshot(u) {
     name: u.name || '',
     mobile,
     phone: u.phone || (mobile ? '+91' + mobile : ''),
+    gender: _userGenderValue(u),
     email: u.email || '',
     dateOfBirth: getUserDobValue(u),
     className: u.className || '',
@@ -34428,6 +34457,7 @@ function _accountSnapshot(u) {
 function _accountChangeLog(before, after) {
   const labels = {
     name: 'Full Name', mobile: 'Mobile Number', phone: 'Phone',
+    gender: 'Gender',
     email: 'Google Email', dateOfBirth: 'Date of Birth',
     className: 'Class',
     state: 'State', district: 'District', subDistrict: 'Sub-District',
@@ -34447,6 +34477,7 @@ function _accountFormSnapshot() {
   return {
     name: val('accName'),
     mobile: val('accMobile').replace(/\D/g,''),
+    gender: val('accGender'),
     email: val('accEmail'),
     dateOfBirth: getDobValue('acc'),
     className: val('accClass'),
@@ -34459,7 +34490,7 @@ function _accountFormSnapshot() {
 }
 function _sameAccountSnapshot(a, b) {
   a = a || {}; b = b || {};
-  const keys = ['name','mobile','email','dateOfBirth','className','state','district','subDistrict','place','school'];
+  const keys = ['name','mobile','gender','email','dateOfBirth','className','state','district','subDistrict','place','school'];
   return keys.every(k => String(a[k] || '') === String(b[k] || ''));
 }
 function _accountCooldownUntil(u) {
@@ -34503,36 +34534,8 @@ function _updateAccountSaveState() {
 // Called automatically by saveAccountDetails() whenever the user's name changes.
 // Updates both the local state.listings array and every matching Firestore document.
 async function _syncSellerNameInListings(uid, newName) {
-  if (!uid || !newName) return;
-  // 1. Update local cache so UI reflects the new name immediately
-  let localUpdated = 0;
-  (state.listings || []).forEach(l => {
-    const lUid = String(l.userId || l.sellerUserId || l.ownerId || '').trim();
-    if (lUid && lUid === uid) {
-      l.seller     = newName;
-      l.sellerName = newName;
-      localUpdated++;
-    }
-  });
-  if (localUpdated) save();   // persist to localStorage
-  // 2. Update Firebase listings so other users see the new name when they search
-  if (!_db) return;
-  try {
-    const snaps = await Promise.all([
-      _db.collection('listings').where('userId', '==', uid).get(),
-      _db.collection('listings').where('sellerUserId', '==', uid).get()
-    ]);
-    const batch = _db.batch();
-    const seen = new Set();
-    snaps.forEach(snap => snap.docs.forEach(doc => {
-      if (seen.has(doc.ref.path)) return;
-      seen.add(doc.ref.path);
-      batch.update(doc.ref, { seller: newName, sellerName: newName });
-    }));
-    if (seen.size) await batch.commit();
-  } catch(e) {
-    console.warn('[PKITAAP] Could not sync seller name in listings:', e);
-  }
+  // Privacy hardening: public listing documents must not store user names.
+  return;
 }
 async function _fetchCurrentUserName(uid, fallback) {
   uid = String(uid || '').trim();
@@ -34762,7 +34765,7 @@ function renderMatches(bookId) {
   if (list) list.innerHTML = '<p style="color:#888;font-size:13px;font-weight:800;padding:8px 0;">Searching sellers...</p>';
   if (_db) {
     _db.collection('listings').get().then(async snap => {
-      const remoteListings = snap.docs.map(doc => Object.assign({id:doc.id}, doc.data()));
+      const remoteListings = snap.docs.map(doc => _publicListingCopy(Object.assign({id:doc.id}, doc.data())));
       state.listings = remoteListings;
       save();
       // Fetch each seller's CURRENT name/status live from /users so profile changes/deleted users are reflected.
@@ -34845,7 +34848,7 @@ function _renderMatchList(bId, query, sellerNameMap, removedSellerUids, sourceLi
     const location = [l.place,l.subDistrict,l.district,l.state].filter(Boolean).join(', ');
     // FIX: prefer the live name fetched from /users over the stale stored name
     const lUid = String(l.userId || l.sellerUserId || '').trim();
-    const displayName = (sellerNameMap && lUid && sellerNameMap[lUid]) || l.sellerName || l.seller || 'Seller';
+    const displayName = 'Seller';
     const listingTitle = l.title || l.bookTitle || book()?.title || 'Book';
     const listingPrice = l.price ? ('â‚¹' + l.price) : 'Price not added';
     return '<div class="result-card" data-open-listing="' + _acEsc(l.id) + '"><strong>' + _acEsc(displayName) + '</strong>' +
@@ -34859,7 +34862,6 @@ function _renderMatchList(bId, query, sellerNameMap, removedSellerUids, sourceLi
       (l.details ? '<span>Details: ' + _acEsc(l.details) + '</span>' : '') +
       '<div class="contact-row">' +
       (state.settings.messaging!==false?'<button class="btn btn-primary" type="button" style="font-size:12px;" data-message-listing="' + _acEsc(l.id) + '">Message Seller</button>':'') +
-      (state.settings.whatsapp&&l.whatsapp?'<a href="https://wa.me/91'+encodeURIComponent(l.whatsapp)+'" target="_blank" class="btn btn-primary" style="font-size:12px;">WhatsApp</a>':'') +
       '</div></div>';
   }).join("") : '<p style="color:#888;font-size:13px;font-weight:700;padding:8px 0;">No sellers found in ' + _acEsc(query.subDistrict || query.place || 'this area') + ' for this book yet.</p>';
   if (matches.length) {
@@ -34896,7 +34898,7 @@ async function _loadMyListingsFromFirestore() {
     const snap = await _db.collection('listings').where('userId','==',u.uid || u.id).get();
     let changed = false;
     snap.docs.forEach(doc => {
-      const data = Object.assign({ id: doc.id }, doc.data());
+      const data = _publicListingCopy(Object.assign({ id: doc.id }, doc.data()));
       const idx = (state.listings || []).findIndex(x => x.id === data.id);
       if (idx >= 0) state.listings[idx] = Object.assign({}, state.listings[idx], data);
       else { state.listings.push(data); changed = true; }
@@ -35225,19 +35227,36 @@ async function _markMessagesDelivered(chatId, messages) {
   } catch(e) { console.warn('[PKITAAP] mark delivered failed (check Firestore rules allow update of deliveredTo/readBy):', e); }
 }
 async function _markMessagesRead(chatId) {
-  if (!_db || !chatId) return;
+  if (!chatId) return;
   const me = _myChatUid();
   if (!me) return;
-  const chat = _getLocalChats().find(c => c.id === chatId);
-  if (!chat || !Array.isArray(chat.messages)) return;
-  const toMark = chat.messages.filter(m =>
-    m && m.id && String(m.senderUid || m.senderId || '') !== me &&
-    !((m.readBy || []).includes(me))
-  );
-  if (!toMark.length) return;
+  // 1) Update local readBy/deliveredTo immediately and persist to localStorage.
+  //    This is what makes "seen" survive a page refresh / re-login even when
+  //    Firestore readBy writes are blocked by security rules.
+  const chats = _getLocalChats();
+  const ci = chats.findIndex(c => c.id === chatId);
+  const fromOthers = [];
+  if (ci >= 0 && Array.isArray(chats[ci].messages)) {
+    let changed = false;
+    chats[ci].messages.forEach(m => {
+      const sender = String(m.senderUid || m.senderId || '').trim();
+      if (sender && sender !== me) {
+        fromOthers.push(m);
+        if (!Array.isArray(m.readBy)) m.readBy = [];
+        if (!Array.isArray(m.deliveredTo)) m.deliveredTo = [];
+        if (m.readBy.indexOf(me) < 0) { m.readBy.push(me); changed = true; }
+        if (m.deliveredTo.indexOf(me) < 0) { m.deliveredTo.push(me); changed = true; }
+      }
+    });
+    if (changed) { _saveLocalChats(chats); _updateMessagesMenuBadge(); }
+  }
+  // 2) Best-effort Firestore sync (cross-device + tick updates). arrayUnion
+  //    is idempotent, so marking already-read messages again is harmless.
+  if (!_db || !fromOthers.length) return;
   try {
     const batch = _db.batch();
-    toMark.forEach(m => {
+    fromOthers.forEach(m => {
+      if (!m.id) return;
       const ref = _db.collection('chats').doc(chatId).collection('messages').doc(m.id);
       batch.update(ref, {
         deliveredTo: firebase.firestore.FieldValue.arrayUnion(me),
@@ -35252,8 +35271,12 @@ function _chatUnreadCount(chat, me) {
   const readAt = Number(_getChatReadMap()[chat.id] || 0) || 0;
   return (Array.isArray(chat.messages) ? chat.messages : []).filter(m => {
     const sender = String(m.senderUid || m.senderId || '').trim();
+    if (!sender || sender === me) return false;            // my own messages are never "unread"
+    const readBy = Array.isArray(m.readBy) ? m.readBy : [];
+    if (readBy.indexOf(me) >= 0) return false;             // authoritative: I've read it (survives refresh/login)
     const ms = Number(m.createdAtMs || Date.parse(m.createdAt || '')) || 0;
-    return sender && sender !== me && ms > readAt;
+    if (ms <= readAt) return false;                        // fallback: same-session timestamp says read
+    return true;                                           // unread by both signals
   }).length;
 }
 function _updateMessagesMenuBadge() {
@@ -35324,15 +35347,28 @@ function _mergeChatMessages(chatId, messages, replaceExisting) {
   const chats = _getLocalChats();
   const idx = chats.findIndex(c => c.id === chatId);
   if (idx < 0) return null;
+  // Snapshot existing local messages so we can preserve read/delivered state
+  // even in replace mode (Firestore copies may lack readBy due to rules).
+  const oldById = new Map();
+  (Array.isArray(chats[idx].messages) ? chats[idx].messages : []).forEach(m => {
+    if (m && m.id) oldById.set(String(m.id), m);
+  });
+  const _union = (a, b) => Array.from(new Set([].concat(Array.isArray(a)?a:[], Array.isArray(b)?b:[])));
   const byId = new Map();
   if (!replaceExisting) {
-    (Array.isArray(chats[idx].messages) ? chats[idx].messages : []).forEach(m => {
-      if (m && m.id) byId.set(String(m.id), m);
-    });
+    oldById.forEach((m, id) => byId.set(id, m));
   }
   (Array.isArray(messages) ? messages : []).forEach(m => {
     m = _normalizeChatMessage(m);
-    if (m && m.id) byId.set(String(m.id), m);
+    if (m && m.id) {
+      const prev = oldById.get(String(m.id));
+      if (prev) {
+        // Preserve "seen"/"delivered" markers recorded locally
+        m.readBy = _union(prev.readBy, m.readBy);
+        m.deliveredTo = _union(prev.deliveredTo, m.deliveredTo);
+      }
+      byId.set(String(m.id), m);
+    }
   });
   const merged = Array.from(byId.values()).sort((a,b) => (Number(a.createdAtMs || Date.parse(a.createdAt || '')) || 0) - (Number(b.createdAtMs || Date.parse(b.createdAt || '')) || 0));
   chats[idx].messages = merged;
@@ -35377,37 +35413,14 @@ async function _syncChatMessageToFirestore(chat, msg) {
 async function _resolveSellerUidForListing(listing) {
   listing = listing || {};
   const direct = String(listing.userId || listing.sellerUserId || listing.ownerId || '').trim();
-  const email = String(listing.sellerEmail || listing.email || '').trim();
-  const mobile = String(listing.mobile || listing.sellerMobile || '').replace(/\D/g,'').slice(-10);
   if (_db) {
     try {
-      const docIds = [direct, mobile, mobile ? 'u' + mobile : ''].filter(Boolean);
+      const docIds = [direct].filter(Boolean);
       for (const id of docIds) {
         const doc = await _db.collection('users').doc(id).get();
         if (doc.exists) {
           const u = doc.data() || {};
           return String(u.uid || doc.id || direct || '').trim();
-        }
-      }
-      if (email) {
-        const snap = await _db.collection('users').where('email','==',email).limit(1).get();
-        if (!snap.empty) {
-          const u = snap.docs[0].data() || {};
-          return String(u.uid || snap.docs[0].id || direct || '').trim();
-        }
-      }
-      if (mobile) {
-        const snap = await _db.collection('users').where('mobile','==',mobile).limit(1).get();
-        if (!snap.empty) {
-          const u = snap.docs[0].data() || {};
-          return String(u.uid || snap.docs[0].id || direct || '').trim();
-        }
-      }
-      if (mobile) {
-        const snap = await _db.collection('users').where('phone','==','+91' + mobile).limit(1).get();
-        if (!snap.empty) {
-          const u = snap.docs[0].data() || {};
-          return String(u.uid || snap.docs[0].id || direct || '').trim();
         }
       }
     } catch(e) { console.warn('[PKITAAP] Seller UID lookup failed:', e); }
@@ -35573,8 +35586,7 @@ async function startListingChat(listingId) {
   const me = _myChatUid();
   const sellerUid = await _resolveSellerUidForListing(listing);
   if (!me || !sellerUid) { toast('Could not open chat for this seller.'); return; }
-  const sellerName = await _fetchCurrentUserName(sellerUid, listing.sellerName || listing.seller || 'Seller');
-  if (!sellerName) { toast('This seller profile is no longer available.'); return; }
+  const sellerName = 'Seller';
   const chatId = _chatIdFor(listing, me, sellerUid);
   const hidden = _getHiddenChatMap();
   if (hidden[chatId]) {
@@ -36396,13 +36408,13 @@ function _collectSignupDraft() {
 
 function _hasSignupDraftValues(draft) {
   const d = draft || _collectSignupDraft();
-  return !!(d.fullName || d.mobile || d.dateOfBirth || d.dobDay || d.dobMonth || d.dobYear || d.className || d.state || d.district || d.subDistrict || d.place || d.school || d.passport);
+  return !!(d.fullName || d.mobile || d.gender || d.dateOfBirth || d.dobDay || d.dobMonth || d.dobYear || d.className || d.state || d.district || d.subDistrict || d.place || d.school || d.passport);
 }
 
 function _isSignupProfileComplete() {
   const d = _collectSignupDraft();
   const passportRequired = state.settings && state.settings.passport;
-  return !!(d.fullName && /^[0-9]{10}$/.test(d.mobile) && d.dateOfBirth && d.className && d.state && d.district && d.subDistrict && d.place && d.school && d.placeConfirmed && d.schoolConfirmed && (!passportRequired || d.passport));
+  return !!(d.fullName && /^[0-9]{10}$/.test(d.mobile) && d.gender && d.dateOfBirth && d.className && d.state && d.district && d.subDistrict && d.place && d.school && d.placeConfirmed && d.schoolConfirmed && (!passportRequired || d.passport));
 }
 
 function _saveSignupDraftNow() {
@@ -36449,6 +36461,7 @@ function _restoreSignupDraft() {
     };
     setIf('signupFullName', draft.fullName);
     setIf('signupMobile', draft.mobile);
+    setIf('signupGender', draft.gender);
     setDobValue('signup', draft.dateOfBirth || '');
     setIf('signupDobDay', draft.dobDay);
     setIf('signupDobMonth', draft.dobMonth);
@@ -36651,9 +36664,37 @@ async function _saveCommunityLocation(state, district, subDistrict, place, schoo
     }
   } catch(e) { console.warn('[PKITAAP] _saveCommunityLocation error:', e); }
 }
+function _scrollCatalogTop() {
+  // Instantly bring the catalog card to the top of the view so the newly
+  // shown content (boards of the tapped class, streams, books) is visible
+  // right away. We use an INSTANT jump (no smooth animation) so it feels
+  // like a direct page change rather than the page sliding upward.
+  try {
+    const card = document.getElementById('catalogCard');
+    const main = document.querySelector('.main');
+    if (card && main) {
+      // Position the catalog card near the top of the scrollable main pane.
+      const top = Math.max(0, card.offsetTop - 8);
+      if (typeof main.scrollTo === 'function') main.scrollTo({ top: top, behavior: 'auto' });
+      else main.scrollTop = top;
+    } else if (main) {
+      main.scrollTop = 0;
+    }
+  } catch(_) {}
+  try { window.scrollTo(0, 0); } catch(_) {}
+}
+let _lastCatalogViewKey = null;
 function render() {
   updateAccessControls();
   updateBuyLocationMode();
+  // If the catalog view changed (class/board/stream/book/category navigation
+  // or Back), scroll to the top. Typing in search doesn't change this key,
+  // so it won't cause an unwanted scroll.
+  const _viewKey = [catalogStep, selectedClass, selectedBoard, selectedStream, selectedBookId, selectedCategory].join('|');
+  if (_lastCatalogViewKey !== null && _lastCatalogViewKey !== _viewKey) {
+    _scrollCatalogTop();
+  }
+  _lastCatalogViewKey = _viewKey;
   const selected = null;
   const _catTitleEl = document.querySelector("#catalogTitle");
   const _mediumFilterEl = document.getElementById("booksMediumFilter");
@@ -36687,6 +36728,13 @@ function render() {
   }
   document.querySelector("#backBtn").style.display = catalogStep==="classes" ? "none" : "inline-block";
   document.querySelector("#matchCard").style.display = "none";
+  // About/SEO blurb belongs on the home landing only — show it on the
+  // initial classes view (no search), hide it while browsing boards/books.
+  const _aboutEl = document.getElementById('aboutSection');
+  if (_aboutEl) {
+    const onHomeLanding = (catalogStep === 'classes') && !selectedCategory && !(search && search.trim());
+    _aboutEl.style.display = onHomeLanding ? '' : 'none';
+  }
   renderClasses(); renderCategories(); renderBoards(); renderStreams(); renderBooks(); renderSelected();
   renderSellCatalog();
 }
@@ -36694,6 +36742,23 @@ function bindMenu() {
   const btn = document.getElementById("menuBtn");
   const panel = document.getElementById("menuPanel");
   const backdrop = document.getElementById("menuBackdrop");
+  // Single source of truth for background scroll lock: whenever the menu
+  // panel gains/loses the "open" class (via ANY code path), freeze/unfreeze
+  // the page behind it. Using a MutationObserver means we don't have to patch
+  // every place that opens or closes the menu.
+  const _applyMenuScrollLock = () => {
+    const open = !!(panel && panel.classList.contains("open"));
+    document.documentElement.classList.toggle("menu-open", open);
+    document.body.classList.toggle("menu-open", open);
+  };
+  if (panel && typeof MutationObserver !== "undefined") {
+    try {
+      new MutationObserver(_applyMenuScrollLock).observe(panel, { attributes: true, attributeFilter: ["class"] });
+    } catch(_) {}
+  }
+  _applyMenuScrollLock();
+  // On mobile, stop touches on the dimmed backdrop from scrolling the page behind.
+  backdrop?.addEventListener("touchmove", e => { e.preventDefault(); }, { passive: false });
   const closeMenu = () => { btn.classList.remove("open"); panel.classList.remove("open"); backdrop?.classList.remove("open"); };
   btn.onclick = () => {
     const opening = !panel.classList.contains("open");
@@ -36780,13 +36845,11 @@ function bindSellForm() {
       className: selected ? selected.className : "",
       board    : selected ? selected.board : "",
       stream   : selected ? selected.stream : "",
-      seller   : u ? u.name : "You",
-      sellerName: u ? u.name : "You",
+      seller   : "Seller",
+      sellerName: "Seller",
       userId   : (_auth && _auth.currentUser && _auth.currentUser.uid) || (u ? (u.uid||u.id) : ""),
       sellerUserId: (_auth && _auth.currentUser && _auth.currentUser.uid) || (u ? (u.uid||u.id) : ""),
       ownerId  : (_auth && _auth.currentUser && _auth.currentUser.uid) || (u ? (u.uid||u.id) : ""),
-      sellerEmail: u ? (u.email || "") : "",
-      mobile   : u ? (u.mobile || "") : "",
       state    : listingState,
       medium   : listingMedium,
       district : listingDistrict,
@@ -36796,7 +36859,6 @@ function bindSellForm() {
       condition: document.getElementById("sellCondition").value,
       details  : (document.getElementById("sellDetails")?.value || "").trim(),
       customSubject: customSubject,
-      whatsapp : document.getElementById("sellWhatsapp")?.value || "",
       price    : listingPrice,
       adminPrice: adminPrice,
       priceMode: customSubject ? "custom" : (state.settings.allowUserPrice === true && typedPrice ? "seller" : "admin"),
@@ -36834,8 +36896,8 @@ function bindSellForm() {
         listing.userId      = existing.userId      || listing.userId;
         listing.sellerUserId = existing.sellerUserId || listing.sellerUserId;
         listing.ownerId     = existing.ownerId     || listing.ownerId;
-        listing.sellerName  = existing.sellerName  || listing.sellerName;
-        listing.sellerEmail = existing.sellerEmail || listing.sellerEmail;
+        listing.seller      = 'Seller';
+        listing.sellerName  = 'Seller';
         listing.updatedAt   = new Date().toISOString().slice(0, 10);
         state.listings[existingIdx] = listing;
       }
@@ -36943,7 +37005,7 @@ function fillSignupLocations() {
   if (sdSel) sdSel.onchange = () => { updateSignupPlaces(); _checkUnlockPassword(); };
   initDobSelectors('signup');
   initDobSelectors('acc');
-  ['signupFullName','signupMobile','signupDobDay','signupDobMonth','signupDobYear','signupClass','signupState','signupDistrict','signupSubDistrict','signupPlace','signupSchool','signupPassport'].forEach(id => {
+  ['signupFullName','signupMobile','signupGender','signupDobDay','signupDobMonth','signupDobYear','signupClass','signupState','signupDistrict','signupSubDistrict','signupPlace','signupSchool','signupPassport'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
     el.addEventListener('input', _checkUnlockPassword);
@@ -37230,7 +37292,7 @@ function init() {
   // Account details dialog save + close
   const accSave = document.getElementById('accSaveBtn');
   if (accSave) accSave.onclick = saveAccountDetails;
-  ['accName','accMobile','accDobDay','accDobMonth','accDobYear','accClass','accState','accDistrict','accSubDistrict','accPlace','accSchool'].forEach(id => {
+  ['accName','accMobile','accGender','accDobDay','accDobMonth','accDobYear','accClass','accState','accDistrict','accSubDistrict','accPlace','accSchool'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
     el.addEventListener('input', _updateAccountSaveState);
