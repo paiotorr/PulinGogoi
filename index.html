@@ -33999,7 +33999,13 @@ function renderBoards() {
   }
   boardGrid.innerHTML = bds.map(name => '<button class="stream-card" data-board="' + name + '"><strong>' + name + '</strong></button>').join("");
   document.querySelectorAll("[data-board]").forEach(card => {
-    card.onclick = () => { selectedBoard = card.dataset.board; selectedStream=""; selectedBookId=""; catalogStep="books"; render(); };
+    card.onclick = () => {
+      selectedBoard = card.dataset.board;
+      selectedStream = "";
+      selectedBookId = "";
+      catalogStep = (selectedClass === "Class 11" || selectedClass === "Class 12") ? "streams" : "books";
+      render();
+    };
   });
 }
 function renderStreams() {
@@ -36722,7 +36728,7 @@ function render() {
   } else {
     if (_catTitleEl) {
       _catTitleEl.style.display = "";
-      _catTitleEl.textContent = catalogStep === "classes" ? "Classes" : catalogStep === "boards" ? "Boards" : "Streams";
+      _catTitleEl.textContent = catalogStep === "classes" ? "Classes" : catalogStep === "boards" ? "Boards" : catalogStep === "streams" ? "Streams" : "Subjects";
     }
     if (_mediumFilterEl) _mediumFilterEl.style.display = "none";
   }
