@@ -66,9 +66,6 @@ button, input, select, textarea { font: inherit; }
   padding: 18px; position: fixed; top: 78px; transform: translateX(-50%); z-index: 90;
   max-height: calc(100vh - 104px); overflow-y: auto; overscroll-behavior: contain;
 }
-/* Scroll lock when the menu is open is applied in JS (bindMenu) with
-   scrollbar-width compensation so the page doesn't shift sideways. */
-.menu-backdrop { touch-action: none; }
 .menu-backdrop { background: rgba(15,23,42,0.42); backdrop-filter: blur(4px); display: none; inset: 58px 0 0; position: fixed; z-index: 85; }
 .menu-backdrop.open { display: block; }
 .menu-panel.open { display: flex; flex-direction: column; }
@@ -34109,57 +34106,82 @@ function renderBooks() {
   });
   const sellers = Object.keys(sellerGroups).map(k => sellerGroups[k]);
 
-  grid.innerHTML = '<div class="seller-cards-grid">' + sellers.map(s => {
-    return '<div class="seller-card" data-seller-uid="' + _acEsc(s.uid) + '">' +
-      '<div class="seller-card-icon">' + _sellerAvatarHtml(s) + '</div>' +
-      '<div class="seller-card-name">Name - ' + _acEsc(s.name || 'Seller') + '</div>' +
-      '<hr class="seller-card-divider">' +
-      '<div class="seller-card-school">' + _acEsc(s.school || 'Not added') + '</div>' +
-      '<div class="seller-card-meta">' + (s.place ? _acEsc(s.place) + ' · ' : '') + s.listings.length + ' book' + (s.listings.length > 1 ? 's' : '') + ' available</div>' +
-    '</div>';
-  }).join('') + '</div>';
+  // Group by PLACE first (keep place headings), then by seller within each place
+  const placeGroups = {};
+  matches.forEach(l => {
+    const place = String(l.place || 'Place not added').trim();
+    (placeGroups[place] = placeGroups[place] || []).push(l);
+  });
+  // myPlace already declared above
+  const placeNames = Object.keys(placeGroups).sort((a,b) => {
+    const aMine = myPlace && _sameText(a, myPlace);
+    const bMine = myPlace && _sameText(b, myPlace);
+    if (aMine !== bMine) return aMine ? -1 : 1;
+    return a.localeCompare(b);
+  });
 
-  // Bind seller-card clicks: show that seller's books as a clean separate page
+  grid.innerHTML = placeNames.map(place => {
+    const placeSellers = {};
+    placeGroups[place].forEach(l => {
+      const uid = String(l.userId || l.sellerUserId || l.ownerId || '').trim() || ('anon_' + (l.id || ''));
+      if (!placeSellers[uid]) placeSellers[uid] = { uid: uid, name: l.sellerName || 'Seller', school: l.school || '', listings: [] };
+      placeSellers[uid].listings.push(l);
+      if (!placeSellers[uid].school && l.school) placeSellers[uid].school = l.school;
+    });
+    const sellerArr = Object.keys(placeSellers).map(k => placeSellers[k]);
+    const heading = '<div class="seller-place-heading"><strong>' + _acEsc(place) + '</strong></div>';
+    const cards = '<div class="seller-cards-grid">' + sellerArr.map(sel => {
+      return '<div class="seller-card" data-seller-uid="' + _acEsc(sel.uid) + '">' +
+        '<div class="seller-card-icon">' + _sellerAvatarHtml(sel) + '</div>' +
+        '<div class="seller-card-name">Name - ' + _acEsc(sel.name) + '</div>' +
+        '<hr class="seller-card-divider">' +
+        '<div class="seller-card-school">' + _acEsc(sel.school || 'Not added') + '</div>' +
+        '<div class="seller-card-meta">' + sel.listings.length + ' book' + (sel.listings.length > 1 ? 's' : '') + ' available</div>' +
+      '</div>';
+    }).join('') + '</div>';
+    return '<div class="seller-place-group">' + heading + cards + '</div>';
+  }).join('');
+
   grid.querySelectorAll('[data-seller-uid]').forEach(card => {
     card.onclick = () => {
       const uid = card.getAttribute('data-seller-uid');
-      const sg = sellerGroups[uid]; if (!sg) return;
-      const sListings = sg.listings;
-      const bookCards = sListings.map(l => {
-        const price = Number(l.price || 0) || 0;
-        const title = (l.className ? l.className + ' ' : '') + (l.title || l.bookTitle || 'Book');
-        return '<label class="seller-listed-book">' +
-          '<input type="checkbox" class="seller-book-cb" data-lid="' + _acEsc(l.id) + '" data-price="' + price + '">' +
-          '<div class="seller-listed-book-info">' +
-            '<strong>' + _acEsc(title) + '</strong>' +
-            (l.customSubject ? '<span class="book-detail">' + _acEsc(l.customSubject) + '</span>' : '') +
-            '<span class="book-detail">' + (price ? '₹' + price + ' · ' : '') + _acEsc(l.condition || 'Condition not set') + '</span>' +
-            (l.place ? '<span class="book-detail">' + _acEsc(l.place) + '</span>' : '') +
-          '</div>' +
-        '</label>';
+      const sellerListings = matches.filter(l => {
+        const lu = String(l.userId || l.sellerUserId || l.ownerId || '').trim();
+        return lu === uid;
+      });
+      if (!sellerListings.length) return;
+      const sName = sellerListings[0].sellerName || 'Seller';
+      const sSchool = sellerListings[0].school || '';
+      const _rs = 'font-size:13px;line-height:1.55;color:var(--muted);font-weight:600;';
+      const _vs = 'font-size:13px;color:var(--text);font-weight:700;';
+      const header = '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">' +
+        '<div class="seller-card-icon">' + _sellerAvatarHtml({}) + '</div>' +
+        '<div><strong style="font-size:15px;font-weight:950;">' + _acEsc(sName) + '</strong>' +
+        (sSchool ? '<div style="font-size:12px;font-weight:800;color:var(--muted);">' + _acEsc(sSchool) + '</div>' : '') +
+        '</div></div>';
+      const bookCards = sellerListings.map(l => {
+        const title = l.title || l.bookTitle || l.subject || 'Book';
+        const rows = [];
+        if (l.condition) rows.push('<span style="' + _rs + '">Condition: <span style="' + _vs + '">' + _acEsc(l.condition) + '</span></span>');
+        if (l.school)    rows.push('<span style="' + _rs + '">School: <span style="' + _vs + '">' + _acEsc(l.school) + '</span></span>');
+        if (l.place)     rows.push('<span style="' + _rs + '">Place: <span style="' + _vs + '">' + _acEsc(l.place) + '</span></span>');
+        if (l.price)     rows.push('<span style="' + _rs + '">Price ₹: <span style="' + _vs + '">' + _acEsc(String(l.price)) + '</span></span>');
+        return '<button class="seller-subject-card" type="button" data-msg-listing="' + _acEsc(l.id) + '">' +
+          '<strong style="border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:4px;color:var(--text);font-size:16px;font-weight:950;line-height:1.3;">' + _acEsc(title) + '</strong>' +
+          rows.join('') +
+          '</button>';
       }).join('');
-      grid.innerHTML =
-        '<button class="btn btn-ghost btn-sm" type="button" data-back-browse style="margin-bottom:12px;">← Back to sellers</button>' +
-        '<div class="seller-profile-header">' +
-          '<div class="seller-card-icon" style="width:64px;height:64px;margin:0 auto 12px;">' + _sellerAvatarHtml(sg) + '</div>' +
-          '<div class="seller-card-name">Name - ' + _acEsc(sg.name || 'Seller') + '</div>' +
-          '<hr class="seller-card-divider">' +
-          '<div class="seller-card-school">' + _acEsc(sg.school || '') + '</div>' +
-          '<div class="seller-card-meta">' + _acEsc(sg.place || '') + '</div>' +
-        '</div>' +
-        '<div class="seller-books-heading">Listed Books</div>' +
-        bookCards +
-        '<div id="buyTotalRow" style="font-weight:950;margin-top:12px;font-size:15px;">Total: ₹0</div>' +
-        (state.settings.messaging !== false
-          ? '<button class="btn btn-primary" type="button" data-buy-seller style="width:100%;margin-top:12px;">🛒 Buy / Message Seller</button>'
-          : '<p style="color:var(--muted);font-size:12px;margin-top:10px;">In-app messaging is currently disabled.</p>');
-      const backBtn = grid.querySelector('[data-back-browse]');
-      if (backBtn) backBtn.onclick = () => render();
-      grid.querySelectorAll('.seller-book-cb').forEach(cb => { cb.onchange = _updateBuyTotal; });
-      const buyBtn = grid.querySelector('[data-buy-seller]');
-      if (buyBtn) buyBtn.onclick = () => _buySelectedFromSeller(uid);
+      grid.innerHTML = header + bookCards;
+      grid.querySelectorAll('[data-msg-listing]').forEach(btn => {
+        btn.onclick = () => {
+          triggerAdMob('subjectClick');
+          if (!requireLogin()) return;
+          startListingChat(btn.getAttribute('data-msg-listing'));
+        };
+      });
     };
   });
+
 }
 
 function _listingMatchesBrowse(l, district, subDistrict) {
@@ -34924,7 +34946,7 @@ function _sellerAvatarHtml(s) {
   }
   return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>';
 }
-// Show all books listed by ONE seller (in the current class context), each selectable.
+// Show all books listed by ONE seller (in the current class context).
 function showSellerListings(uid) {
   const list = document.querySelector("#matchList");
   if (!list) return;
@@ -34939,40 +34961,32 @@ function showSellerListings(uid) {
   const sg = (window._lastSellerGroups && window._lastSellerGroups[uid]) || {};
   const sName = sg.name || mine[0].sellerName || 'Seller';
   const sSchool = sg.school || mine[0].school || '';
-  const sPlace = (mine[0] && mine[0].place) || '';
+  const _rs = 'font-size:13px;line-height:1.55;color:var(--muted);font-weight:600;';
+  const _vs = 'font-size:13px;color:var(--text);font-weight:700;';
+  const header = '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">' +
+    '<div class="seller-card-icon">' + _sellerAvatarHtml(sg) + '</div>' +
+    '<div><strong style="font-size:15px;font-weight:950;">' + _acEsc(sName) + '</strong>' +
+    (sSchool ? '<div style="font-size:12px;font-weight:800;color:var(--muted);">' + _acEsc(sSchool) + '</div>' : '') +
+    '</div></div>';
   const bookCards = mine.map(l => {
-    const price = Number(l.price || 0) || 0;
-    const title = (l.className ? l.className + ' ' : '') + (l.title || l.bookTitle || 'Book');
-    return '<label class="seller-listed-book">' +
-      '<input type="checkbox" class="seller-book-cb" data-lid="' + _acEsc(l.id) + '" data-price="' + price + '">' +
-      '<div class="seller-listed-book-info">' +
-        '<strong>' + _acEsc(title) + '</strong>' +
-        (l.customSubject ? '<span class="book-detail">' + _acEsc(l.customSubject) + '</span>' : '') +
-        '<span class="book-detail">' + (price ? '₹' + price + ' · ' : '') + _acEsc(l.condition || 'Condition not set') + '</span>' +
-        (l.place ? '<span class="book-detail">' + _acEsc(l.place) + '</span>' : '') +
-      '</div>' +
-    '</label>';
+    const title = l.title || l.bookTitle || l.subject || 'Book';
+    const rows = [];
+    if (l.condition) rows.push('<span style="' + _rs + '">Condition: <span style="' + _vs + '">' + _acEsc(l.condition) + '</span></span>');
+    if (l.school)    rows.push('<span style="' + _rs + '">School: <span style="' + _vs + '">' + _acEsc(l.school) + '</span></span>');
+    if (l.place)     rows.push('<span style="' + _rs + '">Place: <span style="' + _vs + '">' + _acEsc(l.place) + '</span></span>');
+    if (l.price)     rows.push('<span style="' + _rs + '">Price ₹: <span style="' + _vs + '">' + _acEsc(String(l.price)) + '</span></span>');
+    return '<button class="seller-subject-card" type="button" data-msg-listing="' + _acEsc(l.id) + '">' +
+      '<strong style="border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:4px;color:var(--text);font-size:16px;font-weight:950;line-height:1.3;">' + _acEsc(title) + '</strong>' +
+      rows.join('') +
+      '</button>';
   }).join("");
-  list.innerHTML =
-    '<button class="btn btn-ghost btn-sm" type="button" data-back-sellers style="margin-bottom:12px;">← Back to sellers</button>' +
-    '<div class="seller-profile-header">' +
-      '<div class="seller-card-icon" style="width:64px;height:64px;margin:0 auto 12px;">' + _sellerAvatarHtml(sg) + '</div>' +
-      '<div class="seller-card-name">Name - ' + _acEsc(sName) + '</div>' +
-      '<hr class="seller-card-divider">' +
-      '<div class="seller-card-school">' + _acEsc(sSchool) + '</div>' +
-      '<div class="seller-card-meta">' + _acEsc(sPlace) + '</div>' +
-    '</div>' +
-    '<div class="seller-books-heading">Listed Books</div>' +
-    bookCards +
-    '<div id="buyTotalRow" style="font-weight:950;margin-top:12px;font-size:15px;">Total: ₹0</div>' +
-    (state.settings.messaging !== false
-      ? '<button class="btn btn-primary" type="button" data-buy-seller style="width:100%;margin-top:12px;">🛒 Buy / Message Seller</button>'
-      : '<p style="color:var(--muted);font-size:12px;margin-top:10px;">In-app messaging is currently disabled.</p>');
-  const backBtn = list.querySelector('[data-back-sellers]');
-  if (backBtn) backBtn.onclick = () => renderMatches();
-  list.querySelectorAll('.seller-book-cb').forEach(cb => { cb.onchange = _updateBuyTotal; });
-  const buyBtn = list.querySelector('[data-buy-seller]');
-  if (buyBtn) buyBtn.onclick = () => _buySelectedFromSeller(uid);
+  list.innerHTML = header + bookCards;
+  list.querySelectorAll('[data-msg-listing]').forEach(btn => {
+    btn.onclick = () => {
+      if (!requireLogin()) return;
+      startListingChat(btn.getAttribute('data-msg-listing'));
+    };
+  });
 }
 function _updateBuyTotal() {
   const boxes = Array.prototype.slice.call(document.querySelectorAll('.seller-book-cb:checked'));
@@ -36903,37 +36917,6 @@ function bindMenu() {
   const btn = document.getElementById("menuBtn");
   const panel = document.getElementById("menuPanel");
   const backdrop = document.getElementById("menuBackdrop");
-  // Single source of truth for background scroll lock: whenever the menu
-  // panel gains/loses the "open" class (via ANY code path), freeze/unfreeze
-  // the page behind it — WITHOUT shifting the layout. Setting overflow:hidden
-  // removes the scrollbar, which would shove the page sideways; we add an
-  // equal padding-right to compensate, so nothing visibly moves.
-  const _applyMenuScrollLock = () => {
-    const open = !!(panel && panel.classList.contains("open"));
-    const locked = document.body.classList.contains("menu-open");
-    if (open && !locked) {
-      const sbw = window.innerWidth - document.documentElement.clientWidth; // scrollbar width
-      document.documentElement.style.overflow = "hidden";
-      document.body.style.overflow = "hidden";
-      if (sbw > 0) document.body.style.paddingRight = sbw + "px";
-      document.documentElement.classList.add("menu-open");
-      document.body.classList.add("menu-open");
-    } else if (!open && locked) {
-      document.documentElement.style.overflow = "";
-      document.body.style.overflow = "";
-      document.body.style.paddingRight = "";
-      document.documentElement.classList.remove("menu-open");
-      document.body.classList.remove("menu-open");
-    }
-  };
-  if (panel && typeof MutationObserver !== "undefined") {
-    try {
-      new MutationObserver(_applyMenuScrollLock).observe(panel, { attributes: true, attributeFilter: ["class"] });
-    } catch(_) {}
-  }
-  _applyMenuScrollLock();
-  // On mobile, stop touches on the dimmed backdrop from scrolling the page behind.
-  backdrop?.addEventListener("touchmove", e => { e.preventDefault(); }, { passive: false });
   const closeMenu = () => { btn.classList.remove("open"); panel.classList.remove("open"); backdrop?.classList.remove("open"); };
   btn.onclick = () => {
     const opening = !panel.classList.contains("open");
