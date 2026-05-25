@@ -66,8 +66,8 @@ button, input, select, textarea { font: inherit; }
   padding: 18px; position: fixed; top: 78px; transform: translateX(-50%); z-index: 90;
   max-height: calc(100vh - 104px); overflow-y: auto; overscroll-behavior: contain;
 }
-/* Freeze the page behind the menu while it's open (restored on close). */
-html.menu-open, body.menu-open { overflow: hidden !important; }
+/* Scroll lock when the menu is open is applied in JS (bindMenu) with
+   scrollbar-width compensation so the page doesn't shift sideways. */
 .menu-backdrop { touch-action: none; }
 .menu-backdrop { background: rgba(15,23,42,0.42); backdrop-filter: blur(4px); display: none; inset: 58px 0 0; position: fixed; z-index: 85; }
 .menu-backdrop.open { display: block; }
@@ -150,6 +150,19 @@ label { color: #444; display: grid; font-size: 13px; font-weight: 900; gap: 5px;
 .selected-box span { color: var(--muted); display: block; font-weight: 900; margin-top: 4px; }
 .result-list { display: grid; gap: 10px; margin-top: 14px; }
 .result-card { border: 2px solid var(--line); border-radius: 14px; padding: 12px; }
+.seller-card { cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+.seller-card:hover { border-color: var(--red); box-shadow: 0 4px 16px rgba(220,38,38,0.10); }
+.seller-card-row { display: flex; align-items: center; gap: 12px; }
+.seller-avatar { width: 46px; height: 46px; border-radius: 50%; background: var(--red-light); color: var(--red); display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; }
+.seller-card-info { flex: 1; min-width: 0; }
+.seller-card-info strong { display: block; font-size: 15px; }
+.seller-card-info span { color: var(--muted); display: block; font-size: 12px; font-weight: 800; margin-top: 2px; }
+.seller-card-arrow { font-size: 26px; color: var(--muted); line-height: 1; flex-shrink: 0; }
+.seller-book-row { display: flex; align-items: center; gap: 10px; padding: 10px; border: 2px solid var(--line); border-radius: 12px; margin-bottom: 8px; cursor: pointer; }
+.seller-book-row input { width: 20px; height: 20px; flex-shrink: 0; accent-color: var(--red); }
+.seller-book-info { flex: 1; min-width: 0; }
+.seller-book-info strong { display: block; font-size: 14px; }
+.seller-book-info span { color: var(--muted); font-size: 12px; font-weight: 800; }
 .result-card[data-open-listing] { cursor: pointer; }
 .result-card strong { display: block; }
 .result-card span { color: var(--muted); display: block; font-size: 12px; font-weight: 900; margin-top: 4px; }
@@ -1672,7 +1685,8 @@ const seed = {
     "passport": false,
     "allowUserPrice": false,
     "messaging": true,
-    "allowSubjectAdding": true
+    "allowSubjectAdding": true,
+    "profilePic": false
   },
   "adMob": {
     "appId": "",
@@ -34850,38 +34864,148 @@ function _renderMatchList(bId, query, sellerNameMap, removedSellerUids, sourceLi
       ? query.place
       : (subDistrictMatches.length ? 'Other places in ' + (query.subDistrict || 'this sub-district') : query.place))
     : 'Matching sellers';
-  list.innerHTML = matches.length ? matches.map(l => {
-    const location = [l.place,l.subDistrict,l.district,l.state].filter(Boolean).join(', ');
-    // FIX: prefer the live name fetched from /users over the stale stored name
-    const lUid = String(l.userId || l.sellerUserId || '').trim();
-    const displayName = 'Seller';
-    const listingTitle = l.title || l.bookTitle || book()?.title || 'Book';
-    const listingPrice = l.price ? ('â‚¹' + l.price) : 'Price not added';
-    return '<div class="result-card" data-open-listing="' + _acEsc(l.id) + '"><strong>' + _acEsc(displayName) + '</strong>' +
-      '<span>Book: ' + _acEsc(listingTitle) + '</span>' +
-      '<span>Price: ' + _acEsc(listingPrice) + '</span>' +
-      '<span>School/College: ' + _acEsc(l.school || 'Not added') + '</span>' +
-      '<span>Medium: ' + _acEsc(l.medium || 'Not added') + '</span>' +
-      '<span>Place: ' + _acEsc(l.place || 'Not added') + '</span>' +
-      '<span>' + _acEsc(location || 'Location not added') + '</span>' +
-      '<span>Condition: ' + _acEsc(l.condition || 'Not set') + (l.price ? ' · ₹' + _acEsc(l.price) : '') + '</span>' +
-      (l.details ? '<span>Details: ' + _acEsc(l.details) + '</span>' : '') +
-      '<div class="contact-row">' +
-      (state.settings.messaging!==false?'<button class="btn btn-primary" type="button" style="font-size:12px;" data-message-listing="' + _acEsc(l.id) + '">Message Seller</button>':'') +
+  // Group matching listings BY SELLER → show seller cards instead of every book.
+  const groups = {};
+  matches.forEach(l => {
+    const uid = String(l.userId || l.sellerUserId || l.ownerId || '').trim() || ('anon_' + (l.id || ''));
+    if (!groups[uid]) groups[uid] = { uid, name: (sellerNameMap[uid] || l.sellerName || 'Seller'), school: l.school || '', listings: [] };
+    groups[uid].listings.push(l);
+    if (!groups[uid].school && l.school) groups[uid].school = l.school;
+  });
+  window._lastSellerGroups = groups;
+  const sellerCards = Object.keys(groups).map(k => groups[k]);
+  list.innerHTML = sellerCards.length ? sellerCards.map(s => {
+    return '<div class="result-card seller-card" data-seller-card="' + _acEsc(s.uid) + '">' +
+      '<div class="seller-card-row">' +
+        '<div class="seller-avatar">' + _sellerAvatarHtml(s) + '</div>' +
+        '<div class="seller-card-info">' +
+          '<strong>' + _acEsc(s.name || 'Seller') + '</strong>' +
+          '<span>School/College: ' + _acEsc(s.school || 'Not added') + '</span>' +
+          '<span>' + s.listings.length + ' book' + (s.listings.length > 1 ? 's' : '') + ' available · tap to view</span>' +
+        '</div>' +
+        '<div class="seller-card-arrow">›</div>' +
       '</div></div>';
   }).join("") : '<p style="color:#888;font-size:13px;font-weight:700;padding:8px 0;">No sellers found in ' + _acEsc(query.subDistrict || query.place || 'this area') + ' for this book yet.</p>';
-  if (matches.length) {
+  if (sellerCards.length) {
     list.innerHTML = '<div style="font-size:14px;font-weight:950;color:var(--text);padding:2px 0 4px;">' + _acEsc(resultTitle) + '</div>' + list.innerHTML;
   }
-  list.querySelectorAll('[data-message-listing]').forEach(btn => {
-    btn.onclick = () => startListingChat(btn.getAttribute('data-message-listing'));
+  list.querySelectorAll('[data-seller-card]').forEach(card => {
+    card.onclick = () => showSellerListings(card.getAttribute('data-seller-card'));
   });
-  list.querySelectorAll('[data-open-listing]').forEach(card => {
-    card.onclick = (e) => {
-      if (e.target.closest('button,a')) return;
-      startListingChat(card.getAttribute('data-open-listing'));
-    };
+}
+function _sellerAvatarHtml(s) {
+  if (state.settings && state.settings.profilePic === true && s && s.photoURL) {
+    return '<img src="' + _acEsc(s.photoURL) + '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+  }
+  return '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>';
+}
+// Show all books listed by ONE seller (in the current class context), each selectable.
+function showSellerListings(uid) {
+  const list = document.querySelector("#matchList");
+  if (!list) return;
+  const clsCtx = (typeof book === 'function' && book() && book().className) || selectedClass || '';
+  const mine = (state.listings || []).filter(l => {
+    const lu = String(l.userId || l.sellerUserId || l.ownerId || '').trim();
+    if (lu !== String(uid)) return false;
+    if (clsCtx && l.className && !_sameText(l.className, clsCtx)) return false;
+    return !_isMineListing(l);
   });
+  if (!mine.length) { toast('This seller has no available books here.'); return; }
+  const sName = (window._lastSellerGroups && window._lastSellerGroups[uid] && window._lastSellerGroups[uid].name) || mine[0].sellerName || 'Seller';
+  const sSchool = mine[0].school || '';
+  const rows = mine.map(l => {
+    const price = Number(l.price || 0) || 0;
+    const title = (l.className ? l.className + ' ' : '') + (l.title || l.bookTitle || 'Book');
+    const sub = (price ? '₹' + price : 'Price not added') + ' · ' + (l.condition || 'Condition not set') + (l.place ? ' · ' + l.place : '');
+    return '<label class="seller-book-row">' +
+      '<input type="checkbox" class="seller-book-cb" data-lid="' + _acEsc(l.id) + '" data-price="' + price + '">' +
+      '<span class="seller-book-info"><strong>' + _acEsc(title) + '</strong><span>' + _acEsc(sub) + '</span></span>' +
+      '</label>';
+  }).join("");
+  list.innerHTML =
+    '<button class="btn btn-ghost btn-sm" type="button" data-back-sellers style="margin-bottom:10px;">← Back to sellers</button>' +
+    '<div class="result-card">' +
+      '<div class="seller-card-row" style="margin-bottom:10px;">' +
+        '<div class="seller-avatar">' + _sellerAvatarHtml(window._lastSellerGroups ? window._lastSellerGroups[uid] : null) + '</div>' +
+        '<div class="seller-card-info"><strong>' + _acEsc(sName) + '</strong>' + (sSchool ? '<span>' + _acEsc(sSchool) + '</span>' : '') + '</div>' +
+      '</div>' +
+      '<div style="font-weight:900;font-size:13px;margin-bottom:6px;">Select the book(s) you want to buy:</div>' +
+      rows +
+      '<div id="buyTotalRow" style="font-weight:950;margin-top:12px;font-size:15px;">Total: ₹0</div>' +
+      (state.settings.messaging !== false
+        ? '<button class="btn btn-primary" type="button" data-buy-seller style="width:100%;margin-top:12px;">🛒 Buy / Message Seller</button>'
+        : '<p style="color:var(--muted);font-size:12px;margin-top:10px;">In-app messaging is currently disabled.</p>') +
+    '</div>';
+  // Bind handlers in JS (these functions aren't global, so inline onclick won't find them).
+  const backBtn = list.querySelector('[data-back-sellers]');
+  if (backBtn) backBtn.onclick = () => renderMatches();
+  list.querySelectorAll('.seller-book-cb').forEach(cb => { cb.onchange = _updateBuyTotal; });
+  const buyBtn = list.querySelector('[data-buy-seller]');
+  if (buyBtn) buyBtn.onclick = () => _buySelectedFromSeller(uid);
+}
+function _updateBuyTotal() {
+  const boxes = Array.prototype.slice.call(document.querySelectorAll('.seller-book-cb:checked'));
+  let t = 0;
+  boxes.forEach(b => { t += Number(b.getAttribute('data-price')) || 0; });
+  const el = document.getElementById('buyTotalRow');
+  if (el) el.textContent = 'Total: ₹' + t + (boxes.length ? ('  (' + boxes.length + ' selected)') : '');
+}
+// Collect the buyer's selected books from one seller, compose a message, open chat.
+async function _buySelectedFromSeller(uid) {
+  if (!requireLogin()) return;
+  const boxes = Array.prototype.slice.call(document.querySelectorAll('.seller-book-cb:checked'));
+  if (!boxes.length) { toast('Please select at least one book first.'); return; }
+  const ids = boxes.map(b => String(b.getAttribute('data-lid')));
+  const listings = (state.listings || []).filter(l => ids.indexOf(String(l.id)) !== -1);
+  if (!listings.length) { toast('Selected books not found.'); return; }
+  let total = 0;
+  const lines = listings.map((l, i) => {
+    const price = Number(l.price || 0) || 0;
+    total += price;
+    const title = (l.className ? l.className + ' ' : '') + (l.title || l.bookTitle || 'Book');
+    return (i + 1) + '. ' + title + (price ? ' — ₹' + price : '');
+  });
+  let msg = 'Hi, I want to buy these books:\n' + lines.join('\n');
+  if (total) msg += '\nTotal: ₹' + total;
+  msg += '\nIs it available?';
+  await _openSellerChat(uid, listings[0], msg, listings.length);
+}
+// Open (or reuse) a single chat thread with a seller and pre-fill the first message.
+async function _openSellerChat(sellerUid, contextListing, prefillMsg, bookCount) {
+  if (!requireLogin()) return;
+  const me = _myChatUid();
+  sellerUid = String(sellerUid || '').trim();
+  if (!me || !sellerUid) { toast('Could not open chat for this seller.'); return; }
+  if (me === sellerUid) { toast('This is your own listing.'); return; }
+  // One thread per buyer-seller pair (not per book), so multiple buys stay together.
+  const pseudo = { id: 'seller_' + sellerUid, bookId: '', title: '' };
+  const chatId = _chatIdFor(pseudo, me, sellerUid);
+  const hidden = _getHiddenChatMap();
+  if (hidden[chatId]) { delete hidden[chatId]; _saveHiddenChatMap(hidden); }
+  const existing = _getLocalChats().find(c => c.id === chatId) || {};
+  const bookTitle = (bookCount && bookCount > 1) ? (bookCount + ' books') : ((contextListing && (contextListing.title || contextListing.bookTitle)) || 'book');
+  const chat = Object.assign({}, existing, {
+    id: chatId,
+    listingId: (contextListing && contextListing.id) || '',
+    bookId: (contextListing && contextListing.bookId) || '',
+    bookTitle: bookTitle,
+    participants: [me, sellerUid],
+    buyerUid: me,
+    sellerUid: sellerUid,
+    buyerName: (window._currentUser && window._currentUser.name) || 'Buyer',
+    sellerName: 'Seller',
+    updatedAt: new Date().toISOString(),
+    messages: Array.isArray(existing.messages) ? existing.messages : []
+  });
+  _upsertLocalChat(chat);
+  const synced = await _saveChatToFirestore(chat);
+  if (!synced && _db) toast('Chat opened locally. Online sync is not enabled yet.');
+  _showMessagesPage();
+  renderMessages(true);
+  openChat(chatId);
+  const input = document.getElementById('messageInput');
+  if (input) { input.value = prefillMsg; input.focus(); }
+  _autosizeMessageInput();
 }
 function _isMineListing(l) {
   const u = window._currentUser || {};
@@ -36750,12 +36874,26 @@ function bindMenu() {
   const backdrop = document.getElementById("menuBackdrop");
   // Single source of truth for background scroll lock: whenever the menu
   // panel gains/loses the "open" class (via ANY code path), freeze/unfreeze
-  // the page behind it. Using a MutationObserver means we don't have to patch
-  // every place that opens or closes the menu.
+  // the page behind it — WITHOUT shifting the layout. Setting overflow:hidden
+  // removes the scrollbar, which would shove the page sideways; we add an
+  // equal padding-right to compensate, so nothing visibly moves.
   const _applyMenuScrollLock = () => {
     const open = !!(panel && panel.classList.contains("open"));
-    document.documentElement.classList.toggle("menu-open", open);
-    document.body.classList.toggle("menu-open", open);
+    const locked = document.body.classList.contains("menu-open");
+    if (open && !locked) {
+      const sbw = window.innerWidth - document.documentElement.clientWidth; // scrollbar width
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
+      if (sbw > 0) document.body.style.paddingRight = sbw + "px";
+      document.documentElement.classList.add("menu-open");
+      document.body.classList.add("menu-open");
+    } else if (!open && locked) {
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
+      document.documentElement.classList.remove("menu-open");
+      document.body.classList.remove("menu-open");
+    }
   };
   if (panel && typeof MutationObserver !== "undefined") {
     try {
