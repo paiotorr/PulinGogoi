@@ -34099,7 +34099,7 @@ function renderBooks() {
   const sellerGroups = {};
   matches.forEach(l => {
     const uid = String(l.userId || l.sellerUserId || l.ownerId || '').trim() || ('anon_' + (l.id || ''));
-    if (!sellerGroups[uid]) sellerGroups[uid] = { uid, name: l.sellerName || 'Seller', school: l.school || '', place: l.place || '', listings: [] };
+    if (!sellerGroups[uid]) sellerGroups[uid] = { uid, name: _sellerDisplayNameForListing(l), school: l.school || '', place: l.place || '', listings: [] };
     sellerGroups[uid].listings.push(l);
     if (!sellerGroups[uid].school && l.school) sellerGroups[uid].school = l.school;
     if (!sellerGroups[uid].place && l.place) sellerGroups[uid].place = l.place;
@@ -34124,7 +34124,7 @@ function renderBooks() {
     const placeSellers = {};
     placeGroups[place].forEach(l => {
       const uid = String(l.userId || l.sellerUserId || l.ownerId || '').trim() || ('anon_' + (l.id || ''));
-      if (!placeSellers[uid]) placeSellers[uid] = { uid: uid, name: l.seller || l.sellerName || 'Seller', school: l.school || '', listings: [] };
+      if (!placeSellers[uid]) placeSellers[uid] = { uid: uid, name: _sellerDisplayNameForListing(l), school: l.school || '', listings: [] };
       placeSellers[uid].listings.push(l);
       if (!placeSellers[uid].school && l.school) placeSellers[uid].school = l.school;
     });
@@ -34151,7 +34151,8 @@ function renderBooks() {
         return lu === uid;
       });
       if (!sellerListings.length) return;
-      let sName = sellerListings[0].seller || sellerListings[0].sellerName || 'Seller';
+      const sellerGroup = sellerGroups[uid] || {};
+      let sName = _sellerNameCandidate(sellerGroup.name) || _sellerDisplayNameForListing(sellerListings[0]);
       const sSchool = sellerListings[0].school || '';
       const _doRender = (name) => {
         const _rs = 'font-size:13px;line-height:1.55;color:var(--muted);font-weight:600;';
@@ -34250,11 +34251,36 @@ function _loadBrowseListings() {
       if (typeof renderMyListings === 'function') renderMyListings(true);
     }, e => console.warn('[PKITAAP] Browse listings live load failed:', e));
 }
+function _sellerNameCandidate(value) {
+  const name = String(value || '').trim();
+  return name && name.toLowerCase() !== 'seller' ? name : '';
+}
+function _sellerUidForListing(l) {
+  l = l || {};
+  return String(l.sellerUserId || l.userId || l.ownerId || l.uid || '').trim();
+}
+function _knownSellerNameForListing(l) {
+  const uid = _sellerUidForListing(l);
+  if (!uid) return '';
+  const users = [];
+  try { if (Array.isArray(state && state.users)) users.push(...state.users); } catch(e) {}
+  try { if (typeof S !== 'undefined' && Array.isArray(S.users)) users.push(...S.users); } catch(e) {}
+  try { if (typeof _fbUsers !== 'undefined' && Array.isArray(_fbUsers)) users.push(..._fbUsers); } catch(e) {}
+  const found = users.find(u => [u && u.uid, u && u.id, u && u.userId].some(id => String(id || '').trim() === uid));
+  return found ? _sellerNameCandidate(found.name || found.fullName || found.displayName) : '';
+}
+function _sellerDisplayNameForListing(l, sellerNameMap) {
+  const uid = _sellerUidForListing(l);
+  const mapped = uid && sellerNameMap ? _sellerNameCandidate(sellerNameMap[uid]) : '';
+  return mapped || _sellerNameCandidate(l && l.sellerDisplayName) || _sellerNameCandidate(l && l.sellerName) || _sellerNameCandidate(l && l.seller) || _knownSellerNameForListing(l) || 'Seller';
+}
 function _publicListingCopy(raw) {
   const l = Object.assign({}, raw || {});
   ['sellerEmail','email','mobile','sellerMobile','phone','whatsapp','userName'].forEach(k => delete l[k]);
-  l.seller = 'Seller';
-  l.sellerName = 'Seller';
+  const sellerName = _sellerDisplayNameForListing(raw || l);
+  l.seller = sellerName;
+  l.sellerName = sellerName;
+  l.sellerDisplayName = sellerName;
   return l;
 }
 
@@ -34880,7 +34906,7 @@ function renderMatches(bookId) {
       const removedSellerUids = {};
       try {
         const matchedListings = remoteListings.filter(l => _selectedBookMatchesListing(l, bId));
-        const uniqueUids = [...new Set(matchedListings.map(l => String(l.userId || l.sellerUserId || '').trim()).filter(Boolean))];
+        const uniqueUids = [...new Set(matchedListings.map(l => _sellerUidForListing(l)).filter(Boolean))];
         if (uniqueUids.length) {
           await Promise.all(uniqueUids.map(async uid => {
             try {
@@ -34927,7 +34953,7 @@ function _renderMatchList(bId, query, sellerNameMap, removedSellerUids, sourceLi
   const allMatches = (sourceListings || state.listings || [])
     .filter(l => _selectedBookMatchesListing(l, bId))
     .filter(l => {
-      const uid = String(l.userId || l.sellerUserId || '').trim();
+      const uid = _sellerUidForListing(l);
       return !(removedSellerUids && uid && removedSellerUids[uid]);
     })
     .filter(l => !query.medium || !l.medium || _sameText(l.medium, query.medium))
@@ -34955,7 +34981,7 @@ function _renderMatchList(bId, query, sellerNameMap, removedSellerUids, sourceLi
   const groups = {};
   matches.forEach(l => {
     const uid = String(l.userId || l.sellerUserId || l.ownerId || '').trim() || ('anon_' + (l.id || ''));
-    if (!groups[uid]) groups[uid] = { uid, name: (sellerNameMap[uid] || l.sellerName || 'Seller'), school: l.school || '', listings: [] };
+    if (!groups[uid]) groups[uid] = { uid, name: _sellerDisplayNameForListing(l, sellerNameMap), school: l.school || '', listings: [] };
     groups[uid].listings.push(l);
     if (!groups[uid].school && l.school) groups[uid].school = l.school;
   });
@@ -34997,7 +35023,7 @@ function showSellerListings(uid) {
   });
   if (!mine.length) { toast('This seller has no available books here.'); return; }
   const sg = (window._lastSellerGroups && window._lastSellerGroups[uid]) || {};
-  let sName = sg.name || mine[0].seller || mine[0].sellerName || 'Seller';
+  let sName = _sellerNameCandidate(sg.name) || _sellerDisplayNameForListing(mine[0]);
   const sSchool = sg.school || mine[0].school || '';
   const _renderBooks = (name) => {
     list.style.display = 'block'; // override parent grid so content stacks vertically
@@ -35096,7 +35122,7 @@ async function _openSellerChat(sellerUid, contextListing, prefillMsg, bookCount)
     buyerUid: me,
     sellerUid: sellerUid,
     buyerName: (window._currentUser && window._currentUser.name) || 'Buyer',
-    sellerName: 'Seller',
+    sellerName: _sellerDisplayNameForListing(contextListing),
     updatedAt: new Date().toISOString(),
     messages: Array.isArray(existing.messages) ? existing.messages : []
   });
@@ -35819,7 +35845,7 @@ async function startListingChat(listingId) {
   const me = _myChatUid();
   const sellerUid = await _resolveSellerUidForListing(listing);
   if (!me || !sellerUid) { toast('Could not open chat for this seller.'); return; }
-  const sellerName = 'Seller';
+  const sellerName = _sellerDisplayNameForListing(listing);
   const chatId = _chatIdFor(listing, me, sellerUid);
   const hidden = _getHiddenChatMap();
   if (hidden[chatId]) {
@@ -37112,8 +37138,10 @@ function bindSellForm() {
         listing.userId      = existing.userId      || listing.userId;
         listing.sellerUserId = existing.sellerUserId || listing.sellerUserId;
         listing.ownerId     = existing.ownerId     || listing.ownerId;
-        listing.seller      = 'Seller';
-        listing.sellerName  = 'Seller';
+        const sellerName = _sellerNameCandidate(listing.sellerDisplayName) || _sellerNameCandidate(listing.sellerName) || _sellerNameCandidate(listing.seller) || _sellerDisplayNameForListing(existing) || _sellerDisplayNameForListing(listing);
+        listing.seller = sellerName;
+        listing.sellerName = sellerName;
+        listing.sellerDisplayName = sellerName;
         listing.updatedAt   = new Date().toISOString().slice(0, 10);
         state.listings[existingIdx] = listing;
       }
