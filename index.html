@@ -34273,14 +34273,23 @@ function _sellerMobileToken(item) {
     .replace(/D/g, '')
     .slice(-10);
 }
+function _sellerAliasTokens(item) {
+  item = item || {};
+  const mobile = _sellerMobileToken(item);
+  const emails = _sellerEmailTokens(item);
+  return [...new Set([
+    ..._sellerIdentityTokens(item),
+    ...emails,
+    mobile,
+    mobile ? ('u' + mobile) : ''
+  ].map(v => String(v || '').trim().toLowerCase()).filter(Boolean))];
+}
 function _sellerUidForListing(l) {
   return _sellerIdentityTokens(l)[0] || '';
 }
 function _knownSellerNameForListing(l) {
-  const listingIds = new Set(_sellerIdentityTokens(l));
-  const listingEmails = new Set(_sellerEmailTokens(l));
-  const listingMobile = _sellerMobileToken(l);
-  if (!listingIds.size && !listingEmails.size && !listingMobile) return '';
+  const listingAliases = new Set(_sellerAliasTokens(l));
+  if (!listingAliases.size) return '';
   const users = [];
   try { if (Array.isArray(state && state.users)) users.push(...state.users); } catch(e) {}
   try { if (typeof S !== 'undefined' && Array.isArray(S.users)) users.push(...S.users); } catch(e) {}
@@ -34288,12 +34297,10 @@ function _knownSellerNameForListing(l) {
   for (const u of users) {
     const name = _sellerNameCandidate(u && (u.name || u.fullName || u.displayName));
     if (!name) continue;
-    const userIds = [...new Set([..._sellerIdentityTokens(u), String(u && u.id || '').trim()].filter(Boolean))];
-    if (userIds.some(id => listingIds.has(id))) return name;
-    const userEmails = _sellerEmailTokens(u);
-    if (userEmails.some(email => listingEmails.has(email))) return name;
-    const userMobile = _sellerMobileToken(u);
-    if (listingMobile && userMobile && listingMobile === userMobile) return name;
+    const userAliases = new Set(_sellerAliasTokens(u).concat(String(u && u.id || '').trim().toLowerCase()));
+    for (const key of userAliases) {
+      if (key && listingAliases.has(key)) return name;
+    }
   }
   return '';
 }
@@ -34301,17 +34308,27 @@ function _sellerDisplayNameForListing(l, sellerNameMap) {
   let mapped = '';
   if (sellerNameMap) {
     for (const key of _sellerIdentityTokens(l)) {
-      mapped = _sellerNameCandidate(sellerNameMap[key]);
+      const lk = String(key || '').trim().toLowerCase();
+      mapped = _sellerNameCandidate(sellerNameMap[lk] || sellerNameMap[key]);
       if (mapped) break;
     }
     if (!mapped) {
       for (const key of _sellerEmailTokens(l)) {
-        mapped = _sellerNameCandidate(sellerNameMap[key]);
+        const lk = String(key || '').trim().toLowerCase();
+        mapped = _sellerNameCandidate(sellerNameMap[lk] || sellerNameMap[key]);
         if (mapped) break;
       }
     }
     if (!mapped) {
-      mapped = _sellerNameCandidate(sellerNameMap[_sellerMobileToken(l)]);
+      const m = _sellerMobileToken(l);
+      mapped = _sellerNameCandidate(sellerNameMap[String(m || '').trim().toLowerCase()] || sellerNameMap[m]);
+    }
+    if (!mapped) {
+      for (const key of _sellerAliasTokens(l)) {
+        const lk = String(key || '').trim().toLowerCase();
+        mapped = _sellerNameCandidate(sellerNameMap[lk] || sellerNameMap[key]);
+        if (mapped) break;
+      }
     }
   }
   return mapped || _sellerNameCandidate(l && l.sellerDisplayName) || _sellerNameCandidate(l && l.sellerName) || _sellerNameCandidate(l && l.seller) || _knownSellerNameForListing(l) || 'Seller';
@@ -34971,7 +34988,10 @@ function renderMatches(bookId) {
                 return;
               }
               const name = _sellerNameCandidate(userData.name || userData.fullName || userData.displayName);
-              if (name) sellerNameMap[uid] = name;
+              if (name) {
+                sellerNameMap[String(uid || '').trim().toLowerCase()] = name;
+                _sellerAliasTokens(userData).forEach(key => { sellerNameMap[String(key || '').trim().toLowerCase()] = name; });
+              }
             } catch(e) {}
           }));
         }
@@ -34984,7 +35004,10 @@ function renderMatches(bookId) {
               const userData = qByEmail.docs[0].data() || {};
               if ((userData.status || 'active') === 'banned') return;
               const name = _sellerNameCandidate(userData.name || userData.fullName || userData.displayName);
-              if (name) sellerNameMap[email] = name;
+              if (name) {
+                sellerNameMap[String(email || '').trim().toLowerCase()] = name;
+                _sellerAliasTokens(userData).forEach(key => { sellerNameMap[String(key || '').trim().toLowerCase()] = name; });
+              }
             } catch(e) {}
           }));
         }
@@ -35002,10 +35025,22 @@ function renderMatches(bookId) {
               }
               if (!userData || (userData.status || 'active') === 'banned') return;
               const name = _sellerNameCandidate(userData.name || userData.fullName || userData.displayName);
-              if (name) sellerNameMap[mobile] = name;
+              if (name) {
+                sellerNameMap[String(mobile || '').trim().toLowerCase()] = name;
+                sellerNameMap['u' + String(mobile || '').trim()] = name;
+                _sellerAliasTokens(userData).forEach(key => { sellerNameMap[String(key || '').trim().toLowerCase()] = name; });
+              }
             } catch(e) {}
           }));
         }
+        remoteListings.forEach(l => {
+          const resolved = _sellerDisplayNameForListing(l, sellerNameMap);
+          if (resolved) {
+            l.seller = resolved;
+            l.sellerName = resolved;
+            l.sellerDisplayName = resolved;
+          }
+        });
       } catch(e) {}
       _renderMatchList(bId, query, sellerNameMap, removedSellerUids, remoteListings);
     }).catch(e=>{
@@ -35229,9 +35264,12 @@ async function _openSellerChat(sellerUid, contextListing, prefillMsg, bookCount)
 function _isMineListing(l) {
   const u = window._currentUser || {};
   if (!l || !u) return false;
-  const myOwnerIds = [u.uid, u.id].map(v => String(v || '').trim()).filter(Boolean);
+  const myMobile = _sellerMobileToken(u);
+  const myOwnerIds = [u.uid, u.id, u.userId, u.sellerUserId, u.email, myMobile, myMobile ? ('u' + myMobile) : '']
+    .map(v => String(v || '').trim())
+    .filter(Boolean);
   if (!myOwnerIds.length) return false;
-  const listingOwnerIds = [l.userId, l.uid, l.sellerUserId, l.ownerId]
+  const listingOwnerIds = [l.userId, l.uid, l.sellerUserId, l.ownerId, l.sellerEmail, l.email, _sellerMobileToken(l), _sellerMobileToken(l) ? ('u' + _sellerMobileToken(l)) : '']
     .map(v => String(v || '').trim())
     .filter(Boolean);
   if (!listingOwnerIds.length) return false;
@@ -35244,14 +35282,50 @@ async function _loadMyListingsFromFirestore() {
   const u = window._currentUser;
   if (!_db || !u || !(u.uid || u.id)) return;
   try {
-    const snap = await _db.collection('listings').where('userId','==',u.uid || u.id).get();
+    const refs = new Map();
+    const userKeys = [...new Set([
+      String(u.uid || '').trim(),
+      String(u.id || '').trim(),
+      String(u.userId || '').trim(),
+      String(u.sellerUserId || '').trim(),
+      String(u.email || '').trim(),
+      _sellerMobileToken(u),
+      _sellerMobileToken(u) ? ('u' + _sellerMobileToken(u)) : ''
+    ].filter(Boolean))];
+    for (const field of ['userId','sellerUserId','ownerId','uid','sellerEmail','email','mobile','phone']) {
+      for (const key of userKeys) {
+        try {
+          const qs = await _db.collection('listings').where(field, '==', key).get();
+          qs.docs.forEach(doc => refs.set(doc.id, doc));
+        } catch(e) {}
+      }
+    }
+    const docs = [...refs.values()];
     let changed = false;
-    snap.docs.forEach(doc => {
-      const data = _publicListingCopy(Object.assign({ id: doc.id }, doc.data()));
+    const myName = _sellerNameCandidate(u.name || u.fullName || u.displayName);
+    const repairBatch = _db.batch();
+    let repairCount = 0;
+    docs.forEach(doc => {
+      const raw = Object.assign({ id: doc.id }, doc.data());
+      const data = _publicListingCopy(raw);
+      const resolvedName = myName || _sellerDisplayNameForListing(raw) || _sellerDisplayNameForListing(data);
+      if (resolvedName && _sellerNameCandidate(data.sellerName) !== resolvedName) {
+        data.seller = resolvedName;
+        data.sellerName = resolvedName;
+        data.sellerDisplayName = resolvedName;
+        repairBatch.set(doc.ref, { seller: resolvedName, sellerName: resolvedName, sellerDisplayName: resolvedName }, { merge: true });
+        repairCount++;
+      }
       const idx = (state.listings || []).findIndex(x => x.id === data.id);
-      if (idx >= 0) state.listings[idx] = Object.assign({}, state.listings[idx], data);
+      if (idx >= 0) {
+        state.listings[idx] = Object.assign({}, state.listings[idx], data);
+        changed = true;
+      }
       else { state.listings.push(data); changed = true; }
     });
+    if (repairCount) {
+      try { await repairBatch.commit(); } catch(e) {}
+    }
     if (changed) save();
   } catch(e) {}
 }
