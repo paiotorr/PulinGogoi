@@ -34255,27 +34255,71 @@ function _sellerNameCandidate(value) {
   const name = String(value || '').trim();
   return name && name.toLowerCase() !== 'seller' ? name : '';
 }
+function _sellerIdentityTokens(item) {
+  item = item || {};
+  return [item.sellerUserId, item.userId, item.ownerId, item.uid, item.sellerUid, item.sellerId]
+    .map(v => String(v || '').trim())
+    .filter((v, i, arr) => v && arr.indexOf(v) === i);
+}
+function _sellerEmailTokens(item) {
+  item = item || {};
+  return [item.sellerEmail, item.email, item._sellerEmail, item._email]
+    .map(v => String(v || '').trim().toLowerCase())
+    .filter((v, i, arr) => v && arr.indexOf(v) === i);
+}
+function _sellerMobileToken(item) {
+  item = item || {};
+  return String(item.mobile || item.sellerMobile || item.phone || item.whatsapp || item._sellerMobile || '')
+    .replace(/D/g, '')
+    .slice(-10);
+}
 function _sellerUidForListing(l) {
-  l = l || {};
-  return String(l.sellerUserId || l.userId || l.ownerId || l.uid || '').trim();
+  return _sellerIdentityTokens(l)[0] || '';
 }
 function _knownSellerNameForListing(l) {
-  const uid = _sellerUidForListing(l);
-  if (!uid) return '';
+  const listingIds = new Set(_sellerIdentityTokens(l));
+  const listingEmails = new Set(_sellerEmailTokens(l));
+  const listingMobile = _sellerMobileToken(l);
+  if (!listingIds.size && !listingEmails.size && !listingMobile) return '';
   const users = [];
   try { if (Array.isArray(state && state.users)) users.push(...state.users); } catch(e) {}
   try { if (typeof S !== 'undefined' && Array.isArray(S.users)) users.push(...S.users); } catch(e) {}
   try { if (typeof _fbUsers !== 'undefined' && Array.isArray(_fbUsers)) users.push(..._fbUsers); } catch(e) {}
-  const found = users.find(u => [u && u.uid, u && u.id, u && u.userId].some(id => String(id || '').trim() === uid));
-  return found ? _sellerNameCandidate(found.name || found.fullName || found.displayName) : '';
+  for (const u of users) {
+    const name = _sellerNameCandidate(u && (u.name || u.fullName || u.displayName));
+    if (!name) continue;
+    const userIds = [...new Set([..._sellerIdentityTokens(u), String(u && u.id || '').trim()].filter(Boolean))];
+    if (userIds.some(id => listingIds.has(id))) return name;
+    const userEmails = _sellerEmailTokens(u);
+    if (userEmails.some(email => listingEmails.has(email))) return name;
+    const userMobile = _sellerMobileToken(u);
+    if (listingMobile && userMobile && listingMobile === userMobile) return name;
+  }
+  return '';
 }
 function _sellerDisplayNameForListing(l, sellerNameMap) {
-  const uid = _sellerUidForListing(l);
-  const mapped = uid && sellerNameMap ? _sellerNameCandidate(sellerNameMap[uid]) : '';
+  let mapped = '';
+  if (sellerNameMap) {
+    for (const key of _sellerIdentityTokens(l)) {
+      mapped = _sellerNameCandidate(sellerNameMap[key]);
+      if (mapped) break;
+    }
+    if (!mapped) {
+      for (const key of _sellerEmailTokens(l)) {
+        mapped = _sellerNameCandidate(sellerNameMap[key]);
+        if (mapped) break;
+      }
+    }
+    if (!mapped) {
+      mapped = _sellerNameCandidate(sellerNameMap[_sellerMobileToken(l)]);
+    }
+  }
   return mapped || _sellerNameCandidate(l && l.sellerDisplayName) || _sellerNameCandidate(l && l.sellerName) || _sellerNameCandidate(l && l.seller) || _knownSellerNameForListing(l) || 'Seller';
 }
 function _publicListingCopy(raw) {
   const l = Object.assign({}, raw || {});
+  l._sellerEmail = String(raw && (raw.sellerEmail || raw.email) || '').trim();
+  l._sellerMobile = String(raw && (raw.mobile || raw.sellerMobile || raw.phone || raw.whatsapp) || '').trim();
   ['sellerEmail','email','mobile','sellerMobile','phone','whatsapp','userName'].forEach(k => delete l[k]);
   const sellerName = _sellerDisplayNameForListing(raw || l);
   l.seller = sellerName;
@@ -34906,13 +34950,59 @@ function renderMatches(bookId) {
       const removedSellerUids = {};
       try {
         const matchedListings = remoteListings.filter(l => _selectedBookMatchesListing(l, bId));
-        const uniqueUids = [...new Set(matchedListings.map(l => _sellerUidForListing(l)).filter(Boolean))];
-        if (uniqueUids.length) {
-          await Promise.all(uniqueUids.map(async uid => {
+        const uniqueSellerIds = [...new Set(matchedListings.flatMap(l => _sellerIdentityTokens(l)).filter(Boolean))];
+        if (uniqueSellerIds.length) {
+          await Promise.all(uniqueSellerIds.map(async uid => {
             try {
-              const uDoc = await _db.collection('users').doc(uid).get();
-              if (uDoc.exists && (uDoc.data().status || 'active') !== 'banned') sellerNameMap[uid] = uDoc.data().name || '';
-              if (!uDoc.exists || uDoc.data().status === 'banned') removedSellerUids[uid] = true;
+              let userData = null;
+              const directDoc = await _db.collection('users').doc(uid).get();
+              if (directDoc.exists) {
+                userData = directDoc.data() || {};
+              } else {
+                const qByUid = await _db.collection('users').where('uid', '==', uid).limit(1).get();
+                if (!qByUid.empty) userData = qByUid.docs[0].data() || {};
+              }
+              if (!userData) {
+                removedSellerUids[uid] = true;
+                return;
+              }
+              if ((userData.status || 'active') === 'banned') {
+                removedSellerUids[uid] = true;
+                return;
+              }
+              const name = _sellerNameCandidate(userData.name || userData.fullName || userData.displayName);
+              if (name) sellerNameMap[uid] = name;
+            } catch(e) {}
+          }));
+        }
+        const uniqueSellerEmails = [...new Set(matchedListings.flatMap(l => _sellerEmailTokens(l)).filter(Boolean))];
+        if (uniqueSellerEmails.length) {
+          await Promise.all(uniqueSellerEmails.map(async email => {
+            try {
+              const qByEmail = await _db.collection('users').where('email', '==', email).limit(1).get();
+              if (qByEmail.empty) return;
+              const userData = qByEmail.docs[0].data() || {};
+              if ((userData.status || 'active') === 'banned') return;
+              const name = _sellerNameCandidate(userData.name || userData.fullName || userData.displayName);
+              if (name) sellerNameMap[email] = name;
+            } catch(e) {}
+          }));
+        }
+        const uniqueSellerMobiles = [...new Set(matchedListings.map(l => _sellerMobileToken(l)).filter(Boolean))];
+        if (uniqueSellerMobiles.length) {
+          await Promise.all(uniqueSellerMobiles.map(async mobile => {
+            try {
+              let userData = null;
+              const qByMobile = await _db.collection('users').where('mobile', '==', mobile).limit(1).get();
+              if (!qByMobile.empty) {
+                userData = qByMobile.docs[0].data() || {};
+              } else {
+                const qByPhone = await _db.collection('users').where('phone', '==', '+91' + mobile).limit(1).get();
+                if (!qByPhone.empty) userData = qByPhone.docs[0].data() || {};
+              }
+              if (!userData || (userData.status || 'active') === 'banned') return;
+              const name = _sellerNameCandidate(userData.name || userData.fullName || userData.displayName);
+              if (name) sellerNameMap[mobile] = name;
             } catch(e) {}
           }));
         }
