@@ -156,7 +156,7 @@ label { color: #444; display: grid; font-size: 13px; font-weight: 900; gap: 5px;
 .seller-card-divider { border: none; border-top: 1.5px solid var(--line); margin: 10px auto; width: 80%; }
 .seller-card-school { font-size: 13px; font-weight: 800; color: var(--text); line-height: 1.35; }
 .seller-card-meta { font-size: 12px; font-weight: 700; color: var(--muted); margin-top: 6px; }
-.seller-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+.seller-cards-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 .seller-profile-header { text-align: center; padding: 18px 12px 10px; }
 .seller-books-heading { font-size: 15px; font-weight: 950; color: var(--text); padding: 14px 0 8px; }
 .seller-listed-book { border: 2px solid var(--line); border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: flex-start; gap: 12px; cursor: pointer; transition: border-color .15s; background: #fff; }
@@ -34133,7 +34133,7 @@ function renderBooks() {
     const cards = '<div class="seller-cards-grid">' + sellerArr.map(sel => {
       return '<div class="seller-card" data-seller-uid="' + _acEsc(sel.uid) + '">' +
         '<div class="seller-card-icon">' + _sellerAvatarHtml(sel) + '</div>' +
-        '<div class="seller-card-name">Name - ' + _acEsc(sel.name) + '</div>' +
+        '<div class="seller-card-name">' + _acEsc(sel.name) + '</div>' +
         '<hr class="seller-card-divider">' +
         '<div class="seller-card-school">' + _acEsc(sel.school || 'Not added') + '</div>' +
         '<div class="seller-card-meta">' + sel.listings.length + ' book' + (sel.listings.length > 1 ? 's' : '') + ' available</div>' +
@@ -34144,7 +34144,7 @@ function renderBooks() {
 
   grid.querySelectorAll('[data-seller-uid]').forEach(card => {
     card.onclick = () => {
-      const uid = card.getAttribute('data-seller-uid');
+            const uid = card.getAttribute('data-seller-uid');
       const sellerListings = matches.filter(l => {
         const lu = String(l.userId || l.sellerUserId || l.ownerId || '').trim();
         return lu === uid;
@@ -34152,33 +34152,35 @@ function renderBooks() {
       if (!sellerListings.length) return;
       const sName = sellerListings[0].sellerName || 'Seller';
       const sSchool = sellerListings[0].school || '';
-      const _rs = 'font-size:13px;line-height:1.55;color:var(--muted);font-weight:600;';
-      const _vs = 'font-size:13px;color:var(--text);font-weight:700;';
-      const header = '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">' +
+      const hdr = '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">' +
         '<div class="seller-card-icon">' + _sellerAvatarHtml({}) + '</div>' +
         '<div><strong style="font-size:15px;font-weight:950;">' + _acEsc(sName) + '</strong>' +
         (sSchool ? '<div style="font-size:12px;font-weight:800;color:var(--muted);">' + _acEsc(sSchool) + '</div>' : '') +
         '</div></div>';
-      const bookCards = sellerListings.map(l => {
-        const title = l.title || l.bookTitle || l.subject || 'Book';
-        const rows = [];
-        if (l.condition) rows.push('<span style="' + _rs + '">Condition: <span style="' + _vs + '">' + _acEsc(l.condition) + '</span></span>');
-        if (l.school)    rows.push('<span style="' + _rs + '">School: <span style="' + _vs + '">' + _acEsc(l.school) + '</span></span>');
-        if (l.place)     rows.push('<span style="' + _rs + '">Place: <span style="' + _vs + '">' + _acEsc(l.place) + '</span></span>');
-        if (l.price)     rows.push('<span style="' + _rs + '">Price ₹: <span style="' + _vs + '">' + _acEsc(String(l.price)) + '</span></span>');
-        return '<button class="seller-subject-card" type="button" data-msg-listing="' + _acEsc(l.id) + '">' +
-          '<strong style="border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:4px;color:var(--text);font-size:16px;font-weight:950;line-height:1.3;">' + _acEsc(title) + '</strong>' +
-          rows.join('') +
-          '</button>';
+      const bkCards = sellerListings.map(l => {
+        const price = Number(l.price || 0) || 0;
+        const title = (l.className ? l.className + ' ' : '') + (l.title || l.bookTitle || 'Book');
+        return '<label class="seller-listed-book">' +
+          '<input type="checkbox" class="seller-book-cb" data-lid="' + _acEsc(l.id) + '" data-price="' + price + '">' +
+          '<div class="seller-listed-book-info">' +
+            '<strong>' + _acEsc(title) + '</strong>' +
+            (l.customSubject ? '<span class="book-detail">' + _acEsc(l.customSubject) + '</span>' : '') +
+            (l.condition ? '<span class="book-detail">Condition: ' + _acEsc(l.condition) + '</span>' : '') +
+            (l.school ? '<span class="book-detail">' + _acEsc(l.school) + '</span>' : '') +
+            '<span class="book-detail">' + (price ? '₹' + price : 'Price not added') + '</span>' +
+            (l.place ? '<span class="book-detail">' + _acEsc(l.place) + '</span>' : '') +
+          '</div>' +
+        '</label>';
       }).join('');
-      grid.innerHTML = header + bookCards;
-      grid.querySelectorAll('[data-msg-listing]').forEach(btn => {
-        btn.onclick = () => {
-          triggerAdMob('subjectClick');
-          if (!requireLogin()) return;
-          startListingChat(btn.getAttribute('data-msg-listing'));
-        };
-      });
+      grid.innerHTML = hdr + bkCards +
+        '<div id="buyTotalRow" style="font-weight:950;margin-top:12px;font-size:15px;">Total: ₹0</div>' +
+        (state.settings.messaging !== false
+          ? '<button class="btn btn-primary" type="button" data-buy-seller style="width:100%;margin-top:10px;">Buy It</button>'
+          : '');
+      grid.querySelectorAll('.seller-book-cb').forEach(function(cb) { cb.onchange = _updateBuyTotal; });
+      const buyBtn2 = grid.querySelector('[data-buy-seller]');
+      if (buyBtn2) buyBtn2.onclick = function() { _buySelectedFromSeller(uid); };
+
     };
   });
 
@@ -34927,7 +34929,7 @@ function _renderMatchList(bId, query, sellerNameMap, removedSellerUids, sourceLi
     const place = (s.listings[0] && s.listings[0].place) || '';
     return '<div class="seller-card" data-seller-card="' + _acEsc(s.uid) + '">' +
       '<div class="seller-card-icon">' + _sellerAvatarHtml(s) + '</div>' +
-      '<div class="seller-card-name">Name - ' + _acEsc(s.name || 'Seller') + '</div>' +
+      '<div class="seller-card-name">' + _acEsc(s.name || 'Seller') + '</div>' +
       '<hr class="seller-card-divider">' +
       '<div class="seller-card-school">' + _acEsc(s.school || 'Not added') + '</div>' +
       '<div class="seller-card-meta">' + (place ? _acEsc(place) + ' · ' : '') + s.listings.length + ' book' + (s.listings.length > 1 ? 's' : '') + ' available</div>' +
@@ -34946,7 +34948,7 @@ function _sellerAvatarHtml(s) {
   }
   return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>';
 }
-// Show all books listed by ONE seller (in the current class context).
+// Show all books listed by ONE seller, each selectable with checkboxes.
 function showSellerListings(uid) {
   const list = document.querySelector("#matchList");
   if (!list) return;
@@ -34961,32 +34963,34 @@ function showSellerListings(uid) {
   const sg = (window._lastSellerGroups && window._lastSellerGroups[uid]) || {};
   const sName = sg.name || mine[0].sellerName || 'Seller';
   const sSchool = sg.school || mine[0].school || '';
-  const _rs = 'font-size:13px;line-height:1.55;color:var(--muted);font-weight:600;';
-  const _vs = 'font-size:13px;color:var(--text);font-weight:700;';
   const header = '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">' +
     '<div class="seller-card-icon">' + _sellerAvatarHtml(sg) + '</div>' +
     '<div><strong style="font-size:15px;font-weight:950;">' + _acEsc(sName) + '</strong>' +
     (sSchool ? '<div style="font-size:12px;font-weight:800;color:var(--muted);">' + _acEsc(sSchool) + '</div>' : '') +
     '</div></div>';
   const bookCards = mine.map(l => {
-    const title = l.title || l.bookTitle || l.subject || 'Book';
-    const rows = [];
-    if (l.condition) rows.push('<span style="' + _rs + '">Condition: <span style="' + _vs + '">' + _acEsc(l.condition) + '</span></span>');
-    if (l.school)    rows.push('<span style="' + _rs + '">School: <span style="' + _vs + '">' + _acEsc(l.school) + '</span></span>');
-    if (l.place)     rows.push('<span style="' + _rs + '">Place: <span style="' + _vs + '">' + _acEsc(l.place) + '</span></span>');
-    if (l.price)     rows.push('<span style="' + _rs + '">Price ₹: <span style="' + _vs + '">' + _acEsc(String(l.price)) + '</span></span>');
-    return '<button class="seller-subject-card" type="button" data-msg-listing="' + _acEsc(l.id) + '">' +
-      '<strong style="border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:4px;color:var(--text);font-size:16px;font-weight:950;line-height:1.3;">' + _acEsc(title) + '</strong>' +
-      rows.join('') +
-      '</button>';
+    const price = Number(l.price || 0) || 0;
+    const title = (l.className ? l.className + ' ' : '') + (l.title || l.bookTitle || 'Book');
+    return '<label class="seller-listed-book">' +
+      '<input type="checkbox" class="seller-book-cb" data-lid="' + _acEsc(l.id) + '" data-price="' + price + '">' +
+      '<div class="seller-listed-book-info">' +
+        '<strong>' + _acEsc(title) + '</strong>' +
+        (l.customSubject ? '<span class="book-detail">' + _acEsc(l.customSubject) + '</span>' : '') +
+        (l.condition ? '<span class="book-detail">Condition: ' + _acEsc(l.condition) + '</span>' : '') +
+        (l.school ? '<span class="book-detail">' + _acEsc(l.school) + '</span>' : '') +
+        '<span class="book-detail">' + (price ? '₹' + price : 'Price not added') + '</span>' +
+        (l.place ? '<span class="book-detail">' + _acEsc(l.place) + '</span>' : '') +
+      '</div>' +
+    '</label>';
   }).join("");
-  list.innerHTML = header + bookCards;
-  list.querySelectorAll('[data-msg-listing]').forEach(btn => {
-    btn.onclick = () => {
-      if (!requireLogin()) return;
-      startListingChat(btn.getAttribute('data-msg-listing'));
-    };
-  });
+  list.innerHTML = header + bookCards +
+    '<div id="buyTotalRow" style="font-weight:950;margin-top:12px;font-size:15px;">Total: ₹0</div>' +
+    (state.settings.messaging !== false
+      ? '<button class="btn btn-primary" type="button" data-buy-seller style="width:100%;margin-top:10px;">Buy It</button>'
+      : '');
+  list.querySelectorAll('.seller-book-cb').forEach(cb => { cb.onchange = _updateBuyTotal; });
+  const buyBtn = list.querySelector('[data-buy-seller]');
+  if (buyBtn) buyBtn.onclick = () => _buySelectedFromSeller(uid);
 }
 function _updateBuyTotal() {
   const boxes = Array.prototype.slice.call(document.querySelectorAll('.seller-book-cb:checked'));
