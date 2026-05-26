@@ -34200,6 +34200,25 @@ function renderBooks() {
 
     };
   });
+  // Auto-fetch real seller names for cards showing generic "Seller"
+  if (_db) {
+    var _nameCards = grid.querySelectorAll('[data-seller-uid]');
+    var _namesSeen = {};
+    _nameCards.forEach(function(nc) {
+      var u = nc.getAttribute('data-seller-uid');
+      var ne = nc.querySelector('.seller-card-name');
+      if (!ne || _namesSeen[u]) return;
+      var nm = (ne.textContent || '').trim();
+      if (nm === 'Seller' || nm === '') {
+        _namesSeen[u] = true;
+        _db.collection('users').doc(u).get().then(function(sn) {
+          if (sn.exists && sn.data() && sn.data().name) {
+            ne.textContent = sn.data().name;
+          }
+        }).catch(function(){});
+      }
+    });
+  }
 
 }
 
