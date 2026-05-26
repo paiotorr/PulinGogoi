@@ -34144,45 +34144,58 @@ function renderBooks() {
 
   grid.querySelectorAll('[data-seller-uid]').forEach(card => {
     card.onclick = () => {
-                  const uid = card.getAttribute('data-seller-uid');
+                        const uid = card.getAttribute('data-seller-uid');
       const sellerListings = matches.filter(l => {
         const lu = String(l.userId || l.sellerUserId || l.ownerId || '').trim();
         return lu === uid;
       });
       if (!sellerListings.length) return;
-      const sName = sellerListings[0].seller || sellerListings[0].sellerName || 'Seller';
+      let sName = sellerListings[0].seller || sellerListings[0].sellerName || 'Seller';
       const sSchool = sellerListings[0].school || '';
-      const hdr = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">' +
-        '<div class="seller-card-icon" style="width:40px;height:40px;">' + _sellerAvatarHtml({}) + '</div>' +
-        '<div style="font-size:14px;font-weight:900;color:var(--text);line-height:1.35;">' + _acEsc(sName) +
-        (sSchool ? '<br><span style="font-size:12px;font-weight:700;color:var(--muted);">' + _acEsc(sSchool) + '</span>' : '') +
-        '</div></div>';
-      const _rs = 'font-size:13px;line-height:1.55;color:var(--muted);font-weight:600;';
-      const _vs = 'font-size:13px;color:var(--text);font-weight:700;';
-      const bkCards = sellerListings.map(l => {
-        const price = Number(l.price || 0) || 0;
-        const title = (l.className ? l.className + ' ' : '') + (l.title || l.bookTitle || 'Book');
-        const rows = [];
-        if (l.condition) rows.push('<span style="' + _rs + '">Condition: <span style="' + _vs + '">' + _acEsc(l.condition) + '</span></span>');
-        if (l.school)    rows.push('<span style="' + _rs + '">School: <span style="' + _vs + '">' + _acEsc(l.school) + '</span></span>');
-        if (l.place)     rows.push('<span style="' + _rs + '">Place: <span style="' + _vs + '">' + _acEsc(l.place) + '</span></span>');
-        if (price)       rows.push('<span style="' + _rs + '">Price ₹: <span style="' + _vs + '">' + price + '</span></span>');
-        return '<div class="seller-listed-book">' +
-          '<input type="checkbox" class="seller-book-cb" data-lid="' + _acEsc(l.id) + '" data-price="' + price + '">' +
-          '<div class="seller-listed-book-info" style="display:grid;gap:3px;">' +
-            '<strong style="font-size:15px;font-weight:950;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:2px;">' + _acEsc(title) + '</strong>' +
-            rows.join('') +
-          '</div>' +
-        '</div>';
-      }).join('');
-      grid.innerHTML = hdr + bkCards +
-        '<div id="buyTotalRow" style="font-weight:950;margin-top:12px;font-size:15px;">Total: ₹0</div>' +
-        (state.settings.messaging !== false
-          ? '<button class="btn btn-primary" type="button" data-buy-seller style="width:100%;margin-top:10px;">Buy It</button>'
-          : '');
-      grid.querySelectorAll('.seller-book-cb').forEach(function(cb) { cb.onchange = _updateBuyTotal; });
-      const buyBtn2 = grid.querySelector('[data-buy-seller]');
-      if (buyBtn2) buyBtn2.onclick = function() { _buySelectedFromSeller(uid); };
+      const _doRender = (name) => {
+        const _rs = 'font-size:13px;line-height:1.55;color:var(--muted);font-weight:600;';
+        const _vs = 'font-size:13px;color:var(--text);font-weight:700;';
+        const hdr = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">' +
+          '<div class="seller-card-icon" style="width:40px;height:40px;">' + _sellerAvatarHtml({}) + '</div>' +
+          '<div style="font-size:14px;font-weight:900;color:var(--text);line-height:1.35;">' + _acEsc(name) +
+          (sSchool ? '<br><span style="font-size:12px;font-weight:700;color:var(--muted);">' + _acEsc(sSchool) + '</span>' : '') +
+          '</div></div>';
+        const bkCards = sellerListings.map(l => {
+          const price = Number(l.price || 0) || 0;
+          const title = (l.className ? l.className + ' ' : '') + (l.title || l.bookTitle || 'Book');
+          const subj = (l.customSubject && typeof l.customSubject === 'string' && l.customSubject !== 'true') ? l.customSubject : '';
+          const rows = [];
+          rows.push('<span style="' + _rs + '">Seller: <span style="' + _vs + '">' + _acEsc(name) + '</span></span>');
+          if (l.condition) rows.push('<span style="' + _rs + '">Condition: <span style="' + _vs + '">' + _acEsc(l.condition) + '</span></span>');
+          if (l.school)    rows.push('<span style="' + _rs + '">School: <span style="' + _vs + '">' + _acEsc(l.school) + '</span></span>');
+          if (l.place)     rows.push('<span style="' + _rs + '">Place: <span style="' + _vs + '">' + _acEsc(l.place) + '</span></span>');
+          if (price)       rows.push('<span style="' + _rs + '">Price ₹: <span style="' + _vs + '">' + price + '</span></span>');
+          return '<div class="seller-listed-book">' +
+            '<input type="checkbox" class="seller-book-cb" data-lid="' + _acEsc(l.id) + '" data-price="' + price + '">' +
+            '<div class="seller-listed-book-info" style="display:grid;gap:3px;">' +
+              '<strong style="font-size:15px;font-weight:950;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:2px;">' + _acEsc(title) + (subj ? ' (' + _acEsc(subj) + ')' : '') + '</strong>' +
+              rows.join('') +
+            '</div>' +
+          '</div>';
+        }).join('');
+        grid.innerHTML = '<div style="display:block;">' + hdr + bkCards +
+          '<div id="buyTotalRow" style="font-weight:950;margin-top:12px;font-size:15px;">Total: ₹0</div>' +
+          (state.settings.messaging !== false
+            ? '<button class="btn btn-primary" type="button" data-buy-seller style="width:100%;margin-top:10px;">Buy It</button>'
+            : '') + '</div>';
+        grid.querySelectorAll('.seller-book-cb').forEach(function(cb) { cb.onchange = _updateBuyTotal; });
+        const buyBtn2 = grid.querySelector('[data-buy-seller]');
+        if (buyBtn2) buyBtn2.onclick = function() { _buySelectedFromSeller(uid); };
+      };
+      _doRender(sName);
+      if (_db && (sName === 'Seller' || !sName)) {
+        _db.collection('users').doc(uid).get().then(function(snap) {
+          if (snap.exists && snap.data() && snap.data().name) {
+            sName = snap.data().name;
+            _doRender(sName);
+          }
+        }).catch(function(){});
+      }
 
     };
   });
@@ -34964,39 +34977,53 @@ function showSellerListings(uid) {
   });
   if (!mine.length) { toast('This seller has no available books here.'); return; }
   const sg = (window._lastSellerGroups && window._lastSellerGroups[uid]) || {};
-  const sName = sg.name || mine[0].sellerName || 'Seller';
+  let sName = sg.name || mine[0].seller || mine[0].sellerName || 'Seller';
   const sSchool = sg.school || mine[0].school || '';
-  const header = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">' +
-    '<div class="seller-card-icon" style="width:40px;height:40px;">' + _sellerAvatarHtml(sg) + '</div>' +
-    '<div style="font-size:14px;font-weight:900;color:var(--text);line-height:1.35;">' + _acEsc(sName) +
-    (sSchool ? '<br><span style="font-size:12px;font-weight:700;color:var(--muted);">' + _acEsc(sSchool) + '</span>' : '') +
-    '</div></div>';
-  const _rs = 'font-size:13px;line-height:1.55;color:var(--muted);font-weight:600;';
-  const _vs = 'font-size:13px;color:var(--text);font-weight:700;';
-  const bookCards = mine.map(l => {
-    const price = Number(l.price || 0) || 0;
-    const title = (l.className ? l.className + ' ' : '') + (l.title || l.bookTitle || 'Book');
-    const rows = [];
-    if (l.condition) rows.push('<span style="' + _rs + '">Condition: <span style="' + _vs + '">' + _acEsc(l.condition) + '</span></span>');
-    if (l.school)    rows.push('<span style="' + _rs + '">School: <span style="' + _vs + '">' + _acEsc(l.school) + '</span></span>');
-    if (l.place)     rows.push('<span style="' + _rs + '">Place: <span style="' + _vs + '">' + _acEsc(l.place) + '</span></span>');
-    if (price)       rows.push('<span style="' + _rs + '">Price ₹: <span style="' + _vs + '">' + price + '</span></span>');
-    return '<div class="seller-listed-book">' +
-      '<input type="checkbox" class="seller-book-cb" data-lid="' + _acEsc(l.id) + '" data-price="' + price + '">' +
-      '<div class="seller-listed-book-info" style="display:grid;gap:3px;">' +
-        '<strong style="font-size:15px;font-weight:950;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:2px;">' + _acEsc(title) + '</strong>' +
-        rows.join('') +
-      '</div>' +
-    '</div>';
-  }).join("");
-  list.innerHTML = header + bookCards +
-    '<div id="buyTotalRow" style="font-weight:950;margin-top:12px;font-size:15px;">Total: ₹0</div>' +
-    (state.settings.messaging !== false
-      ? '<button class="btn btn-primary" type="button" data-buy-seller style="width:100%;margin-top:10px;">Buy It</button>'
-      : '');
-  list.querySelectorAll('.seller-book-cb').forEach(cb => { cb.onchange = _updateBuyTotal; });
-  const buyBtn = list.querySelector('[data-buy-seller]');
-  if (buyBtn) buyBtn.onclick = () => _buySelectedFromSeller(uid);
+  const _renderBooks = (name) => {
+    const _rs = 'font-size:13px;line-height:1.55;color:var(--muted);font-weight:600;';
+    const _vs = 'font-size:13px;color:var(--text);font-weight:700;';
+    const header = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">' +
+      '<div class="seller-card-icon" style="width:40px;height:40px;">' + _sellerAvatarHtml(sg) + '</div>' +
+      '<div style="font-size:14px;font-weight:900;color:var(--text);line-height:1.35;">' + _acEsc(name) +
+      (sSchool ? '<br><span style="font-size:12px;font-weight:700;color:var(--muted);">' + _acEsc(sSchool) + '</span>' : '') +
+      '</div></div>';
+    const bookCards = mine.map(l => {
+      const price = Number(l.price || 0) || 0;
+      const title = (l.className ? l.className + ' ' : '') + (l.title || l.bookTitle || 'Book');
+      const subj = (l.customSubject && typeof l.customSubject === 'string' && l.customSubject !== 'true') ? l.customSubject : '';
+      const rows = [];
+      rows.push('<span style="' + _rs + '">Seller: <span style="' + _vs + '">' + _acEsc(name) + '</span></span>');
+      if (l.condition) rows.push('<span style="' + _rs + '">Condition: <span style="' + _vs + '">' + _acEsc(l.condition) + '</span></span>');
+      if (l.school)    rows.push('<span style="' + _rs + '">School: <span style="' + _vs + '">' + _acEsc(l.school) + '</span></span>');
+      if (l.place)     rows.push('<span style="' + _rs + '">Place: <span style="' + _vs + '">' + _acEsc(l.place) + '</span></span>');
+      if (price)       rows.push('<span style="' + _rs + '">Price ₹: <span style="' + _vs + '">' + price + '</span></span>');
+      return '<div class="seller-listed-book">' +
+        '<input type="checkbox" class="seller-book-cb" data-lid="' + _acEsc(l.id) + '" data-price="' + price + '">' +
+        '<div class="seller-listed-book-info" style="display:grid;gap:3px;">' +
+          '<strong style="font-size:15px;font-weight:950;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:2px;">' + _acEsc(title) + (subj ? ' (' + _acEsc(subj) + ')' : '') + '</strong>' +
+          rows.join('') +
+        '</div>' +
+      '</div>';
+    }).join("");
+    list.innerHTML = '<div style="display:block;">' + header + bookCards +
+      '<div id="buyTotalRow" style="font-weight:950;margin-top:12px;font-size:15px;">Total: ₹0</div>' +
+      (state.settings.messaging !== false
+        ? '<button class="btn btn-primary" type="button" data-buy-seller style="width:100%;margin-top:10px;">Buy It</button>'
+        : '') + '</div>';
+    list.querySelectorAll('.seller-book-cb').forEach(cb => { cb.onchange = _updateBuyTotal; });
+    const buyBtn = list.querySelector('[data-buy-seller]');
+    if (buyBtn) buyBtn.onclick = () => _buySelectedFromSeller(uid);
+  };
+  _renderBooks(sName);
+  // If name is generic "Seller", try to fetch the real name from Firestore
+  if (_db && (sName === 'Seller' || !sName)) {
+    _db.collection('users').doc(uid).get().then(snap => {
+      if (snap.exists && snap.data() && snap.data().name) {
+        sName = snap.data().name;
+        _renderBooks(sName);
+      }
+    }).catch(() => {});
+  }
 }
 function _updateBuyTotal() {
   const boxes = Array.prototype.slice.call(document.querySelectorAll('.seller-book-cb:checked'));
