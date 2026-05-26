@@ -34287,6 +34287,27 @@ function _sellerAliasTokens(item) {
 function _sellerUidForListing(l) {
   return _sellerIdentityTokens(l)[0] || '';
 }
+function _currentSellerPublicName(user) {
+  const u = user || window._currentUser || {};
+  const authUser = (_auth && _auth.currentUser) || {};
+  return _sellerNameCandidate(u.name || u.fullName || u.displayName || authUser.displayName);
+}
+function _applyPublicSellerName(listing, sellerName) {
+  const name = _sellerNameCandidate(sellerName);
+  if (!listing || !name) return '';
+  listing.seller = name;
+  listing.sellerName = name;
+  delete listing.sellerDisplayName;
+  return name;
+}
+function _listingWriteCopy(listing) {
+  const clean = Object.assign({}, listing || {});
+  delete clean.sellerDisplayName;
+  delete clean._sellerEmail;
+  delete clean._email;
+  delete clean._sellerMobile;
+  return clean;
+}
 function _knownSellerNameForListing(l) {
   const listingAliases = new Set(_sellerAliasTokens(l));
   if (!listingAliases.size) return '';
@@ -34331,7 +34352,7 @@ function _sellerDisplayNameForListing(l, sellerNameMap) {
       }
     }
   }
-  return mapped || _sellerNameCandidate(l && l.sellerDisplayName) || _sellerNameCandidate(l && l.sellerName) || _sellerNameCandidate(l && l.seller) || _knownSellerNameForListing(l) || 'Seller';
+  return mapped || _sellerNameCandidate(l && l.sellerName) || _sellerNameCandidate(l && l.seller) || _sellerNameCandidate(l && l.sellerDisplayName) || _knownSellerNameForListing(l) || 'Seller';
 }
 function _publicListingCopy(raw) {
   const l = Object.assign({}, raw || {});
@@ -34341,7 +34362,6 @@ function _publicListingCopy(raw) {
   const sellerName = _sellerDisplayNameForListing(raw || l);
   l.seller = sellerName;
   l.sellerName = sellerName;
-  l.sellerDisplayName = sellerName;
   return l;
 }
 
@@ -34728,8 +34748,34 @@ function _updateAccountSaveState() {
 // Called automatically by saveAccountDetails() whenever the user's name changes.
 // Updates both the local state.listings array and every matching Firestore document.
 async function _syncSellerNameInListings(uid, newName) {
-  // Privacy hardening: public listing documents must not store user names.
-  return;
+  uid = String(uid || '').trim();
+  const sellerName = _sellerNameCandidate(newName);
+  if (!uid || !sellerName) return 0;
+  let updated = 0;
+  (state.listings || []).forEach(l => {
+    if (_isMineListing(l) || _sellerIdentityTokens(l).includes(uid)) {
+      if (_applyPublicSellerName(l, sellerName)) updated++;
+    }
+  });
+  if (updated) save();
+  if (!_db) return updated;
+  try {
+    const refs = new Map();
+    for (const field of ['userId', 'sellerUserId', 'ownerId', 'uid']) {
+      try {
+        const snap = await _db.collection('listings').where(field, '==', uid).get();
+        snap.docs.forEach(doc => refs.set(doc.ref.path, doc.ref));
+      } catch(e) {}
+    }
+    for (const ref of refs.values()) {
+      try {
+        await ref.set({ seller: sellerName, sellerName: sellerName }, { merge: true });
+      } catch(e) {}
+    }
+  } catch(e) {
+    console.warn('[PKITAAP] Could not sync seller name in listings:', e);
+  }
+  return updated;
 }
 async function _fetchCurrentUserName(uid, fallback) {
   uid = String(uid || '').trim();
@@ -35038,7 +35084,6 @@ function renderMatches(bookId) {
           if (resolved) {
             l.seller = resolved;
             l.sellerName = resolved;
-            l.sellerDisplayName = resolved;
           }
         });
       } catch(e) {}
@@ -35312,8 +35357,7 @@ async function _loadMyListingsFromFirestore() {
       if (resolvedName && _sellerNameCandidate(data.sellerName) !== resolvedName) {
         data.seller = resolvedName;
         data.sellerName = resolvedName;
-        data.sellerDisplayName = resolvedName;
-        repairBatch.set(doc.ref, { seller: resolvedName, sellerName: resolvedName, sellerDisplayName: resolvedName }, { merge: true });
+        repairBatch.set(doc.ref, { seller: resolvedName, sellerName: resolvedName }, { merge: true });
         repairCount++;
       }
       const idx = (state.listings || []).findIndex(x => x.id === data.id);
@@ -37244,6 +37288,7 @@ function bindSellForm() {
       toast("Please fill state" + (!selectedCategory ? ", medium" : "") + ", district, sub-district, place and school");
       return;
     }
+    const publicSellerName = _currentSellerPublicName(u);
     const listing = {
       id       : "ls"+Date.now(),
       bookId   : customSubject ? selected.id : selectedBookId,
@@ -37251,8 +37296,8 @@ function bindSellForm() {
       className: selected ? selected.className : "",
       board    : selected ? selected.board : "",
       stream   : selected ? selected.stream : "",
-      seller   : u ? (u.name || "Seller") : "Seller",
-      sellerName: u ? (u.name || "Seller") : "Seller",
+      seller   : publicSellerName || "Seller",
+      sellerName: publicSellerName || "Seller",
       userId   : (_auth && _auth.currentUser && _auth.currentUser.uid) || (u ? (u.uid||u.id) : ""),
       sellerUserId: (_auth && _auth.currentUser && _auth.currentUser.uid) || (u ? (u.uid||u.id) : ""),
       ownerId  : (_auth && _auth.currentUser && _auth.currentUser.uid) || (u ? (u.uid||u.id) : ""),
@@ -37302,16 +37347,14 @@ function bindSellForm() {
         listing.userId      = existing.userId      || listing.userId;
         listing.sellerUserId = existing.sellerUserId || listing.sellerUserId;
         listing.ownerId     = existing.ownerId     || listing.ownerId;
-        const sellerName = _sellerNameCandidate(listing.sellerDisplayName) || _sellerNameCandidate(listing.sellerName) || _sellerNameCandidate(listing.seller) || _sellerDisplayNameForListing(existing) || _sellerDisplayNameForListing(listing);
-        listing.seller = sellerName;
-        listing.sellerName = sellerName;
-        listing.sellerDisplayName = sellerName;
+        const sellerName = _currentSellerPublicName(u) || _sellerNameCandidate(listing.sellerName) || _sellerNameCandidate(listing.seller) || _sellerDisplayNameForListing(existing) || _sellerDisplayNameForListing(listing);
+        _applyPublicSellerName(listing, sellerName);
         listing.updatedAt   = new Date().toISOString().slice(0, 10);
         state.listings[existingIdx] = listing;
       }
       save();
       if (_db) {
-        try { await _db.collection('listings').doc(listing.id).set(listing); }
+        try { await _db.collection('listings').doc(listing.id).set(_listingWriteCopy(listing)); }
         catch(e) { toast('Saved locally, but Firebase sync failed.'); console.warn('[PKITAAP] Edit save failed:', e); }
       }
       window._editingListingId = '';
@@ -37333,7 +37376,7 @@ function bindSellForm() {
     save();
     // Also save to Firestore
     if (_db) {
-      try { await _db.collection('listings').doc(listing.id).set(listing); }
+      try { await _db.collection('listings').doc(listing.id).set(_listingWriteCopy(listing)); }
       catch(e) { toast('Listing saved locally, but Firebase save failed. Check rules/login.'); console.warn('[PKITAAP] Listing save failed:', e); }
     }
     toast("✅ Listed for sale!");
