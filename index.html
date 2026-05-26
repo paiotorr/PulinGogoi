@@ -34124,7 +34124,7 @@ function renderBooks() {
     const placeSellers = {};
     placeGroups[place].forEach(l => {
       const uid = String(l.userId || l.sellerUserId || l.ownerId || '').trim() || ('anon_' + (l.id || ''));
-      if (!placeSellers[uid]) placeSellers[uid] = { uid: uid, name: l.sellerName || 'Seller', school: l.school || '', listings: [] };
+      if (!placeSellers[uid]) placeSellers[uid] = { uid: uid, name: l.seller || l.sellerName || 'Seller', school: l.school || '', listings: [] };
       placeSellers[uid].listings.push(l);
       if (!placeSellers[uid].school && l.school) placeSellers[uid].school = l.school;
     });
@@ -34144,33 +34144,36 @@ function renderBooks() {
 
   grid.querySelectorAll('[data-seller-uid]').forEach(card => {
     card.onclick = () => {
-            const uid = card.getAttribute('data-seller-uid');
+                  const uid = card.getAttribute('data-seller-uid');
       const sellerListings = matches.filter(l => {
         const lu = String(l.userId || l.sellerUserId || l.ownerId || '').trim();
         return lu === uid;
       });
       if (!sellerListings.length) return;
-      const sName = sellerListings[0].sellerName || 'Seller';
+      const sName = sellerListings[0].seller || sellerListings[0].sellerName || 'Seller';
       const sSchool = sellerListings[0].school || '';
-      const hdr = '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">' +
-        '<div class="seller-card-icon">' + _sellerAvatarHtml({}) + '</div>' +
-        '<div><strong style="font-size:15px;font-weight:950;">' + _acEsc(sName) + '</strong>' +
-        (sSchool ? '<div style="font-size:12px;font-weight:800;color:var(--muted);">' + _acEsc(sSchool) + '</div>' : '') +
+      const hdr = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">' +
+        '<div class="seller-card-icon" style="width:40px;height:40px;">' + _sellerAvatarHtml({}) + '</div>' +
+        '<div style="font-size:14px;font-weight:900;color:var(--text);line-height:1.35;">' + _acEsc(sName) +
+        (sSchool ? '<br><span style="font-size:12px;font-weight:700;color:var(--muted);">' + _acEsc(sSchool) + '</span>' : '') +
         '</div></div>';
+      const _rs = 'font-size:13px;line-height:1.55;color:var(--muted);font-weight:600;';
+      const _vs = 'font-size:13px;color:var(--text);font-weight:700;';
       const bkCards = sellerListings.map(l => {
         const price = Number(l.price || 0) || 0;
         const title = (l.className ? l.className + ' ' : '') + (l.title || l.bookTitle || 'Book');
-        return '<label class="seller-listed-book">' +
+        const rows = [];
+        if (l.condition) rows.push('<span style="' + _rs + '">Condition: <span style="' + _vs + '">' + _acEsc(l.condition) + '</span></span>');
+        if (l.school)    rows.push('<span style="' + _rs + '">School: <span style="' + _vs + '">' + _acEsc(l.school) + '</span></span>');
+        if (l.place)     rows.push('<span style="' + _rs + '">Place: <span style="' + _vs + '">' + _acEsc(l.place) + '</span></span>');
+        if (price)       rows.push('<span style="' + _rs + '">Price ₹: <span style="' + _vs + '">' + price + '</span></span>');
+        return '<div class="seller-listed-book">' +
           '<input type="checkbox" class="seller-book-cb" data-lid="' + _acEsc(l.id) + '" data-price="' + price + '">' +
-          '<div class="seller-listed-book-info">' +
-            '<strong>' + _acEsc(title) + '</strong>' +
-            (l.customSubject ? '<span class="book-detail">' + _acEsc(l.customSubject) + '</span>' : '') +
-            (l.condition ? '<span class="book-detail">Condition: ' + _acEsc(l.condition) + '</span>' : '') +
-            (l.school ? '<span class="book-detail">' + _acEsc(l.school) + '</span>' : '') +
-            '<span class="book-detail">' + (price ? '₹' + price : 'Price not added') + '</span>' +
-            (l.place ? '<span class="book-detail">' + _acEsc(l.place) + '</span>' : '') +
+          '<div class="seller-listed-book-info" style="display:grid;gap:3px;">' +
+            '<strong style="font-size:15px;font-weight:950;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:2px;">' + _acEsc(title) + '</strong>' +
+            rows.join('') +
           '</div>' +
-        '</label>';
+        '</div>';
       }).join('');
       grid.innerHTML = hdr + bkCards +
         '<div id="buyTotalRow" style="font-weight:950;margin-top:12px;font-size:15px;">Total: ₹0</div>' +
@@ -34963,25 +34966,28 @@ function showSellerListings(uid) {
   const sg = (window._lastSellerGroups && window._lastSellerGroups[uid]) || {};
   const sName = sg.name || mine[0].sellerName || 'Seller';
   const sSchool = sg.school || mine[0].school || '';
-  const header = '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">' +
-    '<div class="seller-card-icon">' + _sellerAvatarHtml(sg) + '</div>' +
-    '<div><strong style="font-size:15px;font-weight:950;">' + _acEsc(sName) + '</strong>' +
-    (sSchool ? '<div style="font-size:12px;font-weight:800;color:var(--muted);">' + _acEsc(sSchool) + '</div>' : '') +
+  const header = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">' +
+    '<div class="seller-card-icon" style="width:40px;height:40px;">' + _sellerAvatarHtml(sg) + '</div>' +
+    '<div style="font-size:14px;font-weight:900;color:var(--text);line-height:1.35;">' + _acEsc(sName) +
+    (sSchool ? '<br><span style="font-size:12px;font-weight:700;color:var(--muted);">' + _acEsc(sSchool) + '</span>' : '') +
     '</div></div>';
+  const _rs = 'font-size:13px;line-height:1.55;color:var(--muted);font-weight:600;';
+  const _vs = 'font-size:13px;color:var(--text);font-weight:700;';
   const bookCards = mine.map(l => {
     const price = Number(l.price || 0) || 0;
     const title = (l.className ? l.className + ' ' : '') + (l.title || l.bookTitle || 'Book');
-    return '<label class="seller-listed-book">' +
+    const rows = [];
+    if (l.condition) rows.push('<span style="' + _rs + '">Condition: <span style="' + _vs + '">' + _acEsc(l.condition) + '</span></span>');
+    if (l.school)    rows.push('<span style="' + _rs + '">School: <span style="' + _vs + '">' + _acEsc(l.school) + '</span></span>');
+    if (l.place)     rows.push('<span style="' + _rs + '">Place: <span style="' + _vs + '">' + _acEsc(l.place) + '</span></span>');
+    if (price)       rows.push('<span style="' + _rs + '">Price ₹: <span style="' + _vs + '">' + price + '</span></span>');
+    return '<div class="seller-listed-book">' +
       '<input type="checkbox" class="seller-book-cb" data-lid="' + _acEsc(l.id) + '" data-price="' + price + '">' +
-      '<div class="seller-listed-book-info">' +
-        '<strong>' + _acEsc(title) + '</strong>' +
-        (l.customSubject ? '<span class="book-detail">' + _acEsc(l.customSubject) + '</span>' : '') +
-        (l.condition ? '<span class="book-detail">Condition: ' + _acEsc(l.condition) + '</span>' : '') +
-        (l.school ? '<span class="book-detail">' + _acEsc(l.school) + '</span>' : '') +
-        '<span class="book-detail">' + (price ? '₹' + price : 'Price not added') + '</span>' +
-        (l.place ? '<span class="book-detail">' + _acEsc(l.place) + '</span>' : '') +
+      '<div class="seller-listed-book-info" style="display:grid;gap:3px;">' +
+        '<strong style="font-size:15px;font-weight:950;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:2px;">' + _acEsc(title) + '</strong>' +
+        rows.join('') +
       '</div>' +
-    '</label>';
+    '</div>';
   }).join("");
   list.innerHTML = header + bookCards +
     '<div id="buyTotalRow" style="font-weight:950;margin-top:12px;font-size:15px;">Total: ₹0</div>' +
@@ -37007,8 +37013,8 @@ function bindSellForm() {
       className: selected ? selected.className : "",
       board    : selected ? selected.board : "",
       stream   : selected ? selected.stream : "",
-      seller   : "Seller",
-      sellerName: "Seller",
+      seller   : u ? (u.name || "Seller") : "Seller",
+      sellerName: u ? (u.name || "Seller") : "Seller",
       userId   : (_auth && _auth.currentUser && _auth.currentUser.uid) || (u ? (u.uid||u.id) : ""),
       sellerUserId: (_auth && _auth.currentUser && _auth.currentUser.uid) || (u ? (u.uid||u.id) : ""),
       ownerId  : (_auth && _auth.currentUser && _auth.currentUser.uid) || (u ? (u.uid||u.id) : ""),
