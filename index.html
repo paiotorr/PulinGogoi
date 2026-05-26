@@ -1106,6 +1106,10 @@ async function _saveUserToFirestore(userData) {
       await ref.set(cleanUser, {merge:true});
     }
 
+    // Public seller profile contains only safe display data. Buyers can read
+    // this document to show seller names while /users stays private.
+    await _savePublicSellerProfile(Object.assign({}, cleanUser, { uid: authUid }), _db);
+
     // Success — clear any pending-profile cache so we don't retry forever.
     try { localStorage.removeItem('pkitaap_pending_profile'); } catch(_) {}
     return Object.assign({}, userData, cleanUser, {
@@ -34292,6 +34296,60 @@ function _currentSellerPublicName(user) {
   const authUser = (_auth && _auth.currentUser) || {};
   return _sellerNameCandidate(u.name || u.fullName || u.displayName || authUser.displayName);
 }
+function _publicSellerProfilePayload(user) {
+  const u = user || window._currentUser || {};
+  const authUid = String((_auth && _auth.currentUser && _auth.currentUser.uid) || '').trim();
+  const uid = String(u.uid || u.id || authUid || '').trim();
+  const name = _sellerNameCandidate(u.name || u.fullName || u.displayName || ((_auth && _auth.currentUser) || {}).displayName);
+  if (!uid || !name) return null;
+  return {
+    uid: uid,
+    name: name,
+    status: String(u.status || 'active').trim() || 'active',
+    updatedAt: new Date().toISOString()
+  };
+}
+async function _savePublicSellerProfile(user, dbOverride) {
+  const db = dbOverride || _db || (typeof _fbDb !== 'undefined' ? _fbDb : null);
+  const payload = _publicSellerProfilePayload(user);
+  if (!db || !payload) return false;
+  try {
+    await db.collection('public_users').doc(payload.uid).set(payload, { merge: true });
+    return true;
+  } catch(e) {
+    console.warn('[PKITAAP] Could not save public seller profile:', e);
+    return false;
+  }
+}
+function _rememberSellerName(sellerNameMap, key, name) {
+  const cleanName = _sellerNameCandidate(name);
+  const cleanKey = String(key || '').trim();
+  if (!sellerNameMap || !cleanKey || !cleanName) return;
+  sellerNameMap[cleanKey] = cleanName;
+  sellerNameMap[cleanKey.toLowerCase()] = cleanName;
+}
+async function _loadPublicSellerNamesForListings(listings, sellerNameMap, removedSellerUids) {
+  if (!_db || !Array.isArray(listings) || !listings.length) return 0;
+  const sellerIds = [...new Set(listings.flatMap(l => _sellerIdentityTokens(l)).filter(Boolean))];
+  let found = 0;
+  await Promise.all(sellerIds.map(async uid => {
+    try {
+      const snap = await _db.collection('public_users').doc(uid).get();
+      if (!snap.exists) return;
+      const data = snap.data() || {};
+      if ((data.status || 'active') === 'banned') {
+        if (removedSellerUids) removedSellerUids[uid] = true;
+        return;
+      }
+      const name = _sellerNameCandidate(data.name || data.fullName || data.displayName);
+      if (!name) return;
+      found++;
+      _rememberSellerName(sellerNameMap, uid, name);
+      _sellerAliasTokens(Object.assign({ id: uid, uid: uid }, data)).forEach(key => _rememberSellerName(sellerNameMap, key, name));
+    } catch(e) {}
+  }));
+  return found;
+}
 function _applyPublicSellerName(listing, sellerName) {
   const name = _sellerNameCandidate(sellerName);
   if (!listing || !name) return '';
@@ -35008,77 +35066,13 @@ function renderMatches(bookId) {
       const remoteListings = snap.docs.map(doc => _publicListingCopy(Object.assign({id:doc.id}, doc.data())));
       state.listings = remoteListings;
       save();
-      // Fetch each seller's CURRENT name/status live from /users so profile changes/deleted users are reflected.
+      // Buyers read seller display names only from public listing fields and
+      // public_users. Private /users data stays owner/admin-only.
       const sellerNameMap = {};
       const removedSellerUids = {};
       try {
         const matchedListings = remoteListings.filter(l => _selectedBookMatchesListing(l, bId));
-        const uniqueSellerIds = [...new Set(matchedListings.flatMap(l => _sellerIdentityTokens(l)).filter(Boolean))];
-        if (uniqueSellerIds.length) {
-          await Promise.all(uniqueSellerIds.map(async uid => {
-            try {
-              let userData = null;
-              const directDoc = await _db.collection('users').doc(uid).get();
-              if (directDoc.exists) {
-                userData = directDoc.data() || {};
-              } else {
-                const qByUid = await _db.collection('users').where('uid', '==', uid).limit(1).get();
-                if (!qByUid.empty) userData = qByUid.docs[0].data() || {};
-              }
-              if (!userData) {
-                removedSellerUids[uid] = true;
-                return;
-              }
-              if ((userData.status || 'active') === 'banned') {
-                removedSellerUids[uid] = true;
-                return;
-              }
-              const name = _sellerNameCandidate(userData.name || userData.fullName || userData.displayName);
-              if (name) {
-                sellerNameMap[String(uid || '').trim().toLowerCase()] = name;
-                _sellerAliasTokens(userData).forEach(key => { sellerNameMap[String(key || '').trim().toLowerCase()] = name; });
-              }
-            } catch(e) {}
-          }));
-        }
-        const uniqueSellerEmails = [...new Set(matchedListings.flatMap(l => _sellerEmailTokens(l)).filter(Boolean))];
-        if (uniqueSellerEmails.length) {
-          await Promise.all(uniqueSellerEmails.map(async email => {
-            try {
-              const qByEmail = await _db.collection('users').where('email', '==', email).limit(1).get();
-              if (qByEmail.empty) return;
-              const userData = qByEmail.docs[0].data() || {};
-              if ((userData.status || 'active') === 'banned') return;
-              const name = _sellerNameCandidate(userData.name || userData.fullName || userData.displayName);
-              if (name) {
-                sellerNameMap[String(email || '').trim().toLowerCase()] = name;
-                _sellerAliasTokens(userData).forEach(key => { sellerNameMap[String(key || '').trim().toLowerCase()] = name; });
-              }
-            } catch(e) {}
-          }));
-        }
-        const uniqueSellerMobiles = [...new Set(matchedListings.map(l => _sellerMobileToken(l)).filter(Boolean))];
-        if (uniqueSellerMobiles.length) {
-          await Promise.all(uniqueSellerMobiles.map(async mobile => {
-            try {
-              let userData = null;
-              const qByMobile = await _db.collection('users').where('mobile', '==', mobile).limit(1).get();
-              if (!qByMobile.empty) {
-                userData = qByMobile.docs[0].data() || {};
-              } else {
-                const qByPhone = await _db.collection('users').where('phone', '==', '+91' + mobile).limit(1).get();
-                if (!qByPhone.empty) userData = qByPhone.docs[0].data() || {};
-              }
-              if (!userData || (userData.status || 'active') === 'banned') return;
-              const name = _sellerNameCandidate(userData.name || userData.fullName || userData.displayName);
-              if (name) {
-                sellerNameMap[String(mobile || '').trim().toLowerCase()] = name;
-                sellerNameMap['u' + String(mobile || '').trim()] = name;
-                _sellerAliasTokens(userData).forEach(key => { sellerNameMap[String(key || '').trim().toLowerCase()] = name; });
-              }
-            } catch(e) {}
-          }));
-        }
+        await _loadPublicSellerNamesForListings(matchedListings, sellerNameMap, removedSellerUids);
         remoteListings.forEach(l => {
           const resolved = _sellerDisplayNameForListing(l, sellerNameMap);
           if (resolved) {
@@ -35232,9 +35226,9 @@ function showSellerListings(uid) {
     if (buyBtn) buyBtn.onclick = () => _buySelectedFromSeller(uid);
   };
   _renderBooks(sName);
-  // If name is generic "Seller", try to fetch the real name from Firestore
+  // If name is generic "Seller", try the public seller profile only.
   if (_db && (sName === 'Seller' || !sName)) {
-    _db.collection('users').doc(uid).get().then(snap => {
+    _db.collection('public_users').doc(uid).get().then(snap => {
       if (snap.exists && snap.data() && snap.data().name) {
         sName = snap.data().name;
         _renderBooks(sName);
