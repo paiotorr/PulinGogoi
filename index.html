@@ -34145,6 +34145,7 @@ function renderBooks() {
   grid.querySelectorAll('[data-seller-uid]').forEach(card => {
     card.onclick = () => {
                         const uid = card.getAttribute('data-seller-uid');
+      grid.style.display = 'block';
       const sellerListings = matches.filter(l => {
         const lu = String(l.userId || l.sellerUserId || l.ownerId || '').trim();
         return lu === uid;
@@ -34980,6 +34981,7 @@ function showSellerListings(uid) {
   let sName = sg.name || mine[0].seller || mine[0].sellerName || 'Seller';
   const sSchool = sg.school || mine[0].school || '';
   const _renderBooks = (name) => {
+    list.style.display = 'block'; // override parent grid so content stacks vertically
     const _rs = 'font-size:13px;line-height:1.55;color:var(--muted);font-weight:600;';
     const _vs = 'font-size:13px;color:var(--text);font-weight:700;';
     const header = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">' +
