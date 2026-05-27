@@ -34221,9 +34221,36 @@ function renderBooks() {
         if (buyBtn2) buyBtn2.onclick = function() { _buySelectedFromSeller(uid); };
       };
       _doRender(sName);
+      if (_db && (sName === 'Seller' || !sName)) {
+        _db.collection('users').doc(uid).get().then(function(snap) {
+          if (snap.exists && snap.data() && snap.data().name) {
+            sName = snap.data().name;
+            _doRender(sName);
+          }
+        }).catch(function(){});
+      }
 
     };
   });
+  // Auto-fetch real seller names for cards showing generic "Seller"
+  if (_db) {
+    var _nameCards = grid.querySelectorAll('[data-seller-uid]');
+    var _namesSeen = {};
+    _nameCards.forEach(function(nc) {
+      var u = nc.getAttribute('data-seller-uid');
+      var ne = nc.querySelector('.seller-card-name');
+      if (!ne || _namesSeen[u]) return;
+      var nm = (ne.textContent || '').trim();
+      if (nm === 'Seller' || nm === '') {
+        _namesSeen[u] = true;
+        _db.collection('users').doc(u).get().then(function(sn) {
+          if (sn.exists && sn.data() && sn.data().name) {
+            ne.textContent = sn.data().name;
+          }
+        }).catch(function(){});
+      }
+    });
+  }
 
 }
 
@@ -34248,26 +34275,8 @@ function _loadBrowseListings() {
   if (!_db) return;
   if (_listingsUnsub) return;
   _listingsUnsub = _db.collection('listings')
-    .onSnapshot(async snap => {
-      const remoteListings = snap.docs.map(doc => _publicListingCopy(Object.assign({ id: doc.id }, doc.data())));
-      const sellerNameMap = {};
-      const removedSellerUids = {};
-      try {
-        await _loadPublicSellerNamesForListings(remoteListings, sellerNameMap, removedSellerUids);
-        remoteListings.forEach(l => {
-          const uid = _sellerUidForListing(l);
-          if (removedSellerUids && uid && removedSellerUids[uid]) return;
-          const resolved = _sellerDisplayNameForListing(l, sellerNameMap);
-          if (resolved) {
-            l.seller = resolved;
-            l.sellerName = resolved;
-          }
-        });
-      } catch(e) {}
-      state.listings = remoteListings.filter(l => {
-        const uid = _sellerUidForListing(l);
-        return !(removedSellerUids && uid && removedSellerUids[uid]);
-      });
+    .onSnapshot(snap => {
+      state.listings = snap.docs.map(doc => _publicListingCopy(Object.assign({ id: doc.id }, doc.data())));
       save();
       if (catalogStep === "books") renderBooks();
       if (typeof renderMyListings === 'function') renderMyListings(true);
@@ -34349,46 +34358,22 @@ function _rememberSellerName(sellerNameMap, key, name) {
 async function _loadPublicSellerNamesForListings(listings, sellerNameMap, removedSellerUids) {
   if (!_db || !Array.isArray(listings) || !listings.length) return 0;
   const sellerIds = [...new Set(listings.flatMap(l => _sellerIdentityTokens(l)).filter(Boolean))];
-  const nameCache = window._sellerNameCache || (window._sellerNameCache = {});
   let found = 0;
   await Promise.all(sellerIds.map(async uid => {
-    const cachedName = _sellerNameCandidate(nameCache[uid] || nameCache[String(uid || '').toLowerCase()]);
-    if (cachedName) {
-      found++;
-      _rememberSellerName(sellerNameMap, uid, cachedName);
-      return;
-    }
-    let data = null;
-    let name = '';
     try {
       const snap = await _db.collection('public_users').doc(uid).get();
-      if (snap.exists) data = snap.data() || {};
-      if (data && (data.status || 'active') === 'banned') {
+      if (!snap.exists) return;
+      const data = snap.data() || {};
+      if ((data.status || 'active') === 'banned') {
         if (removedSellerUids) removedSellerUids[uid] = true;
         return;
       }
+      const name = _sellerNameCandidate(data.name || data.fullName || data.displayName);
+      if (!name) return;
+      found++;
+      _rememberSellerName(sellerNameMap, uid, name);
+      _sellerAliasTokens(Object.assign({ id: uid, uid: uid }, data)).forEach(key => _rememberSellerName(sellerNameMap, key, name));
     } catch(e) {}
-    name = _sellerNameCandidate(data && (data.name || data.fullName || data.displayName || data.sellerName));
-    if (!name) {
-      try {
-        const snap = await _db.collection('users').doc(uid).get();
-        if (snap.exists) data = snap.data() || {};
-        if (data && (data.status || 'active') === 'banned') {
-          if (removedSellerUids) removedSellerUids[uid] = true;
-          return;
-        }
-        name = _sellerNameCandidate(data && (data.name || data.fullName || data.displayName));
-      } catch(e) {}
-    }
-    if (!name) return;
-    found++;
-    _rememberSellerName(sellerNameMap, uid, name);
-    nameCache[uid] = name;
-    nameCache[String(uid || '').toLowerCase()] = name;
-    _sellerAliasTokens(Object.assign({ id: uid, uid: uid }, data || {})).forEach(key => {
-      _rememberSellerName(sellerNameMap, key, name);
-      nameCache[key] = name;
-    });
   }));
   return found;
 }
@@ -35108,8 +35093,8 @@ function renderMatches(bookId) {
       const remoteListings = snap.docs.map(doc => _publicListingCopy(Object.assign({id:doc.id}, doc.data())));
       state.listings = remoteListings;
       save();
-      // Resolve seller names before rendering so cards do not flash from
-      // a placeholder to the real name.
+      // Buyers read seller display names only from public listing fields and
+      // public_users. Private /users data stays owner/admin-only.
       const sellerNameMap = {};
       const removedSellerUids = {};
       try {
@@ -35268,6 +35253,15 @@ function showSellerListings(uid) {
     if (buyBtn) buyBtn.onclick = () => _buySelectedFromSeller(uid);
   };
   _renderBooks(sName);
+  // If name is generic "Seller", try the public seller profile only.
+  if (_db && (sName === 'Seller' || !sName)) {
+    _db.collection('public_users').doc(uid).get().then(snap => {
+      if (snap.exists && snap.data() && snap.data().name) {
+        sName = snap.data().name;
+        _renderBooks(sName);
+      }
+    }).catch(() => {});
+  }
 }
 function _updateBuyTotal() {
   const boxes = Array.prototype.slice.call(document.querySelectorAll('.seller-book-cb:checked'));
