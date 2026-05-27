@@ -34349,22 +34349,46 @@ function _rememberSellerName(sellerNameMap, key, name) {
 async function _loadPublicSellerNamesForListings(listings, sellerNameMap, removedSellerUids) {
   if (!_db || !Array.isArray(listings) || !listings.length) return 0;
   const sellerIds = [...new Set(listings.flatMap(l => _sellerIdentityTokens(l)).filter(Boolean))];
+  const nameCache = window._sellerNameCache || (window._sellerNameCache = {});
   let found = 0;
   await Promise.all(sellerIds.map(async uid => {
+    const cachedName = _sellerNameCandidate(nameCache[uid] || nameCache[String(uid || '').toLowerCase()]);
+    if (cachedName) {
+      found++;
+      _rememberSellerName(sellerNameMap, uid, cachedName);
+      return;
+    }
+    let data = null;
+    let name = '';
     try {
       const snap = await _db.collection('public_users').doc(uid).get();
-      if (!snap.exists) return;
-      const data = snap.data() || {};
-      if ((data.status || 'active') === 'banned') {
+      if (snap.exists) data = snap.data() || {};
+      if (data && (data.status || 'active') === 'banned') {
         if (removedSellerUids) removedSellerUids[uid] = true;
         return;
       }
-      const name = _sellerNameCandidate(data.name || data.fullName || data.displayName);
-      if (!name) return;
-      found++;
-      _rememberSellerName(sellerNameMap, uid, name);
-      _sellerAliasTokens(Object.assign({ id: uid, uid: uid }, data)).forEach(key => _rememberSellerName(sellerNameMap, key, name));
     } catch(e) {}
+    name = _sellerNameCandidate(data && (data.name || data.fullName || data.displayName || data.sellerName));
+    if (!name) {
+      try {
+        const snap = await _db.collection('users').doc(uid).get();
+        if (snap.exists) data = snap.data() || {};
+        if (data && (data.status || 'active') === 'banned') {
+          if (removedSellerUids) removedSellerUids[uid] = true;
+          return;
+        }
+        name = _sellerNameCandidate(data && (data.name || data.fullName || data.displayName));
+      } catch(e) {}
+    }
+    if (!name) return;
+    found++;
+    _rememberSellerName(sellerNameMap, uid, name);
+    nameCache[uid] = name;
+    nameCache[String(uid || '').toLowerCase()] = name;
+    _sellerAliasTokens(Object.assign({ id: uid, uid: uid }, data || {})).forEach(key => {
+      _rememberSellerName(sellerNameMap, key, name);
+      nameCache[key] = name;
+    });
   }));
   return found;
 }
@@ -35084,8 +35108,8 @@ function renderMatches(bookId) {
       const remoteListings = snap.docs.map(doc => _publicListingCopy(Object.assign({id:doc.id}, doc.data())));
       state.listings = remoteListings;
       save();
-      // Buyers read seller display names only from public listing fields and
-      // public_users. Private /users data stays owner/admin-only.
+      // Resolve seller names before rendering so cards do not flash from
+      // a placeholder to the real name.
       const sellerNameMap = {};
       const removedSellerUids = {};
       try {
