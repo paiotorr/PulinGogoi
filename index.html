@@ -33756,6 +33756,23 @@ function updateAccessControls() {
   });
 }
 
+function _hasStateOptionData(map) {
+  return !!(map && typeof map === 'object' && Object.keys(map).some(key =>
+    Array.isArray(map[key]) && map[key].some(item => String(item || '').trim())
+  ));
+}
+function _mergeStateOptionData(base, incoming) {
+  const out = Object.assign({}, base || {});
+  if (!incoming || typeof incoming !== 'object') return out;
+  Object.keys(incoming).forEach(key => {
+    const items = Array.isArray(incoming[key])
+      ? incoming[key].map(item => String(item || '').trim()).filter(Boolean)
+      : [];
+    if (items.length) out[key] = items;
+  });
+  return out;
+}
+
 async function loadRemoteAppData() {
   if (!_db) return;
   try {
@@ -33787,7 +33804,11 @@ async function loadRemoteAppData() {
     ref.doc('boards').onSnapshot(snap => {
       if (!snap.exists || snap.metadata.fromCache) return;
       const d = snap.data();
-      if (d.byState) state.boardsByState = d.byState;
+      if (_hasStateOptionData(d.byState)) {
+        state.boardsByState = _mergeStateOptionData(seed.boardsByState || {}, d.byState);
+      } else if (_hasStateOptionData(seed.boardsByState)) {
+        state.boardsByState = seed.boardsByState || {};
+      }
       save(); render();
     }, err => console.warn('[PKITAAP] boards listener:', err));
 
@@ -33795,7 +33816,11 @@ async function loadRemoteAppData() {
     ref.doc('mediums').onSnapshot(snap => {
       if (!snap.exists || snap.metadata.fromCache) return;
       const d = snap.data();
-      if (d.byState) state.mediumsByState = d.byState;
+      if (_hasStateOptionData(d.byState)) {
+        state.mediumsByState = _mergeStateOptionData(seed.mediumsByState || {}, d.byState);
+      } else if (_hasStateOptionData(seed.mediumsByState)) {
+        state.mediumsByState = seed.mediumsByState || {};
+      }
       save(); render();
     }, err => console.warn('[PKITAAP] mediums listener:', err));
 
@@ -33856,8 +33881,8 @@ function normalizeState(input) {
   //    these with live Firestore data — deleted items never return from cache.
   next.classes        = seed.classes        || ["Class 9","Class 10","Class 11","Class 12"];
   next.streams        = seed.streams        || ["Science","Commerce","Arts"];
-  next.boardsByState  = seed.boardsByState  || {};
-  next.mediumsByState = seed.mediumsByState || {};
+  next.boardsByState  = _mergeStateOptionData(seed.boardsByState || {}, next.boardsByState || {});
+  next.mediumsByState = _mergeStateOptionData(seed.mediumsByState || {}, next.mediumsByState || {});
   next.categories     = seed.categories     || [];
   next.locations      = seed.locations      || [];
   next.books = (seed.books || []).map(item => {
@@ -33923,7 +33948,9 @@ function getBoardsForState(st) {
   return key ? ((state.boardsByState || {})[key] || []) : [];
 }
 function getMediumsForState(st) {
-  return (state.mediumsByState||{})[st] || [];
+  const wanted = String(st || '').trim().toLowerCase();
+  const key = Object.keys(state.mediumsByState || {}).find(k => String(k || '').trim().toLowerCase() === wanted);
+  return key ? ((state.mediumsByState || {})[key] || []) : [];
 }
 function _normStateBoard(value) {
   return String(value || '').trim().toLowerCase();
@@ -34194,36 +34221,9 @@ function renderBooks() {
         if (buyBtn2) buyBtn2.onclick = function() { _buySelectedFromSeller(uid); };
       };
       _doRender(sName);
-      if (_db && (sName === 'Seller' || !sName)) {
-        _db.collection('users').doc(uid).get().then(function(snap) {
-          if (snap.exists && snap.data() && snap.data().name) {
-            sName = snap.data().name;
-            _doRender(sName);
-          }
-        }).catch(function(){});
-      }
 
     };
   });
-  // Auto-fetch real seller names for cards showing generic "Seller"
-  if (_db) {
-    var _nameCards = grid.querySelectorAll('[data-seller-uid]');
-    var _namesSeen = {};
-    _nameCards.forEach(function(nc) {
-      var u = nc.getAttribute('data-seller-uid');
-      var ne = nc.querySelector('.seller-card-name');
-      if (!ne || _namesSeen[u]) return;
-      var nm = (ne.textContent || '').trim();
-      if (nm === 'Seller' || nm === '') {
-        _namesSeen[u] = true;
-        _db.collection('users').doc(u).get().then(function(sn) {
-          if (sn.exists && sn.data() && sn.data().name) {
-            ne.textContent = sn.data().name;
-          }
-        }).catch(function(){});
-      }
-    });
-  }
 
 }
 
@@ -34248,8 +34248,26 @@ function _loadBrowseListings() {
   if (!_db) return;
   if (_listingsUnsub) return;
   _listingsUnsub = _db.collection('listings')
-    .onSnapshot(snap => {
-      state.listings = snap.docs.map(doc => _publicListingCopy(Object.assign({ id: doc.id }, doc.data())));
+    .onSnapshot(async snap => {
+      const remoteListings = snap.docs.map(doc => _publicListingCopy(Object.assign({ id: doc.id }, doc.data())));
+      const sellerNameMap = {};
+      const removedSellerUids = {};
+      try {
+        await _loadPublicSellerNamesForListings(remoteListings, sellerNameMap, removedSellerUids);
+        remoteListings.forEach(l => {
+          const uid = _sellerUidForListing(l);
+          if (removedSellerUids && uid && removedSellerUids[uid]) return;
+          const resolved = _sellerDisplayNameForListing(l, sellerNameMap);
+          if (resolved) {
+            l.seller = resolved;
+            l.sellerName = resolved;
+          }
+        });
+      } catch(e) {}
+      state.listings = remoteListings.filter(l => {
+        const uid = _sellerUidForListing(l);
+        return !(removedSellerUids && uid && removedSellerUids[uid]);
+      });
       save();
       if (catalogStep === "books") renderBooks();
       if (typeof renderMyListings === 'function') renderMyListings(true);
@@ -35226,15 +35244,6 @@ function showSellerListings(uid) {
     if (buyBtn) buyBtn.onclick = () => _buySelectedFromSeller(uid);
   };
   _renderBooks(sName);
-  // If name is generic "Seller", try the public seller profile only.
-  if (_db && (sName === 'Seller' || !sName)) {
-    _db.collection('public_users').doc(uid).get().then(snap => {
-      if (snap.exists && snap.data() && snap.data().name) {
-        sName = snap.data().name;
-        _renderBooks(sName);
-      }
-    }).catch(() => {});
-  }
 }
 function _updateBuyTotal() {
   const boxes = Array.prototype.slice.call(document.querySelectorAll('.seller-book-cb:checked'));
