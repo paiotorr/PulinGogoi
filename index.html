@@ -34601,6 +34601,9 @@ let sellCatalogStep = "classes";
 function renderSellCatalog() {
   const sellPage = document.getElementById('sellPage');
   if (!sellPage || !sellPage.classList.contains('active')) return;
+  // Open the new-book details form directly on the subject step — no extra tap.
+  // Done here (before the show/hide check below) so the form card is revealed.
+  if (sellCatalogStep === 'books' && state.settings.allowSubjectAdding !== false && !selectedBookId) selectedBookId = '__custom';
   const sellSelectedCard = document.getElementById('sellSelectedCard');
   const sellFormCard     = document.getElementById('sellFormCard');
   const catalogTitle = document.getElementById('sellCatalogTitle');
@@ -34693,18 +34696,27 @@ function renderSellCatalog() {
       bkg.style.display='grid';
       const items=shownBooks();
       const allowCustomSubject = state.settings.allowSubjectAdding !== false;
-      // Skip the extra "Add new subject/book" tap — drop the seller straight into
-      // the new-book details form. Any saved subjects still show as quick-picks.
-      if (allowCustomSubject && !selectedBookId) selectedBookId = '__custom';
-      const emptyMsg = allowCustomSubject
-        ? '<div style="grid-column:1/-1;text-align:center;color:var(--muted);font-weight:700;padding:14px 6px;line-height:1.5;">No saved subjects here yet — just add your book details below.</div>'
-        : '<div style="grid-column:1/-1;text-align:center;color:var(--muted);font-weight:700;padding:14px 6px;">No books found.</div>';
-      bkg.innerHTML=(items.length?items.map(item=>'<button class="book-card '+(item.id===selectedBookId?'active':'')+'" data-sellid="'+item.id+'"><img src="'+imageForBook(item)+'" alt="'+item.title+'"/><div class="card-info"><strong>'+item.title+'</strong><small>'+bookMeta(item)+'</small><span class="price">'+priceText(item)+'</span></div></button>').join(''):emptyMsg);
-      bkg.querySelectorAll('[data-sellid]').forEach(card=>{card.onclick=()=>{triggerAdMob("subjectClick");selectedBookId=card.dataset.sellid;renderSellCatalog();renderSelected();};});
-      renderSelected();
+      // "Add a new book" card removed — the details form opens directly (see top of
+      // this function). Saved subjects still appear as optional quick-picks.
+      const savedCards = items.length ? items.map(item=>'<button class="book-card '+(item.id===selectedBookId?'active':'')+'" data-sellid="'+item.id+'"><img src="'+imageForBook(item)+'" alt="'+item.title+'"/><div class="card-info"><strong>'+item.title+'</strong><small>'+bookMeta(item)+'</small><span class="price">'+priceText(item)+'</span></div></button>').join('') : '';
+      const catTitleEl = document.getElementById('sellCatalogTitle');
+      if (savedCards) {
+        bkg.style.display='grid';
+        bkg.innerHTML = savedCards;
+        bkg.querySelectorAll('[data-sellid]').forEach(card=>{card.onclick=()=>{triggerAdMob("subjectClick");selectedBookId=card.dataset.sellid;renderSellCatalog();renderSelected();};});
+      } else if (allowCustomSubject) {
+        // No saved subjects here — hide the grid; the new-book form is already open below.
+        bkg.style.display='none';
+        bkg.innerHTML='';
+        if (catTitleEl) catTitleEl.textContent = 'Add Your Book';
+      } else {
+        bkg.style.display='grid';
+        bkg.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--muted);font-weight:700;padding:14px 6px;">No books found.</div>';
+      }
     } else { bkg.style.display='none'; }
   }
   updateCustomSubjectControls();
+  if (sellCatalogStep === 'books') renderSelected();
 }
 function updateCustomSubjectControls() {
   const show = isCustomSellSubject();
