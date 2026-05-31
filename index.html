@@ -34612,7 +34612,7 @@ function renderSellCatalog() {
   if (catalogTitle) catalogTitle.textContent = sellCatalogStep==='classes'?'Select a Book to Sell':sellCatalogStep==='boards'?'Select Board':sellCatalogStep==='streams'?'Select Stream':'Select Subject';
   if (backBtn) backBtn.style.display = sellCatalogStep==='classes' ? 'none' : 'inline-block';
   // Show selected + sell form only when a book is picked
-  if (sellSelectedCard) sellSelectedCard.style.display = (selectedBookId && sellCatalogStep==='books') ? '' : 'none';
+  if (sellSelectedCard) sellSelectedCard.style.display = (selectedBookId && sellCatalogStep==='books' && !isCustomSellSubject()) ? '' : 'none';
   if (sellFormCard) sellFormCard.style.display = (selectedBookId && sellCatalogStep==='books') ? '' : 'none';
   updateSellPriceControls();
   const mw = document.getElementById('sellMediumWrap');
@@ -34705,9 +34705,9 @@ function renderSellCatalog() {
         bkg.innerHTML = savedCards;
         bkg.querySelectorAll('[data-sellid]').forEach(card=>{card.onclick=()=>{triggerAdMob("subjectClick");selectedBookId=card.dataset.sellid;renderSellCatalog();renderSelected();};});
       } else if (allowCustomSubject) {
-        // No saved subjects here — hide the grid; the new-book form is already open below.
-        bkg.style.display='none';
-        bkg.innerHTML='';
+        // New book, nothing to pick here — show the prompt inside this "Add Your Book" card.
+        bkg.style.display='block';
+        bkg.innerHTML='<div style="color:var(--muted);font-weight:700;padding:2px 2px 4px;line-height:1.5;">New subject/book — add the title, price &amp; details in the form below.</div>';
         if (catTitleEl) catTitleEl.textContent = 'Add Your Book';
       } else {
         bkg.style.display='grid';
