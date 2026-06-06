@@ -35499,49 +35499,47 @@ function _renderInquiryCompose(chat, msg) {
   if (body) {
     const existing = _getLocalChats().find(c => c.id === chat.id);
     const msgs = (existing && Array.isArray(existing.messages)) ? existing.messages : [];
-    body.innerHTML = msgs.length ? msgs.map(function(m){
+    let hist = msgs.map(function(m){
       const mine = String(m.senderUid || m.senderId || '') === me;
       return '<div class="chat-message-row ' + (mine ? 'mine' : 'theirs') + '"><div class="chat-bubble ' + (mine ? 'mine' : 'theirs') + '">' + _acEsc(m.text || '') + '<span class="chat-time">' + _acEsc(_fmtMsgIST(m)) + '</span></div></div>';
-    }).join('') : '<p style="color:#64748b;font-size:13px;font-weight:800;padding:8px 0;">Your inquiry is ready below — tap send to contact the seller.</p>';
+    }).join('');
+    body.innerHTML = hist + '<p style="color:#15803d;font-size:12px;font-weight:800;padding:10px 2px;line-height:1.5;">🔒 This first message is protected and cannot be edited. Tap <b>Send</b> to deliver it — or tap the message to cancel.</p>';
     _scrollChatToBottom();
   }
-  const oldBar = document.getElementById('inquiryComposeBar'); if (oldBar && oldBar.parentNode) oldBar.parentNode.removeChild(oldBar);
-  const form = document.getElementById('messageForm'); if (form) form.style.display = '';
+  const form = document.getElementById('messageForm');
   const input = document.getElementById('messageInput');
-  if (input) {
-    input.value = msg;
-    input.setAttribute('data-inquiry-lock', '1');
-    _autosizeMessageInput();
-    try { input.blur(); } catch(e){}
-    if (!input._inqHooked) {
-      input._inqHooked = true;
-      // Locked first message: any attempt to edit or clear it (backspace, the
-      // keyboard X / clear, paste, etc.) wipes the whole message and returns the
-      // buyer to the seller's page. Nothing is saved unless they actually Send.
-      input.addEventListener('input', function(){
-        if (_pendingInquiry && input.getAttribute('data-inquiry-lock') === '1') {
-          input.removeAttribute('data-inquiry-lock');
-          _leaveInquiry();
-        }
-      });
-      input.addEventListener('keydown', function(e){
-        if (_pendingInquiry && input.getAttribute('data-inquiry-lock') === '1') {
-          if (e.key === 'Backspace' || e.key === 'Delete') {
-            e.preventDefault();
-            input.removeAttribute('data-inquiry-lock');
-            _leaveInquiry();
-          } else if (e.key !== 'Enter') {
-            e.preventDefault();
-          }
-        }
-      });
-    }
+  if (form) form.style.display = '';
+  if (input) input.style.display = 'none';
+  let prot = document.getElementById('inquiryProtected');
+  if (!prot) {
+    prot = document.createElement('div');
+    prot.id = 'inquiryProtected';
+    if (input && input.parentNode) input.parentNode.insertBefore(prot, input);
+    else if (form) form.insertBefore(prot, form.firstChild);
   }
+  prot.style.cssText = 'position:relative;flex:1;border:2px solid #16a34a;background:#f0fdf4;border-radius:14px;padding:12px 14px;min-height:44px;max-height:160px;overflow:auto;cursor:pointer;-webkit-user-select:none;user-select:none;';
+  prot.style.display = '';
+  prot.innerHTML =
+    '<div style="white-space:pre-wrap;font-size:14px;font-weight:700;color:#14532d;line-height:1.5;pointer-events:none;">' + _acEsc(msg) + '</div>' +
+    '<div style="position:absolute;inset:0;border-radius:12px;background:linear-gradient(180deg,rgba(22,163,74,0.04),rgba(22,163,74,0.12));display:flex;align-items:flex-start;justify-content:flex-end;padding:6px;pointer-events:none;">' +
+      '<span style="display:inline-flex;align-items:center;gap:4px;background:#16a34a;color:#fff;font-size:10px;font-weight:900;padding:3px 8px;border-radius:999px;box-shadow:0 1px 3px rgba(0,0,0,.15);">🔒 Protected</span>' +
+    '</div>';
+  prot.onclick = function(){ _leaveInquiry(); };
+  if (!window._inqKeyHook) {
+    window._inqKeyHook = true;
+    document.addEventListener('keydown', function(e){
+      if (_pendingInquiry && (e.key === 'Backspace' || e.key === 'Delete')) { e.preventDefault(); _leaveInquiry(); }
+    });
+  }
+}
+function _restoreComposeInput() {
+  const prot = document.getElementById('inquiryProtected'); if (prot) prot.style.display = 'none';
+  const input = document.getElementById('messageInput');
+  if (input) { input.style.display = ''; input.removeAttribute('data-inquiry-lock'); input.value = ''; _autosizeMessageInput(); }
 }
 function _cancelPendingInquiry() {
   _pendingInquiry = null;
-  const input = document.getElementById('messageInput');
-  if (input) { input.removeAttribute('data-inquiry-lock'); input.value = ''; _autosizeMessageInput(); }
+  _restoreComposeInput();
 }
 function _leaveInquiry() {
   const uid = _pendingInquiry ? _pendingInquiry.sellerUid : '';
@@ -35589,8 +35587,7 @@ async function _sendPendingInquiry() {
     _saveLocalChats(chats);
   }
   _pendingInquiry = null;
-  const input = document.getElementById('messageInput');
-  if (input) { input.removeAttribute('data-inquiry-lock'); input.value = ''; _autosizeMessageInput(); }
+  _restoreComposeInput();
   _activeChatId = p.chatId;
   renderMessages(true);
   openChat(p.chatId);
@@ -36448,6 +36445,7 @@ function openChat(chatId, skipRemote) {
   const chat = _getLocalChats().find(c => c.id === chatId);
   if (!chat) return;
   _activeChatId = chatId;
+  if (!_pendingInquiry) { var _pp=document.getElementById('inquiryProtected'); if(_pp) _pp.style.display='none'; var _ii=document.getElementById('messageInput'); if(_ii) _ii.style.display=''; }
   const me = _myChatUid();
   const otherUid = chat.sellerUid === me ? chat.buyerUid : chat.sellerUid;
   const otherName = chat.sellerUid === me ? (chat.buyerName || 'Buyer') : (chat.sellerName || 'Seller');
