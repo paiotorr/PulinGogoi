@@ -350,7 +350,7 @@ dialog::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
   .messages-shell { grid-template-columns: 1fr; min-height: 0; }
   .thread-list-panel { min-height: calc(100dvh - 210px); }
   .thread-list { max-height: none; overflow-y: visible; padding-bottom: 18px; }
-  .messages-shell.chat-open { min-height: 0; height: calc(100dvh - 110px); }
+  .messages-shell.chat-open { min-height: 0; height: calc(100dvh - 150px); }
   .messages-shell.chat-open .chat-panel { height: 100%; min-height: 0; }
   .messages-shell.chat-open .chat-body { min-height: 0; flex: 1 1 0; }
   body.chat-typing .brand-footer { display: none; }
@@ -35510,7 +35510,6 @@ function _renderInquiryCompose(chat, msg) {
   const input = document.getElementById('messageInput');
   if (form) form.style.display = '';
   if (input) input.style.display = 'none';
-  document.body.classList.add('chat-typing');
   let prot = document.getElementById('inquiryProtected');
   if (!prot) {
     prot = document.createElement('div');
@@ -35526,6 +35525,7 @@ function _renderInquiryCompose(chat, msg) {
       '<span style="display:inline-flex;align-items:center;gap:4px;background:#16a34a;color:#fff;font-size:10px;font-weight:900;padding:3px 8px;border-radius:999px;box-shadow:0 1px 3px rgba(0,0,0,.15);">🔒 Protected</span>' +
     '</div>';
   prot.onclick = function(){ _leaveInquiry(); };
+  setTimeout(function(){ try { window.scrollTo(0, document.documentElement.scrollHeight); } catch(e){} try { var f=document.getElementById('messageForm'); if (f && f.scrollIntoView) f.scrollIntoView({block:'end'}); } catch(e){} }, 60);
   if (!window._inqKeyHook) {
     window._inqKeyHook = true;
     document.addEventListener('keydown', function(e){
@@ -35534,7 +35534,6 @@ function _renderInquiryCompose(chat, msg) {
   }
 }
 function _restoreComposeInput() {
-  document.body.classList.remove('chat-typing');
   const prot = document.getElementById('inquiryProtected'); if (prot) prot.style.display = 'none';
   const input = document.getElementById('messageInput');
   if (input) { input.style.display = ''; input.removeAttribute('data-inquiry-lock'); input.value = ''; _autosizeMessageInput(); }
