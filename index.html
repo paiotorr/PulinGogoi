@@ -38105,7 +38105,7 @@ function init() {
   // Account details dialog save + close
   const accSave = document.getElementById('accSaveBtn');
   if (accSave) accSave.onclick = saveAccountDetails;
-  ['accName','accMobile','accGender','accDobDay','accDobMonth','accDobYear','accClass','accState','accDistrict','accSubDistrict','accPlace','accSchool'].forEach(id => {
+  ['accName','accMobile','accGender','accDobDay','accDobMonth','accDobYear','accClass','accState','accDistrict','accSubDistrict','accPlace','accSchool','accPlaceFallback','accSchoolFallback'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
     el.addEventListener('input', _updateAccountSaveState);
