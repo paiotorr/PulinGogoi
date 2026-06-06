@@ -35490,57 +35490,72 @@ async function _openSellerChat(sellerUid, contextListing, prefillMsg, bookCount)
   _renderInquiryCompose(chat, _pendingInquiry.msg);
 }
 function _renderInquiryCompose(chat, msg) {
+  const me = _myChatUid();
   const title = document.getElementById('messageChatTitle');
   const sub = document.getElementById('messageChatSub');
   const body = document.getElementById('messageChatBody');
   if (title) title.textContent = chat.sellerName || 'Seller';
-  if (sub) sub.textContent = (chat.bookTitle ? chat.bookTitle + ' — ' : '') + 'inquiry';
+  if (sub) sub.textContent = chat.bookTitle ? ('About: ' + chat.bookTitle) : 'Book conversation';
   if (body) {
-    body.innerHTML =
-      '<div class="chat-message-row mine"><div class="chat-bubble mine" style="white-space:pre-wrap;">' +
-        _acEsc(msg) +
-      '</div></div>' +
-      '<p style="color:#64748b;font-size:12px;font-weight:800;padding:8px 2px;line-height:1.5;">This first message is fixed — book names, prices and total cannot be changed. Tap “Send to seller” to start the chat.</p>';
+    const existing = _getLocalChats().find(c => c.id === chat.id);
+    const msgs = (existing && Array.isArray(existing.messages)) ? existing.messages : [];
+    body.innerHTML = msgs.length ? msgs.map(function(m){
+      const mine = String(m.senderUid || m.senderId || '') === me;
+      return '<div class="chat-message-row ' + (mine ? 'mine' : 'theirs') + '"><div class="chat-bubble ' + (mine ? 'mine' : 'theirs') + '">' + _acEsc(m.text || '') + '<span class="chat-time">' + _acEsc(_fmtMsgIST(m)) + '</span></div></div>';
+    }).join('') : '<p style="color:#64748b;font-size:13px;font-weight:800;padding:8px 0;">Your inquiry is ready below — tap send to contact the seller.</p>';
     _scrollChatToBottom();
   }
-  const form = document.getElementById('messageForm');
-  if (form) form.style.display = 'none';
-  let bar = document.getElementById('inquiryComposeBar');
-  if (!bar) {
-    bar = document.createElement('div');
-    bar.id = 'inquiryComposeBar';
-    bar.style.cssText = 'display:flex;gap:8px;padding:10px 12px;';
-    const card = document.getElementById('messageChatCard');
-    if (form && form.parentNode) form.parentNode.insertBefore(bar, form.nextSibling);
-    else if (card) card.appendChild(bar);
+  const oldBar = document.getElementById('inquiryComposeBar'); if (oldBar && oldBar.parentNode) oldBar.parentNode.removeChild(oldBar);
+  const form = document.getElementById('messageForm'); if (form) form.style.display = '';
+  const input = document.getElementById('messageInput');
+  if (input) {
+    input.value = msg;
+    input.setAttribute('data-inquiry-lock', '1');
+    _autosizeMessageInput();
+    try { input.blur(); } catch(e){}
+    if (!input._inqHooked) {
+      input._inqHooked = true;
+      // Locked first message: any attempt to edit or clear it (backspace, the
+      // keyboard X / clear, paste, etc.) wipes the whole message and returns the
+      // buyer to the seller's page. Nothing is saved unless they actually Send.
+      input.addEventListener('input', function(){
+        if (_pendingInquiry && input.getAttribute('data-inquiry-lock') === '1') {
+          input.removeAttribute('data-inquiry-lock');
+          _leaveInquiry();
+        }
+      });
+      input.addEventListener('keydown', function(e){
+        if (_pendingInquiry && input.getAttribute('data-inquiry-lock') === '1') {
+          if (e.key === 'Backspace' || e.key === 'Delete') {
+            e.preventDefault();
+            input.removeAttribute('data-inquiry-lock');
+            _leaveInquiry();
+          } else if (e.key !== 'Enter') {
+            e.preventDefault();
+          }
+        }
+      });
+    }
   }
-  bar.style.display = 'flex';
-  bar.innerHTML =
-    '<button type="button" class="btn" id="inqCancelBtn" style="flex:0 0 auto;">Back</button>' +
-    '<button type="button" class="btn btn-primary" id="inqSendBtn" style="flex:1;">Send to seller</button>';
-  const sendBtn = document.getElementById('inqSendBtn');
-  const cancelBtn = document.getElementById('inqCancelBtn');
-  if (sendBtn) sendBtn.onclick = function(){ _sendPendingInquiry(); };
-  if (cancelBtn) cancelBtn.onclick = function(){ _cancelPendingInquiry(); _backToBuyFromInquiry(); };
 }
 function _cancelPendingInquiry() {
   _pendingInquiry = null;
-  const bar = document.getElementById('inquiryComposeBar'); if (bar) bar.style.display = 'none';
-  const form = document.getElementById('messageForm'); if (form) form.style.display = '';
+  const input = document.getElementById('messageInput');
+  if (input) { input.removeAttribute('data-inquiry-lock'); input.value = ''; _autosizeMessageInput(); }
 }
-function _backToBuyFromInquiry() {
+function _leaveInquiry() {
+  const uid = _pendingInquiry ? _pendingInquiry.sellerUid : '';
+  _cancelPendingInquiry();
   document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
   const bp = document.getElementById('buyPage'); if (bp) bp.classList.add('active');
-  try { render(); } catch(e){}
+  try { if (uid && typeof showSellerListings === 'function') showSellerListings(uid); else render(); }
+  catch(e){ try { render(); } catch(_e){} }
   try { window.scrollTo(0, 0); } catch(e){}
 }
 async function _sendPendingInquiry() {
   const p = _pendingInquiry;
   if (!p) return;
-  const sendBtn = document.getElementById('inqSendBtn');
-  if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = 'Sending…'; }
   const chat = p.chat;
-  // Un-hide if it was previously hidden, then create the chat for real.
   const hidden = _getHiddenChatMap();
   if (hidden[p.chatId]) { delete hidden[p.chatId]; _saveHiddenChatMap(hidden); }
   _upsertLocalChat(chat);
@@ -35561,7 +35576,6 @@ async function _sendPendingInquiry() {
     catch(e) {
       console.warn('[PKITAAP] Inquiry send failed:', e);
       toast('Message failed. Please check your connection and try again.');
-      if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = 'Send to seller'; }
       return;
     }
   }
@@ -35575,8 +35589,8 @@ async function _sendPendingInquiry() {
     _saveLocalChats(chats);
   }
   _pendingInquiry = null;
-  const bar = document.getElementById('inquiryComposeBar'); if (bar) bar.style.display = 'none';
-  const form = document.getElementById('messageForm'); if (form) form.style.display = '';
+  const input = document.getElementById('messageInput');
+  if (input) { input.removeAttribute('data-inquiry-lock'); input.value = ''; _autosizeMessageInput(); }
   _activeChatId = p.chatId;
   renderMessages(true);
   openChat(p.chatId);
@@ -36482,6 +36496,7 @@ function openChat(chatId, skipRemote) {
   }
 }
 async function sendChatMessage() {
+  if (_pendingInquiry) { _sendPendingInquiry(); return; }
   if (!_activeChatId) { toast('Select a conversation first.'); return; }
   const input = document.getElementById('messageInput');
   const text = (input?.value || '').trim();
