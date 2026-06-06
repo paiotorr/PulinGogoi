@@ -35510,6 +35510,7 @@ function _renderInquiryCompose(chat, msg) {
   const input = document.getElementById('messageInput');
   if (form) form.style.display = '';
   if (input) input.style.display = 'none';
+  document.body.classList.add('chat-typing');
   let prot = document.getElementById('inquiryProtected');
   if (!prot) {
     prot = document.createElement('div');
@@ -35517,7 +35518,7 @@ function _renderInquiryCompose(chat, msg) {
     if (input && input.parentNode) input.parentNode.insertBefore(prot, input);
     else if (form) form.insertBefore(prot, form.firstChild);
   }
-  prot.style.cssText = 'position:relative;flex:1;border:2px solid #16a34a;background:#f0fdf4;border-radius:14px;padding:12px 14px;min-height:44px;max-height:160px;overflow:auto;cursor:pointer;-webkit-user-select:none;user-select:none;';
+  prot.style.cssText = 'position:relative;flex:1;border:2px solid #16a34a;background:#f0fdf4;border-radius:14px;padding:12px 14px;min-height:44px;max-height:120px;overflow:auto;cursor:pointer;-webkit-user-select:none;user-select:none;';
   prot.style.display = '';
   prot.innerHTML =
     '<div style="white-space:pre-wrap;font-size:14px;font-weight:700;color:#14532d;line-height:1.5;pointer-events:none;">' + _acEsc(msg) + '</div>' +
@@ -35533,6 +35534,7 @@ function _renderInquiryCompose(chat, msg) {
   }
 }
 function _restoreComposeInput() {
+  document.body.classList.remove('chat-typing');
   const prot = document.getElementById('inquiryProtected'); if (prot) prot.style.display = 'none';
   const input = document.getElementById('messageInput');
   if (input) { input.style.display = ''; input.removeAttribute('data-inquiry-lock'); input.value = ''; _autosizeMessageInput(); }
