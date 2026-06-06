@@ -35554,6 +35554,7 @@ function _leaveInquiry() {
 async function _sendPendingInquiry() {
   const p = _pendingInquiry;
   if (!p) return;
+  if (!_msgQuotaCheck()) return;
   const chat = p.chat;
   const hidden = _getHiddenChatMap();
   if (hidden[p.chatId]) { delete hidden[p.chatId]; _saveHiddenChatMap(hidden); }
@@ -35587,6 +35588,7 @@ async function _sendPendingInquiry() {
     chats[idx].updatedAtMs = msg.createdAtMs;
     _saveLocalChats(chats);
   }
+  _msgQuotaBump();
   _pendingInquiry = null;
   _restoreComposeInput();
   _activeChatId = p.chatId;
@@ -36494,6 +36496,60 @@ function openChat(chatId, skipRemote) {
     _watchChatMessages(chatId);
   }
 }
+// ---- Integrity guard (safe): backend config + core functions ----
+// Hidden expected copy of the backend config, baked at export. If someone edits
+// the visible PKITAAP_FB_CONFIG (to repoint the backend) without also editing this
+// copy, the values won't match and the app refuses to leave the splash screen.
+const _PK_FB_EXPECT = {"apiKey":"AIzaSyBfddqQmMk0GWChrC-eGFqFCiQA7tEMKUs","authDomain":"auth.paiotorr.com","projectId":"pkitaap","storageBucket":"pkitaap.firebasestorage.app","messagingSenderId":"8439723706","appId":"1:8439723706:web:2c1e96a447bca698b1b483"};
+function _pkIntegrityOk() {
+  try {
+    var cfg = (typeof PKITAAP_FB_CONFIG !== 'undefined') ? PKITAAP_FB_CONFIG : null;
+    var exp = (typeof _PK_FB_EXPECT !== 'undefined') ? _PK_FB_EXPECT : null;
+    if (cfg && exp && typeof cfg === 'object' && typeof exp === 'object') {
+      var keys = ['apiKey','authDomain','projectId','appId','messagingSenderId','storageBucket'];
+      for (var i = 0; i < keys.length; i++) {
+        var a = cfg[keys[i]] == null ? '' : String(cfg[keys[i]]);
+        var b = exp[keys[i]] == null ? '' : String(exp[keys[i]]);
+        if (a !== b) return false;
+      }
+    }
+    if (typeof _acEsc !== 'function') return false;
+    if (typeof _buySelectedFromSeller !== 'function') return false;
+    if (typeof _sendPendingInquiry !== 'function') return false;
+    if (typeof sendChatMessage !== 'function') return false;
+    if (typeof _msgQuotaCheck !== 'function') return false;
+    if (typeof openChat !== 'function') return false;
+    if (typeof _openSellerChat !== 'function') return false;
+    if (typeof _syncChatMessageToFirestore !== 'function') return false;
+    if (typeof requireLogin !== 'function') return false;
+    return true;
+  } catch (e) { return true; } // never lock out real users on an unexpected error
+}
+try { window._pkIntegrityOk = _pkIntegrityOk; Object.freeze(_PK_FB_EXPECT); } catch (e) {}
+// ---- Daily message send cap (device-side, no Firebase cost) ----
+var _MSG_DAILY_LIMIT = 50; // messages a user may send per day; set to 0 to disable
+function _msgQuotaToday() {
+  var d = new Date();
+  var key = d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+  var raw;
+  try { raw = JSON.parse(localStorage.getItem('pk_msgquota') || '{}'); } catch (e) { raw = {}; }
+  if (!raw || raw.date !== key) raw = { date: key, count: 0 };
+  return raw;
+}
+function _msgQuotaCheck() {
+  if (!_MSG_DAILY_LIMIT || _MSG_DAILY_LIMIT <= 0) return true;
+  if (_msgQuotaToday().count >= _MSG_DAILY_LIMIT) {
+    toast('Daily message limit reached (' + _MSG_DAILY_LIMIT + '/day). Please try again tomorrow.');
+    return false;
+  }
+  return true;
+}
+function _msgQuotaBump() {
+  if (!_MSG_DAILY_LIMIT || _MSG_DAILY_LIMIT <= 0) return;
+  var q = _msgQuotaToday();
+  q.count = (q.count || 0) + 1;
+  try { localStorage.setItem('pk_msgquota', JSON.stringify(q)); } catch (e) {}
+}
 async function sendChatMessage() {
   if (_pendingInquiry) { _sendPendingInquiry(); return; }
   if (!_activeChatId) { toast('Select a conversation first.'); return; }
@@ -36503,6 +36559,7 @@ async function sendChatMessage() {
   const chats = _getLocalChats();
   const idx = chats.findIndex(c => c.id === _activeChatId);
   if (idx < 0) return;
+  if (!_msgQuotaCheck()) return;
   const msg = {
     id: 'm' + Date.now() + '_' + Math.random().toString(36).slice(2,8),
     senderUid: _myChatUid(),
@@ -36528,6 +36585,7 @@ async function sendChatMessage() {
   chats[idx].updatedAt = msg.createdAt;
   chats[idx].updatedAtMs = msg.createdAtMs;
   _saveLocalChats(chats);
+  _msgQuotaBump();
   input.value = '';
   _autosizeMessageInput();
   renderMessages(true);
@@ -36870,7 +36928,7 @@ function updateSignupSubDistricts() {
   if (!sdSel) return;
   sdSel.innerHTML = '<option value="">— Sub-District —</option>' +
     _getSubDistricts(stateName, district).slice().sort((a,b)=>String(a.subDistrict||'').localeCompare(String(b.subDistrict||''))).map(sd =>
-      '<option value="' + sd.subDistrict + '">' + sd.subDistrict + '</option>'
+      '<option value="' + _acEsc(sd.subDistrict) + '">' + _acEsc(sd.subDistrict) + '</option>'
     ).join('');
   if (pInp) { pInp.value = ''; pInp.disabled = true; pInp.placeholder = 'Select sub-district first'; }
   if (sInp) { sInp.value = ''; sInp.disabled = true; sInp.placeholder = 'Enter place first'; }
@@ -37469,7 +37527,7 @@ function render() {
       const _meds = (typeof getMediumsForState === 'function' ? getMediumsForState(selectedState) : []) || [];
       const _prev = _mediumFilterEl.value || '';
       _mediumFilterEl.innerHTML = '<option value="">Select Medium</option>' +
-        _meds.map(m => '<option value="' + m + '">' + m + '</option>').join('');
+        _meds.map(m => '<option value="' + _acEsc(m) + '">' + _acEsc(m) + '</option>').join('');
       if (_prev && _meds.indexOf(_prev) >= 0) _mediumFilterEl.value = _prev;
       else _mediumFilterEl.value = '';
     }
@@ -37729,8 +37787,8 @@ function bindAdminForms() {
     const nCls=document.getElementById("newClass");
     const nBrd=document.getElementById("newBoard");
     const nStr=document.getElementById("newStream");
-    nCls.innerHTML = [...classes,...(state.settings.general?["General"]:[])].map(c=>'<option>'+c+'</option>').join("");
-    nCls.onchange = () => { const c=nCls.value; nBrd.innerHTML=(getBoardsForState(selectedState)||[]).map(b=>'<option>'+b+'</option>').join(""); };
+    nCls.innerHTML = [...classes,...(state.settings.general?["General"]:[])].map(c=>'<option>'+_acEsc(c)+'</option>').join("");
+    nCls.onchange = () => { const c=nCls.value; nBrd.innerHTML=(getBoardsForState(selectedState)||[]).map(b=>'<option>'+_acEsc(b)+'</option>').join(""); };
     nCls.onchange();
     bookForm.onsubmit = e => { e.preventDefault(); if(state.settings.allowSubjectAdding === false){ toast("Subject adding is turned off by admin"); return; } const cls=nCls.value; const brd=nBrd.value; const str=nStr.value; const title=document.getElementById("newTitle").value.trim(); const price=parseInt(document.getElementById("newPrice").value)||0; const author=document.getElementById("newAuthor").value.trim(); const image=document.getElementById("newImage").value.trim(); if(!title||!price) return; state.books.push({id:"b"+Date.now(),type:cls==="General"?"general":"school",state:cls==="General"?"":selectedState,className:cls,board:brd,stream:str,title,price,author,image}); save(); toast("Subject added!"); e.target.reset(); nCls.onchange(); };
     }
@@ -37741,8 +37799,8 @@ function bindAdminForms() {
     const nPlace=document.getElementById("newPlace");
     // Populate from all districts across all states
     const allDists = state.locations.flatMap(st=>st.districts||[]);
-    nDist.innerHTML = allDists.map(d=>'<option>'+d.district+'</option>').join("");
-    nDist.onchange = () => { const d=allDists.find(x=>x.district===nDist.value); nPlace.innerHTML=(d?.places||[]).map(p=>'<option>'+p.name+'</option>').join(""); };
+    nDist.innerHTML = allDists.map(d=>'<option>'+_acEsc(d.district)+'</option>').join("");
+    nDist.onchange = () => { const d=allDists.find(x=>x.district===nDist.value); nPlace.innerHTML=(d?.places||[]).map(p=>'<option>'+_acEsc(p.name)+'</option>').join(""); };
     nDist.onchange();
     schoolForm.onsubmit = e => { e.preventDefault(); const d=allDists.find(x=>x.district===nDist.value); const p=d?.places.find(x=>x.name===nPlace.value); const sc=document.getElementById("newSchool").value.trim(); if(!p||!sc) return; p.schools.push(sc); save(); toast("School added!"); document.getElementById("newSchool").value=""; };
   }
@@ -37963,7 +38021,7 @@ function _updateMediumsForState(stateVal) {
   if (!sel) return;
   if (!stateVal) { sel.innerHTML = '<option value="">— Select State first —</option>'; return; }
   sel.innerHTML = '<option value="">— Select Medium —</option>' +
-    (meds.length ? meds.map(m=>'<option value="'+m+'">'+m+'</option>').join('') :
+    (meds.length ? meds.map(m=>'<option value="'+_acEsc(m)+'">'+_acEsc(m)+'</option>').join('') :
       '<option value="English Medium">English Medium</option>');
 }
 function _updateSellMediumsForState(stateVal, selectedValue) {
@@ -37972,7 +38030,7 @@ function _updateSellMediumsForState(stateVal, selectedValue) {
   if (!sel) return;
   if (!stateVal) { sel.innerHTML = '<option value="">Select state first</option>'; return; }
   sel.innerHTML = '<option value="">Select Medium</option>' +
-    (meds.length ? meds.map(m=>'<option value="'+m+'">'+m+'</option>').join('') :
+    (meds.length ? meds.map(m=>'<option value="'+_acEsc(m)+'">'+_acEsc(m)+'</option>').join('') :
       '<option value="English Medium">English Medium</option>');
   if (selectedValue) sel.value = selectedValue;
 }
@@ -38676,6 +38734,14 @@ init();
 
   function _doHideSplash() {
     if (_splashDone) return;
+    if (window._pkIntegrityOk && window._pkIntegrityOk() === false) {
+      // Tamper detected (backend config changed or core functions removed):
+      // keep the জয় জুবিন দা splash, cover the whole screen, and never load.
+      var ov0 = document.getElementById('splashOverlay');
+      if (ov0) { ov0.classList.remove('fade-out'); ov0.style.opacity = '1'; ov0.style.pointerEvents = 'auto'; ov0.style.top = '0'; ov0.style.zIndex = '2147483647'; }
+      document.body.classList.add('splash-active');
+      return;
+    }
     _splashDone = true;
     var overlay = document.getElementById('splashOverlay');
     if (!overlay) return;
