@@ -33668,6 +33668,7 @@ try {
 state.listings = [];
 let selectedClass = "", selectedBoard = "", selectedStream = "", selectedBookId = "", selectedCategory = "";
 let search = "", catalogStep = "classes";
+let _viewingSellerUid = "";
 let _browseListingsLoadedAt = 0;
 let _lastBrowseSig = '';
 let _listingsUnsub = null;
@@ -33724,6 +33725,7 @@ function requireLogin() {
 }
 
 function goHome() {
+  _viewingSellerUid = '';
   if (typeof _pendingInquiry !== 'undefined' && _pendingInquiry) _cancelPendingInquiry();
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('buyPage')?.classList.add('active');
@@ -33769,6 +33771,14 @@ window.pkitaapAndroidBack = function() {
     if (_ml) _ml.innerHTML = '';
     render();
     return true;
+  }
+  if (_viewingSellerUid) {
+    _viewingSellerUid = '';
+    if (catalogStep === 'books') {
+      const _mlv = document.querySelector('#matchList'); if (_mlv) _mlv.innerHTML = '';
+      renderBooks();
+      return true;
+    }
   }
   if (catalogStep === 'books') {
     selectedCategory = '';
@@ -34149,6 +34159,7 @@ function renderBooks() {
   grid.style.display = catalogStep === "books" ? "grid" : "none";
   grid.classList.toggle("focused", false);
   if (catalogStep !== "books") return;
+  _viewingSellerUid = "";
 
   const district = document.getElementById('browseDistrict')?.value || window._currentUser?.district || '';
   const subDistrict = document.getElementById('browseSubDistrict')?.value || window._currentUser?.subDistrict || '';
@@ -34242,6 +34253,7 @@ function renderBooks() {
   grid.querySelectorAll('[data-seller-uid]').forEach(card => {
     card.onclick = () => {
                         const uid = card.getAttribute('data-seller-uid');
+      _viewingSellerUid = uid;
       grid.style.display = 'block';
       const sellerListings = matches.filter(l => {
         const lu = String(l.userId || l.sellerUserId || l.ownerId || '').trim();
