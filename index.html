@@ -33812,11 +33812,12 @@ window.pkitaapAndroidBack = function() {
   history.pushState({ pkitaap: 1 }, '');
 
   window.addEventListener('popstate', function() {
-    var handled = false;
-    try { handled = !!(window.pkitaapAndroidBack && window.pkitaapAndroidBack()); } catch(e) {}
-    if (handled) {
-      history.pushState({ pkitaap: 1 }, '');
-    }
+    try { if (window.pkitaapAndroidBack) window.pkitaapAndroidBack(); } catch(e) {}
+    // ALWAYS restore a history buffer so the phone/browser Back button can
+    // never close the app unexpectedly. Back now steps within the app
+    // (seller -> sellers -> stream -> board -> class) and simply stays put on
+    // the home/class screen. (To leave the app, use the phone's Home button.)
+    history.pushState({ pkitaap: 1 }, '');
   });
 })();
 // ────────────────────────────────────────────────────────────────
