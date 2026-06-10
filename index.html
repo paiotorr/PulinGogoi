@@ -35378,6 +35378,7 @@ function _sellerAvatarHtml(s) {
 function showSellerListings(uid) {
   const list = document.querySelector("#matchList");
   if (!list) return;
+  _viewingSellerUid = uid;
   const clsCtx = (typeof book === 'function' && book() && book().className) || selectedClass || '';
   const mine = (state.listings || []).filter(l => {
     const lu = String(l.userId || l.sellerUserId || l.ownerId || '').trim();
@@ -37597,6 +37598,14 @@ function bindSearch() {
   const clr = document.querySelector("#clearSearch");
   const back = document.querySelector("#backBtn");
   if(back) back.onclick = () => {
+    if (_viewingSellerUid) {
+      _viewingSellerUid = "";
+      if (catalogStep === "books") {
+        const _mlv = document.querySelector("#matchList"); if (_mlv) _mlv.innerHTML = "";
+        renderBooks();
+        return;
+      }
+    }
     selectedCategory = "";
     if (catalogStep === "books") {
       if (selectedStream) catalogStep = "streams";
