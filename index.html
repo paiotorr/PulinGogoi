@@ -33812,11 +33812,26 @@ window.pkitaapAndroidBack = function() {
   history.pushState({ pkitaap: 1 }, '');
 
   window.addEventListener('popstate', function() {
-    try { if (window.pkitaapAndroidBack) window.pkitaapAndroidBack(); } catch(e) {}
-    // ALWAYS restore a history buffer so the phone/browser Back button can
-    // never close the app unexpectedly. Back now steps within the app
-    // (seller -> sellers -> stream -> board -> class) and simply stays put on
-    // the home/class screen. (To leave the app, use the phone's Home button.)
+    try {
+      var _bb = document.getElementById('backBtn');
+      var _dlg = document.querySelector('dialog[open]');
+      var _menu = document.getElementById('menuPanel');
+      var _shell = document.getElementById('messagesShell');
+      var _overlay = _dlg
+        || (_menu && _menu.classList.contains('open'))
+        || (_shell && _shell.classList.contains('chat-open'));
+      if (_overlay) {
+        // a dialog / menu / chat is open -> let the main handler close it
+        if (window.pkitaapAndroidBack) window.pkitaapAndroidBack();
+      } else if (_bb && getComputedStyle(_bb).display !== 'none') {
+        // NOT on the home/class screen -> drive the SAME on-screen Back
+        // button that already works (seller -> sellers -> stream -> board -> class)
+        _bb.click();
+      }
+      // else: already on the home/class screen -> stay put
+    } catch(e) {}
+    // ALWAYS restore a history buffer so the phone/browser Back can never
+    // close the site unexpectedly.
     history.pushState({ pkitaap: 1 }, '');
   });
 })();
