@@ -34107,7 +34107,7 @@ function renderClasses() {
   grid.style.display = catalogStep === "classes" ? "grid" : "none";
   grid.innerHTML = all.map(name => '<button class="class-card ' + (name===selectedClass?"active":"") + '" data-class="' + name + '"><img src="' + imageForClass(name) + '" alt="' + name + '"/><div class="card-info"><strong>' + name + '</strong></div></button>').join("");
   document.querySelectorAll(".class-card").forEach(card => {
-    card.onclick = () => { if(!requireLogin()) return; triggerAdMob("classClick"); selectedClass = card.dataset.class; selectedBoard=""; selectedStream=""; selectedBookId=""; selectedCategory=""; catalogStep = selectedClass === "General" ? "books" : "boards"; const _ml=document.querySelector("#matchList"); if(_ml) _ml.innerHTML=""; render(); };
+    card.onclick = () => { if(!requireLogin()) return; triggerAdMob("classClick"); selectedClass = card.dataset.class; selectedBoard=""; selectedStream=""; selectedBookId=""; selectedCategory=""; catalogStep = selectedClass === "General" ? "books" : "boards"; const _ml=document.querySelector("#matchList"); if(_ml) _ml.innerHTML=""; try{history.pushState({pkitaap:1},'');}catch(e){} render(); };
   });
 }
 function renderCategories() {
@@ -34119,7 +34119,7 @@ function renderCategories() {
   if (!show) return;
   grid.innerHTML = allCats.map(cat => '<button class="class-card" data-catid="' + cat.id + '"><img src="' + (cat.image||placeholder(cat.name)) + '" alt="' + cat.name + '"/><div class="card-info"><strong>' + cat.name + '</strong></div></button>').join("");
   document.querySelectorAll("[data-catid]").forEach(card => {
-    card.onclick = () => { if(!requireLogin()) return; selectedClass = "General"; selectedCategory = card.dataset.catid; search = ""; document.querySelector("#searchInput").value = ""; document.querySelector("#clearSearch").style.display = "none"; catalogStep = "books"; render(); };
+    card.onclick = () => { if(!requireLogin()) return; selectedClass = "General"; selectedCategory = card.dataset.catid; search = ""; document.querySelector("#searchInput").value = ""; document.querySelector("#clearSearch").style.display = "none"; catalogStep = "books"; try{history.pushState({pkitaap:1},'');}catch(e){} render(); };
   });
 }
 function renderBoards() {
@@ -34144,6 +34144,7 @@ function renderBoards() {
       selectedStream = "";
       selectedBookId = "";
       catalogStep = (selectedClass === "Class 11" || selectedClass === "Class 12") ? "streams" : "books";
+      try{history.pushState({pkitaap:1},'');}catch(e){}
       render();
     };
   });
@@ -34163,7 +34164,7 @@ function renderStreams() {
   // Fall back to all streams if none found (safety)
   const toShow = activeStreams.length ? activeStreams : streams;
   grid.innerHTML = toShow.map(name => '<button class="stream-card" data-stream="' + name + '"><strong>' + name + '</strong></button>').join("");
-  document.querySelectorAll("[data-stream]").forEach(card => { card.onclick = () => { selectedStream=card.dataset.stream; selectedBookId=""; catalogStep="books"; render(); }; });
+  document.querySelectorAll("[data-stream]").forEach(card => { card.onclick = () => { selectedStream=card.dataset.stream; selectedBookId=""; catalogStep="books"; try{history.pushState({pkitaap:1},'');}catch(e){} render(); }; });
 }
 function onBooksMediumFilterChange(val) {
   if (typeof renderBooks === 'function') renderBooks();
@@ -34270,6 +34271,7 @@ function renderBooks() {
     card.onclick = () => {
                         const uid = card.getAttribute('data-seller-uid');
       _viewingSellerUid = uid;
+      try{history.pushState({pkitaap:1},'');}catch(e){}
       grid.style.display = 'block';
       const sellerListings = matches.filter(l => {
         const lu = String(l.userId || l.sellerUserId || l.ownerId || '').trim();
@@ -35395,6 +35397,7 @@ function showSellerListings(uid) {
   const list = document.querySelector("#matchList");
   if (!list) return;
   _viewingSellerUid = uid;
+  try{history.pushState({pkitaap:1},'');}catch(e){}
   const clsCtx = (typeof book === 'function' && book() && book().className) || selectedClass || '';
   const mine = (state.listings || []).filter(l => {
     const lu = String(l.userId || l.sellerUserId || l.ownerId || '').trim();
