@@ -47,7 +47,7 @@
   h2 { font-size:1.1rem; margin:22px 0 8px; }
   .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; margin-top:16px; }
   .card > h2:first-child { margin-top:0; }
-  ul { padding-left:20px; margin:8px 0; }
+  ul, ol { padding-left:20px; margin:8px 0; }
   li { margin:4px 0; }
   .muted { color:var(--muted); font-size:.92rem; }
   .steps { display:flex; gap:8px; margin:18px 0 0; font-size:.88rem; color:var(--muted); }
@@ -87,6 +87,33 @@
   </header>
   <p class="muted">GasDay is an app by Paiotorr. Use this page to delete your account and the data associated with it - right now, without opening the app.</p>
 
+  <!-- ALWAYS VISIBLE, with no sign-in and no JavaScript: how to delete, what is deleted, what is kept, and for how long. -->
+  <section class="card" id="info">
+    <h2>How to delete your account</h2>
+    <ol>
+      <li>Sign in below with the <strong>same Google account you use in GasDay</strong>.</li>
+      <li>Tick the confirmation box and press <strong>Delete my account now</strong>.</li>
+    </ol>
+    <p class="muted">If you can't sign in, email <a href="mailto:pulinoffice7@gmail.com?subject=GasDay%20account%20deletion%20request">pulinoffice7@gmail.com</a> from the address linked to your account (see the end of this page).</p>
+
+    <h2>What is deleted</h2>
+    <p>Deleting your account permanently deletes <strong>all of your GasDay data that is stored online</strong>:</p>
+    <ul>
+      <li><strong>Everything GasDay stored in your Google Drive</strong> - every backup file (your customers, past lists, DAC history and cycle information) and every saved backup password. These live in GasDay's own private, hidden app folder in your Drive, and <strong>every file in that folder is deleted</strong>. Google will ask you to allow access to that one folder only, so that it can be emptied.</li>
+      <li>Your cloud settings (Shop Name and Location).</li>
+      <li>Your GasDay sign-in account (the name, email and account ID linked to it).</li>
+    </ul>
+
+    <h2>What is not deleted</h2>
+    <ul>
+      <li>Data that exists only on your phone (for example the <em>Documents/GasDay</em> folder, exported lists and encrypted backup files you saved). You can remove it by deleting those files or uninstalling the app.</li>
+      <li>Your Google account itself, and all your other Google Drive files and folders. GasDay can only reach its own private app folder; it never opens, reads or changes anything else in your Drive.</li>
+    </ul>
+
+    <h2>When it happens, and how long anything is kept</h2>
+    <p><strong>Immediately.</strong> There is no waiting period and it cannot be undone. GasDay and its developer, Paiotorr, keep no copy of the deleted data afterwards. Google may keep technical backup copies of deleted Google / Firebase data for a limited time under its own terms; neither GasDay nor Paiotorr can access them.</p>
+  </section>
+
   <div class="steps" aria-hidden="true"><span id="s1" class="on">1 &middot; Sign in</span><span id="s2">2 &middot; Delete</span><span id="s3">3 &middot; Done</span></div>
 
   <noscript><p>This page needs JavaScript to sign you in. Please enable it, or use the email option below.</p></noscript>
@@ -94,7 +121,7 @@
   <!-- STEP 1 -->
   <section class="card" id="stepSignIn">
     <h2>Sign in</h2>
-    <p>Sign in with the <strong>same Google account you use in GasDay</strong>. This proves the request comes from the account owner. You will see exactly what will be deleted before anything happens.</p>
+    <p>Sign in with the <strong>same Google account you use in GasDay</strong>. This proves the request comes from the account owner. Nothing is deleted until you tick the confirmation box and press the delete button.</p>
     <button type="button" class="gbtn" id="signin">
       <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
       <span>Sign in with Google</span>
@@ -111,20 +138,7 @@
       <button type="button" class="linkbtn" id="signout">Not you? Sign out</button>
     </div>
 
-    <h2>What will be deleted</h2>
-    <ul>
-      <li>Your GasDay sign-in account (the name and email linked to it).</li>
-      <li>Your cloud settings (Shop Name and Location).</li>
-      <li>Your GasDay backup and your saved backup passwords, stored in your own Google Drive (the app's private data folder). Google will ask you to allow access to that one folder only, so that it can be emptied.</li>
-    </ul>
-
-    <h2>What is not deleted by us</h2>
-    <ul>
-      <li>Data that exists only on your phone (for example the <em>Documents/GasDay</em> folder, exported lists and encrypted backup files you saved). You can remove it by deleting those files or uninstalling the app.</li>
-    </ul>
-
-    <h2>When it happens</h2>
-    <p><strong>Immediately.</strong> There is no waiting period and it cannot be undone.</p>
+    <p><strong>All the data listed under "What is deleted" above, including every GasDay file in your Google Drive, will be permanently deleted now.</strong> This cannot be undone.</p>
 
     <label class="check">
       <input type="checkbox" id="confirm">
