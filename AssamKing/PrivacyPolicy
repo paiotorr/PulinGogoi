@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AssamKing Privacy Policy</title>
+<meta name="description" content="How the AssamKing app collects, uses, stores and deletes your information.">
+<style>
+  :root {
+    --bar: #4A1111;
+    --primary: #7A1F1F;
+    --gold: #E6B800;
+    --bg: #FFF8F6;
+    --surface: #FFFFFF;
+    --text: #231919;
+    --muted: #6B5B5B;
+    --line: #E8DCDA;
+    --chip: #F6E7C2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --primary: #FFB4AB;
+      --bg: #1A1111;
+      --surface: #2A1E1E;
+      --text: #F1DEDC;
+      --muted: #CDB8B6;
+      --line: #4A3A39;
+      --chip: #4A3A1A;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Roboto, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-text-size-adjust: 100%;
+  }
+  header {
+    background: var(--bar);
+    color: #fff;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  header img { width: 40px; height: 40px; border-radius: 50%; flex: none; }
+  header .name { font-size: 20px; font-weight: 700; line-height: 1.2; }
+  header .tag { font-size: 12px; color: var(--gold); }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: clamp(24px, 6vw, 32px); line-height: 1.25; margin: 0 0 4px; }
+  .updated { color: var(--muted); font-size: 14px; margin: 0 0 20px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin: 0 0 20px;
+  }
+  .summary ul { margin: 8px 0 0; padding-left: 20px; }
+  .summary li { margin-bottom: 4px; }
+  nav ol { margin: 8px 0 0; padding-left: 22px; columns: 2; column-gap: 24px; }
+  @media (max-width: 560px) { nav ol { columns: 1; } }
+  nav a { color: var(--primary); text-decoration: none; }
+  nav a:hover { text-decoration: underline; }
+  section { scroll-margin-top: 80px; margin-bottom: 28px; }
+  h2 {
+    font-size: 19px;
+    color: var(--primary);
+    margin: 0 0 8px;
+    padding-top: 4px;
+    border-top: 1px solid var(--line);
+    padding-top: 20px;
+  }
+  h3 { font-size: 16px; margin: 16px 0 4px; }
+  p { margin: 0 0 10px; }
+  ul { padding-left: 22px; margin: 0 0 10px; }
+  li { margin-bottom: 6px; }
+  a { color: var(--primary); overflow-wrap: anywhere; }
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 8px 0 12px; }
+  table { border-collapse: collapse; width: 100%; min-width: 520px; font-size: 14px; }
+  th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  th { background: var(--chip); font-weight: 600; }
+  .note {
+    background: var(--chip);
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 15px;
+  }
+  .btn {
+    display: inline-block;
+    background: var(--primary);
+    color: #fff;
+    text-decoration: none;
+    padding: 12px 20px;
+    border-radius: 24px;
+    font-weight: 600;
+    margin: 4px 0 8px;
+  }
+  @media (prefers-color-scheme: dark) { .btn { color: #561E19; } }
+  footer { text-align: center; color: var(--muted); font-size: 13px; padding: 0 16px 32px; }
+</style>
+</head>
+<body>
+<header>
+  <img alt="AssamKing logo" src="data:image/png;base64,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">
+  <div>
+    <div class="name">AssamKing</div>
+    <div class="tag">Justice for Zubeen Garg</div>
+  </div>
+</header>
+
+<main>
+  <h1>Privacy Policy</h1>
+  <p class="updated">Last updated: 22 October 2026</p>
+
+  <div class="card summary">
+    <strong>In short</strong>
+    <ul>
+      <li>You sign in with Google. We store your name, email address and a user ID to run your account.</li>
+      <li>We never ask for your phone number and never read your contacts, messages, files or location.</li>
+      <li>Other users only see how many people joined a protest, never who joined.</li>
+      <li>No ads. We do not sell your data or share it for marketing.</li>
+      <li>You can delete your account and data at any time, in the app or on our website.</li>
+    </ul>
+  </div>
+
+  <nav class="card" aria-label="Contents">
+    <strong>Contents</strong>
+    <ol>
+      <li><a href="#about">About AssamKing</a></li>
+      <li><a href="#collect">Information we collect</a></li>
+      <li><a href="#not-collect">What we do not collect</a></li>
+      <li><a href="#use">How we use information</a></li>
+      <li><a href="#see">Who can see what</a></li>
+      <li><a href="#people">Photos of people on protest cards</a></li>
+      <li><a href="#storage">Where data is stored</a></li>
+      <li><a href="#share">Sharing with others</a></li>
+      <li><a href="#retention">How long we keep data</a></li>
+      <li><a href="#delete">Deleting your account</a></li>
+      <li><a href="#rights">Your choices and rights</a></li>
+      <li><a href="#security">Security</a></li>
+      <li><a href="#changes">Changes to this policy</a></li>
+      <li><a href="#contact">Contact us</a></li>
+    </ol>
+  </nav>
+
+  <section id="about">
+    <h2>1. About AssamKing</h2>
+    <p>AssamKing is a free, volunteer-run Android app for organising peaceful and lawful public gatherings
+      seeking justice for Zubeen Garg. It lists protests by district, lets people join with one tap, and shows how
+      many people have joined.</p>
+    <p>AssamKing is a fan-run community project. It is not affiliated with Zubeen Garg's family, his official
+      teams, any political party or any government body.</p>
+    <p>This policy explains what information the app handles, why, and how you can delete it. "We" and "us" mean
+      the people who run AssamKing.</p>
+  </section>
+
+  <section id="collect">
+    <h2>2. Information we collect</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Information</th><th>When</th><th>Why</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Name, email address and profile photo link from your Google account, and a user ID created by
+              Firebase Authentication</td>
+            <td>When you sign in with Google</td>
+            <td>To create and secure your account</td>
+          </tr>
+          <tr>
+            <td>The district you choose</td>
+            <td>When you first open the app, or change it in Account</td>
+            <td>To show protests in your district first</td>
+          </tr>
+          <tr>
+            <td>A record that your user ID joined a protest, with the time you joined</td>
+            <td>When you tap Join</td>
+            <td>To count joins, remember what you joined and unlock the protest's map link</td>
+          </tr>
+          <tr>
+            <td>Organisers only: the name and role shown on protests you create; for district leaders, the Gmail
+              address, name, role and district added by the main admin</td>
+            <td>When an admin or district leader creates a protest or is added as a leader</td>
+            <td>To show who created a protest ("Created by") and to control who may manage each district</td>
+          </tr>
+          <tr>
+            <td>Protest details added by organisers: title, place, district, date and time, Google Maps link,
+              description, and the names, roles and photos of people listed on a card</td>
+            <td>When an organiser creates or edits a protest</td>
+            <td>To show the protest to users</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>The app uses only the internet permission. Organisers choose photos through Android's own photo picker;
+      the app receives only the photo they pick, shrinks it on the phone and uploads that small copy.</p>
+  </section>
+
+  <section id="not-collect">
+    <h2>3. What we do not collect</h2>
+    <ul>
+      <li>Your phone number.</li>
+      <li>Your contacts, messages, call logs, files or other photos.</li>
+      <li>Your device location. Map links open in Google Maps or your browser; AssamKing does not track where you go.</li>
+      <li>Advertising IDs. The app contains no advertising or analytics services.</li>
+    </ul>
+  </section>
+
+  <section id="use">
+    <h2>4. How we use information</h2>
+    <p>We use information only to run AssamKing:</p>
+    <ul>
+      <li>to sign you in and keep your account secure;</li>
+      <li>to show protests in your district and the live number of people who joined;</li>
+      <li>to remember which protests you joined and unlock their map links;</li>
+      <li>to let admins and district leaders create and manage protests;</li>
+      <li>to keep the app safe, prevent misuse and meet legal obligations.</li>
+    </ul>
+    <p>We do not use your information for advertising, profiling or marketing, and we do not sell it.</p>
+  </section>
+
+  <section id="see">
+    <h2>5. Who can see what</h2>
+    <ul>
+      <li><strong>Other users</strong> see protest cards and how many people joined. They never see who joined,
+        and never see your email address or district.</li>
+      <li><strong>The map link</strong> of a protest is shown only to people who joined it, and to its organisers.</li>
+      <li><strong>"Created by"</strong>: the name and role of the admin or district leader who created a protest are
+        shown on that protest to all signed-in users.</li>
+      <li><strong>The people who run AssamKing</strong> manage the app's Firebase project and can technically
+        access account records (including email addresses) and which protests an account joined. They use this
+        only to run and protect the app, or when the law requires it.</li>
+    </ul>
+  </section>
+
+  <section id="people">
+    <h2>6. Photos of people on protest cards</h2>
+    <p>Organisers can list people on a protest card (for example an organiser or speaker) with a name, role and
+      photo. Any signed-in user can see them by opening that card, and can tap a photo to see it larger.</p>
+    <p>These people are also saved to a private list for that district, so organisers can add them again to future
+      protests. Only the main admin and that district's leader can see this list, and either of them can delete an
+      entry at any time.</p>
+    <p>Organisers must have a person's permission before adding their photo. If you appear on a card and want
+      your photo or name removed, contact us (see <a href="#contact">Contact us</a>) and we will remove it.</p>
+  </section>
+
+  <section id="storage">
+    <h2>7. Where data is stored</h2>
+    <p>AssamKing stores data with Google Firebase (Firebase Authentication and Cloud Firestore), a service run by
+      Google. Data is encrypted while it travels between the app and Google's servers. Google may process data in
+      India or in other countries where it operates. Google's privacy policy:
+      <a href="https://policies.google.com/privacy" rel="noopener">policies.google.com/privacy</a>.</p>
+    <p>Your chosen district is also saved on your phone, so the app does not have to download it each time.</p>
+  </section>
+
+  <section id="share">
+    <h2>8. Sharing with others</h2>
+    <p>We do not sell, rent or trade your information. We share it only:</p>
+    <ul>
+      <li>with Google, which provides sign-in and data storage for the app (Firebase);</li>
+      <li>when required by law, a court order or a valid request from a government authority;</li>
+      <li>to protect the safety of people or prevent misuse of the app.</li>
+    </ul>
+  </section>
+
+  <section id="retention">
+    <h2>9. How long we keep data</h2>
+    <ul>
+      <li><strong>Account, district and join records</strong>: until you delete your account.</li>
+      <li><strong>Protest cards</strong> disappear from the app one day after the protest starts. Organisers keep
+        a record of past protests (title, date, district, number of people who joined and who created it) until an
+        admin or the district's leader deletes it.</li>
+      <li><strong>Deleted protests</strong> are removed completely, including their join records, people, photos and
+        map link.</li>
+      <li><strong>Saved people</strong> in a district's list stay until the main admin or that district's leader
+        deletes them.</li>
+      <li>Google may keep backup copies for a short time under its own policies.</li>
+    </ul>
+  </section>
+
+  <section id="delete">
+    <h2>10. Deleting your account</h2>
+    <p>You can delete your AssamKing account at any time. Deleting it permanently removes your sign-in account
+      (name, email address and user ID), your joins in every protest (the joined counts go down) and your saved
+      district. Your Google account itself is not affected.</p>
+    <h3>In the app</h3>
+    <p>Tap the AssamKing logo at the top left, then <strong>Account</strong>, then <strong>Delete my account</strong>,
+      and confirm. Google may ask you to choose your account once more to confirm it's you. You are then
+      logged out.</p>
+    <h3>On the website</h3>
+    <p>If you no longer have the app, sign in with the same Google account on our delete page and tap
+      <strong>Delete my account</strong>:</p>
+    <p><a class="btn" href="https://assamking-24adf.web.app/delete-account">Delete my account</a></p>
+    <p>Protests you created as an admin or district leader are not removed by deleting your account. The main
+      admin or the district's leader can delete them.</p>
+  </section>
+
+  <section id="rights">
+    <h2>11. Your choices and rights</h2>
+    <ul>
+      <li><strong>Change your district</strong>: Account in the app.</li>
+      <li><strong>Leave a protest</strong>: tap Leave on its card. Your join record is deleted.</li>
+      <li><strong>Delete your account and data</strong>: see <a href="#delete">Deleting your account</a>.</li>
+      <li><strong>Ask a question, ask for a copy of your data, or ask us to correct or remove something</strong>:
+        <a href="#contact">contact us</a>. We will reply as soon as we can, and within 30 days.</li>
+    </ul>
+  </section>
+
+  <section id="security">
+    <h2>12. Security</h2>
+    <p>Data is encrypted in transit. Firebase security rules control who can read and change each piece of data:
+      for example, only you can see your join records and district, only people who joined can see a protest's map
+      link, and only admins and the district's leader can create, edit or delete protests in that district. No
+      system is completely secure, but we work to protect your information.</p>
+  </section>
+
+  <section id="changes">
+    <h2>13. Changes to this policy</h2>
+    <p>We may update this policy when the app changes. The new version will be posted on this page with a new
+      "Last updated" date, and important changes will be shown in the app.</p>
+  </section>
+
+  <section id="contact">
+    <h2>14. Contact us</h2>
+    <p>For any privacy question or request, email
+      <a href="mailto:workpulin@gmail.com">workpulin@gmail.com</a>.</p>
+    <div class="note">Peaceful and lawful gatherings only. AssamKing does not support violence, hate speech or any
+      unlawful activity.</div>
+  </section>
+</main>
+
+<footer>© 2026 AssamKing · Fan-run community app</footer>
+</body>
+</html>
