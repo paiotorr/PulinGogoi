@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Delete your AssamKing account</title>
+<meta name="description" content="Sign in with Google and delete your AssamKing account and data.">
+<style>
+  :root {
+    --bar: #4A1111;
+    --primary: #7A1F1F;
+    --gold: #E6B800;
+    --bg: #FFF8F6;
+    --surface: #FFFFFF;
+    --text: #231919;
+    --muted: #6B5B5B;
+    --line: #E8DCDA;
+    --error: #B3261E;
+    --ok: #1B5E20;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --primary: #FFB4AB;
+      --bg: #1A1111;
+      --surface: #2A1E1E;
+      --text: #F1DEDC;
+      --muted: #CDB8B6;
+      --line: #4A3A39;
+      --error: #FFB4AB;
+      --ok: #A5D6A7;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Roboto, system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.5;
+  }
+  header {
+    background: var(--bar);
+    color: #fff;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  header img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+  header .name { font-size: 20px; font-weight: 700; line-height: 1.2; }
+  header .tag { font-size: 12px; color: var(--gold); }
+  main { max-width: 480px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 22px; margin: 0 0 8px; }
+  p { margin: 0 0 12px; }
+  .muted { color: var(--muted); font-size: 14px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 24px;
+    margin-top: 20px;
+    text-align: center;
+  }
+  .avatar {
+    width: 88px; height: 88px; border-radius: 50%;
+    margin: 0 auto 12px;
+    background: var(--primary); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px; font-weight: 700;
+  }
+  .who { font-size: 20px; font-weight: 600; }
+  .email { color: var(--muted); margin-bottom: 20px; word-break: break-all; }
+  button {
+    width: 100%;
+    height: 52px;
+    border-radius: 26px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    font-family: inherit;
+  }
+  button:disabled { opacity: .6; cursor: default; }
+  .primary { background: var(--primary); color: #fff; }
+  @media (prefers-color-scheme: dark) { .primary { color: #561E19; } }
+  .danger { background: transparent; color: var(--error); border-color: var(--error); }
+  .plain { background: transparent; color: var(--primary); border-color: var(--line); margin-top: 12px; }
+  .danger-zone { text-align: left; border-top: 1px solid var(--line); margin-top: 24px; padding-top: 20px; }
+  .danger-zone h2 { font-size: 15px; color: var(--error); margin: 0 0 6px; }
+  .msg { margin-top: 14px; font-size: 14px; }
+  .msg.error { color: var(--error); }
+  .msg.ok { color: var(--ok); font-weight: 600; }
+  ul { text-align: left; padding-left: 20px; margin: 8px 0 0; }
+  li { margin-bottom: 6px; }
+  dialog {
+    border: none; border-radius: 20px; padding: 24px;
+    max-width: 360px; width: calc(100% - 32px);
+    background: var(--surface); color: var(--text);
+  }
+  dialog::backdrop { background: rgba(0,0,0,.45); }
+  dialog h3 { margin: 0 0 8px; font-size: 20px; }
+  .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+  .actions button { width: auto; height: 40px; padding: 0 16px; background: transparent; border: none; }
+  .actions .keep { color: var(--primary); }
+  .actions .del { color: var(--error); }
+  .hidden { display: none; }
+  footer { text-align: center; font-size: 13px; color: var(--muted); padding: 0 16px 32px; }
+</style>
+</head>
+<body>
+<header>
+  <img id="logo" alt="AssamKing logo" src="data:image/png;base64,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">
+  <div>
+    <div class="name">AssamKing</div>
+    <div class="tag">Justice for Zubeen Garg</div>
+  </div>
+</header>
+
+<main>
+  <h1>Delete your account</h1>
+  <p class="muted">You can also do this in the app: tap the logo at the top left, then Account, then Delete my account.</p>
+  <p class="muted">Deleting your account permanently removes:</p>
+  <ul class="muted">
+    <li>your AssamKing sign-in account (your name, email address and user ID),</li>
+    <li>your joins in every protest (the joined counts go down),</li>
+    <li>the district you chose.</li>
+  </ul>
+  <p class="muted" style="margin-top:12px">This cannot be undone. Your Google account itself is not affected.</p>
+
+  <!-- Signed out -->
+  <section id="signedOut" class="card hidden">
+    <p>Sign in with the same Google account you use in the AssamKing app.</p>
+    <button id="signInBtn" class="primary">Sign in with Google</button>
+    <div id="signInMsg" class="msg error"></div>
+  </section>
+
+  <!-- Signed in -->
+  <section id="signedIn" class="card hidden">
+    <div id="avatar" class="avatar"></div>
+    <div id="who" class="who"></div>
+    <div id="email" class="email"></div>
+    <button id="signOutBtn" class="plain">Log out</button>
+    <div class="danger-zone">
+      <h2>Delete account</h2>
+      <p class="muted">Removes you from every protest you joined and deletes your AssamKing account.</p>
+      <button id="deleteBtn" class="danger">Delete my account</button>
+      <div id="deleteMsg" class="msg error"></div>
+    </div>
+  </section>
+
+  <!-- Done -->
+  <section id="done" class="card hidden">
+    <p class="msg ok">Your AssamKing account was deleted.</p>
+    <p class="muted">You have been logged out. You can close this page.</p>
+  </section>
+
+  <!-- Loading -->
+  <section id="loading" class="card">
+    <p class="muted">Loading…</p>
+  </section>
+</main>
+
+<footer>Peaceful and lawful gatherings only. · <a href="privacy" style="color:inherit">Privacy policy</a></footer>
+
+<dialog id="confirm">
+  <h3>Delete your account?</h3>
+  <p>You will be removed from all protests you joined and your account will be deleted permanently.</p>
+  <div class="actions">
+    <button class="keep" id="keepBtn">Keep my account</button>
+    <button class="del" id="confirmDeleteBtn">Delete</button>
+  </div>
+</dialog>
+
+<script>
+  // If the Firebase scripts can't load (no internet, blocked network), say so instead of "Loading…" forever.
+  setTimeout(function () {
+    var l = document.getElementById("loading");
+    if (l && !l.classList.contains("hidden")) {
+      l.innerHTML = '<p class="msg error">Couldn\'t load. Check your internet connection and reload this page.</p>';
+    }
+  }, 15000);
+</script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect,
+    reauthenticateWithPopup, deleteUser, signOut,
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import {
+    getFirestore, collection, getDocs, doc, getDoc, writeBatch, deleteDoc, increment,
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  // AssamKing web app config (Firebase Console > Project settings > Your apps > Web).
+  // These values are public by design; the Firestore rules are what protect the data.
+  // Analytics is deliberately NOT loaded: the privacy policy says AssamKing uses no analytics.
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJ-FcQdQj63FRomz1PXViB8ezCfmj4jKY",
+    authDomain: "assamking-24adf.firebaseapp.com",
+    projectId: "assamking-24adf",
+    storageBucket: "assamking-24adf.firebasestorage.app",
+    messagingSenderId: "259418145456",
+    appId: "1:259418145456:web:ceab8529d2cacbd09ab175",
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
+
+  const $ = (id) => document.getElementById(id);
+  const sections = ["loading", "signedOut", "signedIn", "done"];
+  const show = (id) => sections.forEach((s) => $(s).classList.toggle("hidden", s !== id));
+  let deleted = false;
+
+
+  onAuthStateChanged(auth, (user) => {
+    if (deleted) return;
+    if (!user) { show("signedOut"); return; }
+    const name = user.displayName || "Google account";
+    $("avatar").textContent = (name.trim()[0] || "?").toUpperCase();
+    $("who").textContent = name;
+    $("email").textContent = user.email || "";
+    $("deleteMsg").textContent = "";
+    show("signedIn");
+  });
+
+  $("signInBtn").onclick = async () => {
+    $("signInMsg").textContent = "";
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (e) {
+      if (e.code === "auth/popup-blocked") {
+        await signInWithRedirect(auth, provider);
+      } else if (e.code !== "auth/popup-closed-by-user" && e.code !== "auth/cancelled-popup-request") {
+        $("signInMsg").textContent = "Sign-in failed. Please try again. (" + (e.code || e.message) + ")";
+      }
+    }
+  };
+
+  $("signOutBtn").onclick = () => signOut(auth);
+
+  $("deleteBtn").onclick = () => $("confirm").showModal();
+  $("keepBtn").onclick = () => $("confirm").close();
+
+  $("confirmDeleteBtn").onclick = async () => {
+    $("confirm").close();
+    const user = auth.currentUser;
+    if (!user) return;
+    const btn = $("deleteBtn");
+    btn.disabled = true;
+    btn.textContent = "Deleting…";
+    $("deleteMsg").textContent = "";
+    try {
+      // Firebase only deletes an account right after a fresh sign-in. If the sign-in on
+      // this page is older than a few minutes, ask Google once more before touching any data.
+      const lastSignIn = Date.parse(user.metadata.lastSignInTime || "") || 0;
+      if (Date.now() - lastSignIn > 4 * 60 * 1000) {
+        await reauthenticateWithPopup(user, provider);
+      }
+
+      // 1. Leave every protest this user joined, so the joined counts stay right.
+      const protests = await getDocs(collection(db, "protests"));
+      for (const p of protests.docs) {
+        const memberRef = doc(db, "protests", p.id, "members", user.uid);
+        const member = await getDoc(memberRef);
+        if (!member.exists()) continue;
+        try {
+          const batch = writeBatch(db);
+          batch.delete(memberRef);
+          batch.update(p.ref, { joinCount: increment(-1) });
+          await batch.commit();
+        } catch (e) {
+          await deleteDoc(memberRef); // e.g. a count that is already 0
+        }
+      }
+
+      // 2. Delete the saved district, then the sign-in account itself, then log out.
+      await deleteDoc(doc(db, "users", user.uid));
+      deleted = true;
+      await deleteUser(user);
+      await signOut(auth).catch(() => {});
+      show("done");
+    } catch (e) {
+      deleted = false;
+      btn.disabled = false;
+      btn.textContent = "Delete my account";
+      if (e.code === "auth/popup-closed-by-user" || e.code === "auth/cancelled-popup-request") return;
+      if (e.code === "auth/user-mismatch") {
+        $("deleteMsg").textContent = "Please choose the same Google account you signed in with.";
+      } else if (e.code === "auth/requires-recent-login") {
+        $("deleteMsg").textContent = "Please log out, sign in again, and then delete.";
+      } else {
+        $("deleteMsg").textContent = "Couldn't delete your account. Check your internet connection and try again.";
+      }
+    }
+  };
+</script>
+</body>
+</html>
