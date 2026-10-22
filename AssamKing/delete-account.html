@@ -125,7 +125,7 @@
     <li>your joins in every protest (the joined counts go down),</li>
     <li>the district you chose.</li>
   </ul>
-  <p class="muted" style="margin-top:12px">This cannot be undone. Your Google account itself is not affected.</p>
+  <p class="muted" style="margin-top:12px">This cannot be undone. Your Google account itself is not affected. Read our <a href="https://paiotorr.com/AssamKing/PrivacyPolicy.html">privacy policy</a>.</p>
 
   <!-- Signed out -->
   <section id="signedOut" class="card hidden">
@@ -160,7 +160,7 @@
   </section>
 </main>
 
-<footer>Peaceful and lawful gatherings only. · <a href="privacy" style="color:inherit">Privacy policy</a></footer>
+<footer>Peaceful and lawful gatherings only. · <a href="https://paiotorr.com/AssamKing/PrivacyPolicy.html" style="color:inherit">Privacy policy</a></footer>
 
 <dialog id="confirm">
   <h3>Delete your account?</h3>
@@ -232,6 +232,8 @@
     } catch (e) {
       if (e.code === "auth/popup-blocked") {
         await signInWithRedirect(auth, provider);
+      } else if (e.code === "auth/unauthorized-domain") {
+        $("signInMsg").textContent = "This website isn't allowed to use Google sign-in yet. (Admin: add it in Firebase → Authentication → Settings → Authorized domains.)";
       } else if (e.code !== "auth/popup-closed-by-user" && e.code !== "auth/cancelled-popup-request") {
         $("signInMsg").textContent = "Sign-in failed. Please try again. (" + (e.code || e.message) + ")";
       }
@@ -257,6 +259,16 @@
       const lastSignIn = Date.parse(user.metadata.lastSignInTime || "") || 0;
       if (Date.now() - lastSignIn > 4 * 60 * 1000) {
         await reauthenticateWithPopup(user, provider);
+      }
+
+      // 0. Organiser accounts (main admin / district leader) can't be deleted here.
+      const email = (user.email || "").toLowerCase();
+      const isAdmin = await getDoc(doc(db, "admins", email)).then((d) => d.exists()).catch(() => false);
+      const isLeader = await getDoc(doc(db, "leaders", email)).then((d) => d.exists()).catch(() => false);
+      if (isAdmin || isLeader) {
+        const err = new Error("organiser");
+        err.code = isAdmin ? "app/admin" : "app/leader";
+        throw err;
       }
 
       // 1. Leave every protest this user joined, so the joined counts stay right.
@@ -286,7 +298,11 @@
       btn.disabled = false;
       btn.textContent = "Delete my account";
       if (e.code === "auth/popup-closed-by-user" || e.code === "auth/cancelled-popup-request") return;
-      if (e.code === "auth/user-mismatch") {
+      if (e.code === "app/admin") {
+        $("deleteMsg").textContent = "This is a main admin account, so it can't be deleted here. Remove it from the admins list in the Firebase Console first.";
+      } else if (e.code === "app/leader") {
+        $("deleteMsg").textContent = "You are a district leader. Ask the main admin to remove you as a leader first, then delete your account.";
+      } else if (e.code === "auth/user-mismatch") {
         $("deleteMsg").textContent = "Please choose the same Google account you signed in with.";
       } else if (e.code === "auth/requires-recent-login") {
         $("deleteMsg").textContent = "Please log out, sign in again, and then delete.";
