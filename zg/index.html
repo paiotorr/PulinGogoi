@@ -680,6 +680,12 @@
     }
   }
 
+  /** A Plus Code ("956M+2MV Na-Ali Bhatia, Assam") or other place text, opened as a Google Maps search. */
+  function mapsSearch(text) {
+    const t = String(text).trim();
+    return t ? "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(t) : null;
+  }
+
   // Protests are in Assam, so times are shown in Indian time; "IST" is added for visitors elsewhere.
   const TZ = "Asia/Kolkata";
   const dateFmt = new Intl.DateTimeFormat("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: TZ });
@@ -1266,7 +1272,7 @@
     // Place: visible to all; the Google Maps link unlocks after joining.
     const see = canSee(p);
     const url = S.maps.get(p.id);
-    const link = url ? safeUrl(url) : null;
+    const link = url ? safeUrl(url) || mapsSearch(url) : null;
     const sub = !see ? "Join to unlock the map link"
       : url === undefined ? "Loading map link…"
       : url === null ? "Couldn't load the map link. Check your internet."
