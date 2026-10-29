@@ -101,12 +101,15 @@
     <ul>
       <li><strong>Everything GasDay stored in your Google Drive</strong> - every backup file (your customers, past lists, DAC history and cycle information) and every saved backup password. These live in GasDay's own private, hidden app folder in your Drive, and <strong>every file in that folder is deleted</strong>. Google will ask you to allow access to that one folder only, so that it can be emptied.</li>
       <li>Your cloud settings (Shop Name and Location).</li>
+      <li>Your free trial and subscription record.</li>
       <li>Your GasDay sign-in account (the name, email and account ID linked to it).</li>
     </ul>
+    <p>Kept: the record of your phone with your email and account ID removed. It holds only the phone's identifier (Android ID) and the date it was first seen, so that the phone cannot get a second free trial. It contains no personal information about you.</p>
 
     <h2>What is not deleted</h2>
     <ul>
       <li>Data that exists only on your phone (for example the <em>Documents/GasDay</em> folder, exported lists and encrypted backup files you saved). You can remove it by deleting those files or uninstalling the app.</li>
+      <li>Your GasDay subscription. It is held by Google Play, so deleting your account does not cancel it. To stop future charges, cancel it in Google Play (Payments &amp; subscriptions &gt; Subscriptions) <em>before</em> you delete your account.</li>
       <li>Your Google account itself, and all your other Google Drive files and folders. GasDay can only reach its own private app folder; it never opens, reads or changes anything else in your Drive.</li>
     </ul>
 
@@ -150,7 +153,7 @@
   <!-- STEP 3 -->
   <section class="card done" id="stepDone" hidden>
     <h2>Your account has been deleted</h2>
-    <p>Your GasDay sign-in account, your cloud settings and your GasDay backup (with your saved backup passwords) in Google Drive have been permanently deleted.</p>
+    <p>Your GasDay sign-in account, your cloud settings, your free trial and subscription record and your GasDay backup (with your saved backup passwords) in Google Drive have been permanently deleted.</p>
     <p class="muted">Anything saved only on your phone stays there until you delete those files or uninstall the app. You can close this page.</p>
   </section>
 
@@ -209,8 +212,11 @@
   function StepError(step, message, cause) { this.step = step; this.message = message; this.cause = cause; }
 
   // The order matters and every step is safe to repeat (same order as the in-app "Delete Account"):
-  //   1. read-only checks (nothing is deleted if any fails)   2. Drive folder   3. cloud settings   4. the sign-in account
-  // `d` supplies: settingsExist(), listDriveIds(), deleteDriveFile(id), deleteSettings(), deleteAuthUser().
+  //   1. read-only checks (nothing is deleted if any fails)   2. Drive folder   3. cloud settings
+  //   3b. free trial / subscription record (users/{uid} deleted; the phone record keeps only its ID and firstSeen)
+  //   4. the sign-in account
+  // `d` supplies: settingsExist(), listDriveIds(), deleteDriveFile(id), deleteSettings(), trialDeviceId(),
+  //   stripDevice(deviceId), deleteTrialRecord(), deleteAuthUser().
   async function deleteEverything(d, onStep) {
     onStep("check");
     var hasSettings;
@@ -236,6 +242,20 @@
       onStep("settings");
       try { await d.deleteSettings(); }
       catch (e) { throw new StepError("settings", "Your Drive backup was removed, but your cloud settings couldn't be deleted. Please press the button again.", e); }
+    }
+
+    onStep("trial");
+    try {
+      var deviceId = await d.trialDeviceId(); // null = no record
+      if (deviceId !== null) {
+        if (deviceId) {
+          // Not this account's phone record (it was refused a trial there), or already cleared: skipped quietly.
+          try { await d.stripDevice(deviceId); } catch (e) { }
+        }
+        await d.deleteTrialRecord();
+      }
+    } catch (e) {
+      throw new StepError("trial", "Your Drive backup was removed, but your account record couldn't be deleted yet. Please press the button again.", e);
     }
 
     onStep("account");
@@ -361,6 +381,7 @@
   function buildServices() {
     var fb = firebase, uid = user.uid;
     var settingsRef = fb.f.doc(fb.db, "users", uid, "settings", "shop");
+    var userRef = fb.f.doc(fb.db, "users", uid);
     return {
       settingsExist: async function () { var snap = await fb.f.getDocFromServer(settingsRef); return snap.exists(); },
       listDriveIds: async function () {
@@ -370,13 +391,21 @@
       },
       deleteDriveFile: async function (id) { await driveFetch(DRIVE_API + "/" + encodeURIComponent(id), { method: "DELETE" }); },
       deleteSettings: async function () { await fb.f.deleteDoc(settingsRef); },
+      trialDeviceId: async function () {
+        var snap = await fb.f.getDocFromServer(userRef);
+        return snap.exists() ? String(snap.get("deviceId") || "") : null;
+      },
+      stripDevice: async function (deviceId) {
+        await fb.f.updateDoc(fb.f.doc(fb.db, "devices", deviceId), { uid: fb.f.deleteField(), email: fb.f.deleteField() });
+      },
+      deleteTrialRecord: async function () { await fb.f.deleteDoc(userRef); },
       deleteAuthUser: async function () { await fb.a.deleteUser(fb.auth.currentUser); }
     };
   }
 
   // ---- Step 2: delete --------------------------------------------------------------------------------
   var STEP_TEXT = {
-    check: "Checking…", drive: "Removing your Drive backup…", settings: "Removing your settings…", account: "Deleting your account…"
+    check: "Checking…", drive: "Removing your Drive backup…", settings: "Removing your settings…", trial: "Removing your account record…", account: "Deleting your account…"
   };
 
   async function onDelete() {
